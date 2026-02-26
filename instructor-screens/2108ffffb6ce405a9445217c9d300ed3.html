@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Instructor Teaching Profile Settings - Tacliimi Learn</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#7f13ec",
+                        "background-light": "#f7f6f8",
+                        "background-dark": "#191022",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style type="text/tailwindcss">
+        body {
+            font-family: 'Lexend', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .sidebar-item-active {
+            background-color: #7f13ec;
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100">
+<div class="relative flex min-h-screen w-full flex-col">
+<header class="sticky top-0 z-50 flex h-16 w-full items-center justify-between border-b border-slate-200 bg-white px-4 md:px-10 dark:border-slate-800 dark:bg-background-dark">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-3">
+<div class="flex size-9 items-center justify-center rounded-lg bg-primary text-white">
+<span class="material-symbols-outlined">school</span>
+</div>
+<h2 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Tacliimi <span class="text-primary">Learn</span></h2>
+</div>
+<nav class="hidden lg:flex items-center gap-6">
+<a class="text-sm font-medium text-slate-600 hover:text-primary dark:text-slate-400 dark:hover:text-white" href="#">Home</a>
+<a class="text-sm font-medium text-slate-600 hover:text-primary dark:text-slate-400 dark:hover:text-white" href="#">Dashboard</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="flex size-10 items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<div class="flex items-center gap-3 pl-2">
+<div class="hidden text-right md:block">
+<p class="text-sm font-bold text-slate-900 dark:text-white leading-none">Instructor Account</p>
+<p class="text-[10px] font-medium text-slate-500 dark:text-slate-400 mt-1">ID: 32342</p>
+</div>
+<div class="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border-2 border-primary/20 bg-slate-200 text-slate-500">
+<span class="material-symbols-outlined text-2xl">account_circle</span>
+</div>
+</div>
+</div>
+</header>
+<div class="flex flex-1 overflow-hidden">
+<aside class="hidden w-72 flex-col border-r border-slate-200 bg-white p-6 lg:flex dark:border-slate-800 dark:bg-background-dark">
+<nav class="flex flex-col gap-2">
+<a class="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-slate-600 hover:bg-primary/10 hover:text-primary dark:text-slate-400 dark:hover:bg-primary/20" href="#">
+<span class="material-symbols-outlined text-[20px]">person</span>
+                        Personal Info
+                    </a>
+<a class="sidebar-item-active flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-all" href="#">
+<span class="material-symbols-outlined text-[20px]">co_present</span>
+                        Teaching Profile
+                    </a>
+<a class="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-slate-600 hover:bg-primary/10 hover:text-primary dark:text-slate-400 dark:hover:bg-primary/20" href="#">
+<span class="material-symbols-outlined text-[20px]">account_balance_wallet</span>
+                        Payout Settings
+                    </a>
+<a class="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-slate-600 hover:bg-primary/10 hover:text-primary dark:text-slate-400 dark:hover:bg-primary/20" href="#">
+<span class="material-symbols-outlined text-[20px]">shield_person</span>
+                        Security
+                    </a>
+<div class="my-4 border-t border-slate-100 dark:border-slate-800"></div>
+<a class="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800" href="#">
+<span class="material-symbols-outlined text-[20px]">visibility</span>
+                        View Public Profile
+                    </a>
+</nav>
+</aside>
+<main class="flex-1 overflow-y-auto bg-slate-50 p-4 md:p-10 dark:bg-background-dark/50">
+<div class="mx-auto max-w-4xl">
+<div class="mb-8">
+<h1 class="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Teaching Profile</h1>
+<p class="mt-2 text-slate-600 dark:text-slate-400">Showcase your expertise and educational background to potential students.</p>
+</div>
+<div class="space-y-6">
+<section class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-background-dark">
+<label class="block text-sm font-bold text-slate-900 dark:text-white" for="headline">Professional Headline</label>
+<p class="mb-4 text-xs text-slate-500">Add a catchy headline to summarize your professional identity.</p>
+<input class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm font-light text-slate-900 placeholder:text-slate-400 focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white" id="headline" placeholder="e.g. Senior Software Engineer &amp; Mathematics Specialist" type="text"/>
+</section>
+<div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+<section class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-background-dark">
+<label class="mb-4 block text-sm font-bold text-slate-900 dark:text-white">Area of Expertise</label>
+<div class="flex flex-wrap gap-2">
+<span class="flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary">
+                                        Mathematics <button class="material-symbols-outlined text-[14px]">close</button>
+</span>
+<span class="flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary">
+                                        Coding <button class="material-symbols-outlined text-[14px]">close</button>
+</span>
+<span class="flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary">
+                                        Business <button class="material-symbols-outlined text-[14px]">close</button>
+</span>
+<button class="flex items-center gap-1 rounded-full border border-dashed border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-500 hover:border-primary hover:text-primary dark:border-slate-700">
+<span class="material-symbols-outlined text-[14px]">add</span> Add Expertise
+                                    </button>
+</div>
+</section>
+<section class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-background-dark">
+<label class="mb-4 block text-sm font-bold text-slate-900 dark:text-white" for="experience">Teaching Experience</label>
+<select class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white" id="experience">
+<option value="">Select experience</option>
+<option value="1-3">1-3 years</option>
+<option value="3-5">3-5 years</option>
+<option value="5+">5+ years</option>
+</select>
+</section>
+</div>
+<section class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-background-dark">
+<h3 class="mb-6 text-sm font-bold text-slate-900 dark:text-white">Educational Background</h3>
+<div class="space-y-4">
+<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+<div>
+<label class="mb-2 block text-xs font-medium text-slate-500" for="university">University / Institution</label>
+<input class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white" id="university" placeholder="e.g. Stanford University" type="text"/>
+</div>
+<div>
+<label class="mb-2 block text-xs font-medium text-slate-500" for="degree">Degree</label>
+<input class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white" id="degree" placeholder="e.g. Master of Computer Science" type="text"/>
+</div>
+</div>
+<button class="flex items-center gap-2 text-sm font-bold text-primary">
+<span class="material-symbols-outlined text-[18px]">add_circle</span> Add another education
+                                </button>
+</div>
+</section>
+<section class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-background-dark">
+<label class="mb-4 block text-sm font-bold text-slate-900 dark:text-white">Languages Spoken</label>
+<div class="flex flex-wrap gap-2">
+<span class="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-300">English</span>
+<span class="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-300">Arabic</span>
+<span class="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-300">French</span>
+<button class="material-symbols-outlined rounded-lg bg-primary/10 p-1 text-primary">edit</button>
+</div>
+</section>
+</div>
+<div class="h-24"></div>
+</div>
+</main>
+</div>
+<div class="fixed bottom-0 z-50 flex w-full items-center justify-between border-t border-slate-200 bg-white/80 px-4 py-4 backdrop-blur-md lg:px-10 dark:border-slate-800 dark:bg-background-dark/80">
+<div class="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+<span class="material-symbols-outlined text-sm">info</span>
+<span class="text-xs">Update your profile to improve visibility to students.</span>
+</div>
+<div class="flex gap-4">
+<button class="rounded-lg px-6 py-2 text-sm font-bold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">
+                    Cancel
+                </button>
+<button class="flex items-center gap-2 rounded-lg bg-primary px-8 py-3 text-sm font-bold text-white shadow-lg shadow-primary/20 transition-transform active:scale-95">
+<span class="material-symbols-outlined text-[18px]">save</span>
+                    Save Changes
+                </button>
+</div>
+</div>
+</div>
+
+</body></html>

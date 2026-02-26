@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Instructor Dashboard | Tacliimi Learn</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#4F46E5",
+                        "background-light": "#F9FAFB",
+                        "background-dark": "#111827",
+                    },
+                    fontFamily: {
+                        display: ["Inter", "sans-serif"],
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.5rem",
+                    },
+                },
+            },
+        };
+    </script>
+    <style type="text/tailwindcss">
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        
+        /* Hide content until router loads it */
+        #instructor-content-area {
+            opacity: 1;
+            transition: opacity 0.2s ease-in-out;
+        }
+        #instructor-content-area.loading {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+    </style>
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 transition-colors duration-200">
+    <aside
+        class="fixed left-0 top-0 h-full w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 hidden lg:flex flex-col z-20">
+        <div class="p-6 border-b border-slate-100 dark:border-slate-800">
+            <div class="flex items-center gap-2 cursor-pointer" onclick="window.location.href='/index.html'">
+                <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                    <span class="material-symbols-outlined text-white text-lg">school</span>
+                </div>
+                <span class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Tacliimi</span>
+            </div>
+        </div>
+        <nav class="flex-1 p-4 space-y-1" id="instructor-sidebar-nav">
+            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                href="/instructor-dashboard/">
+                <span class="material-symbols-outlined">dashboard</span>
+                Dashboard
+            </a>
+            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                href="/instructor-courses/">
+                <span class="material-symbols-outlined">auto_stories</span>
+                My Courses
+            </a>
+            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                href="/instructor-mentorship/">
+                <span class="material-symbols-outlined">groups</span>
+                Mentorship
+            </a>
+            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                href="/instructor-analytics/">
+                <span class="material-symbols-outlined">analytics</span>
+                Analytics
+            </a>
+            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                href="/instructor-earnings/">
+                <span class="material-symbols-outlined">payments</span>
+                Earnings
+            </a>
+            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                href="/instructor-communications/">
+                <span class="material-symbols-outlined">message</span>
+                Communications
+            </a>
+        </nav>
+    </aside>
+
+    <div class="lg:ml-64 min-h-screen flex flex-col">
+        <header
+            class="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-8 sticky top-0 z-10 shrink-0">
+            <h1 class="text-lg font-semibold dark:text-white" id="header-page-title">Mentorship</h1>
+            <div class="flex items-center gap-4">
+                <button class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 relative">
+                    <span class="material-symbols-outlined">notifications</span>
+                    <span class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
+                </button>
+                <button class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                    onclick="document.documentElement.classList.toggle('dark')">
+                    <span class="material-symbols-outlined">dark_mode</span>
+                </button>
+                <div class="flex items-center gap-3 pl-4 border-l border-slate-200 dark:border-slate-800 cursor-pointer hover:opacity-80 transition-opacity"
+                    onclick="window.location.href='/instructor-profile/index.html'">
+                    <div class="text-right hidden sm:block">
+                        <p class="text-sm font-medium dark:text-white">Instructor account</p>
+                        <p class="text-xs text-slate-500">ID: 32342</p>
+                    </div>
+                    <div
+                        class="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-slate-100 text-slate-400 dark:bg-slate-800 border-2 border-primary/20 hover:border-primary transition-colors">
+                        <span class="material-symbols-outlined text-2xl">account_circle</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- DYNAMIC CONTENT AREA -->
+        <main id="instructor-content-area" class="flex-1 bg-background-light dark:bg-background-dark pb-20">
+
+
+<div class="flex-1 overflow-y-auto px-8 pb-8 pt-2 bg-background-light dark:bg-background-dark">
+<div class="max-w-6xl mx-auto space-y-8">
+<div class="flex flex-col gap-1">
+<h1 class="text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Mentorship Overview</h1>
+<p class="text-slate-500 dark:text-slate-400">Manage your student guidance sessions and requests.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
+<div class="flex items-center justify-between mb-4">
+<span class="material-symbols-outlined text-primary bg-primary/10 p-2 rounded-lg">event</span>
+<span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Metrics</span>
+</div>
+<p class="text-slate-600 dark:text-slate-400 text-sm font-medium">Upcoming Sessions</p>
+<p class="text-slate-900 dark:text-slate-100 text-4xl font-bold mt-1">0</p>
+</div>
+<div class="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
+<div class="flex items-center justify-between mb-4">
+<span class="material-symbols-outlined text-green-500 bg-green-500/10 p-2 rounded-lg">timer</span>
+<span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Historical</span>
+</div>
+<p class="text-slate-600 dark:text-slate-400 text-sm font-medium">Total Hours Guided</p>
+<p class="text-slate-900 dark:text-slate-100 text-4xl font-bold mt-1">0</p>
+</div>
+<div class="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
+<div class="flex items-center justify-between mb-4">
+<span class="material-symbols-outlined text-amber-500 bg-amber-500/10 p-2 rounded-lg">pending_actions</span>
+<span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Alerts</span>
+</div>
+<p class="text-slate-600 dark:text-slate-400 text-sm font-medium">New Requests</p>
+<p class="text-slate-900 dark:text-slate-100 text-4xl font-bold mt-1">0</p>
+</div>
+</div>
+<div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+<div class="border-b border-slate-100 dark:border-slate-800 px-6">
+<div class="flex gap-8">
+<button class="py-4 border-b-2 border-primary text-primary text-sm font-bold transition-all">
+                                Upcoming
+                            </button>
+<button class="py-4 border-b-2 border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 text-sm font-bold transition-all">
+                                Requests
+                            </button>
+<button class="py-4 border-b-2 border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 text-sm font-bold transition-all">
+                                Scheduled
+                            </button>
+<button class="py-4 border-b-2 border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 text-sm font-bold transition-all">
+                                Completed
+                            </button>
+<button class="py-4 border-b-2 border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 text-sm font-bold transition-all">
+                                Availability
+                            </button>
+</div>
+</div>
+<div class="p-12 flex flex-col items-center justify-center text-center">
+<div class="relative mb-8 group">
+<div class="absolute -inset-4 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-all duration-500"></div>
+<div class="relative w-64 h-64 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 flex items-center justify-center overflow-hidden">
+<div class="bg-center bg-no-repeat aspect-square w-48 h-48 bg-contain" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBokyABWcIX2v5_q9Kjrh3Mjcy6p1W70Kle8WOMirw1QnbXMrDrnqjergg_zpufpzIXPVVjqR5MLL-sIzpSQ360QW3byN0xZdetNa8SL31YPxifmwfT9hXszieLkwpljfnQ5ZskEfbptx1RoBDiVqXG4OR4GN5MJ8r2-3jypFUbxwdkaKihd8uBGTqTwsvBe4k9roOP_2uI3-Gs2c697B3DcCVztVtVSRgTHyrkEn0bRrNiewAZqPfs6P_NkVZvqzBZq0Jl0a5QaxIO");'></div>
+</div>
+<div class="absolute bottom-4 right-4 bg-white dark:bg-slate-700 p-2 rounded-lg shadow-lg border border-slate-100 dark:border-slate-600 rotate-12">
+<span class="material-symbols-outlined text-primary">event_busy</span>
+</div>
+</div>
+<div class="max-w-md space-y-4 mb-8">
+<h3 class="text-2xl font-bold text-slate-900 dark:text-slate-100">No upcoming sessions yet.</h3>
+<p class="text-slate-600 dark:text-slate-400 text-base leading-relaxed">
+                                Your student bookings will appear here once you set your availability and students start booking.
+                            </p>
+</div>
+<button class="inline-flex items-center justify-center gap-2 px-8 py-3 bg-primary hover:bg-primary/90 text-white font-bold rounded-xl transition-all shadow-lg shadow-primary/25 hover:scale-105 active:scale-95">
+<span class="material-symbols-outlined">calendar_add_on</span>
+<span>Set My Availability</span>
+</button>
+</div>
+</div>
+<div class="bg-primary/5 dark:bg-primary/10 rounded-xl p-6 border border-primary/20 flex gap-4 items-start">
+<span class="material-symbols-outlined text-primary bg-white dark:bg-slate-800 p-2 rounded-lg shadow-sm">lightbulb</span>
+<div class="flex-1">
+<h4 class="text-sm font-bold text-slate-900 dark:text-slate-100">Pro Tip for Instructors</h4>
+<p class="text-sm text-slate-600 dark:text-slate-400 mt-1">Students are 60% more likely to book mentorship when you have at least 5 hours of availability per week. Try setting slots for both morning and evening to cover different time zones.</p>
+</div>
+</div>
+</div>
+</div>
+
+        </main>
+    </div>
+
+    <!-- Router Logic -->
+    <script src="/js/instructor-app.js"></script>
+</body>
+
+</html>

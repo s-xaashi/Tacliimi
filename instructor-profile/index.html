@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Instructor Profile Settings - Tacliimi Learn</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#7f13ec",
+                        "background-light": "#f7f6f8",
+                        "background-dark": "#191022",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style type="text/tailwindcss">
+        body {
+            font-family: 'Lexend', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .sidebar-item-active {
+            background-color: #7f13ec;
+            color: white;
+        }
+        input::placeholder, textarea::placeholder {
+            @apply opacity-40 font-light !important;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100">
+<div class="relative flex min-h-screen w-full flex-col">
+<header class="sticky top-0 z-50 flex h-16 w-full items-center justify-between border-b border-slate-200 bg-white px-4 md:px-10 dark:border-slate-800 dark:bg-background-dark">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-3 cursor-pointer" onclick="window.location.href='/index.html'">
+<div class="flex size-9 items-center justify-center rounded-lg bg-primary text-white">
+<span class="material-symbols-outlined">school</span>
+</div>
+<h2 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Tacliimi <span class="text-primary">Learn</span></h2>
+</div>
+<nav class="hidden items-center gap-6 lg:flex">
+<a class="text-sm font-medium text-slate-600 hover:text-primary dark:text-slate-400 dark:hover:text-white transition-colors" href="/index.html">Home</a>
+<a class="text-sm font-medium text-slate-600 hover:text-primary dark:text-slate-400 dark:hover:text-white transition-colors" href="/instructor-dashboard/index.html">Dashboard</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="flex size-10 items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<div class="flex items-center gap-3 border-l border-slate-200 pl-4 ml-2 dark:border-slate-800">
+<div class="text-right hidden sm:block">
+<p class="text-[13px] font-bold leading-none text-slate-900 dark:text-white">Instructor Account</p>
+<p class="text-[11px] font-medium text-slate-500 dark:text-slate-400">ID: 32342</p>
+</div>
+<div class="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border-2 border-primary/20 bg-slate-100 text-slate-400 dark:bg-slate-800">
+<span class="material-symbols-outlined text-2xl">account_circle</span>
+</div>
+</div>
+</div>
+</header>
+<div class="flex flex-1 overflow-hidden">
+<aside class="hidden w-72 flex-col border-r border-slate-200 bg-white p-6 lg:flex dark:border-slate-800 dark:bg-background-dark">
+<nav class="flex flex-col gap-2">
+<a class="sidebar-item-active flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-all" href="#" onclick="switchPanel('panel-personal', event)">
+<span class="material-symbols-outlined text-[20px]">person</span> Personal Info </a>
+<a class="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-slate-600 hover:bg-primary/10 hover:text-primary dark:text-slate-400 dark:hover:bg-primary/20 transition-all" href="#" onclick="switchPanel('panel-teaching', event)">
+<span class="material-symbols-outlined text-[20px]">co_present</span> Teaching Profile </a>
+<a class="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-slate-600 hover:bg-primary/10 hover:text-primary dark:text-slate-400 dark:hover:bg-primary/20 transition-all" href="#" onclick="switchPanel('panel-payout', event)">
+<span class="material-symbols-outlined text-[20px]">account_balance_wallet</span> Payout Settings </a>
+<a class="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-slate-600 hover:bg-primary/10 hover:text-primary dark:text-slate-400 dark:hover:bg-primary/20 transition-all" href="#" onclick="switchPanel('panel-security', event)">
+<span class="material-symbols-outlined text-[20px]">shield_person</span> Security </a>
+<div class="my-4 border-t border-slate-100 dark:border-slate-800"></div>
+<a class="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800" href="#">
+<span class="material-symbols-outlined text-[20px]">visibility</span>
+                    View Public Profile
+                </a>
+</nav>
+</aside>
+<main class="flex-1 overflow-y-auto bg-slate-50 px-4 pb-4 md:px-10 md:pb-10 pt-2 md:pt-4 dark:bg-background-dark/50">
+<div id="panel-personal" class="profile-panel block">
+
+<div class="mx-auto max-w-4xl">
+<div class="mb-8">
+<h1 class="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Personal Information</h1>
+<p class="mt-2 text-slate-600 dark:text-slate-400">Update your photo and personal details to help students connect with you.</p>
+</div>
+<div class="space-y-6">
+<section class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-background-dark">
+<div class="flex flex-col gap-6 md:flex-row md:items-center">
+<div class="relative">
+<div class="flex size-24 items-center justify-center overflow-hidden rounded-full ring-4 ring-primary/10 bg-slate-100 dark:bg-slate-800 text-slate-400">
+<span class="material-symbols-outlined text-5xl">face_6</span>
+</div>
+<button class="absolute -bottom-1 -right-1 flex size-8 items-center justify-center rounded-full bg-primary text-white shadow-lg">
+<span class="material-symbols-outlined text-sm">edit</span>
+</button>
+</div>
+<div class="flex-1">
+<h3 class="text-lg font-bold text-slate-900 dark:text-white">Profile Photo</h3>
+<p class="text-sm text-slate-500">JPG, GIF or PNG. Max size 2MB.</p>
+<div class="mt-4 flex flex-wrap gap-3">
+<button class="flex h-10 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-bold text-white transition-opacity hover:opacity-90">
+<span class="material-symbols-outlined text-[18px]">upload</span>
+                                        Change Photo
+                                    </button>
+<button class="flex h-10 items-center gap-2 rounded-lg bg-slate-100 px-4 text-sm font-bold text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300">
+                                        Delete
+                                    </button>
+</div>
+</div>
+</div>
+</section>
+<section class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-background-dark">
+<h3 class="mb-6 text-lg font-bold text-slate-900 dark:text-white">Basic Information</h3>
+<div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+<div class="flex flex-col gap-2">
+<label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Full Name</label>
+<input class="h-12 rounded-lg border border-slate-200 px-4 text-slate-900 focus:border-primary focus:ring-1 focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white placeholder:opacity-40 placeholder:font-light" placeholder="Enter your full name" type="text" value="Alex Richardson"/>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Professional Title</label>
+<input class="h-12 rounded-lg border border-slate-200 px-4 text-slate-900 focus:border-primary focus:ring-1 focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white placeholder:opacity-40 placeholder:font-light" placeholder="e.g. Senior Software Engineer" type="text" value="Senior Cloud Architect &amp; Educator"/>
+</div>
+<div class="col-span-full flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Short Bio</label>
+<span class="text-xs text-slate-400">142 / 500 characters</span>
+</div>
+<textarea class="rounded-lg border border-slate-200 p-4 text-slate-900 focus:border-primary focus:ring-1 focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white placeholder:opacity-40 placeholder:font-light" placeholder="Briefly describe your background and expertise" rows="4">Passionate cloud architect with over 10 years of experience in distributed systems. I love breaking down complex topics into digestible lessons for students of all levels.</textarea>
+</div>
+</div>
+</section>
+<section class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-background-dark">
+<h3 class="mb-6 text-lg font-bold text-slate-900 dark:text-white">Social Media Links</h3>
+<div class="flex flex-col gap-4">
+<div class="flex items-center gap-3">
+<div class="flex size-11 items-center justify-center rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-900/20">
+<span class="material-symbols-outlined">link</span>
+</div>
+<div class="flex-1">
+<label class="text-xs font-bold uppercase text-slate-400">LinkedIn Profile</label>
+<input class="mt-1 h-11 w-full rounded-lg border border-slate-200 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white placeholder:opacity-40 placeholder:font-light" placeholder="https://linkedin.com/in/username" type="url" value="https://linkedin.com/in/alex-richardson"/>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="flex size-11 items-center justify-center rounded-lg bg-slate-50 text-slate-900 dark:bg-slate-900/40">
+<span class="material-symbols-outlined">alternate_email</span>
+</div>
+<div class="flex-1">
+<label class="text-xs font-bold uppercase text-slate-400">Twitter / X Profile</label>
+<input class="mt-1 h-11 w-full rounded-lg border border-slate-200 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white placeholder:opacity-40 placeholder:font-light" placeholder="https://twitter.com/username" type="url" value="https://twitter.com/alexcloud"/>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="flex size-11 items-center justify-center rounded-lg bg-blue-50 text-blue-700 dark:bg-blue-900/20">
+<span class="material-symbols-outlined">public</span>
+</div>
+<div class="flex-1">
+<label class="text-xs font-bold uppercase text-slate-400">Facebook Profile</label>
+<input class="mt-1 h-11 w-full rounded-lg border border-slate-200 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white placeholder:opacity-40 placeholder:font-light" placeholder="https://facebook.com/username" type="url" value="https://facebook.com/alex.richardson.teach"/>
+</div>
+</div>
+</div>
+</section>
+</div>
+<div class="h-24"></div>
+</div>
+
+</div>
+<div id="panel-teaching" class="profile-panel hidden">
+
+<div class="mx-auto max-w-4xl">
+<div class="mb-8">
+<h1 class="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Teaching Profile</h1>
+<p class="mt-2 text-slate-600 dark:text-slate-400">Showcase your expertise and educational background to potential students.</p>
+</div>
+<div class="space-y-6">
+<section class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-background-dark">
+<label class="block text-sm font-bold text-slate-900 dark:text-white" for="headline">Professional Headline</label>
+<p class="mb-4 text-xs text-slate-500">Add a catchy headline to summarize your professional identity.</p>
+<input class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm font-light text-slate-900 placeholder:text-slate-400 focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white" id="headline" placeholder="e.g. Senior Software Engineer &amp; Mathematics Specialist" type="text"/>
+</section>
+<div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+<section class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-background-dark">
+<label class="mb-4 block text-sm font-bold text-slate-900 dark:text-white">Area of Expertise</label>
+<div class="flex flex-wrap gap-2">
+<span class="flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary">
+                                        Mathematics <button class="material-symbols-outlined text-[14px]">close</button>
+</span>
+<span class="flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary">
+                                        Coding <button class="material-symbols-outlined text-[14px]">close</button>
+</span>
+<span class="flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary">
+                                        Business <button class="material-symbols-outlined text-[14px]">close</button>
+</span>
+<button class="flex items-center gap-1 rounded-full border border-dashed border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-500 hover:border-primary hover:text-primary dark:border-slate-700">
+<span class="material-symbols-outlined text-[14px]">add</span> Add Expertise
+                                    </button>
+</div>
+</section>
+<section class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-background-dark">
+<label class="mb-4 block text-sm font-bold text-slate-900 dark:text-white" for="experience">Teaching Experience</label>
+<select class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white" id="experience">
+<option value="">Select experience</option>
+<option value="1-3">1-3 years</option>
+<option value="3-5">3-5 years</option>
+<option value="5+">5+ years</option>
+</select>
+</section>
+</div>
+<section class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-background-dark">
+<h3 class="mb-6 text-sm font-bold text-slate-900 dark:text-white">Educational Background</h3>
+<div class="space-y-4">
+<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+<div>
+<label class="mb-2 block text-xs font-medium text-slate-500" for="university">University / Institution</label>
+<input class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white" id="university" placeholder="e.g. Stanford University" type="text"/>
+</div>
+<div>
+<label class="mb-2 block text-xs font-medium text-slate-500" for="degree">Degree</label>
+<input class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white" id="degree" placeholder="e.g. Master of Computer Science" type="text"/>
+</div>
+</div>
+<button class="flex items-center gap-2 text-sm font-bold text-primary">
+<span class="material-symbols-outlined text-[18px]">add_circle</span> Add another education
+                                </button>
+</div>
+</section>
+<section class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-background-dark">
+<label class="mb-4 block text-sm font-bold text-slate-900 dark:text-white">Languages Spoken</label>
+<div class="flex flex-wrap gap-2">
+<span class="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-300">English</span>
+<span class="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-300">Arabic</span>
+<span class="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-300">French</span>
+<button class="material-symbols-outlined rounded-lg bg-primary/10 p-1 text-primary">edit</button>
+</div>
+</section>
+</div>
+<div class="h-24"></div>
+</div>
+
+</div>
+<div id="panel-payout" class="profile-panel hidden">
+
+<div class="mx-auto max-w-4xl">
+<div class="mb-8">
+<h1 class="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Payout Settings</h1>
+<p class="mt-2 text-slate-600 dark:text-slate-400">Manage your earnings, balance, and preferred withdrawal methods.</p>
+</div>
+<div class="space-y-8">
+<section class="rounded-xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-800 dark:bg-background-dark">
+<div class="flex flex-col items-center justify-between gap-6 md:flex-row">
+<div class="flex items-center gap-5">
+<div class="flex size-14 items-center justify-center rounded-full bg-primary/10 text-primary">
+<span class="material-symbols-outlined text-3xl">account_balance_wallet</span>
+</div>
+<div>
+<p class="text-sm font-medium text-slate-500">Available Balance</p>
+<h2 class="text-4xl font-black text-slate-900 dark:text-white">$0.00</h2>
+</div>
+</div>
+<button class="flex h-12 items-center gap-2 rounded-lg bg-slate-200 px-8 text-sm font-bold text-slate-400 cursor-not-allowed dark:bg-slate-800 dark:text-slate-600" disabled="">
+<span class="material-symbols-outlined text-[20px]">payments</span>
+                                Withdraw Funds
+                            </button>
+</div>
+</section>
+<section>
+<div class="mb-4 flex items-center justify-between">
+<h3 class="text-xl font-bold text-slate-900 dark:text-white">Payout Methods</h3>
+<button class="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white transition-opacity hover:opacity-90 shadow-sm shadow-primary/20">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                                Add Payout Method
+                            </button>
+</div>
+<div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+<div class="group relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-white p-6 text-center transition-colors hover:border-primary/50 dark:border-slate-800 dark:bg-background-dark">
+<span class="material-symbols-outlined mb-2 text-slate-400">account_balance</span>
+<h4 class="text-sm font-bold text-slate-900 dark:text-white">Bank Transfer</h4>
+<p class="mt-1 text-xs text-slate-500 leading-tight">Direct transfer to your local bank</p>
+</div>
+<div class="group relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-white p-6 text-center transition-colors hover:border-primary/50 dark:border-slate-800 dark:bg-background-dark">
+<span class="material-symbols-outlined mb-2 text-slate-400">payments</span>
+<h4 class="text-sm font-bold text-slate-900 dark:text-white">Cash on Delivery</h4>
+<p class="mt-1 text-xs text-slate-500 leading-tight">Receive physical payment upon delivery</p>
+</div>
+<div class="group relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-white p-6 text-center transition-colors hover:border-primary/50 dark:border-slate-800 dark:bg-background-dark">
+<span class="material-symbols-outlined mb-2 text-slate-400">smartphone</span>
+<h4 class="text-sm font-bold text-slate-900 dark:text-white">Mobile Money</h4>
+<p class="mt-1 text-xs text-slate-500 leading-tight">Regional mobile wallet payout</p>
+</div>
+</div>
+</section>
+<section>
+<h3 class="mb-4 text-xl font-bold text-slate-900 dark:text-white">Payout History</h3>
+<div class="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-background-dark">
+<div class="min-w-full overflow-x-auto">
+<table class="w-full text-left text-sm">
+<thead class="bg-slate-50 border-b border-slate-200 dark:bg-slate-800/50 dark:border-slate-800">
+<tr>
+<th class="px-6 py-4 font-bold text-slate-700 dark:text-slate-300">ID</th>
+<th class="px-6 py-4 font-bold text-slate-700 dark:text-slate-300">Date</th>
+<th class="px-6 py-4 font-bold text-slate-700 dark:text-slate-300">Method</th>
+<th class="px-6 py-4 font-bold text-slate-700 dark:text-slate-300 text-right">Amount</th>
+<th class="px-6 py-4 font-bold text-slate-700 dark:text-slate-300">Status</th>
+</tr>
+</thead>
+<tbody>
+<tr class="h-64">
+<td class="px-6 py-10" colspan="5">
+<div class="flex flex-col items-center justify-center text-center">
+<div class="mb-4 flex size-16 items-center justify-center rounded-full bg-slate-50 text-slate-300 dark:bg-slate-800/50">
+<span class="material-symbols-outlined text-4xl">history</span>
+</div>
+<p class="text-base font-semibold text-slate-900 dark:text-white">No transactions yet</p>
+<p class="mt-1 text-sm text-slate-500">Your earnings history will appear here.</p>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+</div>
+<div class="h-24"></div>
+</div>
+
+</div>
+<div id="panel-security" class="profile-panel hidden">
+
+<div class="mx-auto max-w-4xl">
+<div class="mb-8">
+<h1 class="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Security &amp; Policies</h1>
+<p class="mt-2 text-slate-600 dark:text-slate-400">Manage your account security and review platform compliance standards.</p>
+</div>
+<div class="space-y-6">
+<section class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-background-dark">
+<div class="mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">lock_reset</span>
+<h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">Security Settings</h3>
+</div>
+<div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+<div class="md:col-span-2">
+<label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2" for="current-password">Current Password</label>
+<input class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white" id="current-password" placeholder="••••••••••••" type="password"/>
+</div>
+<div>
+<label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2" for="new-password">New Password</label>
+<input class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white" id="new-password" placeholder="Min. 8 characters" type="password"/>
+</div>
+<div>
+<label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2" for="confirm-password">Confirm New Password</label>
+<input class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white" id="confirm-password" placeholder="Re-type new password" type="password"/>
+</div>
+</div>
+<div class="mt-8 flex items-center justify-between rounded-lg bg-slate-50 p-4 dark:bg-slate-800/50">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-slate-400">security</span>
+<div>
+<p class="text-sm font-bold text-slate-900 dark:text-white">Two-Factor Authentication</p>
+<p class="text-xs text-slate-500">Secure your account with an extra layer of protection.</p>
+</div>
+</div>
+<label class="relative inline-flex cursor-pointer items-center">
+<input class="peer sr-only" type="checkbox"/>
+<div class="peer h-6 w-11 rounded-full bg-slate-300 transition-colors after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-primary peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none dark:bg-slate-700"></div>
+</label>
+</div>
+</section>
+<section class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-background-dark">
+<div class="mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">gavel</span>
+<h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">Course Creation Policies</h3>
+</div>
+<div class="space-y-3">
+<div class="accordion-item group border-b border-slate-100 pb-3 dark:border-slate-800">
+<button class="flex w-full items-center justify-between py-2 text-left">
+<span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Content Ownership</span>
+<span class="material-symbols-outlined accordion-icon text-slate-400 group-hover:text-primary transition-colors">expand_more</span>
+</button>
+<div class="mt-2 text-xs leading-relaxed text-slate-500">
+                                    Instructors retain all intellectual property rights to their original course materials. By publishing on Tacliimi, you grant us a non-exclusive license to host and distribute the content.
+                                </div>
+</div>
+<div class="accordion-item group border-b border-slate-100 pb-3 dark:border-slate-800">
+<button class="flex w-full items-center justify-between py-2 text-left">
+<span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Quality Standards</span>
+<span class="material-symbols-outlined accordion-icon text-slate-400 group-hover:text-primary transition-colors">expand_more</span>
+</button>
+<div class="mt-2 text-xs leading-relaxed text-slate-500">
+                                    All courses must meet minimum HD video requirements and clear audio standards. Materials must be pedagogical, professional, and free from misleading marketing claims.
+                                </div>
+</div>
+<div class="accordion-item group">
+<button class="flex w-full items-center justify-between py-2 text-left">
+<span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Community Guidelines</span>
+<span class="material-symbols-outlined accordion-icon text-slate-400 group-hover:text-primary transition-colors">expand_more</span>
+</button>
+<div class="mt-2 text-xs leading-relaxed text-slate-500">
+                                    We foster a respectful learning environment. Any forms of harassment, discriminatory content, or spamming will result in immediate course removal and potential account suspension.
+                                </div>
+</div>
+</div>
+</section>
+<section class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-background-dark">
+<div class="mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">verified_user</span>
+<h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">Compliance &amp; Terms</h3>
+</div>
+<div class="space-y-4">
+<label class="flex items-start gap-3 cursor-pointer group">
+<input class="mt-0.5 h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800" type="checkbox"/>
+<span class="text-sm text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-200 transition-colors">
+                                    I agree to the <a class="font-semibold text-primary underline underline-offset-2" href="#">Instructor Terms of Service</a> and Privacy Policy.
+                                </span>
+</label>
+<label class="flex items-start gap-3 cursor-pointer group">
+<input class="mt-0.5 h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800" type="checkbox"/>
+<span class="text-sm text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-200 transition-colors">
+                                    I understand the course moderation process and that approval may take up to 3-5 business days.
+                                </span>
+</label>
+</div>
+</section>
+</div>
+<div class="h-24"></div>
+</div>
+
+</div>
+</main>
+</div>
+<div class="fixed bottom-0 z-50 flex w-full items-center justify-end border-t border-slate-200 bg-white/80 px-4 py-4 backdrop-blur-md lg:px-10 dark:border-slate-800 dark:bg-background-dark/80">
+<div class="flex gap-4">
+<button class="rounded-lg px-6 py-2 text-sm font-bold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">
+                Discard changes
+            </button>
+<button class="flex items-center gap-2 rounded-lg bg-primary px-8 py-3 text-sm font-bold text-white shadow-lg shadow-primary/20 transition-transform active:scale-95">
+<span class="material-symbols-outlined text-[18px]">save</span>
+                Save Changes
+            </button>
+</div>
+</div>
+</div>
+
+
+<script>
+function switchPanel(panelId, event) {
+    if (event) event.preventDefault();
+    
+    // Hide all panels
+    document.querySelectorAll('.profile-panel').forEach(el => {
+        el.classList.remove('block');
+        el.classList.add('hidden');
+    });
+    
+    // Remove active styles from sidebar
+    document.querySelectorAll('aside nav a').forEach(el => {
+        el.classList.remove('sidebar-item-active');
+        el.classList.add('text-slate-600', 'hover:bg-primary/10', 'hover:text-primary', 'dark:text-slate-400', 'dark:hover:bg-primary/20');
+        el.classList.remove('text-slate-600', 'hover:bg-primary/10', 'hover:text-primary', 'dark:text-slate-400', 'dark:hover:bg-primary/20'); // Reset classes nicely
+        if (!el.classList.contains('sidebar-item-active') && !el.id) {
+             el.className = "flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-slate-600 hover:bg-primary/10 hover:text-primary dark:text-slate-400 dark:hover:bg-primary/20 transition-all";
+        }
+    });
+
+    // Show selected panel
+    document.getElementById(panelId).classList.remove('hidden');
+    document.getElementById(panelId).classList.add('block');
+    
+    // Mark target link active
+    if (event && event.currentTarget) {
+        event.currentTarget.className = "sidebar-item-active flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-all";
+    }
+}
+</script>
+</body>
+</html>

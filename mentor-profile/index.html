@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Past Sessions | Tacliimi Learn</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#7f13ec",
+                        "background-light": "#f7f6f8",
+                        "background-dark": "#191022",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Lexend', sans-serif;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .active-nav {
+            background-color: rgba(127, 19, 236, 0.1);
+            color: #7f13ec;
+        }
+    </style>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col">
+    <div class="flex flex-grow">
+        <aside
+            class="w-64 bg-white dark:bg-slate-950 border-r border-slate-200 dark:border-slate-800 hidden lg:flex flex-col shrink-0 sticky top-0 h-screen">
+            <div class="p-6 border-b border-slate-100 dark:border-slate-800">
+                <div class="flex items-center gap-2 text-primary">
+                    <div class="size-8 bg-primary rounded-lg flex items-center justify-center text-white">
+                        <span class="material-symbols-outlined text-xl">school</span>
+                    </div>
+                    <h2 class="text-slate-900 dark:text-white text-xl font-bold tracking-tight">Tacliimi</h2>
+                </div>
+            </div>
+            <nav class="flex-grow p-4 space-y-2">
+                <a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 font-medium rounded-xl hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors"
+                    href="/student-dashboard/">
+                    <span class="material-symbols-outlined">dashboard</span>
+                    <span>Dashboard</span>
+                </a>
+                <a class="flex items-center gap-3 px-4 py-3 active-nav font-bold rounded-xl transition-colors"
+                    href="/student-dashboard/my-mentors.html">
+                    <span class="material-symbols-outlined">group</span>
+                    <span>My Mentors</span>
+                </a>
+                <div class="pt-4 mt-4 border-t border-slate-100 dark:border-slate-800">
+                    <p class="px-4 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Account Settings</p>
+                    <a class="flex items-center gap-3 px-4 py-2 text-slate-600 dark:text-slate-400 text-sm hover:text-primary transition-colors"
+                        href="/student-dashboard/personal-info.html">
+                        <span class="material-symbols-outlined text-xl">person</span>
+                        <span>Personal Info</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-4 py-2 text-slate-600 dark:text-slate-400 text-sm hover:text-primary transition-colors"
+                        href="/student-dashboard/learning-interests.html">
+                        <span class="material-symbols-outlined text-xl">psychology</span>
+                        <span>Learning Interests</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-4 py-2 text-slate-600 dark:text-slate-400 text-sm hover:text-primary transition-colors"
+                        href="/student-dashboard/security.html">
+                        <span class="material-symbols-outlined text-xl">shield</span>
+                        <span>Security</span>
+                    </a>
+                </div>
+            </nav>
+        </aside>
+        <div class="flex-grow flex flex-col min-w-0">
+            <header
+                class="sticky top-0 z-50 w-full bg-white dark:bg-background-dark border-b border-primary/10 px-4 md:px-10 py-3 shrink-0">
+                <div class="max-w-7xl mx-auto flex items-center justify-between">
+                    <div class="flex items-center gap-8">
+                        <nav class="hidden md:flex items-center gap-8">
+                            <a class="text-slate-600 dark:text-slate-300 text-sm font-medium hover:text-primary transition-colors"
+                                href="/">Home</a>
+                            <a class="text-slate-600 dark:text-slate-300 text-sm font-medium hover:text-primary transition-colors"
+                                href="/mentor-profile/">Browse Mentors</a>
+                            <a class="text-slate-600 dark:text-slate-300 text-sm font-medium hover:text-primary transition-colors"
+                                href="/marketplace/">Browse Courses</a>
+                        </nav>
+                    </div>
+                    <div class="flex items-center gap-6">
+                        <button class="relative text-slate-500 hover:text-primary transition-colors">
+                            <span class="material-symbols-outlined">notifications</span>
+                            <span
+                                class="absolute top-0 right-0 size-2 bg-red-500 rounded-full border-2 border-white dark:border-background-dark"></span>
+                        </button>
+                        <div class="flex items-center gap-3">
+                            <div class="text-right hidden sm:block">
+                                <p class="text-sm font-bold text-slate-900 dark:text-white">Alex Johnson</p>
+                                <p class="text-xs text-slate-500">Student Account</p>
+                            </div>
+                            <div onclick="window.location.href='/student-dashboard/personal-info.html'"
+                                class="size-10 rounded-full border-2 border-primary/20 bg-primary/5 flex items-center justify-center text-primary cursor-pointer">
+                                <span class="material-symbols-outlined">person</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            <main class="flex-grow py-8 md:py-12 px-4 md:px-10 overflow-y-auto">
+                <div class="max-w-4xl mx-auto">
+                    <div class="mb-8">
+                        <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-6">My Mentors</h1>
+                        <div class="flex items-center gap-8 border-b border-slate-200 dark:border-slate-800">
+                            <button
+                                class="pb-4 text-sm font-medium text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-all">
+                                Upcoming Sessions
+                            </button>
+                            <button
+                                class="pb-4 text-sm font-bold text-primary border-b-2 border-primary transition-all">
+                                Past Sessions
+                            </button>
+                        </div>
+                    </div>
+                    <div
+                        class="flex flex-col items-center justify-center py-24 px-6 bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 text-center">
+                        <div
+                            class="size-24 rounded-full bg-primary/5 flex items-center justify-center text-primary/40 mb-6">
+                            <span class="material-symbols-outlined text-6xl"
+                                style="font-variation-settings: 'wght' 300;">calendar_today</span>
+                        </div>
+                        <h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-3">No past sessions yet.</h3>
+                        <p class="text-slate-500 dark:text-slate-400 mb-10 max-w-sm leading-relaxed">
+                            Your completed 1-on-1 mentorship history will appear here once you finish your first
+                            session.
+                        </p>
+                        <button
+                            class="bg-primary hover:bg-primary/90 text-white font-bold py-3.5 px-10 rounded-xl transition-all shadow-lg shadow-primary/20 flex items-center gap-2"
+                            onclick="window.location.href='/mentor-booking/'">
+                            <span>Browse Mentors</span>
+                            <span class="material-symbols-outlined text-lg">arrow_forward</span>
+                        </button>
+                    </div>
+                </div>
+            </main>
+            <footer class="bg-white dark:bg-slate-950 border-t border-primary/10 py-8 px-4 md:px-10">
+                <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+                    <div class="flex items-center gap-2 text-slate-400">
+                        <div class="size-6 bg-slate-100 dark:bg-slate-900 rounded flex items-center justify-center">
+                            <span class="material-symbols-outlined text-xs">school</span>
+                        </div>
+                        <p class="text-sm font-medium">© 2024 Tacliimi Learn. All rights reserved.</p>
+                    </div>
+                    <div class="flex gap-8">
+                        <a class="text-slate-400 hover:text-primary text-sm transition-colors" href="#">Privacy
+                            Policy</a>
+                        <a class="text-slate-400 hover:text-primary text-sm transition-colors" href="#">Terms of
+                            Service</a>
+                        <a class="text-slate-400 hover:text-primary text-sm transition-colors" href="#">Contact
+                            Support</a>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+</body>
+
+</html>

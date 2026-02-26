@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Instructor Dashboard | Tacliimi Learn</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#4F46E5",
+                        "background-light": "#F9FAFB",
+                        "background-dark": "#111827",
+                    },
+                    fontFamily: {
+                        display: ["Inter", "sans-serif"],
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.5rem",
+                    },
+                },
+            },
+        };
+    </script>
+    <style type="text/tailwindcss">
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        
+        /* Hide content until router loads it */
+        #instructor-content-area {
+            opacity: 1;
+            transition: opacity 0.2s ease-in-out;
+        }
+        #instructor-content-area.loading {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+    </style>
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 transition-colors duration-200">
+    <aside
+        class="fixed left-0 top-0 h-full w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 hidden lg:flex flex-col z-20">
+        <div class="p-6 border-b border-slate-100 dark:border-slate-800">
+            <div class="flex items-center gap-2 cursor-pointer" onclick="window.location.href='/index.html'">
+                <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                    <span class="material-symbols-outlined text-white text-lg">school</span>
+                </div>
+                <span class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Tacliimi</span>
+            </div>
+        </div>
+        <nav class="flex-1 p-4 space-y-1" id="instructor-sidebar-nav">
+            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                href="/instructor-dashboard/">
+                <span class="material-symbols-outlined">dashboard</span>
+                Dashboard
+            </a>
+            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                href="/instructor-courses/">
+                <span class="material-symbols-outlined">auto_stories</span>
+                My Courses
+            </a>
+            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                href="/instructor-mentorship/">
+                <span class="material-symbols-outlined">groups</span>
+                Mentorship
+            </a>
+            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                href="/instructor-analytics/">
+                <span class="material-symbols-outlined">analytics</span>
+                Analytics
+            </a>
+            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                href="/instructor-earnings/">
+                <span class="material-symbols-outlined">payments</span>
+                Earnings
+            </a>
+            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                href="/instructor-communications/">
+                <span class="material-symbols-outlined">message</span>
+                Communications
+            </a>
+        </nav>
+    </aside>
+
+    <div class="lg:ml-64 min-h-screen flex flex-col">
+        <header
+            class="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-8 sticky top-0 z-10 shrink-0">
+            <h1 class="text-lg font-semibold dark:text-white" id="header-page-title">Earnings</h1>
+            <div class="flex items-center gap-4">
+                <button class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 relative">
+                    <span class="material-symbols-outlined">notifications</span>
+                    <span class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
+                </button>
+                <button class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                    onclick="document.documentElement.classList.toggle('dark')">
+                    <span class="material-symbols-outlined">dark_mode</span>
+                </button>
+                <div class="flex items-center gap-3 pl-4 border-l border-slate-200 dark:border-slate-800 cursor-pointer hover:opacity-80 transition-opacity"
+                    onclick="window.location.href='/instructor-profile/index.html'">
+                    <div class="text-right hidden sm:block">
+                        <p class="text-sm font-medium dark:text-white">Instructor account</p>
+                        <p class="text-xs text-slate-500">ID: 32342</p>
+                    </div>
+                    <div
+                        class="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-slate-100 text-slate-400 dark:bg-slate-800 border-2 border-primary/20 hover:border-primary transition-colors">
+                        <span class="material-symbols-outlined text-2xl">account_circle</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- DYNAMIC CONTENT AREA -->
+        <main id="instructor-content-area" class="flex-1 bg-background-light dark:bg-background-dark pb-20">
+
+
+<div class="px-8 pb-8 pt-2 max-w-7xl mx-auto">
+<div class="mb-8">
+<h2 class="text-3xl font-bold dark:text-white">Earnings</h2>
+<p class="text-slate-500 mt-2">Monitor your revenue and transaction history.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+<div class="flex items-center justify-between mb-4">
+<h3 class="font-medium text-slate-600 dark:text-slate-400">Total Earnings</h3>
+<span class="material-symbols-outlined text-slate-400">account_balance_wallet</span>
+</div>
+<div class="text-3xl font-bold dark:text-white mb-2">$0.00</div>
+<p class="text-slate-400 text-xs leading-relaxed">Earnings will appear after course sales</p>
+</div>
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-4">
+<h3 class="font-medium text-slate-600 dark:text-slate-400">Available for Withdrawal</h3>
+<span class="material-symbols-outlined text-slate-400">payments</span>
+</div>
+<div class="text-3xl font-bold dark:text-white mb-4">$0.00</div>
+</div>
+<button class="w-full bg-slate-100 dark:bg-slate-800 text-slate-400 py-2.5 rounded-lg font-medium cursor-not-allowed" disabled="">
+                        Request Withdrawal
+                    </button>
+</div>
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+<div class="flex items-center justify-between mb-4">
+<h3 class="font-medium text-slate-600 dark:text-slate-400">Earnings This Month</h3>
+<span class="material-symbols-outlined text-slate-400">calendar_month</span>
+</div>
+<div class="text-3xl font-bold dark:text-white mb-2">$0.00</div>
+<p class="text-slate-400 text-xs leading-relaxed">Updated from current period</p>
+</div>
+</div>
+<div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+<div class="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+<h3 class="font-semibold text-slate-900 dark:text-white">Recent Transactions</h3>
+</div>
+<div class="min-h-[400px] flex flex-col items-center justify-center text-center p-8">
+<div class="w-20 h-20 bg-slate-50 dark:bg-slate-800/50 rounded-full flex items-center justify-center mb-6">
+<span class="material-symbols-outlined text-slate-300 dark:text-slate-600 text-4xl">receipt_long</span>
+</div>
+<h4 class="text-lg font-medium dark:text-white mb-2">No transactions found</h4>
+<p class="text-slate-500 max-w-xs">Start selling courses to see your earnings history here.</p>
+</div>
+</div>
+<footer class="mt-16 py-8 border-t border-slate-200 dark:border-slate-800 text-center">
+<div class="flex items-center justify-center gap-4 text-xs text-slate-500">
+<span>Platform Status: <span class="text-emerald-500 font-medium uppercase">Active</span></span>
+<span class="text-slate-300 dark:text-slate-700">|</span>
+<a class="text-primary hover:underline" href="#">Help Center</a>
+<span class="text-slate-300 dark:text-slate-700">|</span>
+<a class="text-primary hover:underline" href="#">Privacy Policy</a>
+</div>
+<p class="mt-4 text-[10px] text-slate-400 font-mono uppercase tracking-widest">Tacliimi Learn © 2024</p>
+</footer>
+</div>
+
+        </main>
+    </div>
+
+    <!-- Router Logic -->
+    <script src="/js/instructor-app.js"></script>
+</body>
+
+</html>

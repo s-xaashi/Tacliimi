@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Tacliimi Learn | Expert-Led E-Learning Platform</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#1e40af", // Deep educational blue
+                        accent: "#14b8a6",  // Soft teal
+                        "background-light": "#fcfcfd",
+                        "background-dark": "#0f172a",
+                        "charcoal": "#333333",
+                    },
+                    fontFamily: {
+                        display: ["Inter", "sans-serif"],
+                        body: ["Inter", "sans-serif"],
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.75rem",
+                    },
+                },
+            },
+        };
+    </script>
+    <style type="text/tailwindcss">
+        .course-card-shadow {
+            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.filled {
+            font-variation-settings: 'FILL' 1;
+        }
+    </style>
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-body transition-colors duration-300">
+    <nav
+        class="sticky top-0 z-50 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center gap-8">
+                    <a class="flex items-center gap-2" href="#">
+                        <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                            <span class="material-symbols-outlined text-white text-xl">school</span>
+                        </div>
+                        <span
+                            class="text-xl font-bold font-display tracking-tight text-primary dark:text-white">Tacliimi
+                            Learn</span>
+                    </a>
+                    <div class="hidden md:flex items-center gap-6">
+                        <a class="text-sm font-medium hover:text-primary transition-colors"
+                            href="/marketplace/">Categories</a>
+                        <a class="text-sm font-medium hover:text-primary transition-colors" href="#">Find a Mentor</a>
+                        <a class="text-sm font-medium hover:text-primary transition-colors"
+                            href="/become-instructor/">Teach on Tacliimi</a>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <button class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                        id="theme-toggle">
+                        <span class="material-symbols-outlined text-[22px] dark:hidden">dark_mode</span>
+                        <span class="material-symbols-outlined text-[22px] hidden dark:block">light_mode</span>
+                    </button>
+                    <div class="hidden sm:flex items-center gap-3">
+                        <button onclick="window.location.href='/login/'"
+                            class="px-4 py-2 text-sm font-semibold border border-slate-300 dark:border-slate-700 rounded-md hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">Log
+                            in</button>
+                        <button onclick="window.location.href='/login/'"
+                            class="px-4 py-2 text-sm font-semibold bg-primary text-white rounded-md hover:bg-blue-700 transition-all shadow-sm">Sign
+                            up</button>
+                    </div>
+                    <button class="md:hidden p-2">
+                        <span class="material-symbols-outlined">menu</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+    <header class="relative pt-16 pb-24 overflow-hidden bg-[#F5F5F5] dark:bg-background-dark">
+        <div class="max-w-4xl mx-auto px-4 text-center">
+            <span
+                class="inline-block py-1 px-3 mb-6 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-sm font-semibold tracking-wide uppercase">
+                Unlock your potential
+            </span>
+            <h1
+                class="text-4xl md:text-6xl font-bold font-display mb-8 tracking-tight text-slate-900 dark:text-white leading-[1.1]">
+                Learn without limits from the <span
+                    class="text-primary underline decoration-blue-200 dark:decoration-blue-800 underline-offset-4">best
+                    institutions</span>
+            </h1>
+            <div class="relative max-w-2xl mx-auto mb-10 group">
+                <div class="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+                    <span
+                        class="material-symbols-outlined text-slate-400 group-focus-within:text-primary transition-colors">search</span>
+                </div>
+                <input
+                    class="block w-full pl-14 pr-32 py-5 bg-white dark:bg-slate-800 border-none rounded-2xl shadow-xl dark:shadow-none focus:ring-2 focus:ring-primary text-lg placeholder:text-slate-400 text-slate-900 dark:text-white transition-all"
+                    placeholder="What do you want to learn today?" type="text" />
+                <div class="absolute inset-y-2 right-2 flex items-center">
+                    <button
+                        class="h-full px-6 bg-primary text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors">Search</button>
+                </div>
+            </div>
+            <p class="text-charcoal dark:text-slate-300 text-lg max-w-2xl mx-auto font-medium leading-relaxed">
+                Empowering learners with accessible, world-class education tailored for your success.
+            </p>
+        </div>
+    </header>
+    <section class="py-20 bg-background-light dark:bg-background-dark">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between items-end mb-10">
+                <div>
+                    <h2 class="text-3xl font-bold font-display text-slate-900 dark:text-white">Featured Courses</h2>
+                    <p class="text-slate-500 dark:text-slate-400 mt-2">Hand-picked excellence for your professional
+                        growth.</p>
+                </div>
+                <a class="text-primary dark:text-blue-400 font-semibold flex items-center gap-1 hover:gap-2 transition-all"
+                    href="#">
+                    View all <span class="material-symbols-outlined text-sm">arrow_forward_ios</span>
+                </a>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div
+                    class="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-700 course-card-shadow group hover:-translate-y-1 transition-all">
+                    <div class="relative h-44 overflow-hidden">
+                        <img alt="Advanced React Development"
+                            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuCWIo7cc9LKt7k6xW64rZk5tSk_J-cMKlciAMCfVjGmcHliHUO4PqUv_ZToNE8sBgvepLNbtJtmEQ68ItNWIXzTHysSz26Pitzzs7PwLt9n_rS9j68g92sa1_nUkLWD748BD5IIQosiUjwt3eTztfr6DyDBlSETca0uRcKrPJNY6RVRlxJapkbVl42_38mBMI3kaU2MowTC25D_XGZhX7OT7jLV6iEHMLfvpP4dIl6Pt6DYTtrXvsQS_EtWjXvQq9A-UMhdcQE6cqwj" />
+                        <div
+                            class="absolute top-3 left-3 bg-white/90 dark:bg-slate-900/90 px-2 py-1 rounded-lg text-xs font-bold uppercase tracking-tight text-primary">
+                            Best Seller</div>
+                    </div>
+                    <div class="p-5">
+                        <h3
+                            class="font-bold text-lg mb-1 line-clamp-2 dark:text-white group-hover:text-primary transition-colors">
+                            Advanced React Development with Micro-frontends</h3>
+                        <p class="text-sm text-slate-500 dark:text-slate-400 mb-3">Dr. Sarah Jenkins, MIT</p>
+                        <div class="flex items-center gap-1 mb-4">
+                            <span class="text-amber-500 font-bold text-sm">4.9</span>
+                            <div class="flex text-amber-500">
+                                <span class="material-symbols-outlined text-sm filled">star</span>
+                                <span class="material-symbols-outlined text-sm filled">star</span>
+                                <span class="material-symbols-outlined text-sm filled">star</span>
+                                <span class="material-symbols-outlined text-sm filled">star</span>
+                                <span class="material-symbols-outlined text-sm filled">star</span>
+                            </div>
+                            <span class="text-xs text-slate-400">(2,450)</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-xl font-bold dark:text-white">$84.99</span>
+                            <button
+                                class="p-2 rounded-full border border-slate-200 dark:border-slate-700 hover:bg-primary hover:text-white transition-all">
+                                <span class="material-symbols-outlined">add_shopping_cart</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div
+                    class="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-700 course-card-shadow group hover:-translate-y-1 transition-all">
+                    <div class="relative h-44 overflow-hidden">
+                        <img alt="Data Science Essentials"
+                            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuDGBFwCBJfaWgybq2GxiZUFd9ye7v6JmJET2GlJW5Y_tyPedLpVNr754XAjxbUfnjNBKfF9MR_GgSEQ54tc-V4a9Qfj2moISSNg-dNFdkzdaWjwe7f8StKAiCMgjsPrQTrWQnvBcYkZXz6T2x7ZjhPOCEUK1Ty9Rq1kkjvHAzx1V-Cs5hAd6Nw4YmKjESn3BOrcrny2ve0cfpkBBf5KhuU7f-My0Yy7zDwkwhgjQqb0MOemEeAMlPHrlFIul0vEXYVsZ1xNWyvdJ-ez" />
+                    </div>
+                    <div class="p-5">
+                        <h3
+                            class="font-bold text-lg mb-1 line-clamp-2 dark:text-white group-hover:text-primary transition-colors">
+                            Data Science Essentials for Business Leaders</h3>
+                        <p class="text-sm text-slate-500 dark:text-slate-400 mb-3">Prof. Robert Chen, Stanford</p>
+                        <div class="flex items-center gap-1 mb-4">
+                            <span class="text-amber-500 font-bold text-sm">4.8</span>
+                            <div class="flex text-amber-500">
+                                <span class="material-symbols-outlined text-sm filled">star</span>
+                                <span class="material-symbols-outlined text-sm filled">star</span>
+                                <span class="material-symbols-outlined text-sm filled">star</span>
+                                <span class="material-symbols-outlined text-sm filled">star</span>
+                                <span class="material-symbols-outlined text-sm filled">star_half</span>
+                            </div>
+                            <span class="text-xs text-slate-400">(1,120)</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-xl font-bold dark:text-white">$119.00</span>
+                            <button
+                                class="p-2 rounded-full border border-slate-200 dark:border-slate-700 hover:bg-primary hover:text-white transition-all">
+                                <span class="material-symbols-outlined">add_shopping_cart</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div
+                    class="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-700 course-card-shadow group hover:-translate-y-1 transition-all">
+                    <div class="relative h-44 overflow-hidden">
+                        <img alt="UI/UX Design Masterclass"
+                            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuBdeL7ey6geMKt4sJfNGb4vc5Cu8IdcuXRF-dh7mD3_rei1vfJkzEg5WhNil-aFVVhgoKI5qpRSxo6pKL52urQ479CimgjvJ-Dhto1GOBB2YHSipFZsSL9L2RCAbOLP8XKaHUqGqYFrcpX88FV76WlbJDQapQCUEDClz5EIBeZxIe_d-70RfRuACBK0LJ3YGubyqA-peq2u_EUrrYRznpjIGhDBZ15l1VL7F8XqM2oQRzXuAysizol0I14zP1LA1jV0Ah2iOO2GYyk9" />
+                    </div>
+                    <div class="p-5">
+                        <h3
+                            class="font-bold text-lg mb-1 line-clamp-2 dark:text-white group-hover:text-primary transition-colors">
+                            UI/UX Design Masterclass: From Zero to Hero</h3>
+                        <p class="text-sm text-slate-500 dark:text-slate-400 mb-3">Elena Gilbert, Design Lead</p>
+                        <div class="flex items-center gap-1 mb-4">
+                            <span class="text-amber-500 font-bold text-sm">4.7</span>
+                            <div class="flex text-amber-500">
+                                <span class="material-symbols-outlined text-sm filled">star</span>
+                                <span class="material-symbols-outlined text-sm filled">star</span>
+                                <span class="material-symbols-outlined text-sm filled">star</span>
+                                <span class="material-symbols-outlined text-sm filled">star</span>
+                                <span class="material-symbols-outlined text-sm filled">star_half</span>
+                            </div>
+                            <span class="text-xs text-slate-400">(890)</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-xl font-bold dark:text-white">$59.99</span>
+                            <button
+                                class="p-2 rounded-full border border-slate-200 dark:border-slate-700 hover:bg-primary hover:text-white transition-all">
+                                <span class="material-symbols-outlined">add_shopping_cart</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div
+                    class="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-700 course-card-shadow group hover:-translate-y-1 transition-all">
+                    <div class="relative h-44 overflow-hidden">
+                        <img alt="Digital Marketing"
+                            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuCULgvVSn9I9LillAQhz5pN4XffR0Y79GaxpaQAqp7ulxSQYVx6Cf4eN7oyDxeAHFcCbN4nuS1-uB3y5w4XqJrWRfSIpPQWERFZ0qdi9H2nlZ5AT-VFJjUhzBriAh7qnW-eP0SzeBF3vUZ6EoD4w6awTCUnhiKhqDAk0YKWFQSkpEdwsNilYE0FAaJSqoZlPCVg7LH1gA6MXo4cuRU7aI2NuMhKAoEttMmpIBp4EzvJ59LYZBO4nHwNFc5w9xnWZG12IaxBfZ89ugoE" />
+                    </div>
+                    <div class="p-5">
+                        <h3
+                            class="font-bold text-lg mb-1 line-clamp-2 dark:text-white group-hover:text-primary transition-colors">
+                            Digital Marketing Strategy for 2024</h3>
+                        <p class="text-sm text-slate-500 dark:text-slate-400 mb-3">Markus Aurelius, Marketing Guru</p>
+                        <div class="flex items-center gap-1 mb-4">
+                            <span class="text-amber-500 font-bold text-sm">4.6</span>
+                            <div class="flex text-amber-500">
+                                <span class="material-symbols-outlined text-sm filled">star</span>
+                                <span class="material-symbols-outlined text-sm filled">star</span>
+                                <span class="material-symbols-outlined text-sm filled">star</span>
+                                <span class="material-symbols-outlined text-sm filled">star</span>
+                                <span class="material-symbols-outlined text-sm">star</span>
+                            </div>
+                            <span class="text-xs text-slate-400">(3,410)</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-xl font-bold dark:text-white">$45.00</span>
+                            <button
+                                class="p-2 rounded-full border border-slate-200 dark:border-slate-700 hover:bg-primary hover:text-white transition-all">
+                                <span class="material-symbols-outlined">add_shopping_cart</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section class="py-20 bg-slate-50 dark:bg-slate-900/40">
+        <div class="max-w-7xl mx-auto px-4 text-center mb-12">
+            <h2 class="text-3xl font-bold font-display text-slate-900 dark:text-white mb-4">Top Categories</h2>
+            <p class="text-slate-500 dark:text-slate-400">Discover topics that interest you most.</p>
+        </div>
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                <a class="group p-6 bg-white dark:bg-slate-800 rounded-2xl border border-transparent hover:border-accent hover:shadow-lg transition-all text-center"
+                    href="#">
+                    <div
+                        class="w-14 h-14 bg-teal-50 dark:bg-teal-900/30 text-accent rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                        <span class="material-symbols-outlined text-3xl">terminal</span>
+                    </div>
+                    <span class="font-bold dark:text-white">Development</span>
+                </a>
+                <a class="group p-6 bg-white dark:bg-slate-800 rounded-2xl border border-transparent hover:border-accent hover:shadow-lg transition-all text-center"
+                    href="#">
+                    <div
+                        class="w-14 h-14 bg-teal-50 dark:bg-teal-900/30 text-accent rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                        <span class="material-symbols-outlined text-3xl">payments</span>
+                    </div>
+                    <span class="font-bold dark:text-white">Finance</span>
+                </a>
+                <a class="group p-6 bg-white dark:bg-slate-800 rounded-2xl border border-transparent hover:border-accent hover:shadow-lg transition-all text-center"
+                    href="#">
+                    <div
+                        class="w-14 h-14 bg-teal-50 dark:bg-teal-900/30 text-accent rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                        <span class="material-symbols-outlined text-3xl">brush</span>
+                    </div>
+                    <span class="font-bold dark:text-white">Design</span>
+                </a>
+                <a class="group p-6 bg-white dark:bg-slate-800 rounded-2xl border border-transparent hover:border-accent hover:shadow-lg transition-all text-center"
+                    href="#">
+                    <div
+                        class="w-14 h-14 bg-teal-50 dark:bg-teal-900/30 text-accent rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                        <span class="material-symbols-outlined text-3xl">trending_up</span>
+                    </div>
+                    <span class="font-bold dark:text-white">Marketing</span>
+                </a>
+                <a class="group p-6 bg-white dark:bg-slate-800 rounded-2xl border border-transparent hover:border-accent hover:shadow-lg transition-all text-center"
+                    href="#">
+                    <div
+                        class="w-14 h-14 bg-teal-50 dark:bg-teal-900/30 text-accent rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                        <span class="material-symbols-outlined text-3xl">biotech</span>
+                    </div>
+                    <span class="font-bold dark:text-white">Science</span>
+                </a>
+                <a class="group p-6 bg-white dark:bg-slate-800 rounded-2xl border border-transparent hover:border-accent hover:shadow-lg transition-all text-center"
+                    href="#">
+                    <div
+                        class="w-14 h-14 bg-teal-50 dark:bg-teal-900/30 text-accent rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                        <span class="material-symbols-outlined text-3xl">language</span>
+                    </div>
+                    <span class="font-bold dark:text-white">Languages</span>
+                </a>
+            </div>
+        </div>
+    </section>
+    <section class="py-24 px-4">
+        <div class="max-w-6xl mx-auto rounded-[2.5rem] bg-slate-900 dark:bg-slate-800 overflow-hidden relative">
+            <div class="absolute inset-0 bg-gradient-to-r from-primary/30 to-transparent"></div>
+            <div class="relative grid md:grid-cols-2 items-center">
+                <div class="p-12 lg:p-20">
+                    <h2 class="text-3xl lg:text-5xl font-bold text-white mb-6 leading-tight">Become an instructor and
+                        empower learners.</h2>
+                    <p class="text-slate-300 text-lg mb-8 max-w-md">Top instructors from around the world teach millions
+                        of learners on Tacliimi. We provide the tools and skills to teach what you love.</p>
+                    <button onclick="window.location.href='/become-instructor/'"
+                        class="px-8 py-4 bg-primary text-white font-bold rounded-xl hover:bg-blue-700 transition-all transform hover:scale-105 shadow-xl">Start
+                        teaching today</button>
+                </div>
+                <div class="hidden md:block h-full relative min-h-[400px]">
+                    <img alt="Friendly professional instructor teaching online with laptop and microphone"
+                        class="h-full w-full object-cover"
+                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuA4EIKswHcq5PK9GCl9hRhGNVrd2cS567H_Pl0mkN4wnwoslKDaGHtXlZA-4jUzKn_nPKR315Y27NXZ1SSzrFXPCg4w3uoxuBIuNA0oQVRpl4sx5ZmaXsEuCnS1ACC6T-okgcoOBNyEOzaBqb-MC3NiwJFkMx6Lseugk-1cwQxxNGMHOw7uwifu04WHajgmhCn5JGy7QBB4sgX27ohd2WGOdZyQAM9oXdBgx3jF5wI9dlHIn0CTPTSjbuk5UfiVroNCzGJlEoZgf227" />
+                    <div class="absolute inset-0 bg-slate-900/10"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <footer class="pt-20 pb-10 border-t border-slate-200 dark:border-slate-800">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-12 mb-16">
+                <div class="col-span-2">
+                    <a class="flex items-center gap-2 mb-6" href="#">
+                        <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                            <span class="material-symbols-outlined text-white text-xl">school</span>
+                        </div>
+                        <span
+                            class="text-xl font-bold font-display tracking-tight text-primary dark:text-white">Tacliimi
+                            Learn</span>
+                    </a>
+                    <p class="text-slate-500 dark:text-slate-400 max-w-sm mb-6">
+                        Empowering global learners through accessible, high-quality education. Join our community of
+                        experts and students today.
+                    </p>
+                    <div class="flex gap-4">
+                        <a class="w-10 h-10 rounded-full border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-400 hover:text-primary transition-colors"
+                            href="#">
+                            <span class="material-symbols-outlined text-xl">alternate_email</span>
+                        </a>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="font-bold mb-6 dark:text-white">Platform</h4>
+                    <ul class="space-y-4 text-slate-500 dark:text-slate-400">
+                        <li><a class="hover:text-primary transition-colors" href="/marketplace/">Browse Courses</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold mb-6 dark:text-white">Community</h4>
+                    <ul class="space-y-4 text-slate-500 dark:text-slate-400">
+                        <li><a class="hover:text-primary transition-colors" href="/become-instructor/">Instructors</a>
+                        </li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold mb-6 dark:text-white">Support</h4>
+                    <ul class="space-y-4 text-slate-500 dark:text-slate-400">
+                        <li><a class="hover:text-primary transition-colors" href="#">Help Center</a></li>
+                        <li><a class="hover:text-primary transition-colors" href="#">Privacy Policy</a></li>
+                        <li><a class="hover:text-primary transition-colors" href="#">Terms of Service</a></li>
+                        <li><a class="hover:text-primary transition-colors" href="#">Contact</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div
+                class="pt-8 border-t border-slate-200 dark:border-slate-800 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-slate-400">
+                <p>© 2024 Tacliimi Learn. All rights reserved.</p>
+                <div class="flex gap-6">
+                    <a class="hover:text-slate-900 dark:hover:text-white" href="#">Cookies</a>
+                    <a class="hover:text-slate-900 dark:hover:text-white" href="#">Accessibility</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <script>
+        const themeToggle = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            html.classList.add('dark');
+        } else {
+            html.classList.remove('dark');
+        }
+        themeToggle.addEventListener('click', () => {
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                localStorage.theme = 'light';
+            } else {
+                html.classList.add('dark');
+                localStorage.theme = 'dark';
+            }
+        });
+    </script>
+
+</body>
+
+</html>

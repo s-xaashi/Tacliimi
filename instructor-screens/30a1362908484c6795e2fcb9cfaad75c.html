@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Instructor Availability Settings - Tacliimi Learn</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#7f13ec",
+                        "background-light": "#f7f6f8",
+                        "background-dark": "#191022",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+<style type="text/tailwindcss">
+        body {
+            font-family: 'Lexend', sans-serif;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #dbcfe7;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display min-h-screen">
+<div class="flex h-screen overflow-hidden">
+<aside class="w-64 flex-shrink-0 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col">
+<div class="p-6 flex items-center gap-3">
+<div class="size-10 rounded-full bg-primary flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-2xl">school</span>
+</div>
+<div>
+<h1 class="text-slate-900 dark:text-white text-base font-bold leading-tight">Tacliimi Learn</h1>
+<p class="text-primary text-xs font-medium">Instructor Portal</p>
+</div>
+</div>
+<nav class="flex-1 px-4 space-y-1 overflow-y-auto custom-scrollbar">
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined text-[22px]">dashboard</span>
+<span class="text-sm font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined text-[22px]">menu_book</span>
+<span class="text-sm font-medium">My Courses</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 bg-primary/10 text-primary rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined text-[22px] fill-[1]">groups</span>
+<span class="text-sm font-semibold">Mentorship</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined text-[22px]">monitoring</span>
+<span class="text-sm font-medium">Analytics</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined text-[22px]">account_balance_wallet</span>
+<span class="text-sm font-medium">Earnings</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined text-[22px]">chat_bubble</span>
+<span class="text-sm font-medium">Communications</span>
+</a>
+</nav>
+</aside>
+<main class="flex-1 flex flex-col min-w-0 overflow-hidden">
+<header class="h-auto py-3 flex-shrink-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-8">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">event_available</span>
+<h2 class="text-lg font-bold">Availability Settings</h2>
+</div>
+<div class="flex items-center gap-5 text-right">
+<div class="flex flex-col items-end">
+<p class="text-sm font-bold leading-tight text-slate-900 dark:text-white">Dr. Aris Thorne</p>
+<div class="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded font-bold uppercase tracking-wider mt-1">Instructor Account</div>
+<div class="text-[10px] text-slate-500 font-bold mt-1">ID: 32342</div>
+</div>
+<div class="size-11 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden ring-2 ring-primary/10 flex-shrink-0">
+<img alt="Instructor Profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBBB5jr1A80hvO0o1E8I_366UjIkW3QZbWaH90FycA8v5YzKZkVycXFXIE2FWF6AZEZshKXV54KDv45s_PDzT-1wCWHQiKoxK5Qxw1BU4QKcJb6BQzkqj9U9IhoWTonX7c0X5ueyT--zF-MWLI0PLdDrLZLjYu_Qg7UMIVLtZk67m0daOmdNFawws-TCcdd9qqvtzQVr8VbskYlmFFiX9nptZp25E0JdPbOCRwXZVcqtCgdihvkM7B-BTrRAjrHz6mxpSZ2z7tzgaib"/>
+</div>
+</div>
+</header>
+<div class="flex-1 overflow-y-auto custom-scrollbar p-8">
+<div class="max-w-4xl mx-auto space-y-8">
+<div>
+<h1 class="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Availability Settings</h1>
+<p class="mt-2 text-slate-600 dark:text-slate-400">Manage your mentorship availability windows and meeting preferences across all institutions.</p>
+</div>
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+<h3 class="text-base font-bold mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-xl">public</span>
+                        Timezone &amp; Location
+                    </h3>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div>
+<label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Select your local timezone</label>
+<div class="relative">
+<select class="w-full appearance-none bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white py-3 px-4 pr-10 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all">
+<option>(GMT+03:00) Mogadishu, Somalia</option>
+<option>(GMT+03:00) Riyadh, Saudi Arabia</option>
+<option>(GMT+00:00) London, United Kingdom</option>
+<option>(GMT-05:00) New York, USA</option>
+<option>(GMT+08:00) Singapore</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">unfold_more</span>
+</div>
+</div>
+<div>
+<label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">City / Base Location</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">location_city</span>
+<input class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg py-3 pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all" placeholder="Mogadishu, Somalia" type="text" value="Mogadishu, Somalia"/>
+</div>
+</div>
+</div>
+<p class="mt-4 text-xs text-slate-500 italic">This ensures students see your availability in their local time correctly and know your base city.</p>
+</div>
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+<h3 class="text-base font-bold mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-xl">calendar_month</span>
+                        Weekly Schedule
+                    </h3>
+<div class="space-y-0">
+<div class="flex flex-wrap md:flex-nowrap items-start gap-4 py-4 border-b border-slate-100 dark:border-slate-800">
+<div class="w-32 flex items-center gap-3 pt-2">
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+</label>
+<span class="font-bold text-sm w-12 text-slate-900 dark:text-white">SAT</span>
+</div>
+<div class="flex-1 flex flex-col gap-3">
+<div class="flex items-center gap-3">
+<input class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:ring-primary focus:border-primary" type="time" value="08:00"/>
+<span class="text-slate-400">to</span>
+<input class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:ring-primary focus:border-primary" type="time" value="12:00"/>
+<button class="p-2 text-slate-400 hover:text-red-500 transition-colors"><span class="material-symbols-outlined text-xl">delete</span></button>
+</div>
+<button class="flex items-center gap-1 text-primary text-xs font-bold hover:underline w-fit">
+<span class="material-symbols-outlined text-sm">add_circle</span> ADD SLOT
+                                </button>
+</div>
+</div>
+<div class="flex flex-wrap md:flex-nowrap items-start gap-4 py-4 border-b border-slate-100 dark:border-slate-800">
+<div class="w-32 flex items-center gap-3 pt-2">
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+</label>
+<span class="font-bold text-sm w-12 text-slate-900 dark:text-white">SUN</span>
+</div>
+<div class="flex-1 flex flex-col gap-3">
+<div class="flex items-center gap-3">
+<input class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:ring-primary focus:border-primary" type="time" value="08:00"/>
+<span class="text-slate-400">to</span>
+<input class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:ring-primary focus:border-primary" type="time" value="12:00"/>
+<button class="p-2 text-slate-400 hover:text-red-500 transition-colors"><span class="material-symbols-outlined text-xl">delete</span></button>
+</div>
+<button class="flex items-center gap-1 text-primary text-xs font-bold hover:underline w-fit">
+<span class="material-symbols-outlined text-sm">add_circle</span> ADD SLOT
+                                </button>
+</div>
+</div>
+<div class="flex flex-wrap md:flex-nowrap items-start gap-4 py-4 border-b border-slate-100 dark:border-slate-800">
+<div class="w-32 flex items-center gap-3 pt-2">
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+</label>
+<span class="font-bold text-sm w-12 text-slate-900 dark:text-white">MON</span>
+</div>
+<div class="flex-1 flex flex-col gap-3">
+<div class="space-y-3">
+<div class="flex items-center gap-3">
+<input class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:ring-primary focus:border-primary" type="time" value="08:00"/>
+<span class="text-slate-400">to</span>
+<input class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:ring-primary focus:border-primary" type="time" value="12:00"/>
+<button class="p-2 text-slate-400 hover:text-red-500 transition-colors"><span class="material-symbols-outlined text-xl">delete</span></button>
+</div>
+<div class="flex items-center gap-3">
+<input class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:ring-primary focus:border-primary" type="time" value="14:00"/>
+<span class="text-slate-400">to</span>
+<input class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:ring-primary focus:border-primary" type="time" value="17:00"/>
+<button class="p-2 text-slate-400 hover:text-red-500 transition-colors"><span class="material-symbols-outlined text-xl">delete</span></button>
+</div>
+</div>
+<button class="flex items-center gap-1 text-primary text-xs font-bold hover:underline w-fit mt-1">
+<span class="material-symbols-outlined text-sm">add_circle</span> ADD SLOT
+                                </button>
+</div>
+</div>
+<div class="flex flex-wrap md:flex-nowrap items-start gap-4 py-4 border-b border-slate-100 dark:border-slate-800">
+<div class="w-32 flex items-center gap-3 pt-2">
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+</label>
+<span class="font-bold text-sm w-12 text-slate-900 dark:text-white">TUE</span>
+</div>
+<div class="flex-1 flex flex-col gap-3">
+<div class="flex items-center gap-3">
+<input class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:ring-primary focus:border-primary" type="time" value="08:00"/>
+<span class="text-slate-400">to</span>
+<input class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:ring-primary focus:border-primary" type="time" value="12:00"/>
+<button class="p-2 text-slate-400 hover:text-red-500 transition-colors"><span class="material-symbols-outlined text-xl">delete</span></button>
+</div>
+<button class="flex items-center gap-1 text-primary text-xs font-bold hover:underline w-fit">
+<span class="material-symbols-outlined text-sm">add_circle</span> ADD SLOT
+                                </button>
+</div>
+</div>
+<div class="flex flex-wrap md:flex-nowrap items-start gap-4 py-4">
+<div class="w-32 flex items-center gap-3 pt-2">
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+</label>
+<span class="font-bold text-sm w-12 text-slate-900 dark:text-white">WED</span>
+</div>
+<div class="flex-1 flex flex-col gap-3">
+<div class="flex items-center gap-3">
+<input class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:ring-primary focus:border-primary" type="time" value="08:00"/>
+<span class="text-slate-400">to</span>
+<input class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:ring-primary focus:border-primary" type="time" value="12:00"/>
+<button class="p-2 text-slate-400 hover:text-red-500 transition-colors"><span class="material-symbols-outlined text-xl">delete</span></button>
+</div>
+<button class="flex items-center gap-1 text-primary text-xs font-bold hover:underline w-fit">
+<span class="material-symbols-outlined text-sm">add_circle</span> ADD SLOT
+                                </button>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+<h3 class="text-base font-bold mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-xl">video_chat</span>
+                        Meeting Preference
+                    </h3>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+<label class="relative flex items-center p-4 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-primary/50 cursor-pointer group transition-all">
+<div class="flex items-center h-5">
+<input checked="" class="h-5 w-5 text-primary border-slate-300 rounded focus:ring-primary" type="checkbox"/>
+</div>
+<div class="ml-3 text-sm">
+<span class="font-bold text-slate-900 dark:text-white">Online Meeting</span>
+<p class="text-slate-500 text-xs">Available via Zoom, Meet, or Teams</p>
+</div>
+<span class="material-symbols-outlined ml-auto text-slate-300 group-hover:text-primary transition-colors">videocam</span>
+</label>
+<label class="relative flex items-center p-4 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-primary/50 cursor-pointer group transition-all">
+<div class="flex items-center h-5">
+<input class="h-5 w-5 text-primary border-slate-300 rounded focus:ring-primary" type="checkbox"/>
+</div>
+<div class="ml-3 text-sm">
+<span class="font-bold text-slate-900 dark:text-white">In-Person Meeting</span>
+<p class="text-slate-500 text-xs">Available at institutional campus locations</p>
+</div>
+<span class="material-symbols-outlined ml-auto text-slate-300 group-hover:text-primary transition-colors">location_on</span>
+</label>
+</div>
+</div>
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+<h3 class="text-base font-bold mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-xl">link</span>
+                        Location &amp; Meeting Link
+                    </h3>
+<div class="space-y-6">
+<div>
+<label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Default Online Meeting Link</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">link</span>
+<input class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg py-3 pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all" placeholder="https://zoom.us/j/123456789" type="url"/>
+</div>
+<p class="mt-2 text-xs text-slate-500 italic">This link will be automatically shared with students once they book an online session.</p>
+</div>
+<div>
+<label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Preferred In-Person Location</label>
+<textarea class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4 text-sm focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all min-h-[100px] resize-none" placeholder="e.g. Innovation Hub - Room 402, North Campus"></textarea>
+<p class="mt-2 text-xs text-slate-500 italic">Specify the exact building, floor, or room number for physical mentorship meetings.</p>
+</div>
+</div>
+</div>
+<div class="flex justify-end pt-4 pb-12">
+<button class="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white font-bold py-3 px-12 rounded-xl shadow-lg shadow-primary/20 transition-all transform active:scale-[0.98]">
+<span class="material-symbols-outlined">save</span>
+                        Save Availability
+                    </button>
+</div>
+</div>
+</div>
+</main>
+</div>
+
+</body></html>
