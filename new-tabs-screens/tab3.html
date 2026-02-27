@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Completed Mentorship Sessions | Tacliimi Learn</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "brand-purple": "#7c3aed",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style type="text/tailwindcss">
+        body {
+            font-family: 'Lexend', sans-serif;
+        }
+        .sidebar-item-active {
+            @apply bg-primary/10 text-primary border-r-[3px] border-primary;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .fill-icon {
+            font-variation-settings: 'FILL' 1;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100">
+<div class="flex h-screen overflow-hidden">
+<aside class="w-64 flex-shrink-0 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col">
+<div class="p-6 flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-brand-purple flex items-center justify-center text-white shadow-lg shadow-brand-purple/20">
+<span class="material-symbols-outlined text-2xl fill-icon">school</span>
+</div>
+<span class="font-extrabold text-lg tracking-tight text-slate-900 dark:text-white">Tacliimi <span class="text-brand-purple">Learn</span></span>
+</div>
+<nav class="flex-1 px-4 space-y-1 overflow-y-auto mt-4">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-sm font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined">book_5</span>
+<span class="text-sm font-medium">My Courses</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg sidebar-item-active transition-colors" href="#">
+<span class="material-symbols-outlined fill-icon">group</span>
+<span class="text-sm font-semibold">Mentorship</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined">bar_chart</span>
+<span class="text-sm font-medium">Analytics</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+<span class="text-sm font-medium">Earnings</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined">chat</span>
+<span class="text-sm font-medium">Communications</span>
+</a>
+</nav>
+</aside>
+<main class="flex-1 flex flex-col overflow-hidden">
+<header class="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-8">
+<div class="flex items-center gap-4">
+<h2 class="text-xl font-bold text-slate-800 dark:text-slate-100">Mentorship Bookings</h2>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-3">
+<button class="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
+<span class="material-symbols-outlined">help</span>
+</button>
+</div>
+<div class="flex flex-col text-right border-l border-slate-200 dark:border-slate-700 pl-6">
+<h1 class="text-slate-900 dark:text-slate-100 text-sm font-semibold leading-none">Instructor account</h1>
+<p class="text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-wider mt-1">ID: 32342</p>
+</div>
+</div>
+</header>
+<div class="flex-1 overflow-y-auto p-8 bg-background-light dark:bg-background-dark">
+<div class="max-w-6xl mx-auto space-y-8">
+<div class="flex flex-col gap-1">
+<h1 class="text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Mentorship Archive</h1>
+<p class="text-slate-500 dark:text-slate-400">View history of your completed student guidance sessions.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
+<div class="flex items-center justify-between mb-4">
+<span class="material-symbols-outlined text-primary bg-primary/10 p-2 rounded-lg">event_available</span>
+<span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Upcoming</span>
+</div>
+<p class="text-slate-600 dark:text-slate-400 text-sm font-medium">Upcoming Sessions</p>
+<p class="text-slate-900 dark:text-slate-100 text-4xl font-bold mt-1">0</p>
+</div>
+<div class="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
+<div class="flex items-center justify-between mb-4">
+<span class="material-symbols-outlined text-green-500 bg-green-500/10 p-2 rounded-lg">timer</span>
+<span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Time</span>
+</div>
+<p class="text-slate-600 dark:text-slate-400 text-sm font-medium">Total Hours Guided</p>
+<p class="text-slate-900 dark:text-slate-100 text-4xl font-bold mt-1">0</p>
+</div>
+<div class="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
+<div class="flex items-center justify-between mb-4">
+<span class="material-symbols-outlined text-amber-500 bg-amber-500/10 p-2 rounded-lg">notifications_active</span>
+<span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Attention</span>
+</div>
+<p class="text-slate-600 dark:text-slate-400 text-sm font-medium">New Requests</p>
+<p class="text-slate-900 dark:text-slate-100 text-4xl font-bold mt-1">0</p>
+</div>
+</div>
+<div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+<div class="border-b border-slate-100 dark:border-slate-800 px-6">
+<div class="flex gap-8">
+<button class="py-4 border-b-2 border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 text-sm font-bold transition-all">
+                                    Upcoming
+                                </button>
+<button class="py-4 border-b-2 border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 text-sm font-bold transition-all">
+                                    Requests
+                                </button>
+<button class="py-4 border-b-2 border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 text-sm font-bold transition-all">
+                                    Scheduled
+                                </button>
+<button class="py-4 border-b-2 border-primary text-primary text-sm font-bold transition-all">
+                                    Completed
+                                </button>
+<button class="py-4 border-b-2 border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 text-sm font-bold transition-all">
+                                    Availability
+                                </button>
+<button class="py-4 border-b-2 border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 text-sm font-bold transition-all">
+                                    Pricing
+                                </button>
+</div>
+</div>
+<div class="p-20 flex flex-col items-center justify-center text-center">
+<div class="relative mb-6">
+<div class="w-32 h-32 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center border border-dashed border-slate-300 dark:border-slate-700">
+<span class="material-symbols-outlined text-6xl text-slate-300 dark:text-slate-600">inventory_2</span>
+</div>
+<div class="absolute -bottom-2 -right-2 w-12 h-12 bg-white dark:bg-slate-900 rounded-full flex items-center justify-center shadow-lg border border-slate-100 dark:border-slate-800">
+<span class="material-symbols-outlined text-green-500 fill-icon text-2xl">check_circle</span>
+</div>
+</div>
+<h3 class="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2">No completed sessions yet</h3>
+<p class="text-slate-500 dark:text-slate-400 max-w-sm leading-relaxed">
+                                Once you finish your first 1-on-1 session, it will appear here in your archive.
+                            </p>
+</div>
+</div>
+<div class="bg-primary/5 dark:bg-primary/10 rounded-xl p-6 border border-primary/20 flex gap-4 items-start">
+<span class="material-symbols-outlined text-primary bg-white dark:bg-slate-800 p-2 rounded-lg shadow-sm">inventory</span>
+<div class="flex-1">
+<h4 class="text-sm font-bold text-slate-900 dark:text-slate-100">Archived Records</h4>
+<p class="text-sm text-slate-600 dark:text-slate-400 mt-1">These sessions are permanently stored for your portfolio records. You can download the participation certificates from the session details if needed for your accreditation.</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+
+</body></html>

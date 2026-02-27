@@ -1,0 +1,103 @@
+<div class="flex-1 overflow-y-auto p-8 bg-background-light dark:bg-background-dark">
+    <div class="max-w-6xl mx-auto space-y-8">
+        <div
+            class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+            <div class="p-8 space-y-10">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div
+                        class="p-8 rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900/50 hover:border-brand-purple/30 transition-all group">
+                        <div class="flex items-center gap-4 mb-6">
+                            <div
+                                class="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-600">
+                                <span class="material-symbols-outlined text-2xl fill-icon">calendar_today</span>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold text-slate-900 dark:text-white leading-tight">Single
+                                    Session</h3>
+                                <p class="text-sm text-slate-500 dark:text-slate-400">One-on-one focused mentorship</p>
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">Price per
+                                Session</label>
+                            <div
+                                class="relative group-focus-within:ring-2 ring-brand-purple/20 rounded-xl transition-all">
+                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
+                                <input
+                                    class="w-full pl-8 pr-4 py-4 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-xl focus:border-brand-purple focus:ring-0 text-2xl font-black text-slate-800 dark:text-white transition-all"
+                                    type="text" value="0.00" />
+                            </div>
+                        </div>
+                    </div>
+                    <div
+                        class="p-8 rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900/50 hover:border-brand-purple/30 transition-all group">
+                        <div class="flex items-center gap-4 mb-6">
+                            <div
+                                class="w-12 h-12 rounded-xl bg-brand-purple/10 flex items-center justify-center text-brand-purple">
+                                <span class="material-symbols-outlined text-2xl fill-icon">all_inclusive</span>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold text-slate-900 dark:text-white leading-tight">Monthly
+                                    Mentorship</h3>
+                                <p class="text-sm text-slate-500 dark:text-slate-400">Intensive month-long engagement
+                                </p>
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Price</label>
+                            <div
+                                class="relative group-focus-within:ring-2 ring-brand-purple/20 rounded-xl transition-all">
+                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
+                                <input
+                                    class="w-full pl-8 pr-4 py-4 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-xl focus:border-brand-purple focus:ring-0 text-2xl font-black text-slate-800 dark:text-white transition-all"
+                                    type="text" value="0.00" />
+                            </div>
+                            <p class="text-xs text-slate-400 italic mt-2 flex items-center gap-1.5">
+                                <span class="material-symbols-outlined text-sm">info</span>
+                                Based on 30 sessions per month.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="pt-6 border-t border-slate-100 dark:border-slate-800">
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-brand-purple">sell</span>
+                        Promotions
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">Enter Coupon
+                                Code</label>
+                            <input
+                                class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg focus:border-brand-purple focus:ring-0 text-sm font-medium transition-all"
+                                placeholder="" type="text" value="" />
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">Discount Amount
+                                (%)</label>
+                            <div class="relative">
+                                <input
+                                    class="w-full pr-12 pl-4 py-3 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg focus:border-brand-purple focus:ring-0 text-sm font-medium transition-all"
+                                    placeholder="0" type="number" value="0" />
+                                <span
+                                    class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div
+            class="bg-brand-purple/5 dark:bg-brand-purple/10 rounded-xl p-6 border border-brand-purple/20 flex gap-4 items-start">
+            <span
+                class="material-symbols-outlined text-brand-purple bg-white dark:bg-slate-800 p-2 rounded-lg shadow-sm">info</span>
+            <div class="flex-1">
+                <h4 class="text-sm font-bold text-slate-900 dark:text-slate-100">Pricing Policy</h4>
+                <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">Updates to pricing will take effect
+                    immediately for all new bookings. Coupons can be managed here and shared with your students via
+                    communications or during courses. Taxes and platform fees will be deducted from your final payout.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>

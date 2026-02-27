@@ -17,6 +17,7 @@
                 extend: {
                     colors: {
                         primary: "#4F46E5",
+                        "brand-purple": "#7c3aed",
                         "background-light": "#F9FAFB",
                         "background-dark": "#111827",
                     },
@@ -122,96 +123,124 @@
         <!-- DYNAMIC CONTENT AREA -->
         <main id="instructor-content-area" class="flex-1 bg-background-light dark:bg-background-dark pb-20">
 
+            
+            <div class="flex-1 overflow-y-auto px-8 pb-8 pt-2 bg-background-light dark:bg-background-dark">
+                <div class="max-w-6xl mx-auto space-y-8">
+                    <div class="flex flex-col gap-1">
+                        <h1 class="text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Mentorship
+                            Overview</h1>
+                        <p class="text-slate-500 dark:text-slate-400 mt-1">Manage your sessions, students, and profile
+                            settings.</p>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <!-- locked cards -->
+                        <div
+                            class="locked-card rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 opacity-60 grayscale-[0.5] relative overflow-hidden">
+                            <div
+                                class="lock-badge absolute top-4 right-4 text-slate-400 bg-slate-50 dark:bg-slate-800 rounded-full p-1.5 border border-slate-100 dark:border-slate-700">
+                                <span class="material-symbols-outlined text-[18px]">lock</span>
+                            </div>
+                            <div class="flex items-center justify-between mb-4">
+                                <span
+                                    class="material-symbols-outlined text-primary bg-primary/10 p-2 rounded-lg">event</span>
+                                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Metrics</span>
+                            </div>
+                            <p class="text-slate-600 dark:text-slate-400 text-sm font-medium">Upcoming Sessions</p>
+                            <p class="text-slate-900 dark:text-slate-100 text-4xl font-extrabold mt-1">0</p>
+                        </div>
+                        <div
+                            class="locked-card rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 opacity-60 grayscale-[0.5] relative overflow-hidden">
+                            <div
+                                class="lock-badge absolute top-4 right-4 text-slate-400 bg-slate-50 dark:bg-slate-800 rounded-full p-1.5 border border-slate-100 dark:border-slate-700">
+                                <span class="material-symbols-outlined text-[18px]">lock</span>
+                            </div>
+                            <div class="flex items-center justify-between mb-4">
+                                <span
+                                    class="material-symbols-outlined text-green-500 bg-green-500/10 p-2 rounded-lg">timer</span>
+                                <span
+                                    class="text-xs font-bold text-slate-400 uppercase tracking-wider">Historical</span>
+                            </div>
+                            <p class="text-slate-600 dark:text-slate-400 text-sm font-medium">Total Hours Guided</p>
+                            <p class="text-slate-900 dark:text-slate-100 text-4xl font-extrabold mt-1">0</p>
+                        </div>
+                        <div
+                            class="locked-card rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 opacity-60 grayscale-[0.5] relative overflow-hidden">
+                            <div
+                                class="lock-badge absolute top-4 right-4 text-slate-400 bg-slate-50 dark:bg-slate-800 rounded-full p-1.5 border border-slate-100 dark:border-slate-700">
+                                <span class="material-symbols-outlined text-[18px]">lock</span>
+                            </div>
+                            <div class="flex items-center justify-between mb-4">
+                                <span
+                                    class="material-symbols-outlined text-amber-500 bg-amber-500/10 p-2 rounded-lg">pending_actions</span>
+                                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Alerts</span>
+                            </div>
+                            <p class="text-slate-600 dark:text-slate-400 text-sm font-medium">New Requests</p>
+                            <p class="text-slate-900 dark:text-slate-100 text-4xl font-extrabold mt-1">0</p>
+                        </div>
+                    </div>
 
-<div class="flex-1 overflow-y-auto px-8 pb-8 pt-2 bg-background-light dark:bg-background-dark">
-<div class="max-w-6xl mx-auto space-y-8">
-<div class="flex flex-col gap-1">
-<h1 class="text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Mentorship Overview</h1>
-<p class="text-slate-500 dark:text-slate-400">Manage your student guidance sessions and requests.</p>
-</div>
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-<div class="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
-<div class="flex items-center justify-between mb-4">
-<span class="material-symbols-outlined text-primary bg-primary/10 p-2 rounded-lg">event</span>
-<span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Metrics</span>
-</div>
-<p class="text-slate-600 dark:text-slate-400 text-sm font-medium">Upcoming Sessions</p>
-<p class="text-slate-900 dark:text-slate-100 text-4xl font-bold mt-1">0</p>
-</div>
-<div class="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
-<div class="flex items-center justify-between mb-4">
-<span class="material-symbols-outlined text-green-500 bg-green-500/10 p-2 rounded-lg">timer</span>
-<span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Historical</span>
-</div>
-<p class="text-slate-600 dark:text-slate-400 text-sm font-medium">Total Hours Guided</p>
-<p class="text-slate-900 dark:text-slate-100 text-4xl font-bold mt-1">0</p>
-</div>
-<div class="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
-<div class="flex items-center justify-between mb-4">
-<span class="material-symbols-outlined text-amber-500 bg-amber-500/10 p-2 rounded-lg">pending_actions</span>
-<span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Alerts</span>
-</div>
-<p class="text-slate-600 dark:text-slate-400 text-sm font-medium">New Requests</p>
-<p class="text-slate-900 dark:text-slate-100 text-4xl font-bold mt-1">0</p>
-</div>
-</div>
-<div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
-<div class="border-b border-slate-100 dark:border-slate-800 px-6">
-<div class="flex gap-8">
-<button class="py-4 border-b-2 border-primary text-primary text-sm font-bold transition-all">
-                                Upcoming
-                            </button>
-<button class="py-4 border-b-2 border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 text-sm font-bold transition-all">
-                                Requests
-                            </button>
-<button class="py-4 border-b-2 border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 text-sm font-bold transition-all">
-                                Scheduled
-                            </button>
-<button class="py-4 border-b-2 border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 text-sm font-bold transition-all">
-                                Completed
-                            </button>
-<button class="py-4 border-b-2 border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 text-sm font-bold transition-all">
-                                Availability
-                            </button>
-</div>
-</div>
-<div class="p-12 flex flex-col items-center justify-center text-center">
-<div class="relative mb-8 group">
-<div class="absolute -inset-4 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-all duration-500"></div>
-<div class="relative w-64 h-64 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 flex items-center justify-center overflow-hidden">
-<div class="bg-center bg-no-repeat aspect-square w-48 h-48 bg-contain" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBokyABWcIX2v5_q9Kjrh3Mjcy6p1W70Kle8WOMirw1QnbXMrDrnqjergg_zpufpzIXPVVjqR5MLL-sIzpSQ360QW3byN0xZdetNa8SL31YPxifmwfT9hXszieLkwpljfnQ5ZskEfbptx1RoBDiVqXG4OR4GN5MJ8r2-3jypFUbxwdkaKihd8uBGTqTwsvBe4k9roOP_2uI3-Gs2c697B3DcCVztVtVSRgTHyrkEn0bRrNiewAZqPfs6P_NkVZvqzBZq0Jl0a5QaxIO");'></div>
-</div>
-<div class="absolute bottom-4 right-4 bg-white dark:bg-slate-700 p-2 rounded-lg shadow-lg border border-slate-100 dark:border-slate-600 rotate-12">
-<span class="material-symbols-outlined text-primary">event_busy</span>
-</div>
-</div>
-<div class="max-w-md space-y-4 mb-8">
-<h3 class="text-2xl font-bold text-slate-900 dark:text-slate-100">No upcoming sessions yet.</h3>
-<p class="text-slate-600 dark:text-slate-400 text-base leading-relaxed">
-                                Your student bookings will appear here once you set your availability and students start booking.
-                            </p>
-</div>
-<button class="inline-flex items-center justify-center gap-2 px-8 py-3 bg-primary hover:bg-primary/90 text-white font-bold rounded-xl transition-all shadow-lg shadow-primary/25 hover:scale-105 active:scale-95">
-<span class="material-symbols-outlined">calendar_add_on</span>
-<span>Set My Availability</span>
-</button>
-</div>
-</div>
-<div class="bg-primary/5 dark:bg-primary/10 rounded-xl p-6 border border-primary/20 flex gap-4 items-start">
-<span class="material-symbols-outlined text-primary bg-white dark:bg-slate-800 p-2 rounded-lg shadow-sm">lightbulb</span>
-<div class="flex-1">
-<h4 class="text-sm font-bold text-slate-900 dark:text-slate-100">Pro Tip for Instructors</h4>
-<p class="text-sm text-slate-600 dark:text-slate-400 mt-1">Students are 60% more likely to book mentorship when you have at least 5 hours of availability per week. Try setting slots for both morning and evening to cover different time zones.</p>
-</div>
-</div>
-</div>
-</div>
-
+                    <!-- Tab container -->
+                    <div
+                        class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+                        <div
+                            class="border-b border-slate-100 dark:border-slate-800 px-6 overflow-x-auto bg-slate-50/30 dark:bg-slate-800/30">
+                            <div class="flex gap-8 whitespace-nowrap" id="mentorship-tab-bar">
+                                <button
+                                    class="mentorship-tab py-4 border-b-2 border-brand-purple text-brand-purple text-sm font-bold flex items-center gap-2"
+                                    data-tab="setup">
+                                    Get Started
+                                </button>
+                                <button
+                                    class="mentorship-tab py-4 border-b-2 border-transparent text-slate-400 dark:text-slate-500 text-sm font-bold flex items-center gap-2 cursor-not-allowed"
+                                    disabled data-tab="upcoming">
+                                    <span>Upcoming</span>
+                                    <span class="material-symbols-outlined text-[14px]">lock</span>
+                                </button>
+                                <button
+                                    class="mentorship-tab py-4 border-b-2 border-transparent text-slate-400 dark:text-slate-500 text-sm font-bold flex items-center gap-2 cursor-not-allowed"
+                                    disabled data-tab="requests">
+                                    <span>Requests</span>
+                                    <span class="material-symbols-outlined text-[14px]">lock</span>
+                                </button>
+                                <button
+                                    class="mentorship-tab py-4 border-b-2 border-transparent text-slate-400 dark:text-slate-500 text-sm font-bold flex items-center gap-2 cursor-not-allowed"
+                                    disabled data-tab="scheduled">
+                                    <span>Scheduled</span>
+                                    <span class="material-symbols-outlined text-[14px]">lock</span>
+                                </button>
+                                <button
+                                    class="mentorship-tab py-4 border-b-2 border-transparent text-slate-400 dark:text-slate-500 text-sm font-bold flex items-center gap-2 cursor-not-allowed"
+                                    disabled data-tab="completed">
+                                    <span>Completed</span>
+                                    <span class="material-symbols-outlined text-[14px]">lock</span>
+                                </button>
+                                <button
+                                    class="mentorship-tab py-4 border-b-2 border-transparent text-slate-400 dark:text-slate-500 text-sm font-bold flex items-center gap-2 cursor-not-allowed"
+                                    disabled data-tab="availability">
+                                    <span>Availability</span>
+                                    <span class="material-symbols-outlined text-[14px]">lock</span>
+                                </button>
+                                <button
+                                    class="mentorship-tab py-4 border-b-2 border-transparent text-slate-400 dark:text-slate-500 text-sm font-bold flex items-center gap-2 cursor-not-allowed"
+                                    disabled data-tab="pricing">
+                                    <span>Pricing</span>
+                                    <span class="material-symbols-outlined text-[14px]">lock</span>
+                                </button>
+                            </div>
+                        </div>
+                        <!-- DYNAMIC CONTENT -->
+                        <div class="p-8 md:p-12 bg-white dark:bg-slate-900" id="mentorship-dynamic-content">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        
         </main>
     </div>
 
     <!-- Router Logic -->
     <script src="/js/instructor-app.js"></script>
+    <script src="/instructor-mentorship/mentorship.js"></script>
 </body>
 
 </html>
