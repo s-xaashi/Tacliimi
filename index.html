@@ -11,6 +11,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
         rel="stylesheet" />
+    <script src="tacliimi_db.js"></script>
     <script>
         tailwind.config = {
             darkMode: "class",
@@ -72,7 +73,8 @@
                     <div class="hidden md:flex items-center gap-6">
                         <a class="text-sm font-medium hover:text-primary transition-colors"
                             href="/marketplace/">Categories</a>
-                        <a class="text-sm font-medium hover:text-primary transition-colors" href="#">Find a Mentor</a>
+                        <a class="text-sm font-medium hover:text-primary transition-colors"
+                            href="/mentor-marketplace/index.html">Find a Mentor</a>
                         <a class="text-sm font-medium hover:text-primary transition-colors"
                             href="/become-instructor/">Teach on Tacliimi</a>
                     </div>
@@ -91,11 +93,27 @@
                             class="px-4 py-2 text-sm font-semibold bg-primary text-white rounded-md hover:bg-blue-700 transition-all shadow-sm">Sign
                             up</button>
                     </div>
-                    <button class="md:hidden p-2">
+                    <button class="md:hidden p-2" id="mobile-menu-btn">
                         <span class="material-symbols-outlined">menu</span>
                     </button>
                 </div>
             </div>
+        </div>
+        <!-- Mobile Menu -->
+        <div class="hidden md:hidden bg-white dark:bg-background-dark border-t border-slate-200 dark:border-slate-800 px-4 py-6 space-y-4 absolute w-full shadow-xl"
+            id="mobile-menu">
+            <a class="block text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors"
+                href="/marketplace/">Categories</a>
+            <a class="block text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors"
+                href="/mentor-marketplace/index.html">Find a Mentor</a>
+            <a class="block text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors"
+                href="/become-instructor/">Teach on Tacliimi</a>
+            <div class="h-px bg-slate-200 dark:bg-slate-800 my-4"></div>
+            <button onclick="window.location.href='/login/'"
+                class="block w-full text-left text-base font-semibold text-slate-700 dark:text-slate-300">Log
+                in</button>
+            <button onclick="window.location.href='/login/'"
+                class="block w-full text-left text-base font-semibold text-primary mt-2">Sign up</button>
         </div>
     </nav>
     <header class="relative pt-16 pb-24 overflow-hidden bg-[#F5F5F5] dark:bg-background-dark">
@@ -129,151 +147,85 @@
         </div>
     </header>
     <section class="py-20 bg-background-light dark:bg-background-dark">
-        <div class="max-w-7xl mx-auto px-4">
-            <div class="flex justify-between items-end mb-10">
+        <div class="max-w-7xl mx-auto px-4 mt-20">
+            <div class="flex items-end justify-between mb-12">
                 <div>
-                    <h2 class="text-3xl font-bold font-display text-slate-900 dark:text-white">Featured Courses</h2>
-                    <p class="text-slate-500 dark:text-slate-400 mt-2">Hand-picked excellence for your professional
-                        growth.</p>
+                    <span class="text-xs text-slate-400">(1,120)</span>
                 </div>
-                <a class="text-primary dark:text-blue-400 font-semibold flex items-center gap-1 hover:gap-2 transition-all"
-                    href="#">
-                    View all <span class="material-symbols-outlined text-sm">arrow_forward_ios</span>
-                </a>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div
-                    class="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-700 course-card-shadow group hover:-translate-y-1 transition-all">
-                    <div class="relative h-44 overflow-hidden">
-                        <img alt="Advanced React Development"
-                            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuCWIo7cc9LKt7k6xW64rZk5tSk_J-cMKlciAMCfVjGmcHliHUO4PqUv_ZToNE8sBgvepLNbtJtmEQ68ItNWIXzTHysSz26Pitzzs7PwLt9n_rS9j68g92sa1_nUkLWD748BD5IIQosiUjwt3eTztfr6DyDBlSETca0uRcKrPJNY6RVRlxJapkbVl42_38mBMI3kaU2MowTC25D_XGZhX7OT7jLV6iEHMLfvpP4dIl6Pt6DYTtrXvsQS_EtWjXvQq9A-UMhdcQE6cqwj" />
-                        <div
-                            class="absolute top-3 left-3 bg-white/90 dark:bg-slate-900/90 px-2 py-1 rounded-lg text-xs font-bold uppercase tracking-tight text-primary">
-                            Best Seller</div>
-                    </div>
-                    <div class="p-5">
-                        <h3
-                            class="font-bold text-lg mb-1 line-clamp-2 dark:text-white group-hover:text-primary transition-colors">
-                            Advanced React Development with Micro-frontends</h3>
-                        <p class="text-sm text-slate-500 dark:text-slate-400 mb-3">Dr. Sarah Jenkins, MIT</p>
-                        <div class="flex items-center gap-1 mb-4">
-                            <span class="text-amber-500 font-bold text-sm">4.9</span>
-                            <div class="flex text-amber-500">
-                                <span class="material-symbols-outlined text-sm filled">star</span>
-                                <span class="material-symbols-outlined text-sm filled">star</span>
-                                <span class="material-symbols-outlined text-sm filled">star</span>
-                                <span class="material-symbols-outlined text-sm filled">star</span>
-                                <span class="material-symbols-outlined text-sm filled">star</span>
-                            </div>
-                            <span class="text-xs text-slate-400">(2,450)</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-xl font-bold dark:text-white">$84.99</span>
-                            <button
-                                class="p-2 rounded-full border border-slate-200 dark:border-slate-700 hover:bg-primary hover:text-white transition-all">
-                                <span class="material-symbols-outlined">add_shopping_cart</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                <div
-                    class="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-700 course-card-shadow group hover:-translate-y-1 transition-all">
-                    <div class="relative h-44 overflow-hidden">
-                        <img alt="Data Science Essentials"
-                            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuDGBFwCBJfaWgybq2GxiZUFd9ye7v6JmJET2GlJW5Y_tyPedLpVNr754XAjxbUfnjNBKfF9MR_GgSEQ54tc-V4a9Qfj2moISSNg-dNFdkzdaWjwe7f8StKAiCMgjsPrQTrWQnvBcYkZXz6T2x7ZjhPOCEUK1Ty9Rq1kkjvHAzx1V-Cs5hAd6Nw4YmKjESn3BOrcrny2ve0cfpkBBf5KhuU7f-My0Yy7zDwkwhgjQqb0MOemEeAMlPHrlFIul0vEXYVsZ1xNWyvdJ-ez" />
-                    </div>
-                    <div class="p-5">
-                        <h3
-                            class="font-bold text-lg mb-1 line-clamp-2 dark:text-white group-hover:text-primary transition-colors">
-                            Data Science Essentials for Business Leaders</h3>
-                        <p class="text-sm text-slate-500 dark:text-slate-400 mb-3">Prof. Robert Chen, Stanford</p>
-                        <div class="flex items-center gap-1 mb-4">
-                            <span class="text-amber-500 font-bold text-sm">4.8</span>
-                            <div class="flex text-amber-500">
-                                <span class="material-symbols-outlined text-sm filled">star</span>
-                                <span class="material-symbols-outlined text-sm filled">star</span>
-                                <span class="material-symbols-outlined text-sm filled">star</span>
-                                <span class="material-symbols-outlined text-sm filled">star</span>
-                                <span class="material-symbols-outlined text-sm filled">star_half</span>
-                            </div>
-                            <span class="text-xs text-slate-400">(1,120)</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-xl font-bold dark:text-white">$119.00</span>
-                            <button
-                                class="p-2 rounded-full border border-slate-200 dark:border-slate-700 hover:bg-primary hover:text-white transition-all">
-                                <span class="material-symbols-outlined">add_shopping_cart</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                <div
-                    class="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-700 course-card-shadow group hover:-translate-y-1 transition-all">
-                    <div class="relative h-44 overflow-hidden">
-                        <img alt="UI/UX Design Masterclass"
-                            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuBdeL7ey6geMKt4sJfNGb4vc5Cu8IdcuXRF-dh7mD3_rei1vfJkzEg5WhNil-aFVVhgoKI5qpRSxo6pKL52urQ479CimgjvJ-Dhto1GOBB2YHSipFZsSL9L2RCAbOLP8XKaHUqGqYFrcpX88FV76WlbJDQapQCUEDClz5EIBeZxIe_d-70RfRuACBK0LJ3YGubyqA-peq2u_EUrrYRznpjIGhDBZ15l1VL7F8XqM2oQRzXuAysizol0I14zP1LA1jV0Ah2iOO2GYyk9" />
-                    </div>
-                    <div class="p-5">
-                        <h3
-                            class="font-bold text-lg mb-1 line-clamp-2 dark:text-white group-hover:text-primary transition-colors">
-                            UI/UX Design Masterclass: From Zero to Hero</h3>
-                        <p class="text-sm text-slate-500 dark:text-slate-400 mb-3">Elena Gilbert, Design Lead</p>
-                        <div class="flex items-center gap-1 mb-4">
-                            <span class="text-amber-500 font-bold text-sm">4.7</span>
-                            <div class="flex text-amber-500">
-                                <span class="material-symbols-outlined text-sm filled">star</span>
-                                <span class="material-symbols-outlined text-sm filled">star</span>
-                                <span class="material-symbols-outlined text-sm filled">star</span>
-                                <span class="material-symbols-outlined text-sm filled">star</span>
-                                <span class="material-symbols-outlined text-sm filled">star_half</span>
-                            </div>
-                            <span class="text-xs text-slate-400">(890)</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-xl font-bold dark:text-white">$59.99</span>
-                            <button
-                                class="p-2 rounded-full border border-slate-200 dark:border-slate-700 hover:bg-primary hover:text-white transition-all">
-                                <span class="material-symbols-outlined">add_shopping_cart</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                <div
-                    class="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-700 course-card-shadow group hover:-translate-y-1 transition-all">
-                    <div class="relative h-44 overflow-hidden">
-                        <img alt="Digital Marketing"
-                            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuCULgvVSn9I9LillAQhz5pN4XffR0Y79GaxpaQAqp7ulxSQYVx6Cf4eN7oyDxeAHFcCbN4nuS1-uB3y5w4XqJrWRfSIpPQWERFZ0qdi9H2nlZ5AT-VFJjUhzBriAh7qnW-eP0SzeBF3vUZ6EoD4w6awTCUnhiKhqDAk0YKWFQSkpEdwsNilYE0FAaJSqoZlPCVg7LH1gA6MXo4cuRU7aI2NuMhKAoEttMmpIBp4EzvJ59LYZBO4nHwNFc5w9xnWZG12IaxBfZ89ugoE" />
-                    </div>
-                    <div class="p-5">
-                        <h3
-                            class="font-bold text-lg mb-1 line-clamp-2 dark:text-white group-hover:text-primary transition-colors">
-                            Digital Marketing Strategy for 2024</h3>
-                        <p class="text-sm text-slate-500 dark:text-slate-400 mb-3">Markus Aurelius, Marketing Guru</p>
-                        <div class="flex items-center gap-1 mb-4">
-                            <span class="text-amber-500 font-bold text-sm">4.6</span>
-                            <div class="flex text-amber-500">
-                                <span class="material-symbols-outlined text-sm filled">star</span>
-                                <span class="material-symbols-outlined text-sm filled">star</span>
-                                <span class="material-symbols-outlined text-sm filled">star</span>
-                                <span class="material-symbols-outlined text-sm filled">star</span>
-                                <span class="material-symbols-outlined text-sm">star</span>
-                            </div>
-                            <span class="text-xs text-slate-400">(3,410)</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-xl font-bold dark:text-white">$45.00</span>
-                            <button
-                                class="p-2 rounded-full border border-slate-200 dark:border-slate-700 hover:bg-primary hover:text-white transition-all">
-                                <span class="material-symbols-outlined">add_shopping_cart</span>
-                            </button>
-                        </div>
-                    </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-xl font-bold dark:text-white">$119.00</span>
+                    <button
+                        class="p-2 rounded-full border border-slate-200 dark:border-slate-700 hover:bg-primary hover:text-white transition-all">
+                        <span class="material-symbols-outlined">add_shopping_cart</span>
+                    </button>
                 </div>
             </div>
+        </div>
+        <div
+            class="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-700 course-card-shadow group hover:-translate-y-1 transition-all">
+            <div class="relative h-44 overflow-hidden">
+                <img alt="UI/UX Design Masterclass"
+                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuBdeL7ey6geMKt4sJfNGb4vc5Cu8IdcuXRF-dh7mD3_rei1vfJkzEg5WhNil-aFVVhgoKI5qpRSxo6pKL52urQ479CimgjvJ-Dhto1GOBB2YHSipFZsSL9L2RCAbOLP8XKaHUqGqYFrcpX88FV76WlbJDQapQCUEDClz5EIBeZxIe_d-70RfRuACBK0LJ3YGubyqA-peq2u_EUrrYRznpjIGhDBZ15l1VL7F8XqM2oQRzXuAysizol0I14zP1LA1jV0Ah2iOO2GYyk9" />
+            </div>
+            <div class="p-5">
+                <h3
+                    class="font-bold text-lg mb-1 line-clamp-2 dark:text-white group-hover:text-primary transition-colors">
+                    UI/UX Design Masterclass: From Zero to Hero</h3>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mb-3">Elena Gilbert, Design Lead</p>
+                <div class="flex items-center gap-1 mb-4">
+                    <span class="text-amber-500 font-bold text-sm">4.7</span>
+                    <div class="flex text-amber-500">
+                        <span class="material-symbols-outlined text-sm filled">star</span>
+                        <span class="material-symbols-outlined text-sm filled">star</span>
+                        <span class="material-symbols-outlined text-sm filled">star</span>
+                        <span class="material-symbols-outlined text-sm filled">star</span>
+                        <span class="material-symbols-outlined text-sm filled">star_half</span>
+                    </div>
+                    <span class="text-xs text-slate-400">(890)</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-xl font-bold dark:text-white">$59.99</span>
+                    <button
+                        class="p-2 rounded-full border border-slate-200 dark:border-slate-700 hover:bg-primary hover:text-white transition-all">
+                        <span class="material-symbols-outlined">add_shopping_cart</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div
+            class="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-700 course-card-shadow group hover:-translate-y-1 transition-all">
+            <div class="relative h-44 overflow-hidden">
+                <img alt="Digital Marketing"
+                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuCULgvVSn9I9LillAQhz5pN4XffR0Y79GaxpaQAqp7ulxSQYVx6Cf4eN7oyDxeAHFcCbN4nuS1-uB3y5w4XqJrWRfSIpPQWERFZ0qdi9H2nlZ5AT-VFJjUhzBriAh7qnW-eP0SzeBF3vUZ6EoD4w6awTCUnhiKhqDAk0YKWFQSkpEdwsNilYE0FAaJSqoZlPCVg7LH1gA6MXo4cuRU7aI2NuMhKAoEttMmpIBp4EzvJ59LYZBO4nHwNFc5w9xnWZG12IaxBfZ89ugoE" />
+            </div>
+            <div class="p-5">
+                <h3
+                    class="font-bold text-lg mb-1 line-clamp-2 dark:text-white group-hover:text-primary transition-colors">
+                    Digital Marketing Strategy for 2024</h3>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mb-3">Markus Aurelius, Marketing Guru</p>
+                <div class="flex items-center gap-1 mb-4">
+                    <span class="text-amber-500 font-bold text-sm">4.6</span>
+                    <div class="flex text-amber-500">
+                        <span class="material-symbols-outlined text-sm filled">star</span>
+                        <span class="material-symbols-outlined text-sm filled">star</span>
+                        <span class="material-symbols-outlined text-sm filled">star</span>
+                        <span class="material-symbols-outlined text-sm filled">star</span>
+                        <span class="material-symbols-outlined text-sm">star</span>
+                    </div>
+                    <span class="text-xs text-slate-400">(3,410)</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-xl font-bold dark:text-white">$45.00</span>
+                    <button
+                        class="p-2 rounded-full border border-slate-200 dark:border-slate-700 hover:bg-primary hover:text-white transition-all">
+                        <span class="material-symbols-outlined">add_shopping_cart</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        </div>
         </div>
     </section>
     <section class="py-20 bg-slate-50 dark:bg-slate-900/40">
@@ -334,7 +286,29 @@
             </div>
         </div>
     </section>
-    <section class="py-24 px-4">
+    <section class="pt-24 pb-12 px-4">
+        <div class="max-w-6xl mx-auto rounded-[2.5rem] bg-[#14b8a6] dark:bg-teal-900 overflow-hidden relative">
+            <div class="absolute inset-0 bg-gradient-to-r from-teal-600/50 to-transparent"></div>
+            <div class="relative grid md:grid-cols-2 items-center">
+                <div class="p-12 lg:p-20">
+                    <h2 class="text-3xl lg:text-5xl font-bold text-white mb-6 leading-tight">Find your perfect Mentor
+                        and accelerate your career.</h2>
+                    <p class="text-teal-50 text-lg mb-8 max-w-md">Connect with industry experts for 1-on-1 guidance,
+                        portfolio reviews, and career advice tailored to your goals.</p>
+                    <button onclick="window.location.href='/mentor-marketplace/index.html'"
+                        class="px-8 py-4 bg-white text-teal-700 font-bold rounded-xl hover:bg-slate-50 transition-all transform hover:scale-105 shadow-xl">Browse
+                        Mentors</button>
+                </div>
+                <div class="hidden md:flex h-full relative min-h-[400px] justify-center items-center">
+                    <img alt="Mentor teaching student" class="object-cover h-full w-full"
+                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuBdeL7ey6geMKt4sJfNGb4vc5Cu8IdcuXRF-dh7mD3_rei1vfJkzEg5WhNil-aFVVhgoKI5qpRSxo6pKL52urQ479CimgjvJ-Dhto1GOBB2YHSipFZsSL9L2RCAbOLP8XKaHUqGqYFrcpX88FV76WlbJDQapQCUEDClz5EIBeZxIe_d-70RfRuACBK0LJ3YGubyqA-peq2u_EUrrYRznpjIGhDBZ15l1VL7F8XqM2oQRzXuAysizol0I14zP1LA1jV0Ah2iOO2GYyk9" />
+                    <div class="absolute inset-0 bg-teal-900/20"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="py-12 px-4">
         <div class="max-w-6xl mx-auto rounded-[2.5rem] bg-slate-900 dark:bg-slate-800 overflow-hidden relative">
             <div class="absolute inset-0 bg-gradient-to-r from-primary/30 to-transparent"></div>
             <div class="relative grid md:grid-cols-2 items-center">
@@ -429,6 +403,78 @@
                 localStorage.theme = 'dark';
             }
         });
+
+        // Mobile Menu Toggle
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        if (mobileMenuBtn && mobileMenu) {
+            mobileMenuBtn.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+        }
+
+        // Render Featured Courses Dynamically
+        function renderFeaturedCourses() {
+            const courses = TacliimiDB.getAllCourses().slice(0, 3); // Get top 3 courses
+            const grid = document.getElementById('featured-courses');
+
+            if (!grid) return;
+
+            let html = '';
+            courses.forEach(course => {
+                const categoryColor = course.category === 'Development' ? 'text-primary' :
+                    course.category === 'Data Science' ? 'text-indigo-500' :
+                        course.category === 'Design' ? 'text-pink-500' :
+                            course.category === 'IT & Software' ? 'text-red-500' :
+                                course.category === 'Marketing' ? 'text-green-500' :
+                                    'text-amber-500';
+
+                html += `
+                <div onclick="window.location.href='/course-details/index.html?id=${encodeURIComponent(course.id)}'"
+                    class="group bg-white dark:bg-slate-800 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl border border-transparent hover:border-primary/20 transition-all duration-300 cursor-pointer flex flex-col">
+                    <div class="relative aspect-[4/3] overflow-hidden">
+                        <img alt="${course.title}"
+                            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            src="${course.thumbnailUrl}" />
+                        <div class="absolute top-4 right-4">
+                            <button onclick="event.stopPropagation(); TacliimiDB.toggleWishlist('${course.id}'); renderFeaturedCourses();"
+                                class="w-10 h-10 rounded-full bg-white/90 dark:bg-black/50 backdrop-blur-md flex items-center justify-center ${TacliimiDB.isWishlisted(course.id) ? 'text-red-500' : 'text-slate-400 hover:text-red-500'} transition-colors shadow-sm">
+                                <span class="material-symbols-outlined text-xl">${TacliimiDB.isWishlisted(course.id) ? 'favorite' : 'favorite_border'}</span>
+                            </button>
+                        </div>
+                        <div class="absolute bottom-4 left-4 flex gap-2">
+                            <span class="px-3 py-1 bg-white/90 dark:bg-black/70 backdrop-blur-md text-xs font-bold rounded-lg dark:text-white">${course.category}</span>
+                            ${course.isBestseller ? `<span class="px-3 py-1 bg-yellow-400 text-yellow-900 text-xs font-bold rounded-lg shadow-sm">Bestseller</span>` : ''}
+                        </div>
+                    </div>
+                    <div class="p-6 flex-1 flex flex-col">
+                        <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2 line-clamp-2 leading-snug group-hover:text-primary transition-colors">${course.title}</h3>
+                        <p class="text-slate-500 text-sm mb-4">${course.instructor} • ${course.instructorRole}</p>
+                        <div class="flex items-center gap-1 mb-4">
+                            <span class="font-bold text-yellow-500">${course.rating.toFixed(1)}</span>
+                            <div class="flex text-yellow-400">
+                                <span class="material-symbols-outlined text-sm font-light">star</span>
+                            </div>
+                            <span class="text-slate-400 text-sm ml-1">(${course.reviews.toLocaleString()})</span>
+                        </div>
+                        <div class="mt-auto border-t border-slate-100 dark:border-slate-700 pt-4 flex items-center justify-between">
+                            <div class="flex items-baseline gap-2">
+                                <span class="text-2xl font-bold text-slate-900 dark:text-white">${typeof course.price === 'number' ? '$' + course.price.toFixed(2) : course.price}</span>
+                                ${course.originalPrice ? `<span class="text-sm text-slate-400 line-through">$${course.originalPrice.toFixed(2)}</span>` : ''}
+                            </div>
+                            <div class="bg-primary/10 dark:bg-primary/20 text-primary p-2 rounded-xl group-hover:bg-primary group-hover:text-white transition-colors">
+                                <span class="material-symbols-outlined">arrow_forward</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                `;
+            });
+
+            grid.innerHTML = html;
+        }
+
+        document.addEventListener('DOMContentLoaded', renderFeaturedCourses);
     </script>
 
 </body>

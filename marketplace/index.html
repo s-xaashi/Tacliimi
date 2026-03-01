@@ -12,6 +12,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
         rel="stylesheet" />
+    <script src="../tacliimi_db.js"></script>
     <script>
         tailwind.config = {
             darkMode: "class",
@@ -210,265 +211,8 @@
                         </select>
                     </div>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                    <div
-                        class="bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 group border border-transparent hover:border-primary/20 cursor-pointer">
-                        <div class="relative aspect-video">
-                            <img alt="Full Stack Web Development course preview"
-                                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuC9ggZBTp4tACHm0fgG4WA2Ip-F_VkIP_6pUIUrP7GPTB0VDr7LwzFeGFscdh5UiBlx2O96_i2PMMJpHsajkRBPjZnMkRplQz3BSLI-tRt3ZPCMedLy1LvoMTEffKueFF48f6aF1wIF8k8QSE8y2z-8appqpggtBVlaTkE3HIlKq87JT6ONMIkdUVA2i7WWN6GeG9eXdW-5rhf7g3bVT8lV3jJB8xLO131Kg2284V5Gt2xHG8Zv_PyyNsSOByvnqV-psFXl4jRKFutw" />
-                            <div class="absolute top-3 right-3">
-                                <button
-                                    class="w-8 h-8 rounded-full bg-white/90 dark:bg-black/50 backdrop-blur-sm flex items-center justify-center text-gray-600 dark:text-white hover:text-red-500 transition-colors">
-                                    <span class="material-icons-outlined text-sm">favorite_border</span>
-                                </button>
-                            </div>
-                            <div
-                                class="absolute bottom-3 left-3 px-2 py-1 rounded bg-yellow-400 text-black text-[10px] font-bold uppercase tracking-wider">
-                                Bestseller</div>
-                        </div>
-                        <div class="p-5">
-                            <div class="text-xs text-primary font-bold uppercase tracking-widest mb-2">Web Development
-                            </div>
-                            <h3
-                                class="font-bold text-gray-900 dark:text-white mb-2 line-clamp-2 leading-snug group-hover:text-primary transition-colors">
-                                The Complete 2024 Fullstack Web Developer Bootcamp</h3>
-                            <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Dr. Sarah Johnson, PhD</p>
-                            <div class="flex items-center gap-1 mb-4">
-                                <span class="font-bold text-sm text-yellow-600 dark:text-yellow-400">4.8</span>
-                                <div class="flex text-yellow-400">
-                                    <span class="material-icons-outlined text-xs">star</span>
-                                    <span class="material-icons-outlined text-xs">star</span>
-                                    <span class="material-icons-outlined text-xs">star</span>
-                                    <span class="material-icons-outlined text-xs">star</span>
-                                    <span class="material-icons-outlined text-xs">star</span>
-                                </div>
-                                <span class="text-xs text-gray-400">(24,532)</span>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-baseline gap-2">
-                                    <span class="text-xl font-bold">$12.99</span>
-                                    <span class="text-sm text-gray-400 line-through">$84.99</span>
-                                </div>
-                                <div class="flex items-center text-xs text-gray-400 gap-1">
-                                    <span class="material-icons-outlined text-sm">schedule</span>
-                                    <span>62h</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div
-                        class="bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 group border border-transparent hover:border-primary/20 cursor-pointer">
-                        <div class="relative aspect-video">
-                            <img alt="Data Science course preview"
-                                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuDWkES2Yh-DOOjliSjirOlQIpnoSvQ7awv_EbU-ccP1CSoQv9npKHJtLcg1h51El9JFrY5QDmGid5KE83YWILqWSXur2wHlvrSObqu4vkjbZnOUKM7s7epPwTQ-fDll47YcirdWF4WDZBBslD-Vrzc-Wpyd6lm6Ee2UwrEhIvdTX0FoGiXxZPSlDp_LpR4yv4ZRzSt_g4Z_c1ckEUVjVD6ZB0oMjpc8PnNu2x7dc0eWLRpa9kc_ZP5pPPQPmUMcskEHLSgFaN9rI_eV" />
-                            <div class="absolute top-3 right-3">
-                                <button
-                                    class="w-8 h-8 rounded-full bg-white/90 dark:bg-black/50 backdrop-blur-sm flex items-center justify-center text-gray-600 dark:text-white hover:text-red-500 transition-colors">
-                                    <span class="material-icons-outlined text-sm">favorite_border</span>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="p-5">
-                            <div class="text-xs text-indigo-500 font-bold uppercase tracking-widest mb-2">Data Science
-                            </div>
-                            <h3
-                                class="font-bold text-gray-900 dark:text-white mb-2 line-clamp-2 leading-snug group-hover:text-primary transition-colors">
-                                Python for Data Science and Machine Learning</h3>
-                            <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Jose Portilla</p>
-                            <div class="flex items-center gap-1 mb-4">
-                                <span class="font-bold text-sm text-yellow-600 dark:text-yellow-400">4.7</span>
-                                <div class="flex text-yellow-400">
-                                    <span class="material-icons-outlined text-xs">star</span>
-                                    <span class="material-icons-outlined text-xs">star</span>
-                                    <span class="material-icons-outlined text-xs">star</span>
-                                    <span class="material-icons-outlined text-xs">star</span>
-                                    <span class="material-icons-outlined text-xs">star_half</span>
-                                </div>
-                                <span class="text-xs text-gray-400">(18,912)</span>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-baseline gap-2">
-                                    <span class="text-xl font-bold">$14.99</span>
-                                    <span class="text-sm text-gray-400 line-through">$94.99</span>
-                                </div>
-                                <div class="flex items-center text-xs text-gray-400 gap-1">
-                                    <span class="material-icons-outlined text-sm">schedule</span>
-                                    <span>22.5h</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div
-                        class="bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 group border border-transparent hover:border-primary/20 cursor-pointer">
-                        <div class="relative aspect-video">
-                            <img alt="UI/UX Design course preview"
-                                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuDQd7Ft5lNmcK0vJPQULpl4uZMhGuRvJke1UUQYlfWFHuZbEewXqfjKcz8qheGeegiqa8vxobSlXB1on8DHJEiHeT-oKQQe0XyYc_vBcM_eru44nggq_2azkzLK8PkwqpcZNxp1a4VKOs85y3ai8c8sPQMxmSvqEuwhqAZHP2OntntCHgjh6g-AlDib0Fs0WSwNVhQQ5IacVTn1-_mw_lay_Fwn-AADsV1ANh2TMzzx4KTfaV0q0B-_LFzHTtPGh8U4PxKHHmRsU1h0" />
-                            <div class="absolute top-3 right-3">
-                                <button
-                                    class="w-8 h-8 rounded-full bg-white/90 dark:bg-black/50 backdrop-blur-sm flex items-center justify-center text-gray-600 dark:text-white hover:text-red-500 transition-colors">
-                                    <span class="material-icons-outlined text-sm">favorite_border</span>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="p-5">
-                            <div class="text-xs text-pink-500 font-bold uppercase tracking-widest mb-2">Design</div>
-                            <h3
-                                class="font-bold text-gray-900 dark:text-white mb-2 line-clamp-2 leading-snug group-hover:text-primary transition-colors">
-                                User Experience Design Essentials - Adobe XD UI/UX</h3>
-                            <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Daniel Walter Scott</p>
-                            <div class="flex items-center gap-1 mb-4">
-                                <span class="font-bold text-sm text-yellow-600 dark:text-yellow-400">4.9</span>
-                                <div class="flex text-yellow-400">
-                                    <span class="material-icons-outlined text-xs">star</span>
-                                    <span class="material-icons-outlined text-xs">star</span>
-                                    <span class="material-icons-outlined text-xs">star</span>
-                                    <span class="material-icons-outlined text-xs">star</span>
-                                    <span class="material-icons-outlined text-xs">star</span>
-                                </div>
-                                <span class="text-xs text-gray-400">(8,211)</span>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-baseline gap-2">
-                                    <span class="text-xl font-bold">$11.99</span>
-                                    <span class="text-sm text-gray-400 line-through">$74.99</span>
-                                </div>
-                                <div class="flex items-center text-xs text-gray-400 gap-1">
-                                    <span class="material-icons-outlined text-sm">schedule</span>
-                                    <span>13h</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div
-                        class="bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 group border border-transparent hover:border-primary/20 cursor-pointer">
-                        <div class="relative aspect-video">
-                            <img alt="Cyber Security course preview"
-                                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuC3pP1-o2Jo_01c-yjRQuvIWQhjBIzjt-CmeOALnYnFxfFCn-1VciBADGbvMKihikD_1Xqoth0VvGPYnXtm1OjWkAIHzrsXCVRynMjrb2gMLbthp80NbcBiMk2O3qMLEsDZYM6M5x5quF80QF68xQd-CuqVwFN6vIVNvu_8y0dgIdMKczfS5a8CCtuYHaxUnQ11DrLRXAZzMxWImw5Kkc1y3ikVAzrdcVY4HjU3l9aZbSzqeMm8xVfolZc9Zt9eoP5jwQEvbVZFlrsQ" />
-                            <div class="absolute top-3 right-3">
-                                <button
-                                    class="w-8 h-8 rounded-full bg-white/90 dark:bg-black/50 backdrop-blur-sm flex items-center justify-center text-gray-600 dark:text-white hover:text-red-500 transition-colors">
-                                    <span class="material-icons-outlined text-sm">favorite_border</span>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="p-5">
-                            <div class="text-xs text-red-500 font-bold uppercase tracking-widest mb-2">IT &amp; Software
-                            </div>
-                            <h3
-                                class="font-bold text-gray-900 dark:text-white mb-2 line-clamp-2 leading-snug group-hover:text-primary transition-colors">
-                                The Complete Cyber Security Course: Hackers Exposed!</h3>
-                            <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Nathan House</p>
-                            <div class="flex items-center gap-1 mb-4">
-                                <span class="font-bold text-sm text-yellow-600 dark:text-yellow-400">4.5</span>
-                                <div class="flex text-yellow-400">
-                                    <span class="material-icons-outlined text-xs">star</span>
-                                    <span class="material-icons-outlined text-xs">star</span>
-                                    <span class="material-icons-outlined text-xs">star</span>
-                                    <span class="material-icons-outlined text-xs">star</span>
-                                    <span class="material-icons-outlined text-xs">star_half</span>
-                                </div>
-                                <span class="text-xs text-gray-400">(12,001)</span>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-baseline gap-2">
-                                    <span class="text-xl font-bold">$15.99</span>
-                                    <span class="text-sm text-gray-400 line-through">$119.99</span>
-                                </div>
-                                <div class="flex items-center text-xs text-gray-400 gap-1">
-                                    <span class="material-icons-outlined text-sm">schedule</span>
-                                    <span>12h</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div
-                        class="bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 group border border-transparent hover:border-primary/20 cursor-pointer">
-                        <div class="relative aspect-video">
-                            <img alt="Digital Marketing course preview"
-                                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuA3CSG7MTDBodlUIBlY3lMpZKI20hDueherr1_BG9tl83T3_76rBLgcRVyvp8XdUIjBx2WWEY0Pr83WpsAfMx4PfcIhB0CHs5Ld-dVqc3ut-6jqE2AYjnAIFykNHfDnU3dIiPRSR9apdplRwBz4iOGDm8u5RVXrX26SmjvviSIr70jqE9OoWRXx7U9UdVJwe0Ayv2FdGGQ6dr4uhBTqF__WtzOnNQNF_fxJl_vYkTK_Ts1F2Ufy2TClWAItRxleq8J9W2mdoIgbIkY-" />
-                            <div class="absolute top-3 right-3">
-                                <button
-                                    class="w-8 h-8 rounded-full bg-white/90 dark:bg-black/50 backdrop-blur-sm flex items-center justify-center text-gray-600 dark:text-white hover:text-red-500 transition-colors">
-                                    <span class="material-icons-outlined text-sm">favorite_border</span>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="p-5">
-                            <div class="text-xs text-green-500 font-bold uppercase tracking-widest mb-2">Marketing</div>
-                            <h3
-                                class="font-bold text-gray-900 dark:text-white mb-2 line-clamp-2 leading-snug group-hover:text-primary transition-colors">
-                                Digital Marketing Strategy Course 2024</h3>
-                            <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Phil Ebiner</p>
-                            <div class="flex items-center gap-1 mb-4">
-                                <span class="font-bold text-sm text-yellow-600 dark:text-yellow-400">4.6</span>
-                                <div class="flex text-yellow-400">
-                                    <span class="material-icons-outlined text-xs">star</span>
-                                    <span class="material-icons-outlined text-xs">star</span>
-                                    <span class="material-icons-outlined text-xs">star</span>
-                                    <span class="material-icons-outlined text-xs">star</span>
-                                    <span class="material-icons-outlined text-xs">star_half</span>
-                                </div>
-                                <span class="text-xs text-gray-400">(5,420)</span>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-baseline gap-2">
-                                    <span class="text-xl font-bold">$12.99</span>
-                                    <span class="text-sm text-gray-400 line-through">$84.99</span>
-                                </div>
-                                <div class="flex items-center text-xs text-gray-400 gap-1">
-                                    <span class="material-icons-outlined text-sm">schedule</span>
-                                    <span>24h</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div
-                        class="bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 group border border-transparent hover:border-primary/20 cursor-pointer">
-                        <div class="relative aspect-video">
-                            <img alt="Management course preview"
-                                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuC0Ii7N67n4p6i2piP2gPPooXxZXbRIy-PqGatLG5XfNiIaVCxQz_3bFVxfFsweHCZLSDqOIVs_nNE0nIeJOGCid2nClNYyFNPeZmvPVn9Os7PuP2GCmoD_yZK5hY_rMXZi7i4xBXCAfMpAE55r0oBXmhXkqnzhBg_DA-OHQBjqb7_UQnkjr5mo_8vByCe9isniMZp_trdGkl42bO7DhQOUELkNEqAM9hr8ea4CUYVYOSZeQDN6ODkRkXSYtHNQpkEJ6waHA1qHxGtV" />
-                            <div class="absolute top-3 right-3">
-                                <button
-                                    class="w-8 h-8 rounded-full bg-white/90 dark:bg-black/50 backdrop-blur-sm flex items-center justify-center text-gray-600 dark:text-white hover:text-red-500 transition-colors">
-                                    <span class="material-icons-outlined text-sm">favorite_border</span>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="p-5">
-                            <div class="text-xs text-amber-500 font-bold uppercase tracking-widest mb-2">Business</div>
-                            <h3
-                                class="font-bold text-gray-900 dark:text-white mb-2 line-clamp-2 leading-snug group-hover:text-primary transition-colors">
-                                Modern Management: Lead Your Team to Success</h3>
-                            <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Sheryl Sandberg</p>
-                            <div class="flex items-center gap-1 mb-4">
-                                <span class="font-bold text-sm text-yellow-600 dark:text-yellow-400">4.8</span>
-                                <div class="flex text-yellow-400">
-                                    <span class="material-icons-outlined text-xs">star</span>
-                                    <span class="material-icons-outlined text-xs">star</span>
-                                    <span class="material-icons-outlined text-xs">star</span>
-                                    <span class="material-icons-outlined text-xs">star</span>
-                                    <span class="material-icons-outlined text-xs">star</span>
-                                </div>
-                                <span class="text-xs text-gray-400">(3,105)</span>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-baseline gap-2">
-                                    <span class="text-xl font-bold">$13.99</span>
-                                    <span class="text-sm text-gray-400 line-through">$89.99</span>
-                                </div>
-                                <div class="flex items-center text-xs text-gray-400 gap-1">
-                                    <span class="material-icons-outlined text-sm">schedule</span>
-                                    <span>8.5h</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                <div id="course-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                    <!-- Cards will be populated dynamically -->
                 </div>
                 <div class="mt-12 flex justify-center">
                     <nav class="flex items-center gap-2">
@@ -565,6 +309,68 @@
         if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
             document.documentElement.classList.add('dark');
         }
+
+        function renderCourses() {
+            const courses = TacliimiDB.getAllCourses();
+            const grid = document.getElementById('course-grid');
+
+            let html = '';
+            courses.forEach(course => {
+                const categoryColor = course.category === 'Development' ? 'text-primary' :
+                    course.category === 'Data Science' ? 'text-indigo-500' :
+                        course.category === 'Design' ? 'text-pink-500' :
+                            course.category === 'IT & Software' ? 'text-red-500' :
+                                course.category === 'Marketing' ? 'text-green-500' :
+                                    'text-amber-500';
+
+                html += `
+                    <div onclick="window.location.href='/course-details/index.html?id=${encodeURIComponent(course.id)}'"
+                        class="bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 group border border-transparent hover:border-primary/20 cursor-pointer flex flex-col">
+                        <div class="relative aspect-video">
+                            <img alt="${course.title}"
+                                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                src="${course.thumbnailUrl}" />
+                            <div class="absolute top-3 right-3">
+                                <button onclick="event.stopPropagation(); TacliimiDB.toggleWishlist('${course.id}'); renderCourses();"
+                                    class="w-8 h-8 rounded-full bg-white/90 dark:bg-black/50 backdrop-blur-sm flex items-center justify-center ${TacliimiDB.isWishlisted(course.id) ? 'text-red-500' : 'text-gray-600 dark:text-white hover:text-red-500'} transition-colors shadow-sm">
+                                    <span class="material-icons-outlined text-sm">${TacliimiDB.isWishlisted(course.id) ? 'favorite' : 'favorite_border'}</span>
+                                </button>
+                            </div>
+                            ${course.isBestseller ? `
+                            <div class="absolute bottom-3 left-3 px-2 py-1 rounded bg-yellow-400 text-black text-[10px] font-bold uppercase tracking-wider shadow-sm">
+                                Bestseller</div>` : ''}
+                        </div>
+                        <div class="p-5 flex-1 flex flex-col">
+                            <div class="text-xs ${categoryColor} font-bold uppercase tracking-widest mb-2">${course.category}</div>
+                            <h3 class="font-bold text-gray-900 dark:text-white mb-2 line-clamp-2 leading-snug group-hover:text-primary transition-colors">
+                                ${course.title}</h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">${course.instructor}</p>
+                            <div class="flex items-center gap-1 mb-4 mt-auto">
+                                <span class="font-bold text-sm text-yellow-600 dark:text-yellow-400">${course.rating.toFixed(1)}</span>
+                                <div class="flex text-yellow-400">
+                                    <span class="material-icons-outlined text-xs">star</span>
+                                </div>
+                                <span class="text-xs text-gray-400">(${course.reviews})</span>
+                            </div>
+                            <div class="flex items-center justify-between border-t border-gray-100 dark:border-gray-700 pt-4 mt-2">
+                                <div class="flex items-baseline gap-2">
+                                    <span class="text-xl font-bold">${typeof course.price === 'number' ? '$' + course.price.toFixed(2) : course.price}</span>
+                                    ${course.originalPrice ? `<span class="text-sm text-gray-400 line-through">$${course.originalPrice.toFixed(2)}</span>` : ''}
+                                </div>
+                                <div class="flex items-center text-xs text-gray-400 gap-1">
+                                    <span class="material-icons-outlined text-sm">schedule</span>
+                                    <span>${course.duration}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            grid.innerHTML = html;
+        }
+
+        document.addEventListener('DOMContentLoaded', renderCourses);
     </script>
 
 </body>

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Course Creation Wizard - Tacliimi Learn</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#1E40AF", // Deep Blue
+                        "background-light": "#F9FAFB",
+                        "background-dark": "#111827",
+                    },
+                    fontFamily: {
+                        display: ["Inter", "sans-serif"],
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.5rem",
+                    },
+                },
+            },
+        };
+    </script>
+<style type="text/tailwindcss">
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .step-active {
+            color: #1E40AF;
+            font-weight: 600;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen">
+<nav class="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 sticky top-0 z-50">
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="flex justify-between items-center h-16">
+<div class="flex items-center gap-2">
+<div class="bg-primary p-1.5 rounded-lg text-white">
+<span class="material-icons text-2xl">school</span>
+</div>
+<span class="text-xl font-bold tracking-tight text-primary">Tacliimi Learn</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 font-medium text-sm">Save Draft</button>
+<button class="bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-4 py-2 rounded-md font-semibold text-sm hover:bg-slate-200 dark:hover:bg-slate-700 transition">Exit</button>
+</div>
+</div>
+</div>
+</nav>
+<main class="max-w-4xl mx-auto px-4 py-12">
+<div class="mb-12">
+<div class="flex justify-between items-center mb-6">
+<div class="flex flex-col">
+<h1 class="text-2xl font-bold dark:text-white">Create New Course</h1>
+<p class="text-slate-500 dark:text-slate-400 text-sm mt-1">Step 1 of 4: Basic Information</p>
+</div>
+<div class="w-48 bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-1/4 transition-all duration-500"></div>
+</div>
+</div>
+<div class="grid grid-cols-4 gap-4">
+<div class="flex flex-col items-center gap-2 group">
+<div class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center ring-4 ring-blue-50 dark:ring-blue-900/30">
+<span class="material-icons text-xl">info</span>
+</div>
+<span class="text-xs font-semibold text-primary uppercase tracking-wider">Basic Info</span>
+</div>
+<div class="flex flex-col items-center gap-2 group">
+<div class="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-500 flex items-center justify-center transition group-hover:bg-slate-300 dark:group-hover:bg-slate-700">
+<span class="material-icons text-xl">menu_book</span>
+</div>
+<span class="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Curriculum</span>
+</div>
+<div class="flex flex-col items-center gap-2 group">
+<div class="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-500 flex items-center justify-center transition group-hover:bg-slate-300 dark:group-hover:bg-slate-700">
+<span class="material-icons text-xl">payments</span>
+</div>
+<span class="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Pricing</span>
+</div>
+<div class="flex flex-col items-center gap-2 group">
+<div class="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-500 flex items-center justify-center transition group-hover:bg-slate-300 dark:group-hover:bg-slate-700">
+<span class="material-icons text-xl">publish</span>
+</div>
+<span class="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Publish</span>
+</div>
+</div>
+</div>
+<div class="space-y-6">
+<div class="bg-white dark:bg-slate-900 p-8 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 relative overflow-hidden">
+<div class="absolute top-0 left-0 w-full h-2 bg-primary"></div>
+<div class="space-y-8">
+<div>
+<label class="block text-sm font-bold text-slate-900 dark:text-slate-100 mb-4 uppercase tracking-wide" for="course-title">Course Title <span class="text-red-500">*</span></label>
+<input class="w-full text-xl px-0 py-2 border-b-2 border-slate-200 dark:border-slate-800 bg-transparent focus:outline-none focus:border-primary dark:focus:border-primary transition-colors placeholder:text-slate-300 dark:placeholder:text-slate-700" id="course-title" placeholder="e.g. Advanced Machine Learning with Python" type="text"/>
+<p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Your title should be catchy and descriptive.</p>
+</div>
+<div>
+<label class="block text-sm font-bold text-slate-900 dark:text-slate-100 mb-4 uppercase tracking-wide" for="course-subtitle">Course Subtitle</label>
+<input class="w-full text-lg px-0 py-2 border-b-2 border-slate-200 dark:border-slate-800 bg-transparent focus:outline-none focus:border-primary dark:focus:border-primary transition-colors placeholder:text-slate-300 dark:placeholder:text-slate-700" id="course-subtitle" placeholder="Master the fundamentals of AI" type="text"/>
+</div>
+<div>
+<label class="block text-sm font-bold text-slate-900 dark:text-slate-100 mb-4 uppercase tracking-wide" for="description">Description</label>
+<textarea class="w-full text-base px-4 py-3 border border-slate-200 dark:border-slate-800 rounded-lg bg-slate-50 dark:bg-slate-800 focus:ring-2 focus:ring-primary focus:border-transparent transition-all dark:text-white" id="description" placeholder="Tell students what they'll learn..." rows="4"></textarea>
+</div>
+</div>
+</div>
+<div class="bg-white dark:bg-slate-900 p-8 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<div>
+<label class="block text-sm font-bold text-slate-900 dark:text-slate-100 mb-4 uppercase tracking-wide">Category</label>
+<select class="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 focus:ring-2 focus:ring-primary focus:border-transparent">
+<option>Select a category</option>
+<option>Computer Science</option>
+<option>Business &amp; Finance</option>
+<option>Design</option>
+<option>Marketing</option>
+</select>
+</div>
+<div>
+<label class="block text-sm font-bold text-slate-900 dark:text-slate-100 mb-4 uppercase tracking-wide">Level</label>
+<select class="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 focus:ring-2 focus:ring-primary focus:border-transparent">
+<option>Beginner</option>
+<option>Intermediate</option>
+<option>Advanced</option>
+<option>All Levels</option>
+</select>
+</div>
+</div>
+</div>
+<div class="bg-white dark:bg-slate-900 p-8 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800">
+<label class="block text-sm font-bold text-slate-900 dark:text-slate-100 mb-6 uppercase tracking-wide">Course Thumbnail</label>
+<div class="flex items-center gap-8">
+<div class="w-48 h-32 bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-300 dark:border-slate-700">
+<span class="material-icons text-4xl text-slate-400 dark:text-slate-500">add_photo_alternate</span>
+</div>
+<div class="flex-1">
+<p class="text-sm text-slate-600 dark:text-slate-400 mb-4 leading-relaxed">Upload your course image here. Important guidelines: 750x422 pixels; .jpg, .jpeg, .gif, or .png. no text on the image.</p>
+<button class="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-6 py-2 rounded-lg font-semibold text-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition">Upload File</button>
+</div>
+</div>
+</div>
+<div class="bg-white dark:bg-slate-900 p-8 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800">
+<label class="block text-sm font-bold text-slate-900 dark:text-slate-100 mb-6 uppercase tracking-wide">Course Introduction Video</label>
+<div class="flex items-center gap-8">
+<div class="w-48 h-32 bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-300 dark:border-slate-700">
+<span class="material-symbols-outlined text-4xl text-slate-400 dark:text-slate-500">video_library</span>
+</div>
+<div class="flex-1">
+<p class="text-sm text-slate-600 dark:text-slate-400 mb-4 leading-relaxed">Add a short preview clip (1-2 minutes) to introduce your course to potential students. Supported formats: .mp4, .mov</p>
+<button class="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-6 py-2 rounded-lg font-semibold text-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition">Upload Video</button>
+</div>
+</div>
+</div>
+<div class="flex justify-between items-center py-6">
+<button class="flex items-center gap-2 px-6 py-3 text-slate-400 dark:text-slate-600 font-bold opacity-50 cursor-not-allowed" disabled="">
+<span class="material-icons">arrow_back</span>
+                    Previous
+                </button>
+<button class="bg-primary hover:bg-blue-700 text-white flex items-center gap-2 px-10 py-3 rounded-xl font-bold transition transform active:scale-95 shadow-lg shadow-blue-500/20">
+                    Save &amp; Next
+                    <span class="material-icons">arrow_forward</span>
+</button>
+</div>
+</div>
+</main>
+<footer class="mt-12 py-8 border-t border-slate-200 dark:border-slate-800 text-center">
+<p class="text-slate-500 dark:text-slate-600 text-xs">
+            © 2024 Tacliimi Learn - Multi-Institutional E-Learning Platform. 
+            <span class="mx-2">|</span> 
+            Need help? <a class="underline hover:text-primary" href="#">Contact Instructor Support</a>
+</p>
+</footer>
+
+</body></html>

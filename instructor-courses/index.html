@@ -124,60 +124,68 @@
         <main id="instructor-content-area" class="flex-1 bg-background-light dark:bg-background-dark pb-20">
 
 
-<div class="px-8 pb-8 pt-2 max-w-7xl mx-auto">
-<div class="border-b border-slate-200 dark:border-slate-800 mb-12">
-<nav class="flex gap-8 -mb-px">
-<a class="tab-active py-4 px-1 text-sm" href="#">Published (0)</a>
-<a class="tab-inactive py-4 px-1 text-sm border-b-2 border-transparent" href="#">Drafts (0)</a>
-<a class="tab-inactive py-4 px-1 text-sm border-b-2 border-transparent" href="#">In Review (0)</a>
-</nav>
-</div>
-<div class="mt-20 flex flex-col items-center justify-center text-center">
-<div class="relative mb-8">
-<div class="w-40 h-40 bg-indigo-50 dark:bg-slate-800/50 rounded-full flex items-center justify-center">
-<span class="material-symbols-outlined text-primary/40 dark:text-primary/20 text-8xl">shelves</span>
-</div>
-<div class="absolute -bottom-2 -right-2 w-16 h-16 bg-white dark:bg-slate-900 rounded-full shadow-lg flex items-center justify-center border border-slate-100 dark:border-slate-800">
-<span class="material-symbols-outlined text-primary text-3xl">auto_stories</span>
-</div>
-</div>
-<h2 class="text-3xl font-bold dark:text-white mb-4">Your library is empty</h2>
-<p class="text-slate-500 dark:text-slate-400 text-lg max-w-md mb-10 leading-relaxed">
-                    Start sharing your knowledge today. Create your first course to build your library.
-                </p>
-<button class="bg-primary hover:bg-indigo-700 text-white px-10 py-5 rounded-2xl flex items-center gap-3 font-bold text-lg transition-all shadow-2xl shadow-indigo-200 dark:shadow-none hover:scale-[1.02] active:scale-[0.98]">
-<span class="material-symbols-outlined text-2xl">add_circle</span>
-                    Create Your First Course
-                </button>
-<div class="mt-24 grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-4xl">
-<div class="p-6 rounded-xl border border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50">
-<span class="material-symbols-outlined text-primary mb-3">video_library</span>
-<h4 class="font-semibold mb-1">Easy Uploads</h4>
-<p class="text-xs text-slate-400">Drag and drop your video lectures and resources.</p>
-</div>
-<div class="p-6 rounded-xl border border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50">
-<span class="material-symbols-outlined text-primary mb-3">public</span>
-<h4 class="font-semibold mb-1">Global Reach</h4>
-<p class="text-xs text-slate-400">Access thousands of students across the globe.</p>
-</div>
-<div class="p-6 rounded-xl border border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50">
-<span class="material-symbols-outlined text-primary mb-3">account_balance_wallet</span>
-<h4 class="font-semibold mb-1">Fast Payouts</h4>
-<p class="text-xs text-slate-400">Get paid securely for every enrollment you gain.</p>
-</div>
-</div>
-</div>
-<footer class="mt-24 py-8 border-t border-slate-200 dark:border-slate-800 text-center">
-<div class="flex items-center justify-center gap-6 text-sm text-slate-500">
-<a class="hover:text-primary transition-colors" href="#">Instructor Guide</a>
-<span class="text-slate-300 dark:text-slate-700">•</span>
-<a class="hover:text-primary transition-colors" href="#">Support Center</a>
-<span class="text-slate-300 dark:text-slate-700">•</span>
-<a class="hover:text-primary transition-colors" href="#">Teaching Policy</a>
-</div>
-<p class="mt-4 text-xs text-slate-400 uppercase tracking-widest">Tacliimi Learn © 2024</p>
-</footer>
-</div>
+            <div class="px-8 pb-8 pt-2 max-w-7xl mx-auto">
+                <div class="border-b border-slate-200 dark:border-slate-800 mb-12">
+                    <nav class="flex gap-8 -mb-px">
+                        <a class="tab-active py-4 px-1 text-sm" href="#">Published (0)</a>
+                        <a class="tab-inactive py-4 px-1 text-sm border-b-2 border-transparent" href="#">Drafts (0)</a>
+                        <a class="tab-inactive py-4 px-1 text-sm border-b-2 border-transparent" href="#">In Review
+                            (0)</a>
+                    </nav>
+                </div>
+                <div class="mt-20 flex flex-col items-center justify-center text-center">
+                    <div class="relative mb-8">
+                        <div
+                            class="w-40 h-40 bg-indigo-50 dark:bg-slate-800/50 rounded-full flex items-center justify-center">
+                            <span
+                                class="material-symbols-outlined text-primary/40 dark:text-primary/20 text-8xl">shelves</span>
+                        </div>
+                        <div
+                            class="absolute -bottom-2 -right-2 w-16 h-16 bg-white dark:bg-slate-900 rounded-full shadow-lg flex items-center justify-center border border-slate-100 dark:border-slate-800">
+                            <span class="material-symbols-outlined text-primary text-3xl">auto_stories</span>
+                        </div>
+                    </div>
+                    <h2 class="text-3xl font-bold dark:text-white mb-4">Your library is empty</h2>
+                    <p class="text-slate-500 dark:text-slate-400 text-lg max-w-md mb-10 leading-relaxed">
+                        Start sharing your knowledge today. Create your first course to build your library.
+                    </p>
+                    <button onclick="window.location.href='/instructor-courses/wizard.html'"
+                        class="bg-primary hover:bg-indigo-700 text-white px-10 py-5 rounded-2xl flex items-center gap-3 font-bold text-lg transition-all shadow-2xl shadow-indigo-200 dark:shadow-none hover:scale-[1.02] active:scale-[0.98]">
+                        <span class="material-symbols-outlined text-2xl">add_circle</span>
+                        Create Your First Course
+                    </button>
+                    <div class="mt-24 grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-4xl">
+                        <div
+                            class="p-6 rounded-xl border border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50">
+                            <span class="material-symbols-outlined text-primary mb-3">video_library</span>
+                            <h4 class="font-semibold mb-1">Easy Uploads</h4>
+                            <p class="text-xs text-slate-400">Drag and drop your video lectures and resources.</p>
+                        </div>
+                        <div
+                            class="p-6 rounded-xl border border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50">
+                            <span class="material-symbols-outlined text-primary mb-3">public</span>
+                            <h4 class="font-semibold mb-1">Global Reach</h4>
+                            <p class="text-xs text-slate-400">Access thousands of students across the globe.</p>
+                        </div>
+                        <div
+                            class="p-6 rounded-xl border border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50">
+                            <span class="material-symbols-outlined text-primary mb-3">account_balance_wallet</span>
+                            <h4 class="font-semibold mb-1">Fast Payouts</h4>
+                            <p class="text-xs text-slate-400">Get paid securely for every enrollment you gain.</p>
+                        </div>
+                    </div>
+                </div>
+                <footer class="mt-24 py-8 border-t border-slate-200 dark:border-slate-800 text-center">
+                    <div class="flex items-center justify-center gap-6 text-sm text-slate-500">
+                        <a class="hover:text-primary transition-colors" href="#">Instructor Guide</a>
+                        <span class="text-slate-300 dark:text-slate-700">•</span>
+                        <a class="hover:text-primary transition-colors" href="#">Support Center</a>
+                        <span class="text-slate-300 dark:text-slate-700">•</span>
+                        <a class="hover:text-primary transition-colors" href="#">Teaching Policy</a>
+                    </div>
+                    <p class="mt-4 text-xs text-slate-400 uppercase tracking-widest">Tacliimi Learn © 2024</p>
+                </footer>
+            </div>
 
         </main>
     </div>

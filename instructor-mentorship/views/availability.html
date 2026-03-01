@@ -257,6 +257,48 @@
         </div>
     </div>
 
+    <!-- Meeting Type Preferences -->
+    <div class="p-6 rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm mt-2">
+        <h3 class="text-base font-bold text-slate-900 dark:text-white mb-4">Meeting Types Offered</h3>
+        <p class="text-sm text-slate-500 mb-6">Select how you want to conduct your mentorship sessions.</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Online Meeting -->
+            <label
+                class="relative flex p-4 border border-slate-200 dark:border-slate-700 rounded-xl cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
+                <div class="flex items-center h-5">
+                    <input type="checkbox" checked
+                        class="w-5 h-5 text-brand-purple border-slate-300 rounded focus:ring-brand-purple dark:focus:ring-brand-purple dark:ring-offset-slate-800 focus:ring-2 dark:bg-slate-700 dark:border-slate-600">
+                </div>
+                <div class="ms-3">
+                    <div class="flex items-center gap-2">
+                        <span class="material-symbols-outlined text-brand-purple text-[20px]">videocam</span>
+                        <span class="block text-sm font-bold text-slate-900 dark:text-white">Online Meeting</span>
+                    </div>
+                    <span class="block text-xs font-normal text-slate-500 dark:text-slate-400 mt-1">Conducted via Zoom,
+                        Google Meet, or Tacliimi Video.</span>
+                </div>
+            </label>
+
+            <!-- In-Person Meeting -->
+            <label
+                class="relative flex p-4 border border-slate-200 dark:border-slate-700 rounded-xl cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
+                <div class="flex items-center h-5">
+                    <input type="checkbox" checked
+                        class="w-5 h-5 text-brand-purple border-slate-300 rounded focus:ring-brand-purple dark:focus:ring-brand-purple dark:ring-offset-slate-800 focus:ring-2 dark:bg-slate-700 dark:border-slate-600">
+                </div>
+                <div class="ms-3">
+                    <div class="flex items-center gap-2">
+                        <span class="material-symbols-outlined text-brand-purple text-[20px]">groups</span>
+                        <span class="block text-sm font-bold text-slate-900 dark:text-white">In-Person Meeting</span>
+                    </div>
+                    <span class="block text-xs font-normal text-slate-500 dark:text-slate-400 mt-1">Face-to-face
+                        sessions at a mutually agreed location.</span>
+                </div>
+            </label>
+        </div>
+    </div>
+
     <!-- Booking Policy Alert -->
     <div
         class="bg-brand-purple/5 dark:bg-brand-purple/10 rounded-xl p-6 border border-brand-purple/20 flex gap-4 items-start mt-4">
