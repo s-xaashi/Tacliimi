@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html class="light" lang="en">
 
 <head>
@@ -11,6 +11,10 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
         rel="stylesheet" />
+    <script src="../tacliimi_db.js"></script>
+    <script>
+        if (!TacliimiDB.getCurrentSession()) window.location.href = '../login/index.html';
+    </script>
     <script>
         tailwind.config = {
             darkMode: "class",
@@ -297,7 +301,7 @@
                     </div>
                     <div
                         class="mt-12 pt-8 border-t border-slate-100 dark:border-slate-800 text-center text-slate-400 text-xs">
-                        © 2024 Tacliimi Learn. All rights reserved.
+                        Â© 2024 Tacliimi Learn. All rights reserved.
                     </div>
                 </div>
             </footer>

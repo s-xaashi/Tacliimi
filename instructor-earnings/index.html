@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -45,6 +45,10 @@
             pointer-events: none;
         }
     </style>
+    <script src="../tacliimi_db.js"></script>
+    <script>
+        if (!TacliimiDB.getCurrentSession()) window.location.href = '../login/index.html';
+    </script>
 </head>
 
 <body
@@ -179,7 +183,7 @@
 <span class="text-slate-300 dark:text-slate-700">|</span>
 <a class="text-primary hover:underline" href="#">Privacy Policy</a>
 </div>
-<p class="mt-4 text-[10px] text-slate-400 font-mono uppercase tracking-widest">Tacliimi Learn © 2024</p>
+<p class="mt-4 text-[10px] text-slate-400 font-mono uppercase tracking-widest">Tacliimi Learn Â© 2024</p>
 </footer>
 </div>
 

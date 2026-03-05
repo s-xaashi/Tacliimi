@@ -11,6 +11,10 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
         rel="stylesheet" />
+    <script src="../tacliimi_db.js"></script>
+    <script>
+        if (!TacliimiDB.getCurrentSession()) window.location.href = '../login/index.html';
+    </script>
     <script>
         tailwind.config = {
             darkMode: "class",

@@ -147,85 +147,29 @@
         </div>
     </header>
     <section class="py-20 bg-background-light dark:bg-background-dark">
-        <div class="max-w-7xl mx-auto px-4 mt-20">
-            <div class="flex items-end justify-between mb-12">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-end mb-12">
                 <div>
-                    <span class="text-xs text-slate-400">(1,120)</span>
+                    <h2 class="text-3xl md:text-4xl font-bold font-display text-slate-900 dark:text-white mb-4">
+                        Featured Courses
+                    </h2>
+                    <p class="text-slate-500 dark:text-slate-400 text-lg">Top-rated courses from our best instructors.
+                    </p>
                 </div>
-                <div class="flex items-center justify-between">
-                    <span class="text-xl font-bold dark:text-white">$119.00</span>
-                    <button
-                        class="p-2 rounded-full border border-slate-200 dark:border-slate-700 hover:bg-primary hover:text-white transition-all">
-                        <span class="material-symbols-outlined">add_shopping_cart</span>
-                    </button>
-                </div>
+                <button onclick="window.location.href='/marketplace/'"
+                    class="hidden md:flex items-center gap-2 text-primary font-bold hover:text-blue-700 transition-colors">
+                    Explore all <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                </button>
             </div>
-        </div>
-        <div
-            class="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-700 course-card-shadow group hover:-translate-y-1 transition-all">
-            <div class="relative h-44 overflow-hidden">
-                <img alt="UI/UX Design Masterclass"
-                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuBdeL7ey6geMKt4sJfNGb4vc5Cu8IdcuXRF-dh7mD3_rei1vfJkzEg5WhNil-aFVVhgoKI5qpRSxo6pKL52urQ479CimgjvJ-Dhto1GOBB2YHSipFZsSL9L2RCAbOLP8XKaHUqGqYFrcpX88FV76WlbJDQapQCUEDClz5EIBeZxIe_d-70RfRuACBK0LJ3YGubyqA-peq2u_EUrrYRznpjIGhDBZ15l1VL7F8XqM2oQRzXuAysizol0I14zP1LA1jV0Ah2iOO2GYyk9" />
+
+            <div id="featured-courses" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                <!-- Javascript will inject courses here -->
             </div>
-            <div class="p-5">
-                <h3
-                    class="font-bold text-lg mb-1 line-clamp-2 dark:text-white group-hover:text-primary transition-colors">
-                    UI/UX Design Masterclass: From Zero to Hero</h3>
-                <p class="text-sm text-slate-500 dark:text-slate-400 mb-3">Elena Gilbert, Design Lead</p>
-                <div class="flex items-center gap-1 mb-4">
-                    <span class="text-amber-500 font-bold text-sm">4.7</span>
-                    <div class="flex text-amber-500">
-                        <span class="material-symbols-outlined text-sm filled">star</span>
-                        <span class="material-symbols-outlined text-sm filled">star</span>
-                        <span class="material-symbols-outlined text-sm filled">star</span>
-                        <span class="material-symbols-outlined text-sm filled">star</span>
-                        <span class="material-symbols-outlined text-sm filled">star_half</span>
-                    </div>
-                    <span class="text-xs text-slate-400">(890)</span>
-                </div>
-                <div class="flex items-center justify-between">
-                    <span class="text-xl font-bold dark:text-white">$59.99</span>
-                    <button
-                        class="p-2 rounded-full border border-slate-200 dark:border-slate-700 hover:bg-primary hover:text-white transition-all">
-                        <span class="material-symbols-outlined">add_shopping_cart</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-        <div
-            class="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-700 course-card-shadow group hover:-translate-y-1 transition-all">
-            <div class="relative h-44 overflow-hidden">
-                <img alt="Digital Marketing"
-                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuCULgvVSn9I9LillAQhz5pN4XffR0Y79GaxpaQAqp7ulxSQYVx6Cf4eN7oyDxeAHFcCbN4nuS1-uB3y5w4XqJrWRfSIpPQWERFZ0qdi9H2nlZ5AT-VFJjUhzBriAh7qnW-eP0SzeBF3vUZ6EoD4w6awTCUnhiKhqDAk0YKWFQSkpEdwsNilYE0FAaJSqoZlPCVg7LH1gA6MXo4cuRU7aI2NuMhKAoEttMmpIBp4EzvJ59LYZBO4nHwNFc5w9xnWZG12IaxBfZ89ugoE" />
-            </div>
-            <div class="p-5">
-                <h3
-                    class="font-bold text-lg mb-1 line-clamp-2 dark:text-white group-hover:text-primary transition-colors">
-                    Digital Marketing Strategy for 2024</h3>
-                <p class="text-sm text-slate-500 dark:text-slate-400 mb-3">Markus Aurelius, Marketing Guru</p>
-                <div class="flex items-center gap-1 mb-4">
-                    <span class="text-amber-500 font-bold text-sm">4.6</span>
-                    <div class="flex text-amber-500">
-                        <span class="material-symbols-outlined text-sm filled">star</span>
-                        <span class="material-symbols-outlined text-sm filled">star</span>
-                        <span class="material-symbols-outlined text-sm filled">star</span>
-                        <span class="material-symbols-outlined text-sm filled">star</span>
-                        <span class="material-symbols-outlined text-sm">star</span>
-                    </div>
-                    <span class="text-xs text-slate-400">(3,410)</span>
-                </div>
-                <div class="flex items-center justify-between">
-                    <span class="text-xl font-bold dark:text-white">$45.00</span>
-                    <button
-                        class="p-2 rounded-full border border-slate-200 dark:border-slate-700 hover:bg-primary hover:text-white transition-all">
-                        <span class="material-symbols-outlined">add_shopping_cart</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-        </div>
+
+            <button onclick="window.location.href='/marketplace/'"
+                class="w-full mt-8 md:hidden py-4 border-2 border-slate-200 dark:border-slate-700 rounded-xl font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                Explore all courses
+            </button>
         </div>
     </section>
     <section class="py-20 bg-slate-50 dark:bg-slate-900/40">
@@ -431,8 +375,8 @@
 
                 html += `
                 <div onclick="window.location.href='/course-details/index.html?id=${encodeURIComponent(course.id)}'"
-                    class="group bg-white dark:bg-slate-800 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl border border-transparent hover:border-primary/20 transition-all duration-300 cursor-pointer flex flex-col">
-                    <div class="relative aspect-[4/3] overflow-hidden">
+                    class="group bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl border border-transparent hover:border-primary/20 transition-all duration-300 cursor-pointer flex flex-col">
+                    <div class="relative h-40 overflow-hidden">
                         <img alt="${course.title}"
                             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                             src="${course.thumbnailUrl}" />

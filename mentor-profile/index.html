@@ -1,31 +1,37 @@
 <!DOCTYPE html>
-<html class="light" lang="en"><head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Mentor Profile Details | Tacliimi Learn</title>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<script id="tailwind-config">
-      tailwind.config = {
-        darkMode: "class",
-        theme: {
-          extend: {
-            colors: {
-              "primary": "#7f13ec",
-              "background-light": "#f8f7f9",
-              "background-dark": "#191022",
-            },
-            fontFamily: {
-              "display": ["Lexend", "sans-serif"]
-            },
-            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "full": "9999px"},
+<html class="light" lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>Mentor Profile Details | Tacliimi Learn</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script src="../tacliimi_db.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800;900&amp;display=swap"
+    rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+    rel="stylesheet" />
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#7f13ec",
+            "background-light": "#f8f7f9",
+            "background-dark": "#191022",
           },
+          fontFamily: {
+            "display": ["Lexend", "sans-serif"]
+          },
+          borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "full": "9999px" },
         },
-      }
-    </script>
-<style type="text/tailwindcss">
-        body {
+      },
+    }
+  </script>
+  <style type="text/tailwindcss">
+    body {
             font-family: 'Lexend', sans-serif;
             background-color: #f8f7f9;
         }
@@ -37,258 +43,299 @@
         }
     </style>
 </head>
-<body class="text-slate-900 dark:text-slate-100 min-h-screen">
-<nav class="sticky top-0 z-50 bg-white dark:bg-background-dark border-b border-slate-200 dark:border-slate-800">
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-<div class="flex justify-between items-center h-16">
-<a href="/index.html" class="flex items-center gap-2">
-<div class="bg-primary text-white p-1.5 rounded-lg flex items-center justify-center">
-<svg class="w-6 h-6" fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-<path d="M24 45.8096C19.6865 45.8096 15.4698 44.5305 11.8832 42.134C8.29667 39.7376 5.50128 36.3314 3.85056 32.3462C2.19985 28.361 1.76794 23.9758 2.60947 19.7452C3.451 15.5145 5.52816 11.6284 8.57829 8.5783C11.6284 5.52817 15.5145 3.45101 19.7452 2.60948C23.9758 1.76795 28.361 2.19986 32.3462 3.85057C36.3314 5.50129 39.7376 8.29668 42.134 11.8833C44.5305 15.4698 45.8096 19.6865 45.8096 24L24 24L24 45.8096Z" fill="currentColor"></path>
-</svg>
-</div>
-<span class="text-xl font-bold tracking-tight">Tacliimi Learn</span>
-</a>
-<div class="hidden md:flex items-center gap-8">
-<a class="text-sm font-medium hover:text-primary transition-colors" href="/index.html">Home</a>
-<a class="text-sm font-medium hover:text-primary transition-colors" href="/mentor-marketplace/index.html">Browse Mentors</a>
-<a class="text-sm font-medium hover:text-primary transition-colors" href="/marketplace/">Browse Courses</a>
-<div onclick="window.location.href='/account-settings/index.html'" class="w-10 h-10 rounded-full border border-slate-200 bg-slate-50 flex items-center justify-center text-slate-400 cursor-pointer hover:border-primary/50 transition-colors">
-<span class="material-symbols-outlined">account_circle</span>
-</div>
-</div>
-</div>
-</div>
-</nav>
-<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-<section class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
-<div class="lg:col-span-2 relative aspect-video bg-slate-900 rounded-2xl overflow-hidden shadow-sm group">
-<div class="absolute inset-0 flex items-center justify-center cursor-pointer">
-<div class="w-20 h-20 bg-primary/90 text-white rounded-full flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform">
-<span class="material-symbols-outlined text-4xl fill-1">play_arrow</span>
-</div>
-</div>
-<div class="absolute bottom-0 left-0 right-0 p-6 video-overlay text-white">
-<p class="text-sm font-medium flex items-center gap-2">
-<span class="material-symbols-outlined text-sm">visibility</span>
-                    Introduction Video
-                </p>
-</div>
-<div class="absolute inset-0 -z-10 bg-slate-200 flex items-center justify-center">
-<span class="material-symbols-outlined text-6xl text-slate-300">smart_display</span>
-</div>
-</div>
-<div class="bg-white dark:bg-slate-900 rounded-2xl p-8 border border-slate-100 dark:border-slate-800 shadow-xl self-start">
-<div class="flex flex-col items-center text-center mb-6">
-<div class="w-24 h-24 rounded-full border-4 border-primary/5 bg-slate-100 flex items-center justify-center text-slate-400 mb-4">
-<span class="material-symbols-outlined text-6xl">account_circle</span>
-</div>
-<h1 class="text-2xl font-bold text-slate-900 dark:text-white">Mentor Name Here</h1>
-<p class="text-primary font-semibold text-sm mt-1">Expertise / Subject Here</p>
-<div class="flex items-center gap-1 mt-2">
-<span class="material-symbols-outlined text-orange-400 text-lg fill-1">star</span>
-<span class="font-bold text-slate-700 dark:text-slate-300">4.9</span>
-<span class="text-slate-400 text-sm">(124 reviews)</span>
-</div>
-</div>
-<div class="space-y-4 pt-6 border-t border-slate-100 dark:border-slate-800">
-<div class="flex justify-between items-center">
-<span class="text-slate-500 text-sm font-medium">Session Price</span>
-<span class="text-2xl font-bold text-slate-900 dark:text-white">$0.00</span>
-</div>
-<div class="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
-<span class="material-symbols-outlined text-primary">schedule</span>
-<div class="text-xs">
-<p class="font-bold">60-minute session</p>
-<p class="text-slate-500">1-on-1 personalized guidance</p>
-</div>
-</div>
-<a href="../mentor-booking/index.html" class="w-full block text-center bg-primary text-white py-4 rounded-xl font-bold text-lg hover:bg-primary/90 transition-all active:scale-[0.98] shadow-lg shadow-primary/20">
-                    Book a Session
-                </a>
-<p class="text-center text-[11px] text-slate-400 uppercase tracking-widest font-semibold">Instant Confirmation</p>
-</div>
-</div>
-</section>
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-<div class="lg:col-span-2 space-y-8">
-<section class="bg-white dark:bg-slate-900 rounded-2xl p-8 border border-slate-100 dark:border-slate-800 shadow-sm">
-<div class="flex items-center gap-3 mb-6">
-<div class="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
-<span class="material-symbols-outlined">person</span>
-</div>
-<h2 class="text-xl font-bold">About Me</h2>
-</div>
-<div class="prose dark:prose-invert max-w-none text-slate-600 dark:text-slate-400 leading-relaxed">
-<p>Detailed bio will appear here. This space provides mentors with the opportunity to share their professional journey, academic background, and personal motivation for teaching. It’s a place to establish trust and build a connection with prospective students.</p>
-</div>
-</section>
-<section class="bg-white dark:bg-slate-900 rounded-2xl p-8 border border-slate-100 dark:border-slate-800 shadow-sm">
-<div class="flex items-center gap-3 mb-6">
-<div class="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
-<span class="material-symbols-outlined">psychology</span>
-</div>
-<h2 class="text-xl font-bold">Expertise</h2>
-</div>
-<div class="flex flex-wrap gap-2">
-<span class="px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-lg text-sm font-medium">Core Topic 1</span>
-<span class="px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-lg text-sm font-medium">Industry Best Practices</span>
-<span class="px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-lg text-sm font-medium">Advanced Skillset</span>
-<span class="px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-lg text-sm font-medium">Strategy &amp; Planning</span>
-<span class="px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-lg text-sm font-medium">Career Development</span>
-</div>
-</section>
-<section class="bg-white dark:bg-slate-900 rounded-2xl p-8 border border-slate-100 dark:border-slate-800 shadow-sm">
-<div class="flex items-center gap-3 mb-6">
-<div class="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
-<span class="material-symbols-outlined">school</span>
-</div>
-<h2 class="text-xl font-bold">Mentorship Style</h2>
-</div>
-<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-<div class="p-4 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30">
-<div class="flex items-center gap-2 mb-2 font-bold text-sm">
-<span class="material-symbols-outlined text-primary text-lg">videocam</span>
-                            Online Sessions
-                        </div>
-<p class="text-sm text-slate-500">Available for remote video calls worldwide using our integrated platform.</p>
-</div>
-<div class="p-4 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30">
-<div class="flex items-center gap-2 mb-2 font-bold text-sm">
-<span class="material-symbols-outlined text-primary text-lg">location_on</span>
-                            In-person Sessions
-                        </div>
-<p class="text-sm text-slate-500">Also available for face-to-face meetings in specific metropolitan areas.</p>
-</div>
-</div>
-<p class="mt-6 text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-                    Description of how the mentor conducts sessions. This might include their approach to goal setting, preferred tools (e.g., whiteboards, code sharing), and the overall vibe of their teaching (e.g., structured vs. conversational).
-                </p>
-</section>
-<section>
-<div class="flex justify-between items-center mb-6">
-<h2 class="text-xl font-bold">What students say</h2>
-<a class="text-primary text-sm font-bold hover:underline" href="#">View all reviews</a>
-</div>
-<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-<div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm">
-<div class="flex items-center gap-3 mb-4">
-<div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
-<span class="material-symbols-outlined">person</span>
-</div>
-<div>
-<h4 class="text-sm font-bold">Alex Johnson</h4>
-<div class="flex text-orange-400">
-<span class="material-symbols-outlined text-xs fill-1">star</span>
-<span class="material-symbols-outlined text-xs fill-1">star</span>
-<span class="material-symbols-outlined text-xs fill-1">star</span>
-<span class="material-symbols-outlined text-xs fill-1">star</span>
-<span class="material-symbols-outlined text-xs fill-1">star</span>
-</div>
-</div>
-</div>
-<p class="text-sm text-slate-500 italic">"The session was incredibly helpful. Mentor explained complex concepts in a way that was very easy to grasp."</p>
-</div>
-<div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm">
-<div class="flex items-center gap-3 mb-4">
-<div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
-<span class="material-symbols-outlined">person</span>
-</div>
-<div>
-<h4 class="text-sm font-bold">Sam River</h4>
-<div class="flex text-orange-400">
-<span class="material-symbols-outlined text-xs fill-1">star</span>
-<span class="material-symbols-outlined text-xs fill-1">star</span>
-<span class="material-symbols-outlined text-xs fill-1">star</span>
-<span class="material-symbols-outlined text-xs fill-1">star</span>
-<span class="material-symbols-outlined text-xs fill-1">star</span>
-</div>
-</div>
-</div>
-<p class="text-sm text-slate-500 italic">"Exceeded my expectations. I left the call with a clear roadmap for my career transition."</p>
-</div>
-</div>
-</section>
-</div>
-<aside class="space-y-6">
-<div class="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-100 dark:border-slate-800 shadow-sm sticky top-24">
-<h3 class="font-bold mb-4 flex items-center gap-2">
-<span class="material-symbols-outlined text-primary">analytics</span>
-                    Profile Stats
-                </h3>
-<div class="space-y-4">
-<div class="flex justify-between items-center text-sm">
-<span class="text-slate-500">Total sessions</span>
-<span class="font-bold">450+</span>
-</div>
-<div class="flex justify-between items-center text-sm">
-<span class="text-slate-500">Avg. response time</span>
-<span class="font-bold">2 hours</span>
-</div>
-<div class="flex justify-between items-center text-sm">
-<span class="text-slate-500">Experience</span>
-<span class="font-bold">10+ Years</span>
-</div>
-</div>
-<div class="mt-6 pt-6 border-t border-slate-100 dark:border-slate-800">
-<p class="text-xs text-slate-400 mb-4">Share this profile</p>
-<div class="flex gap-3">
-<button class="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-primary transition-colors">
-<span class="material-symbols-outlined text-lg">share</span>
-</button>
-<button class="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-primary transition-colors">
-<span class="material-symbols-outlined text-lg">content_copy</span>
-</button>
-</div>
-</div>
-</div>
-</aside>
-</div>
-</main>
-<footer class="bg-white dark:bg-background-dark border-t border-slate-200 dark:border-slate-800 py-12 mt-20">
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-<div class="grid grid-cols-1 md:grid-cols-4 gap-8">
-<div class="col-span-1 md:col-span-2">
-<a href="/index.html" class="flex items-center gap-2 mb-6">
-<div class="bg-primary text-white p-1.5 rounded-lg flex items-center justify-center">
-<svg class="w-6 h-6" fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-<path d="M24 45.8096C19.6865 45.8096 15.4698 44.5305 11.8832 42.134C8.29667 39.7376 5.50128 36.3314 3.85056 32.3462C2.19985 28.361 1.76794 23.9758 2.60947 19.7452C3.451 15.5145 5.52816 11.6284 8.57829 8.5783C11.6284 5.52817 15.5145 3.45101 19.7452 2.60948C23.9758 1.76795 28.361 2.19986 32.3462 3.85057C36.3314 5.50129 39.7376 8.29668 42.134 11.8833C44.5305 15.4698 45.8096 19.6865 45.8096 24L24 24L24 45.8096Z" fill="currentColor"></path>
-</svg>
-</div>
-<span class="text-xl font-bold tracking-tight">Tacliimi Learn</span>
-</a>
-<p class="text-slate-500 max-w-sm mb-6">
-                    The world's leading community for personal and professional growth through expert mentorship.
-                </p>
-</div>
-<div>
-<h4 class="font-bold mb-4 text-sm">Platform</h4>
-<ul class="space-y-2 text-sm text-slate-500">
-<li><a class="hover:text-primary transition-colors" href="/mentor-marketplace/index.html">Marketplace</a></li>
-<li><a class="hover:text-primary transition-colors" href="/marketplace/">Courses</a></li>
-<li><a class="hover:text-primary transition-colors" href="#">Success Stories</a></li>
-<li><a class="hover:text-primary transition-colors" href="/become-instructor/">Become a Mentor</a></li>
-</ul>
-</div>
-<div>
-<h4 class="font-bold mb-4 text-sm">Support</h4>
-<ul class="space-y-2 text-sm text-slate-500">
-<li><a class="hover:text-primary transition-colors" href="#">Help Center</a></li>
-<li><a class="hover:text-primary transition-colors" href="#">Safety Center</a></li>
-<li><a class="hover:text-primary transition-colors" href="#">Terms of Service</a></li>
-<li><a class="hover:text-primary transition-colors" href="#">Privacy Policy</a></li>
-</ul>
-</div>
-</div>
-<div class="mt-12 pt-8 border-t border-slate-100 dark:border-slate-800 flex flex-col md:flex-row justify-between items-center gap-4">
-<p class="text-xs text-slate-400">© 2024 Tacliimi Learn. All rights reserved.</p>
-<div class="flex gap-6">
-<a class="text-slate-400 hover:text-primary" href="#"><span class="material-symbols-outlined text-lg">public</span></a>
-<a class="text-slate-400 hover:text-primary" href="#"><span class="material-symbols-outlined text-lg">chat</span></a>
-<a class="text-slate-400 hover:text-primary" href="#"><span class="material-symbols-outlined text-lg">share</span></a>
-</div>
-</div>
-</div>
-</footer>
 
-</body></html>
+<body class="text-slate-900 dark:text-slate-100 min-h-screen">
+  <nav class="sticky top-0 z-50 bg-white dark:bg-background-dark border-b border-slate-200 dark:border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-16">
+        <a href="/index.html" class="flex items-center gap-2">
+          <div class="bg-primary text-white p-1.5 rounded-lg flex items-center justify-center">
+            <svg class="w-6 h-6" fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+              <path
+                d="M24 45.8096C19.6865 45.8096 15.4698 44.5305 11.8832 42.134C8.29667 39.7376 5.50128 36.3314 3.85056 32.3462C2.19985 28.361 1.76794 23.9758 2.60947 19.7452C3.451 15.5145 5.52816 11.6284 8.57829 8.5783C11.6284 5.52817 15.5145 3.45101 19.7452 2.60948C23.9758 1.76795 28.361 2.19986 32.3462 3.85057C36.3314 5.50129 39.7376 8.29668 42.134 11.8833C44.5305 15.4698 45.8096 19.6865 45.8096 24L24 24L24 45.8096Z"
+                fill="currentColor"></path>
+            </svg>
+          </div>
+          <span class="text-xl font-bold tracking-tight">Tacliimi Learn</span>
+        </a>
+        <div class="hidden md:flex items-center gap-8">
+          <a class="text-sm font-medium hover:text-primary transition-colors" href="/index.html">Home</a>
+          <a class="text-sm font-medium hover:text-primary transition-colors"
+            href="/mentor-marketplace/index.html">Browse Mentors</a>
+          <a class="text-sm font-medium hover:text-primary transition-colors" href="/marketplace/">Browse Courses</a>
+          <div onclick="window.location.href='/account-settings/index.html'"
+            class="w-10 h-10 rounded-full border border-slate-200 bg-slate-50 flex items-center justify-center text-slate-400 cursor-pointer hover:border-primary/50 transition-colors">
+            <span class="material-symbols-outlined">account_circle</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <section class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+      <div class="lg:col-span-2 relative aspect-video bg-slate-900 rounded-2xl overflow-hidden shadow-sm group">
+        <div class="absolute inset-0 flex items-center justify-center cursor-pointer">
+          <div
+            class="w-20 h-20 bg-primary/90 text-white rounded-full flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform">
+            <span class="material-symbols-outlined text-4xl fill-1">play_arrow</span>
+          </div>
+        </div>
+        <div class="absolute bottom-0 left-0 right-0 p-6 video-overlay text-white">
+          <p class="text-sm font-medium flex items-center gap-2">
+            <span class="material-symbols-outlined text-sm">visibility</span>
+            Introduction Video
+          </p>
+        </div>
+        <div class="absolute inset-0 -z-10 bg-slate-200 flex items-center justify-center">
+          <span class="material-symbols-outlined text-6xl text-slate-300">smart_display</span>
+        </div>
+      </div>
+      <div
+        class="bg-white dark:bg-slate-900 rounded-2xl p-8 border border-slate-100 dark:border-slate-800 shadow-xl self-start">
+        <div class="flex flex-col items-center text-center mb-6">
+          <div
+            class="w-24 h-24 rounded-full border-4 border-primary/5 bg-slate-100 flex items-center justify-center text-slate-400 mb-4">
+            <span class="material-symbols-outlined text-6xl">account_circle</span>
+          </div>
+          <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Mentor Name Here</h1>
+          <p class="text-primary font-semibold text-sm mt-1">Expertise / Subject Here</p>
+          <div class="flex items-center gap-1 mt-2">
+            <span class="material-symbols-outlined text-orange-400 text-lg fill-1">star</span>
+            <span class="font-bold text-slate-700 dark:text-slate-300">4.9</span>
+            <span class="text-slate-400 text-sm">(124 reviews)</span>
+          </div>
+        </div>
+        <div class="space-y-4 pt-6 border-t border-slate-100 dark:border-slate-800">
+          <div class="flex justify-between items-center">
+            <span class="text-slate-500 text-sm font-medium">Session Price</span>
+            <span class="text-2xl font-bold text-slate-900 dark:text-white">$0.00</span>
+          </div>
+          <div class="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
+            <span class="material-symbols-outlined text-primary">schedule</span>
+            <div class="text-xs">
+              <p class="font-bold">60-minute session</p>
+              <p class="text-slate-500">1-on-1 personalized guidance</p>
+            </div>
+          </div>
+          <a href="../mentor-booking/index.html"
+            class="w-full block text-center bg-primary text-white py-4 rounded-xl font-bold text-lg hover:bg-primary/90 transition-all active:scale-[0.98] shadow-lg shadow-primary/20">
+            Book a Session
+          </a>
+          <p class="text-center text-[11px] text-slate-400 uppercase tracking-widest font-semibold">Instant Confirmation
+          </p>
+        </div>
+      </div>
+    </section>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div class="lg:col-span-2 space-y-8">
+        <section
+          class="bg-white dark:bg-slate-900 rounded-2xl p-8 border border-slate-100 dark:border-slate-800 shadow-sm">
+          <div class="flex items-center gap-3 mb-6">
+            <div class="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+              <span class="material-symbols-outlined">person</span>
+            </div>
+            <h2 class="text-xl font-bold">About Me</h2>
+          </div>
+          <div class="prose dark:prose-invert max-w-none text-slate-600 dark:text-slate-400 leading-relaxed">
+            <p>Detailed bio will appear here. This space provides mentors with the opportunity to share their
+              professional journey, academic background, and personal motivation for teaching. It’s a place to establish
+              trust and build a connection with prospective students.</p>
+          </div>
+        </section>
+        <section
+          class="bg-white dark:bg-slate-900 rounded-2xl p-8 border border-slate-100 dark:border-slate-800 shadow-sm">
+          <div class="flex items-center gap-3 mb-6">
+            <div class="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+              <span class="material-symbols-outlined">psychology</span>
+            </div>
+            <h2 class="text-xl font-bold">Expertise</h2>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <span class="px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-lg text-sm font-medium">Core Topic 1</span>
+            <span class="px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-lg text-sm font-medium">Industry Best
+              Practices</span>
+            <span class="px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-lg text-sm font-medium">Advanced
+              Skillset</span>
+            <span class="px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-lg text-sm font-medium">Strategy &amp;
+              Planning</span>
+            <span class="px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-lg text-sm font-medium">Career
+              Development</span>
+          </div>
+        </section>
+        <section
+          class="bg-white dark:bg-slate-900 rounded-2xl p-8 border border-slate-100 dark:border-slate-800 shadow-sm">
+          <div class="flex items-center gap-3 mb-6">
+            <div class="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+              <span class="material-symbols-outlined">school</span>
+            </div>
+            <h2 class="text-xl font-bold">Mentorship Style</h2>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div
+              class="p-4 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30">
+              <div class="flex items-center gap-2 mb-2 font-bold text-sm">
+                <span class="material-symbols-outlined text-primary text-lg">videocam</span>
+                Online Sessions
+              </div>
+              <p class="text-sm text-slate-500">Available for remote video calls worldwide using our integrated
+                platform.</p>
+            </div>
+            <div
+              class="p-4 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30">
+              <div class="flex items-center gap-2 mb-2 font-bold text-sm">
+                <span class="material-symbols-outlined text-primary text-lg">location_on</span>
+                In-person Sessions
+              </div>
+              <p class="text-sm text-slate-500">Also available for face-to-face meetings in specific metropolitan areas.
+              </p>
+            </div>
+          </div>
+          <p class="mt-6 text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+            Description of how the mentor conducts sessions. This might include their approach to goal setting,
+            preferred tools (e.g., whiteboards, code sharing), and the overall vibe of their teaching (e.g., structured
+            vs. conversational).
+          </p>
+        </section>
+        <section>
+          <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-bold">What students say</h2>
+            <a class="text-primary text-sm font-bold hover:underline" href="#">View all reviews</a>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div
+              class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm">
+              <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
+                  <span class="material-symbols-outlined">person</span>
+                </div>
+                <div>
+                  <h4 class="text-sm font-bold">Alex Johnson</h4>
+                  <div class="flex text-orange-400">
+                    <span class="material-symbols-outlined text-xs fill-1">star</span>
+                    <span class="material-symbols-outlined text-xs fill-1">star</span>
+                    <span class="material-symbols-outlined text-xs fill-1">star</span>
+                    <span class="material-symbols-outlined text-xs fill-1">star</span>
+                    <span class="material-symbols-outlined text-xs fill-1">star</span>
+                  </div>
+                </div>
+              </div>
+              <p class="text-sm text-slate-500 italic">"The session was incredibly helpful. Mentor explained complex
+                concepts in a way that was very easy to grasp."</p>
+            </div>
+            <div
+              class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm">
+              <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
+                  <span class="material-symbols-outlined">person</span>
+                </div>
+                <div>
+                  <h4 class="text-sm font-bold">Sam River</h4>
+                  <div class="flex text-orange-400">
+                    <span class="material-symbols-outlined text-xs fill-1">star</span>
+                    <span class="material-symbols-outlined text-xs fill-1">star</span>
+                    <span class="material-symbols-outlined text-xs fill-1">star</span>
+                    <span class="material-symbols-outlined text-xs fill-1">star</span>
+                    <span class="material-symbols-outlined text-xs fill-1">star</span>
+                  </div>
+                </div>
+              </div>
+              <p class="text-sm text-slate-500 italic">"Exceeded my expectations. I left the call with a clear roadmap
+                for my career transition."</p>
+            </div>
+          </div>
+        </section>
+      </div>
+      <aside class="space-y-6">
+        <div
+          class="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-100 dark:border-slate-800 shadow-sm sticky top-24">
+          <h3 class="font-bold mb-4 flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary">analytics</span>
+            Profile Stats
+          </h3>
+          <div class="space-y-4">
+            <div class="flex justify-between items-center text-sm">
+              <span class="text-slate-500">Total sessions</span>
+              <span class="font-bold">450+</span>
+            </div>
+            <div class="flex justify-between items-center text-sm">
+              <span class="text-slate-500">Avg. response time</span>
+              <span class="font-bold">2 hours</span>
+            </div>
+            <div class="flex justify-between items-center text-sm">
+              <span class="text-slate-500">Experience</span>
+              <span class="font-bold">10+ Years</span>
+            </div>
+          </div>
+          <div class="mt-6 pt-6 border-t border-slate-100 dark:border-slate-800">
+            <p class="text-xs text-slate-400 mb-4">Share this profile</p>
+            <div class="flex gap-3">
+              <button
+                class="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-primary transition-colors">
+                <span class="material-symbols-outlined text-lg">share</span>
+              </button>
+              <button
+                class="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-primary transition-colors">
+                <span class="material-symbols-outlined text-lg">content_copy</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </main>
+  <footer class="bg-white dark:bg-background-dark border-t border-slate-200 dark:border-slate-800 py-12 mt-20">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div class="col-span-1 md:col-span-2">
+          <a href="/index.html" class="flex items-center gap-2 mb-6">
+            <div class="bg-primary text-white p-1.5 rounded-lg flex items-center justify-center">
+              <svg class="w-6 h-6" fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                <path
+                  d="M24 45.8096C19.6865 45.8096 15.4698 44.5305 11.8832 42.134C8.29667 39.7376 5.50128 36.3314 3.85056 32.3462C2.19985 28.361 1.76794 23.9758 2.60947 19.7452C3.451 15.5145 5.52816 11.6284 8.57829 8.5783C11.6284 5.52817 15.5145 3.45101 19.7452 2.60948C23.9758 1.76795 28.361 2.19986 32.3462 3.85057C36.3314 5.50129 39.7376 8.29668 42.134 11.8833C44.5305 15.4698 45.8096 19.6865 45.8096 24L24 24L24 45.8096Z"
+                  fill="currentColor"></path>
+              </svg>
+            </div>
+            <span class="text-xl font-bold tracking-tight">Tacliimi Learn</span>
+          </a>
+          <p class="text-slate-500 max-w-sm mb-6">
+            The world's leading community for personal and professional growth through expert mentorship.
+          </p>
+        </div>
+        <div>
+          <h4 class="font-bold mb-4 text-sm">Platform</h4>
+          <ul class="space-y-2 text-sm text-slate-500">
+            <li><a class="hover:text-primary transition-colors" href="/mentor-marketplace/index.html">Marketplace</a>
+            </li>
+            <li><a class="hover:text-primary transition-colors" href="/marketplace/">Courses</a></li>
+            <li><a class="hover:text-primary transition-colors" href="#">Success Stories</a></li>
+            <li><a class="hover:text-primary transition-colors" href="/become-instructor/">Become a Mentor</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="font-bold mb-4 text-sm">Support</h4>
+          <ul class="space-y-2 text-sm text-slate-500">
+            <li><a class="hover:text-primary transition-colors" href="#">Help Center</a></li>
+            <li><a class="hover:text-primary transition-colors" href="#">Safety Center</a></li>
+            <li><a class="hover:text-primary transition-colors" href="#">Terms of Service</a></li>
+            <li><a class="hover:text-primary transition-colors" href="#">Privacy Policy</a></li>
+          </ul>
+        </div>
+      </div>
+      <div
+        class="mt-12 pt-8 border-t border-slate-100 dark:border-slate-800 flex flex-col md:flex-row justify-between items-center gap-4">
+        <p class="text-xs text-slate-400">© 2024 Tacliimi Learn. All rights reserved.</p>
+        <div class="flex gap-6">
+          <a class="text-slate-400 hover:text-primary" href="#"><span
+              class="material-symbols-outlined text-lg">public</span></a>
+          <a class="text-slate-400 hover:text-primary" href="#"><span
+              class="material-symbols-outlined text-lg">chat</span></a>
+          <a class="text-slate-400 hover:text-primary" href="#"><span
+              class="material-symbols-outlined text-lg">share</span></a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+</body>
+
+</html>

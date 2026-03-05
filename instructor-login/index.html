@@ -49,23 +49,22 @@
                 <p class="text-slate-500 text-sm">Log in to manage your courses and students.</p>
             </div>
 
-            <form class="space-y-6"
-                onsubmit="event.preventDefault(); window.location.href='../instructor-dashboard/index.html';">
+            <form id="instructorLoginForm" class="space-y-6">
                 <div>
                     <label class="block text-sm font-semibold mb-2" for="email">Email Address</label>
                     <input
                         class="w-full bg-slate-50 border-slate-200 rounded-xl px-4 py-3.5 focus:ring-primary focus:border-primary transition-all text-slate-900 placeholder:text-slate-400"
-                        id="email" placeholder="example@gmail.com" type="email" value="instructor@tacliimi.com"
-                        required />
+                        id="email" placeholder="example@gmail.com" type="email" value="" required />
                 </div>
                 <div>
                     <div class="flex items-center justify-between mb-2">
                         <label class="block text-sm font-semibold" for="password">Password</label>
-                        <a href="#" class="text-xs text-primary font-semibold hover:underline">Forgot password?</a>
+                        <a href="../forgot-password/index.html"
+                            class="text-xs text-primary font-semibold hover:underline">Forgot password?</a>
                     </div>
                     <input
                         class="w-full bg-slate-50 border-slate-200 rounded-xl px-4 py-3.5 focus:ring-primary focus:border-primary transition-all text-slate-900 placeholder:text-slate-400"
-                        id="password" type="password" value="********" required />
+                        id="password" type="password" value="" required />
                 </div>
 
                 <button
@@ -74,6 +73,57 @@
                     Log In to Dashboard <span class="material-icons-round text-xl">arrow_forward</span>
                 </button>
             </form>
+
+            <script src="../tacliimi_db.js"></script>
+            <script>
+                // Prevent access if already logged in as instructor
+                const session = TacliimiDB.getCurrentSession();
+                if (session && session.role === 'instructor') {
+                    window.location.href = '../instructor-dashboard/index.html';
+                }
+
+                document.getElementById('instructorLoginForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
+
+                    const email = document.getElementById('email').value.trim();
+                    const password = document.getElementById('password').value;
+                    const btn = e.target.querySelector('button[type="submit"]');
+                    const originalText = btn.innerHTML;
+
+                    try {
+                        btn.innerText = 'Verifying...';
+
+                        // Enforce instructor role login
+                        const session = TacliimiDB.loginUser(email, password);
+
+                        if (session.role !== 'instructor') {
+                            TacliimiDB.logout();
+                            throw new Error("This account is not registered as an instructor.");
+                        }
+
+                        if (session) {
+                            btn.innerHTML = 'Success <span class="material-icons-round text-xl">check</span>';
+                            btn.classList.replace('bg-primary', 'bg-green-500');
+                            setTimeout(() => {
+                                window.location.href = '../instructor-dashboard/index.html';
+                            }, 500);
+                        }
+                    } catch (err) {
+                        btn.innerHTML = originalText;
+
+                        // Clear existing errors
+                        const oldErr = document.getElementById('login-error');
+                        if (oldErr) oldErr.remove();
+
+                        const errDiv = document.createElement('div');
+                        errDiv.id = 'login-error';
+                        errDiv.className = 'text-red-500 text-sm font-medium mt-2 p-3 bg-red-50 rounded-lg border border-red-100 flex items-center gap-2';
+                        errDiv.innerHTML = `<span class="material-icons-round text-lg">error_outline</span> ${err.message}`;
+
+                        e.target.insertBefore(errDiv, e.target.querySelector('button[type="submit"]'));
+                    }
+                });
+            </script>
 
             <div class="mt-8 text-center border-t border-slate-100 pt-8">
                 <p class="text-slate-500 text-sm">

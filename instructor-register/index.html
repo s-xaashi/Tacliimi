@@ -106,8 +106,7 @@
                     <h1 class="text-3xl font-extrabold mb-2">Become an Instructor</h1>
                     <p class="text-slate-500">Create your account to start building your first course.</p>
                 </div>
-                <form class="space-y-6"
-                    onsubmit="event.preventDefault(); window.location.href='../instructor-dashboard/index.html';">
+                <form id="instructorRegisterForm" class="space-y-6">
                     <div>
                         <label class="block text-sm font-semibold mb-2" for="fullname">Full Name</label>
                         <input
@@ -144,12 +143,70 @@
                             </div>
                         </div>
                     </div>
+                    <div>
+                        <label class="block text-sm font-semibold mb-2" for="password">Password</label>
+                        <input
+                            class="w-full bg-slate-50 border-slate-200 rounded-xl px-4 py-3.5 focus:ring-primary focus:border-primary transition-all text-slate-900 placeholder:text-slate-400"
+                            id="password" placeholder="Create a strong password" type="password" required
+                            minlength="6" />
+                    </div>
                     <button
                         class="w-full bg-primary hover:bg-purple-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/20 transition-all transform hover:-translate-y-0.5 mt-4"
                         type="submit">
                         Create Instructor Account
                     </button>
                 </form>
+
+                <script src="../tacliimi_db.js"></script>
+                <script>
+                    // Prevent access if already logged in as instructor
+                    const session = TacliimiDB.getCurrentSession();
+                    if (session && session.role === 'instructor') {
+                        window.location.href = '../instructor-dashboard/index.html';
+                    }
+
+                    document.getElementById('instructorRegisterForm').addEventListener('submit', (e) => {
+                        e.preventDefault();
+
+                        const fullname = document.getElementById('fullname').value.trim();
+                        const phone = document.getElementById('phone').value.trim();
+                        const email = document.getElementById('email').value.trim();
+                        const password = document.getElementById('password').value;
+                        const btn = e.target.querySelector('button[type="submit"]');
+                        const originalText = btn.innerHTML;
+
+                        try {
+                            btn.innerText = 'Creating Account...';
+
+                            // Register the instructor
+                            const session = TacliimiDB.registerUser({ fullName: fullname, email, password, role: 'instructor' });
+
+                            // Save extra fields like phone to their profile
+                            TacliimiDB.updateProfileInfo({ phone: phone });
+
+                            if (session) {
+                                btn.innerHTML = 'Account Created <span class="material-icons-round text-xl">check</span>';
+                                btn.classList.replace('bg-primary', 'bg-green-500');
+                                setTimeout(() => {
+                                    window.location.href = '../instructor-dashboard/index.html';
+                                }, 500);
+                            }
+                        } catch (err) {
+                            btn.innerHTML = originalText;
+
+                            // Clear existing errors
+                            const oldErr = document.getElementById('register-error');
+                            if (oldErr) oldErr.remove();
+
+                            const errDiv = document.createElement('div');
+                            errDiv.id = 'register-error';
+                            errDiv.className = 'text-red-500 text-sm font-medium mt-2 p-3 bg-red-50 rounded-lg border border-red-100 flex items-center gap-2';
+                            errDiv.innerHTML = `<span class="material-icons-round text-lg">error_outline</span> ${err.message}`;
+
+                            e.target.insertBefore(errDiv, e.target.querySelector('button[type="submit"]'));
+                        }
+                    });
+                </script>
                 <div class="mt-8 text-center border-t border-slate-100 pt-8">
                     <p class="text-slate-500 text-sm">
                         Already have an account?

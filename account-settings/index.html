@@ -11,6 +11,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
         rel="stylesheet" />
+    <script src="../tacliimi_db.js"></script>
     <script>
         tailwind.config = {
             darkMode: "class",
@@ -140,6 +141,14 @@
                         </a>
                     </div>
                 </div>
+                <!-- Logout Button -->
+                <div class="pt-4 pb-2 px-6 mt-4 border-t border-slate-200 dark:border-slate-800">
+                    <a onclick="TacliimiDB.logout(); window.location.href='../login-select/index.html';"
+                        class="flex items-center gap-3 px-6 py-3 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 transition-all cursor-pointer">
+                        <span class="material-symbols-outlined">logout</span>
+                        <span class="font-bold">Logout</span>
+                    </a>
+                </div>
             </div>
         </aside>
         <main class="flex-1 lg:ml-64 min-h-screen">
@@ -186,9 +195,12 @@
                                 <p class="text-sm text-slate-500 dark:text-slate-400 mt-1 mb-4">A high-quality photo
                                     helps mentors and students recognize you.</p>
                                 <div class="flex flex-wrap gap-3">
-                                    <button
-                                        class="px-5 py-2 bg-primary text-white hover:bg-purple-600 rounded-lg text-sm font-semibold transition-colors">Change
-                                        Photo</button>
+                                    <label
+                                        class="cursor-pointer px-5 py-2 bg-primary text-white hover:bg-purple-600 rounded-lg text-sm font-semibold transition-colors">
+                                        Change Photo
+                                        <input type="file" class="hidden" accept="image/png, image/jpeg, image/gif"
+                                            onchange="handleProfileUpload(event)" />
+                                    </label>
                                     <button
                                         class="px-5 py-2 text-slate-500 hover:text-red-500 dark:hover:text-red-400 text-sm font-medium transition-colors">Remove</button>
                                 </div>
@@ -402,7 +414,7 @@
                             <div class="flex gap-3 w-full sm:w-auto">
                                 <button
                                     class="flex-1 sm:flex-none px-6 py-2.5 text-slate-600 dark:text-slate-400 font-semibold hover:text-slate-900 dark:hover:text-white transition-colors border border-transparent">Discard</button>
-                                <button
+                                <button id="update-interests-btn"
                                     class="flex-1 sm:flex-none bg-primary hover:bg-purple-600 text-white px-8 py-2.5 rounded-xl font-bold shadow-lg shadow-primary/20 transition-all">
                                     Update Interests
                                 </button>
@@ -444,35 +456,49 @@
                                 </div>
                                 <div>
                                     <h3 class="text-lg font-bold text-slate-900 dark:text-white">Password</h3>
-                                    <p class="text-slate-500 dark:text-slate-400 text-sm">Last changed 3 months ago</p>
+                                    <p class="text-slate-500 dark:text-slate-400 text-sm">Update your password to stay
+                                        secure.</p>
                                 </div>
                             </div>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div class="col-span-1 md:col-span-2">
-                                    <label
-                                        class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Current
-                                        Password</label>
-                                    <input
-                                        class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all"
-                                        placeholder="Enter current password" type="password" />
+
+                            <div id="security-msg" class="hidden mb-4 p-3 rounded-lg text-sm font-medium"></div>
+
+                            <form id="security-form">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div class="col-span-1 md:col-span-2">
+                                        <label
+                                            class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Current
+                                            Password</label>
+                                        <input id="current-password"
+                                            class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all"
+                                            placeholder="Enter current password" type="password" required />
+                                    </div>
+                                    <div>
+                                        <label
+                                            class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">New
+                                            Password</label>
+                                        <input id="new-password"
+                                            class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all"
+                                            placeholder="Enter new password" type="password" required minlength="6" />
+                                    </div>
+                                    <div>
+                                        <label
+                                            class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Confirm
+                                            New Password</label>
+                                        <input id="confirm-new-password"
+                                            class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all"
+                                            placeholder="Repeat new password" type="password" required minlength="6" />
+                                    </div>
                                 </div>
-                                <div>
-                                    <label
-                                        class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">New
-                                        Password</label>
-                                    <input
-                                        class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all"
-                                        placeholder="Enter new password" type="password" />
+                                <div
+                                    class="pt-8 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row justify-end gap-4 mt-6">
+                                    <button
+                                        class="bg-primary hover:bg-purple-600 text-white px-10 py-3 rounded-xl font-bold shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2"
+                                        type="submit">
+                                        Update Password
+                                    </button>
                                 </div>
-                                <div>
-                                    <label
-                                        class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Confirm
-                                        New Password</label>
-                                    <input
-                                        class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all"
-                                        placeholder="Repeat new password" type="password" />
-                                </div>
-                            </div>
+                            </form>
                         </div>
                     </div>
                 </div>
@@ -625,13 +651,21 @@
         // Initialize default state if empty
         function getAppState() {
             const saved = localStorage.getItem(APP_STATE_KEY);
-            if (saved) return JSON.parse(saved);
-
-            return {
+            let state = saved ? JSON.parse(saved) : {
                 displayName: 'Student Name',
                 fullName: 'Alex Thompson',
                 selectedInterests: ['AI', 'Languages', 'Design']
             };
+
+            const session = TacliimiDB.getCurrentSession();
+            if (session) {
+                state.displayName = session.displayName || state.displayName;
+                state.fullName = session.fullName || state.fullName;
+                if (session.selectedInterests) {
+                    state.selectedInterests = session.selectedInterests;
+                }
+            }
+            return state;
         }
 
         function saveAppState(state) {
@@ -640,20 +674,32 @@
 
         // Apply state to DOM elements
         function applyStateToDOM() {
+            // Apply Session Info and State
+            const session = TacliimiDB.getCurrentSession();
+            // Optional Session Guard: uncomment if needed. For now just show name.
+            // if (!session) window.location.href = '../login/'; 
+
             const state = getAppState();
+            const displayName = session ? session.displayName : state.displayName;
+            const fallbackFullName = session ? session.fullName : state.fullName;
 
             // Update all display name instances
             const displayNames = document.querySelectorAll('.user-display-name');
             displayNames.forEach(el => {
-                el.textContent = state.displayName;
+                el.textContent = displayName || fallbackFullName;
             });
 
             // Update form inputs if they exist (Personal Info Page)
             const displayNameInput = document.getElementById('display-name');
-            if (displayNameInput) displayNameInput.value = state.displayName;
+            if (displayNameInput) displayNameInput.value = displayName || fallbackFullName;
 
             const fullNameInput = document.getElementById('full-name');
-            if (fullNameInput) fullNameInput.value = state.fullName;
+            if (fullNameInput) fullNameInput.value = fallbackFullName;
+
+            if (session) {
+                const emailInput = document.getElementById('email');
+                if (emailInput) emailInput.value = session.email;
+            }
 
             // Update Learning Interests
             updateLearningInterestsUI(state.selectedInterests);
@@ -719,6 +765,12 @@
                     state.displayName = newDisplayName || state.displayName;
                     state.fullName = newFullName || state.fullName;
 
+                    // Save to DB session directly
+                    TacliimiDB.updateProfileInfo({
+                        displayName: state.displayName,
+                        fullName: state.fullName
+                    });
+
                     saveAppState(state);
                     applyStateToDOM();
 
@@ -727,6 +779,39 @@
                     const originalText = btn.innerHTML;
                     btn.innerHTML = `<span class="material-symbols-outlined">check</span> Saved`;
                     setTimeout(() => btn.innerHTML = originalText, 2000);
+                });
+            }
+
+            // Bind Security Form Submission
+            const securityForm = document.getElementById('security-form');
+            if (securityForm) {
+                securityForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const msgDiv = document.getElementById('security-msg');
+                    msgDiv.className = 'hidden mb-4 p-3 rounded-lg text-sm font-medium';
+
+                    const currentPassword = document.getElementById('current-password').value;
+                    const newPassword = document.getElementById('new-password').value;
+                    const confirmPassword = document.getElementById('confirm-new-password').value;
+
+                    if (newPassword !== confirmPassword) {
+                        msgDiv.textContent = 'New passwords do not match.';
+                        msgDiv.classList.add('bg-red-50', 'text-red-600', 'dark:bg-red-500/10', 'dark:text-red-400');
+                        msgDiv.classList.remove('hidden');
+                        return;
+                    }
+
+                    try {
+                        TacliimiDB.changePassword(currentPassword, newPassword);
+                        msgDiv.textContent = 'Password updated successfully.';
+                        msgDiv.classList.add('bg-green-50', 'text-green-600', 'dark:bg-green-500/10', 'dark:text-green-400');
+                        msgDiv.classList.remove('hidden');
+                        securityForm.reset();
+                    } catch (err) {
+                        msgDiv.textContent = err.message;
+                        msgDiv.classList.add('bg-red-50', 'text-red-600', 'dark:bg-red-500/10', 'dark:text-red-400');
+                        msgDiv.classList.remove('hidden');
+                    }
                 });
             }
 
@@ -757,8 +842,36 @@
                     applyStateToDOM();
                 });
             });
+            // Bind Update Interests Button
+            const updateInterBtn = document.getElementById('update-interests-btn');
+            if (updateInterBtn) {
+                updateInterBtn.addEventListener('click', () => {
+                    const state = getAppState();
+                    TacliimiDB.updateProfileInfo({ selectedInterests: state.selectedInterests });
+
+                    const ogText = updateInterBtn.innerText;
+                    updateInterBtn.innerText = 'Saved!';
+                    setTimeout(() => updateInterBtn.innerText = ogText, 2000);
+                });
+            }
         });
 
+    </script>
+    <script>
+        function handleProfileUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                try {
+                    const objectUrl = URL.createObjectURL(file);
+                    TacliimiDB.updateProfileImage(objectUrl);
+                    // Force the actual image element in this page to update since the DOM injection only works for specific ones
+                    const profileImg = document.querySelector('.w-28.h-28 img');
+                    if (profileImg) profileImg.src = objectUrl;
+                } catch (err) {
+                    alert(err.message);
+                }
+            }
+        }
     </script>
 </body>
 

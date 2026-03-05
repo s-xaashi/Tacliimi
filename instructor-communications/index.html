@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -45,6 +45,10 @@
             pointer-events: none;
         }
     </style>
+    <script src="../tacliimi_db.js"></script>
+    <script>
+        if (!TacliimiDB.getCurrentSession()) window.location.href = '../login/index.html';
+    </script>
 </head>
 
 <body
@@ -177,7 +181,7 @@
 </div>
 </div>
 <footer class="mt-8 py-6 border-t border-slate-200 dark:border-slate-800 text-center">
-<p class="text-[10px] text-slate-400 font-mono uppercase tracking-widest">Instructor Communication Hub © Tacliimi Learn</p>
+<p class="text-[10px] text-slate-400 font-mono uppercase tracking-widest">Instructor Communication Hub Â© Tacliimi Learn</p>
 <div class="flex items-center justify-center gap-4 mt-2 text-xs text-slate-500">
 <span>Network Status: <span class="text-emerald-500 font-medium uppercase">Secured</span></span>
 <span class="text-slate-300 dark:text-slate-700">|</span>

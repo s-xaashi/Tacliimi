@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -45,6 +45,10 @@
             pointer-events: none;
         }
     </style>
+    <script src="../tacliimi_db.js"></script>
+    <script>
+        if (!TacliimiDB.getCurrentSession()) window.location.href = '../login/index.html';
+    </script>
 </head>
 
 <body
@@ -178,12 +182,12 @@
                 <footer class="mt-24 py-8 border-t border-slate-200 dark:border-slate-800 text-center">
                     <div class="flex items-center justify-center gap-6 text-sm text-slate-500">
                         <a class="hover:text-primary transition-colors" href="#">Instructor Guide</a>
-                        <span class="text-slate-300 dark:text-slate-700">•</span>
+                        <span class="text-slate-300 dark:text-slate-700">â€¢</span>
                         <a class="hover:text-primary transition-colors" href="#">Support Center</a>
-                        <span class="text-slate-300 dark:text-slate-700">•</span>
+                        <span class="text-slate-300 dark:text-slate-700">â€¢</span>
                         <a class="hover:text-primary transition-colors" href="#">Teaching Policy</a>
                     </div>
-                    <p class="mt-4 text-xs text-slate-400 uppercase tracking-widest">Tacliimi Learn © 2024</p>
+                    <p class="mt-4 text-xs text-slate-400 uppercase tracking-widest">Tacliimi Learn Â© 2024</p>
                 </footer>
             </div>
 

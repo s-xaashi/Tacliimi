@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Reset Password | Tacliimi Learn</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script src="../tacliimi_db.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#4F46E5",
+                        "background-light": "#F9FAFB",
+                        "background-dark": "#111827",
+                    },
+                    fontFamily: {
+                        display: ["Inter", "sans-serif"],
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.5rem",
+                    },
+                },
+            },
+        };
+    </script>
+    <style type="text/tailwindcss">
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .bg-pattern {
+            background-color: #4f46e5;
+            background-image: radial-gradient(#ffffff 1px, transparent 1px);
+            background-size: 20px 20px;
+            opacity: 0.1;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark min-h-screen flex items-center justify-center p-4">
+    <button
+        class="fixed top-6 right-6 p-2 rounded-full bg-white dark:bg-gray-800 shadow-md text-gray-600 dark:text-gray-300 hover:scale-110 transition-transform"
+        onclick="document.documentElement.classList.toggle('dark')">
+        <span class="material-icons-outlined">dark_mode</span>
+    </button>
+    <main
+        class="w-full max-w-6xl bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row min-h-[700px]">
+        <section class="hidden md:flex md:w-1/2 relative bg-primary items-center justify-center p-12 overflow-hidden">
+            <div class="absolute inset-0 bg-pattern"></div>
+            <div class="relative z-10 text-white max-w-md">
+                <div
+                    class="mb-8 inline-flex items-center space-x-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full border border-white/20">
+                    <span class="material-icons-outlined text-white">school</span>
+                    <span class="font-semibold tracking-wide uppercase text-sm">Tacliimi Learn</span>
+                </div>
+                <h1 class="text-5xl font-bold leading-tight mb-6">Empowering institutions, inspiring students.</h1>
+                <p class="text-indigo-100 text-lg mb-8 leading-relaxed">
+                    Join thousands of instructors and students in a seamless multi-institutional learning experience
+                    designed for the future of education.
+                </p>
+                <div class="grid grid-cols-2 gap-6 pt-6 border-t border-indigo-400/30">
+                    <div class="flex items-center space-x-3">
+                        <span class="material-icons-outlined text-indigo-200">verified_user</span>
+                        <span class="text-sm font-medium">Secure Access</span>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <span class="material-icons-outlined text-indigo-200">public</span>
+                        <span class="text-sm font-medium">Global Network</span>
+                    </div>
+                </div>
+            </div>
+            <div class="absolute -bottom-16 -left-16 w-64 h-64 bg-indigo-400/20 rounded-full blur-3xl"></div>
+            <div class="absolute -top-16 -right-16 w-80 h-80 bg-white/10 rounded-full blur-3xl"></div>
+        </section>
+        <section class="w-full md:w-1/2 p-8 md:p-16 flex flex-col justify-center">
+            <div class="max-w-md mx-auto w-full">
+                <div class="md:hidden flex items-center space-x-2 mb-8 text-primary">
+                    <span class="material-icons-outlined text-3xl">school</span>
+                    <span class="text-2xl font-bold tracking-tight">Tacliimi Learn</span>
+                </div>
+                <div class="mb-10 text-center md:text-left">
+                    <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Reset Password</h2>
+                    <p class="text-gray-500 dark:text-gray-400">Enter your new password below.</p>
+                </div>
+                <div id="reset-error"
+                    class="hidden text-sm text-red-600 bg-red-50 dark:bg-red-900/30 dark:text-red-400 p-3 rounded-lg mb-4">
+                </div>
+                <div id="reset-success"
+                    class="hidden text-sm text-green-600 bg-green-50 dark:bg-green-900/30 dark:text-green-400 p-3 rounded-lg mb-4">
+                </div>
+                <form id="reset-form" class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5"
+                            for="password">New Password</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                                <span class="material-icons-outlined text-xl">lock</span>
+                            </span>
+                            <input
+                                class="block w-full pl-10 pr-12 py-3 rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-primary focus:border-primary transition-all sm:text-sm"
+                                id="password" name="password" placeholder="••••••••" required="" type="password" />
+                            <button
+                                class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                                type="button"
+                                onclick="const p = document.getElementById('password'); p.type = p.type === 'password' ? 'text' : 'password';">
+                                <span class="material-icons-outlined text-xl">visibility_off</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5"
+                            for="confirm-password">Confirm Password</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                                <span class="material-icons-outlined text-xl">lock</span>
+                            </span>
+                            <input
+                                class="block w-full pl-10 pr-12 py-3 rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-primary focus:border-primary transition-all sm:text-sm"
+                                id="confirm-password" name="confirm-password" placeholder="••••••••" required=""
+                                type="password" />
+                            <button
+                                class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                                type="button"
+                                onclick="const p = document.getElementById('confirm-password'); p.type = p.type === 'password' ? 'text' : 'password';">
+                                <span class="material-icons-outlined text-xl">visibility_off</span>
+                            </button>
+                        </div>
+                    </div>
+                    <button
+                        class="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-primary hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all duration-200 transform active:scale-[0.98]"
+                        type="submit">
+                        Reset Password
+                    </button>
+                </form>
+                <p class="mt-10 text-center text-sm text-gray-600 dark:text-gray-400">
+                    <a class="font-bold text-primary hover:text-indigo-500 transition-colors"
+                        href="../login/index.html">Back to Login</a>
+                </p>
+                <div
+                    class="mt-12 pt-8 border-t border-gray-100 dark:border-gray-800 flex flex-col items-center space-y-4">
+                    <div class="flex items-center space-x-1.5 text-xs text-gray-400">
+                        <span class="material-icons-outlined text-sm">shield</span>
+                        <span>Secure 256-bit SSL encrypted connection</span>
+                    </div>
+                    <div class="flex space-x-4 text-xs font-medium text-gray-400">
+                        <a class="hover:text-gray-600 dark:hover:text-gray-300" href="#">Help Center</a>
+                        <span>•</span>
+                        <a class="hover:text-gray-600 dark:hover:text-gray-300" href="#">Privacy Policy</a>
+                        <span>•</span>
+                        <a class="hover:text-gray-600 dark:hover:text-gray-300" href="#">Terms</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Session guard
+            const session = TacliimiDB.getCurrentSession();
+            if (session) {
+                window.location.href = session.role === 'instructor' ? '/instructor-dashboard/' : '/student-dashboard/';
+                return;
+            }
+
+            const resetForm = document.getElementById('reset-form');
+            const errorDiv = document.getElementById('reset-error');
+            const successDiv = document.getElementById('reset-success');
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+
+            if (!token) {
+                if (errorDiv) {
+                    errorDiv.textContent = "Invalid or missing reset token.";
+                    errorDiv.classList.remove('hidden');
+                }
+            }
+
+            if (resetForm) {
+                resetForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    errorDiv.classList.add('hidden');
+                    successDiv.classList.add('hidden');
+
+                    if (!token) {
+                        errorDiv.textContent = "Cannot reset: missing token.";
+                        errorDiv.classList.remove('hidden');
+                        return;
+                    }
+
+                    const password = document.getElementById('password').value;
+                    const confirmPassword = document.getElementById('confirm-password').value;
+
+                    if (password !== confirmPassword) {
+                        errorDiv.textContent = "Passwords do not match.";
+                        errorDiv.classList.remove('hidden');
+                        return;
+                    }
+
+                    try {
+                        const user = TacliimiDB.applyPasswordReset(token, password);
+                        successDiv.textContent = "Password reset successful! Logging you in...";
+                        successDiv.classList.remove('hidden');
+
+                        setTimeout(() => {
+                            window.location.href = user.role === 'instructor' ? '/instructor-dashboard/' : '/student-dashboard/';
+                        }, 1000);
+
+                    } catch (err) {
+                        errorDiv.textContent = err.message;
+                        errorDiv.classList.remove('hidden');
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -654,14 +654,17 @@ function renderQuizQuestions() {
         let optionsHtml = '';
         q.options.forEach((opt, oIdx) => {
             optionsHtml += `
-                <div class="flex items-center gap-3 group">
-                <input class="text-accent focus:ring-accent w-5 h-5 border-slate-300"
-                    name="correct-answer-${qIdx}" type="radio" onchange="setQuizCorrectAnswer(${qIdx}, ${oIdx})" ${opt.correct ? 'checked' : ''} />
-                <input
-                    class="flex-1 rounded-lg border-slate-200 dark:border-slate-700 dark:bg-slate-800 text-sm py-2 quiz-opt-input"
-                    type="text" placeholder="Option text..." value="${opt.text}" data-qidx="${qIdx}" data-oidx="${oIdx}" />
-                <button onclick="removeQuizOption(${qIdx}, ${oIdx})" class="text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition"><span class="material-symbols-outlined text-sm">close</span></button>
-            </div>`;
+                <div class="flex items-center gap-3 group p-2 border border-slate-100 dark:border-slate-800 rounded-lg hover:border-primary/30 transition-colors">
+                    <label class="flex items-center gap-2 cursor-pointer shrink-0" title="Select as correct answer">
+                        <input class="form-radio text-emerald-500 focus:ring-emerald-500 w-5 h-5 border-slate-300 cursor-pointer"
+                            name="correct-answer-${qIdx}" type="radio" onchange="setQuizCorrectAnswer(${qIdx}, ${oIdx})" ${opt.correct ? 'checked' : ''} />
+                        <span class="text-xs font-bold select-none ${opt.correct ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'}">Correct?</span>
+                    </label>
+                    <input
+                        class="flex-1 rounded-lg border-slate-200 dark:border-slate-700 dark:bg-slate-800 text-sm py-2 quiz-opt-input focus:ring-primary focus:border-primary"
+                        type="text" placeholder="Option text..." value="${opt.text}" data-qidx="${qIdx}" data-oidx="${oIdx}" />
+                    <button onclick="removeQuizOption(${qIdx}, ${oIdx})" class="text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition shrink-0"><span class="material-symbols-outlined text-sm">close</span></button>
+                </div>`;
         });
 
         html += `
@@ -887,7 +890,16 @@ function publishCourse() {
             duration: '0h',
             isBestseller: false,
             previewVideo: courseDraft.video?.previewUrl || courseDraft.video?.name || '',
-            curriculum: courseDraft.curriculum || []
+            curriculum: courseDraft.curriculum || [],
+            sections: (courseDraft.curriculum || []).map(sec => ({
+                title: sec.title || 'Section',
+                lessons: (sec.items || []).map(item => ({
+                    title: item.title || 'Untitled Lesson',
+                    video: item.video || null,
+                    quizzes: item.quizzes || [],
+                    resources: item.resources || []
+                }))
+            }))
         };
         if (typeof TacliimiDB !== 'undefined') {
             TacliimiDB.addCourse(newCourse);

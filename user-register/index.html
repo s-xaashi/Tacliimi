@@ -12,6 +12,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
         rel="stylesheet" />
+    <script src="../tacliimi_db.js"></script>
     <script>
         tailwind.config = {
             darkMode: "class",
@@ -122,8 +123,11 @@
                             continue with email</span>
                     </div>
                 </div>
-                <form onsubmit="event.preventDefault(); window.location.href='../student-dashboard/index.html';"
-                    class="space-y-6">
+                <div id="register-error"
+                    class="hidden text-sm text-red-600 bg-red-50 dark:bg-red-900/30 dark:text-red-400 p-3 rounded-lg mb-4">
+                </div>
+                <form id="register-form" class="space-y-6">
+                    <input type="hidden" id="role" name="role" value="student">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5"
                             for="fullname">Full Name</label>
@@ -160,7 +164,8 @@
                                 id="password" name="password" placeholder="••••••••" required="" type="password" />
                             <button
                                 class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                                type="button">
+                                type="button"
+                                onclick="const p = document.getElementById('password'); p.type = p.type === 'password' ? 'text' : 'password';">
                                 <span class="material-icons-outlined text-xl">visibility_off</span>
                             </button>
                         </div>
@@ -202,6 +207,50 @@
     </main>
     <div class="fixed top-0 left-0 -z-10 w-1/2 h-full bg-indigo-50 dark:bg-gray-950/50 hidden lg:block"></div>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check url for role context
+            const urlParams = new URLSearchParams(window.location.search);
+            const roleInput = document.getElementById('role');
+            if (urlParams.get('role') === 'instructor') {
+                roleInput.value = 'instructor';
+                const submitBtn = document.querySelector('button[type="submit"]');
+                if (submitBtn) submitBtn.textContent = 'Create Instructor Account';
+                const titleHeading = document.querySelector('h2');
+                if (titleHeading) titleHeading.textContent = 'Apply as an Instructor';
+            }
+
+            // Session guard
+            const session = TacliimiDB.getCurrentSession();
+            if (session) {
+                window.location.href = session.role === 'instructor' ? '/instructor-dashboard/' : '/student-dashboard/';
+                return;
+            }
+
+            const registerForm = document.getElementById('register-form');
+            const errorDiv = document.getElementById('register-error');
+
+            if (registerForm) {
+                registerForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    errorDiv.classList.add('hidden');
+
+                    const fullName = document.getElementById('fullname').value;
+                    const email = document.getElementById('email').value;
+                    const password = document.getElementById('password').value;
+                    const role = document.getElementById('role').value;
+
+                    try {
+                        const user = TacliimiDB.registerUser({ fullName, email, password, role });
+                        window.location.href = user.role === 'instructor' ? '/instructor-dashboard/' : '/student-dashboard/';
+                    } catch (err) {
+                        errorDiv.textContent = err.message;
+                        errorDiv.classList.remove('hidden');
+                    }
+                });
+            }
+        });
+    </script>
 </body>
 
 </html>

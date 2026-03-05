@@ -4,6 +4,9 @@
 const TACLIIMI_DB_KEY = 'tacliimi_courses';
 const TACLIIMI_ENROLLED_KEY = 'tacliimi_enrolled';
 const TACLIIMI_WISHLIST_KEY = 'tacliimi_wishlist';
+const TACLIIMI_USERS_KEY = 'tacliimi_users';
+const TACLIIMI_SESSION_KEY = 'tacliimi_session';
+const TACLIIMI_RESETS_KEY = 'tacliimi_password_resets';
 
 const defaultCourses = [
     {
@@ -95,6 +98,12 @@ class TacliimiDB {
         if (!localStorage.getItem(TACLIIMI_ENROLLED_KEY)) {
             localStorage.setItem(TACLIIMI_ENROLLED_KEY, JSON.stringify([]));
         }
+        if (!localStorage.getItem(TACLIIMI_USERS_KEY)) {
+            localStorage.setItem(TACLIIMI_USERS_KEY, JSON.stringify([]));
+        }
+        if (!localStorage.getItem(TACLIIMI_RESETS_KEY)) {
+            localStorage.setItem(TACLIIMI_RESETS_KEY, JSON.stringify([]));
+        }
         if (!localStorage.getItem(TACLIIMI_WISHLIST_KEY)) {
             // Check legacy wishlist key used in earlier version
             const legacyWishlist = localStorage.getItem('tacliimi_wishlist');
@@ -178,6 +187,7 @@ class TacliimiDB {
             wishlist.push(courseId);
             localStorage.setItem(TACLIIMI_WISHLIST_KEY, JSON.stringify(wishlist));
         }
+        return true;
     }
 
     static removeFromWishlist(courseId) {
@@ -199,7 +209,497 @@ class TacliimiDB {
             return true;
         }
     }
+
+    // ==========================================
+    // AUTHENTICATION & USERS
+    // ==========================================
+
+    /**
+     * Helper to simulate hashing (for demonstration purposes)
+     */
+    static _hashPassword(password) {
+        // In a real app this would use bcrypt/argon2.
+        // For the frontend simulator, a basic base64 or custom string shift is enough to "hash" it.
+        return btoa(password + "_tacliimi_salt");
+    }
+
+    static getAllUsers() {
+        this.init();
+        return JSON.parse(localStorage.getItem(TACLIIMI_USERS_KEY)) || [];
+    }
+
+    static saveUsers(users) {
+        localStorage.setItem(TACLIIMI_USERS_KEY, JSON.stringify(users));
+    }
+
+    /**
+     * Registers a new user. Throws error if email already exists.
+     */
+    static registerUser(userData) {
+        const users = this.getAllUsers();
+        if (users.find(u => u.email === userData.email)) {
+            throw new Error("Email is already registered.");
+        }
+
+        const newUser = {
+            id: 'user_' + Date.now().toString(36) + Math.random().toString(36).substr(2),
+            fullName: userData.fullName || '',
+            displayName: userData.displayName || userData.fullName,
+            email: userData.email,
+            passwordHash: this._hashPassword(userData.password),
+            role: userData.role || 'student', // 'student' or 'instructor'
+            profileImage: null,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        };
+
+        users.push(newUser);
+        this.saveUsers(users);
+
+        // Auto-login after registration
+        this._createSession(newUser);
+        return newUser;
+    }
+
+    /**
+     * Log in a user. Strictly validates email and password constraints.
+     */
+    static loginUser(email, password) {
+        const users = this.getAllUsers();
+        const user = users.find(u => u.email === email);
+
+        if (!user) {
+            throw new Error("Account not found");
+        }
+
+        if (user.passwordHash !== this._hashPassword(password)) {
+            throw new Error("Incorrect password");
+        }
+
+        this._createSession(user);
+        return user;
+    }
+
+    static logout() {
+        localStorage.removeItem(TACLIIMI_SESSION_KEY);
+    }
+
+    static _createSession(user) {
+        const session = {
+            userId: user.id,
+            role: user.role,
+            email: user.email,
+            displayName: user.displayName,
+            expires: Date.now() + 24 * 60 * 60 * 1000 // 24 hours
+        };
+        localStorage.setItem(TACLIIMI_SESSION_KEY, JSON.stringify(session));
+    }
+
+    static getCurrentSession() {
+        const sessionData = localStorage.getItem(TACLIIMI_SESSION_KEY);
+        if (!sessionData) return null;
+
+        const session = JSON.parse(sessionData);
+        if (Date.now() > session.expires) {
+            this.logout();
+            return null;
+        }
+        return session;
+    }
+
+    static getCurrentUser() {
+        const session = this.getCurrentSession();
+        if (!session) return null;
+
+        const users = this.getAllUsers();
+        return users.find(u => u.id === session.userId) || null;
+    }
+
+    /**
+     * Change user password (for logged-in users inside Account Settings)
+     */
+    static changePassword(currentPassword, newPassword) {
+        const session = this.getCurrentSession();
+        if (!session) throw new Error("Must be logged in to change password.");
+
+        const users = this.getAllUsers();
+        let userIndex = users.findIndex(u => u.id === session.userId);
+
+        if (userIndex === -1) throw new Error("User not found.");
+
+        let user = users[userIndex];
+        if (user.passwordHash !== this._hashPassword(currentPassword)) {
+            throw new Error("Current password is incorrect.");
+        }
+
+        user.passwordHash = this._hashPassword(newPassword);
+        user.updatedAt = new Date().toISOString();
+        users[userIndex] = user;
+        this.saveUsers(users);
+        return true;
+    }
+
+    // ==========================================
+    // PASSWORD RESET (Forgot Password Flow)
+    // ==========================================
+    static createResetToken(email) {
+        const users = this.getAllUsers();
+        const user = users.find(u => u.email === email);
+        if (!user) {
+            throw new Error("No account is registered with this email.");
+        }
+
+        let resets = JSON.parse(localStorage.getItem(TACLIIMI_RESETS_KEY)) || [];
+        // Clean out older tokens for this user
+        resets = resets.filter(r => r.userId !== user.id);
+
+        const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+        const resetData = {
+            token,
+            userId: user.id,
+            expires: Date.now() + 10 * 60 * 1000 // 10 minutes from now
+        };
+
+        resets.push(resetData);
+        localStorage.setItem(TACLIIMI_RESETS_KEY, JSON.stringify(resets));
+        return token;
+    }
+
+    static verifyResetToken(token) {
+        let resets = JSON.parse(localStorage.getItem(TACLIIMI_RESETS_KEY)) || [];
+        const resetData = resets.find(r => r.token === token);
+
+        if (!resetData) return false;
+        if (Date.now() > resetData.expires) {
+            // Expired, clear it out
+            resets = resets.filter(r => r.token !== token);
+            localStorage.setItem(TACLIIMI_RESETS_KEY, JSON.stringify(resets));
+            return false;
+        }
+        return resetData;
+    }
+
+    static applyPasswordReset(token, newPassword) {
+        const resetData = this.verifyResetToken(token);
+        if (!resetData) {
+            throw new Error("Invalid or expired reset token.");
+        }
+
+        const users = this.getAllUsers();
+        const userIndex = users.findIndex(u => u.id === resetData.userId);
+
+        if (userIndex === -1) throw new Error("User associated with this token no longer exists.");
+
+        let user = users[userIndex];
+        user.passwordHash = this._hashPassword(newPassword);
+        user.updatedAt = new Date().toISOString();
+        users[userIndex] = user;
+        this.saveUsers(users);
+
+        // Remove token now that it is consumed
+        let resets = JSON.parse(localStorage.getItem(TACLIIMI_RESETS_KEY)) || [];
+        resets = resets.filter(r => r.token !== token);
+        localStorage.setItem(TACLIIMI_RESETS_KEY, JSON.stringify(resets));
+
+        // Auto login user after successful reset
+        this._createSession(user);
+        return user;
+    }
+
+    // ==========================================
+    // GLOBAL PROFILE HELPER
+    // ==========================================
+    static updateProfileInfo(info) {
+        const session = this.getCurrentSession();
+        if (!session) return;
+
+        const users = this.getAllUsers();
+        let userIndex = users.findIndex(u => u.id === session.userId);
+        if (userIndex !== -1) {
+            users[userIndex] = { ...users[userIndex], ...info };
+            this.saveUsers(users);
+        }
+
+        Object.assign(session, info);
+        localStorage.setItem(TACLIIMI_SESSION_KEY, JSON.stringify(session));
+
+        this.applyGlobalProfile();
+    }
+
+    static updateProfileImage(imageUrl) {
+        const session = this.getCurrentSession();
+        if (!session) throw new Error("Must be logged in.");
+
+        const users = this.getAllUsers();
+        let userIndex = users.findIndex(u => u.id === session.userId);
+        if (userIndex !== -1) {
+            users[userIndex].profileImage = imageUrl;
+            this.saveUsers(users);
+        }
+
+        // Also update session
+        session.profileImage = imageUrl;
+        localStorage.setItem(TACLIIMI_SESSION_KEY, JSON.stringify(session));
+
+        // Immediately apply
+        this.applyGlobalProfile();
+    }
+
+    static applyGlobalProfile() {
+        const session = this.getCurrentSession();
+        if (!session) return;
+
+        // Common classes in Tacliimi for name displays
+        const nameElements = document.querySelectorAll('.text-right p.font-semibold, .user-display-name, h1.text-3xl.font-bold, .profile-name');
+
+        nameElements.forEach(el => {
+            if (el.tagName === 'H1' && el.textContent.includes('Welcome back')) {
+                // Keep the emoji structure
+                el.innerText = `Welcome back, ${session.displayName || session.fullName}! 👋`;
+            } else if (!el.classList.contains('text-3xl')) {
+                // Regular names
+                if (el.closest('.text-right') || el.classList.contains('user-display-name') || el.classList.contains('profile-name')) {
+                    el.innerText = session.displayName || session.fullName || 'Learner';
+                }
+            }
+        });
+
+        const idElements = document.querySelectorAll('[data-role="profile-meta"]');
+        idElements.forEach(el => {
+            const txt = (el.innerText || '').toLowerCase();
+            if (txt.includes('id:') || txt.includes('account') || txt.includes('student') || txt.includes('instructor')) {
+                el.innerText = session.role === 'instructor' ? "Instructor Account" : "Student Account";
+            }
+        });
+
+        // Profile pictures
+        if (session.profileImage || session.profilePicture) {
+            const imgSrc = session.profileImage || session.profilePicture;
+            // Use safe data attributes instead of bracketed tailwind selectors
+            const imgElements = document.querySelectorAll('[data-role="profile-image"] img, img.profile-picture-img');
+            imgElements.forEach(img => {
+                img.src = imgSrc;
+            });
+
+            // Also create image inside empty placeholders
+            const emptyPlaceholders = document.querySelectorAll('[data-role="profile-image"], .profile-image-container');
+            emptyPlaceholders.forEach(el => {
+                if (!el.querySelector('img')) {
+                    el.innerHTML = `<img src="${imgSrc}" class="w-full h-full object-cover rounded-full" />`;
+                    el.classList.add('overflow-hidden');
+                }
+            });
+        }
+
+        // Public page navigation swap
+        // Instead of replacing a whole container and risking destroying sibling links, we will find the specific 
+        // login/signup elements or placeholder account circles and replace them with a new container.
+        const authElements = Array.from(document.querySelectorAll('nav, header')).flatMap(parent => {
+            return Array.from(parent.querySelectorAll('a, button, div')).filter(el => {
+                const href = el.getAttribute('href') || el.getAttribute('onclick') || '';
+                const html = el.innerHTML || '';
+
+                // Exclude mobile menus and large wrapper divs
+                if (el.id === 'mobile-menu' || el.closest('#mobile-menu') || el.children.length > 3) return false;
+
+                const isLoginLink = (href.includes('/login/') && !href.includes('instructor-login') && !href.includes('login-select')) || href.includes('user-login');
+                const isPlaceholderProfile = (html.includes('account_circle') || html.includes('Student Name') || html.includes('Instructor account') || html.includes('ID: ') || html.includes('JD') || html.includes('User Profile') || html.includes('Student Profile')) &&
+                    (el.tagName === 'DIV' && (el.classList.contains('rounded-full') || html.includes('Student Name') || html.includes('Instructor account')));
+
+                return isLoginLink || isPlaceholderProfile;
+            });
+        });
+
+        // Group auth elements by parent so we can replace them collectively per-navbar
+        const parentMap = new Map();
+        authElements.forEach(el => {
+            // Avoid selecting the injected profile again if running multiple times
+            if (el.closest('.tacliimi-injected-profile')) return;
+            if (!parentMap.has(el.parentElement)) parentMap.set(el.parentElement, []);
+            parentMap.get(el.parentElement).push(el);
+        });
+
+        // Compute template variables once outside the loop
+        const dashboardLink = session.role === 'instructor' ? '/instructor-dashboard/index.html' : '/student-dashboard/index.html';
+        const roleName = session.role === 'instructor' ? 'Instructor' : 'Student';
+        const imgSrc = session.profileImage || session.profilePicture;
+        const picHtml = imgSrc
+            ? `<img src="${imgSrc}" class="w-full h-full object-cover rounded-full" />`
+            : `<span class="material-symbols-outlined text-2xl relative top-0.5">account_circle</span>`;
+        const settingsLink = session.role === 'instructor' ? '/instructor-profile/index.html' : '/account-settings/index.html';
+
+        parentMap.forEach((elementsToRemove, container) => {
+            // Remove existing duplicate notification bells in the navigation beforehand
+            document.querySelectorAll('nav button').forEach(btn => {
+                if (btn.innerText.includes('notifications') || btn.innerHTML.includes('notifications')) {
+                    btn.remove();
+                }
+            });
+
+            const dropdownHtml = `
+                <div class="flex items-center gap-1 tacliimi-injected-profile">
+                    <button class="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full mr-1 hidden sm:flex items-center justify-center transition-colors">
+                        <span class="material-symbols-outlined">notifications</span>
+                    </button>
+                    <div class="relative group flex items-center justify-end gap-3 pl-3 border-l border-slate-200 dark:border-slate-700 cursor-pointer">
+                        <div class="text-right hidden sm:block">
+                        <p class="user-display-name text-sm font-semibold text-slate-900 dark:text-white leading-tight">${session.displayName || session.fullName || 'User'}</p>
+                        <p class="text-[10px] text-slate-500 uppercase tracking-wider leading-tight" data-role="profile-meta">${roleName}</p>
+                    </div>
+                    <div class="h-10 w-10 shrink-0 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center border-2 border-primary text-slate-400 overflow-hidden" data-role="profile-image">
+                        ${picHtml}
+                    </div>
+                    
+                    <!-- Dropdown Menu -->
+                    <div class="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-slate-800 rounded-xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[100] overflow-hidden text-left">
+                        <div class="p-4 border-b border-slate-100 dark:border-slate-700 md:hidden">
+                            <p class="text-sm font-semibold text-slate-900 dark:text-white">${session.displayName || session.fullName || 'User'}</p>
+                            <p class="text-xs text-slate-500">${session.email || roleName}</p>
+                        </div>
+                        <a href="${dashboardLink}" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:text-primary transition-colors border-b border-slate-100 dark:border-slate-700/50">
+                            <span class="material-symbols-outlined text-lg">dashboard</span> Dashboard
+                        </a>
+                        <a href="${settingsLink}" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:text-primary transition-colors border-b border-slate-100 dark:border-slate-700/50">
+                            <span class="material-symbols-outlined text-lg">settings</span> Settings
+                        </a>
+                        <button onclick="TacliimiDB.logout(); window.location.href='/login-select/index.html';" class="w-full text-left flex items-center gap-3 px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                            <span class="material-symbols-outlined text-lg">logout</span> Logout
+                        </button>
+                    </div>
+                </div>
+                </div>
+            `;
+
+            if (!container.querySelector('.tacliimi-injected-profile')) {
+                elementsToRemove[0].insertAdjacentHTML('beforebegin', dropdownHtml);
+            }
+            elementsToRemove.forEach(el => el.remove());
+        });
+
+        // Update mobile menu buttons if they exist
+        const mobileMenuAuth = document.querySelectorAll('#mobile-menu button');
+        if (mobileMenuAuth.length >= 2) {
+            mobileMenuAuth[0].innerText = 'Dashboard';
+            mobileMenuAuth[0].onclick = () => window.location.href = dashboardLink;
+            mobileMenuAuth[1].innerText = 'Log Out';
+            mobileMenuAuth[1].classList.add('!text-red-500');
+            mobileMenuAuth[1].onclick = () => { TacliimiDB.logout(); window.location.href = '/login-select/index.html'; };
+        }
+
+        // Hide instructor CTA links for logged-in instructors
+        if (session.role === 'instructor') {
+            document.querySelectorAll('a, button').forEach(el => {
+                const attr = el.getAttribute('href') || el.getAttribute('onclick') || '';
+                const txt = (el.innerText || '').toLowerCase();
+
+                if (attr.includes('/become-instructor/') || txt.includes('become a teacher') || txt.includes('teach on tacliimi')) {
+                    el.style.display = 'none';
+                }
+            });
+        }
+    }
 }
 
 // Ensure init runs
 TacliimiDB.init();
+
+// Apply global profile automatically when DB script loads (so it sticks on all pages)
+document.addEventListener('DOMContentLoaded', () => {
+    try {
+        TacliimiDB.applyGlobalProfile();
+
+        // 1. Universal Profile Updates: Also find anything with data-role="profile-meta" or raw ID labels
+        // and replace them with "Student" or "Instructor"
+        const metaRoleElements = document.querySelectorAll('[data-role="profile-meta"], .uppercase.tracking-wider');
+        metaRoleElements.forEach(el => {
+            const txt = (el.innerText || '').toLowerCase();
+            if (txt.includes('id:') || el.getAttribute('data-role') === 'profile-meta') {
+                el.innerText = session.role === 'instructor' ? 'Instructor' : 'Student';
+                el.setAttribute('data-role', 'profile-meta');
+            }
+        });
+
+        // Auto-save form mechanism for all dashboards
+        const session = TacliimiDB.getCurrentSession();
+        if (session) {
+            // Target all data-entry fields except passwords, files, and hidden inputs
+            const inputs = document.querySelectorAll('input:not([type="password"]):not([type="file"]):not([type="hidden"]), textarea, select');
+
+            inputs.forEach(input => {
+                // Generate a reliable key based on ID, name, or preceding label text
+                let key = input.id || input.name;
+                if (!key && input.previousElementSibling && input.previousElementSibling.tagName === 'LABEL') {
+                    key = input.previousElementSibling.innerText.trim().replace(/\s+/g, '_').toLowerCase();
+                }
+
+                if (key) {
+                    // Map common variations of full name
+                    if (key === 'full-name' || key.toLowerCase() === 'fullname') key = 'fullName';
+                    if (key === 'display-name' || key.toLowerCase() === 'displayname') key = 'displayName';
+
+                    // Load saved data into input
+                    if (session[key] !== undefined) {
+                        input.value = session[key];
+                    }
+
+                    // Auto-save on change
+                    input.addEventListener('change', (e) => {
+                        TacliimiDB.updateProfileInfo({ [key]: e.target.value });
+
+                        // Immediately re-apply the global profile to update the header
+                        TacliimiDB.applyGlobalProfile();
+
+                        // Show a subtle toast if we have a save button context, but silently save anyway
+                        const saveBtn = document.querySelector('button:has(.material-symbols-outlined:contains("save")), button#save-profile-btn');
+                        if (saveBtn) {
+                            const origText = saveBtn.innerHTML;
+                            saveBtn.innerHTML = `<span class="material-symbols-outlined text-[18px]">check</span> Saved`;
+                            setTimeout(() => { saveBtn.innerHTML = origText; }, 2000);
+                        }
+                    });
+                }
+            });
+
+            // For instructor specific "Save Changes" buttons to provide manual feedback
+            const saveBtns = document.querySelectorAll('button');
+            saveBtns.forEach(btn => {
+                if (btn.innerText.includes('Save Changes') || btn.innerText.includes('Save Profile')) {
+                    btn.addEventListener('click', (e) => {
+                        e.preventDefault();
+
+                        // If it's the personal info form, trigger the inputs to save
+                        const form = btn.closest('form');
+                        if (form) {
+                            form.querySelectorAll('input, select').forEach(input => {
+                                const key = input.id || input.name || (input.previousElementSibling && input.previousElementSibling.innerText.trim().replace(/\s+/g, '_').toLowerCase());
+                                if (key) TacliimiDB.updateProfileInfo({ [key]: input.value });
+                            });
+                            // Immediately re-apply the global profile to update the header
+                            TacliimiDB.applyGlobalProfile();
+                        }
+
+                        const origText = btn.innerHTML;
+                        btn.innerHTML = `<span class="material-symbols-outlined text-[18px]">check</span> Saved Successfully`;
+                        setTimeout(() => { btn.innerHTML = origText; }, 2000);
+                    });
+                }
+            });
+
+            // Add logout button next to dashboard profile blocks if missing
+            const nameDisplays = document.querySelectorAll('.user-display-name');
+            if (nameDisplays.length > 0) {
+                nameDisplays.forEach(nameDisplay => {
+                    const flexContainer = nameDisplay.closest('.flex.items-center.gap-3');
+                    if (flexContainer && flexContainer.parentNode && !flexContainer.parentNode.querySelector('.logout-btn')) {
+                        const logoutBtn = document.createElement('button');
+                        logoutBtn.className = 'logout-btn p-2 text-slate-500 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500 rounded-full transition-colors mr-2';
+                        logoutBtn.innerHTML = '<span class="material-symbols-outlined relative top-0.5 text-[22px]">logout</span>';
+                        logoutBtn.title = 'Log Out';
+                        logoutBtn.onclick = () => { TacliimiDB.logout(); window.location.href = '/login-select/index.html'; };
+                        flexContainer.parentNode.insertBefore(logoutBtn, flexContainer);
+                    }
+                });
+            }
+        }
+    } catch (err) { }
+});
