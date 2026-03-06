@@ -1,0 +1,229 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Instructor Dashboard | Tacliimi Learn</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#4F46E5",
+                        "brand-purple": "#7c3aed",
+                        "background-light": "#F9FAFB",
+                        "background-dark": "#111827",
+                    },
+                    fontFamily: {
+                        display: ["Inter", "sans-serif"],
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.5rem",
+                    },
+                },
+            },
+        };
+    </script>
+    <style type="text/tailwindcss">
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        
+        /* Hide content until router loads it */
+        #instructor-content-area {
+            opacity: 1;
+            transition: opacity 0.2s ease-in-out;
+        }
+        #instructor-content-area.loading {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+    </style>
+    <script src="/src/services/tacliimi_db.js"></script>
+    <script>
+        if (!TacliimiDB.getCurrentSession()) window.location.href = '/src/pages/auth/login/index.html';
+    </script>
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 transition-colors duration-200">
+    <aside
+        class="fixed left-0 top-0 h-full w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 hidden lg:flex flex-col z-20">
+        <div class="p-6 border-b border-slate-100 dark:border-slate-800">
+            <div class="flex items-center gap-2 cursor-pointer" onclick="window.location.href='/src/pages/common/index.html'">
+                <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                    <span class="material-symbols-outlined text-white text-lg">school</span>
+                </div>
+                <span class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Tacliimi</span>
+            </div>
+        </div>
+        <nav class="flex-1 p-4 space-y-1" id="instructor-sidebar-nav">
+            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                href="/src/pages/instructor/instructor-dashboard/">
+                <span class="material-symbols-outlined">dashboard</span>
+                Dashboard
+            </a>
+            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                href="/src/pages/instructor/instructor-courses/">
+                <span class="material-symbols-outlined">auto_stories</span>
+                My Courses
+            </a>
+            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                href="/src/pages/instructor/instructor-mentorship/">
+                <span class="material-symbols-outlined">groups</span>
+                Mentorship
+            </a>
+            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                href="/src/pages/instructor/instructor-analytics/">
+                <span class="material-symbols-outlined">analytics</span>
+                Analytics
+            </a>
+            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                href="/src/pages/instructor/instructor-earnings/">
+                <span class="material-symbols-outlined">payments</span>
+                Earnings
+            </a>
+            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                href="/src/pages/instructor/instructor-communications/">
+                <span class="material-symbols-outlined">message</span>
+                Communications
+            </a>
+        </nav>
+    </aside>
+
+    <div class="lg:ml-64 min-h-screen flex flex-col">
+        <header
+            class="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-8 sticky top-0 z-10 shrink-0">
+            <h1 class="text-lg font-semibold dark:text-white" id="header-page-title">Analytics</h1>
+            <div class="flex items-center gap-4">
+                <button class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 relative">
+                    <span class="material-symbols-outlined">notifications</span>
+                    <span class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
+                </button>
+                <button class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                    onclick="document.documentElement.classList.toggle('dark')">
+                    <span class="material-symbols-outlined">dark_mode</span>
+                </button>
+                <div class="flex items-center gap-3 pl-4 border-l border-slate-200 dark:border-slate-800 cursor-pointer hover:opacity-80 transition-opacity"
+                    onclick="window.location.href='/src/pages/instructor/instructor-profile/index.html'">
+                    <div class="text-right hidden sm:block">
+                        <p class="text-sm font-medium dark:text-white">Instructor account</p>
+                        <p class="text-xs text-slate-500">ID: 32342</p>
+                    </div>
+                    <div
+                        class="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-slate-100 text-slate-400 dark:bg-slate-800 border-2 border-primary/20 hover:border-primary transition-colors">
+                        <span class="material-symbols-outlined text-2xl">account_circle</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- DYNAMIC CONTENT AREA -->
+        <main id="instructor-content-area" class="flex-1 bg-background-light dark:bg-background-dark pb-20">
+
+
+<div class="px-8 pb-8 pt-2 max-w-7xl mx-auto">
+<div class="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
+<div>
+<h2 class="text-3xl font-bold dark:text-white">Analytics Overview</h2>
+<p class="text-slate-500 mt-2 text-lg">Track your performance, audience, and revenue.</p>
+</div>
+<div class="flex items-center gap-3">
+<div class="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-400 flex items-center gap-2 border border-slate-200 dark:border-slate-700">
+<span class="material-symbols-outlined text-lg">calendar_today</span>
+                        Last 30 Days
+                    </div>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<div class="lg:col-span-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+<div class="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">show_chart</span>
+<h3 class="font-bold text-slate-800 dark:text-slate-200">Course Performance</h3>
+</div>
+<span class="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-[10px] font-bold uppercase tracking-wider text-slate-400 rounded">No data available</span>
+</div>
+<div class="h-80 w-full relative flex flex-col items-center justify-center chart-placeholder-grid p-12">
+<svg class="absolute inset-0 w-full h-full opacity-10" preserveAspectRatio="none" viewBox="0 0 100 100">
+<path class="text-slate-400" d="M0 80 L20 75 L40 85 L60 60 L80 70 L100 40" fill="none" stroke="currentColor" stroke-dasharray="4" stroke-width="0.5"></path>
+</svg>
+<div class="relative z-10 text-center flex flex-col items-center">
+<div class="w-16 h-16 bg-slate-50 dark:bg-slate-800/50 rounded-full flex items-center justify-center mb-4 border border-slate-100 dark:border-slate-700">
+<span class="material-symbols-outlined text-slate-300 dark:text-slate-600 text-3xl">insights</span>
+</div>
+<p class="text-slate-400 dark:text-slate-500 font-medium max-w-xs">Your course views and student interactions will appear here</p>
+</div>
+</div>
+</div>
+<div class="lg:col-span-1 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+<div class="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-emerald-500">groups</span>
+<h3 class="font-bold text-slate-800 dark:text-slate-200">Student Demographics</h3>
+</div>
+<span class="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-[10px] font-bold uppercase tracking-wider text-slate-400 rounded">No data available</span>
+</div>
+<div class="p-8 h-64 flex flex-col items-center justify-center">
+<div class="w-32 h-32 rounded-full border-8 border-dashed border-slate-100 dark:border-slate-800 flex items-center justify-center relative">
+<div class="w-16 h-16 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center">
+<span class="material-symbols-outlined text-slate-300 dark:text-slate-600 text-2xl">public</span>
+</div>
+</div>
+<p class="mt-4 text-xs text-slate-400 uppercase tracking-widest font-semibold">Geographic Data Placeholder</p>
+</div>
+</div>
+<div class="lg:col-span-2 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+<div class="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-amber-500">payments</span>
+<h3 class="font-bold text-slate-800 dark:text-slate-200">Revenue Over Time</h3>
+</div>
+<span class="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-[10px] font-bold uppercase tracking-wider text-slate-400 rounded">No data available</span>
+</div>
+<div class="p-8 h-64 flex flex-col justify-end gap-2">
+<div class="flex items-end justify-between h-32 w-full gap-4">
+<div class="flex-1 bg-slate-50 dark:bg-slate-800/40 rounded-t h-12 border border-slate-100 dark:border-slate-800 border-b-0"></div>
+<div class="flex-1 bg-slate-50 dark:bg-slate-800/40 rounded-t h-20 border border-slate-100 dark:border-slate-800 border-b-0"></div>
+<div class="flex-1 bg-slate-50 dark:bg-slate-800/40 rounded-t h-16 border border-slate-100 dark:border-slate-800 border-b-0"></div>
+<div class="flex-1 bg-slate-50 dark:bg-slate-800/40 rounded-t h-24 border border-slate-100 dark:border-slate-800 border-b-0"></div>
+<div class="flex-1 bg-slate-50 dark:bg-slate-800/40 rounded-t h-14 border border-slate-100 dark:border-slate-800 border-b-0"></div>
+<div class="flex-1 bg-slate-50 dark:bg-slate-800/40 rounded-t h-28 border border-slate-100 dark:border-slate-800 border-b-0"></div>
+</div>
+<div class="flex justify-between w-full pt-4 border-t border-slate-100 dark:border-slate-800">
+<div class="h-2 w-12 bg-slate-50 dark:bg-slate-800 rounded"></div>
+<div class="h-2 w-12 bg-slate-50 dark:bg-slate-800 rounded"></div>
+<div class="h-2 w-12 bg-slate-50 dark:bg-slate-800 rounded"></div>
+<div class="h-2 w-12 bg-slate-50 dark:bg-slate-800 rounded"></div>
+</div>
+<p class="text-center text-slate-400 text-xs mt-4">Growth statistics will be visible after your first sale</p>
+</div>
+</div>
+</div>
+<footer class="mt-16 py-8 border-t border-slate-200 dark:border-slate-800 text-center">
+<p class="text-xs text-slate-400 font-mono uppercase tracking-widest">Tacliimi Learn Analytics Engine v2.0</p>
+<div class="flex items-center justify-center gap-4 mt-2 text-xs text-slate-500">
+<span>Status: <span class="text-emerald-500 font-medium uppercase">Standby</span></span>
+<span class="text-slate-300 dark:text-slate-700">|</span>
+<a class="text-primary hover:underline" href="#">Documentation</a>
+<span class="text-slate-300 dark:text-slate-700">|</span>
+<a class="text-primary hover:underline" href="#">Contact Support</a>
+</div>
+</footer>
+</div>
+
+        </main>
+    </div>
+
+    <!-- Router Logic -->
+    <script src="/src/utils/js/instructor-app.js"></script>
+    <script src="/src/pages/instructor/instructor-mentorship/mentorship.js"></script>
+</body>
+
+</html>

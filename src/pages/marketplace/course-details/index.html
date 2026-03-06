@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Tacliimi Learn - Course Details</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script src="/src/services/tacliimi_db.js"></script>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#6366F1",
+                        "background-light": "#F9FAFB",
+                        "background-dark": "#0F172A",
+                    },
+                    fontFamily: {
+                        display: ["Inter", "sans-serif"],
+                        sans: ["Inter", "sans-serif"],
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.75rem",
+                    },
+                },
+            },
+        };
+    </script>
+    <style type="text/tailwindcss">
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 48;
+        }
+    </style>
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen transition-colors duration-200">
+    <nav
+        class="sticky top-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center gap-8">
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                            <span class="material-icons-round text-white text-xl">school</span>
+                        </div>
+                        <span class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Tacliimi<span
+                                class="text-primary">Learn</span></span>
+                    </div>
+                    <div
+                        class="hidden md:flex items-center gap-6 text-sm font-medium text-slate-600 dark:text-slate-400">
+                        <a class="hover:text-primary transition-colors" href="#">Courses</a>
+                        <a class="hover:text-primary transition-colors" href="#">Institutions</a>
+                        <a class="hover:text-primary transition-colors" href="#">My Learning</a>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <button class="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full">
+                        <span class="material-icons-round">search</span>
+                    </button>
+                    <div class="w-8 h-8 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                        <img alt="User Profile"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuCehWLOlzE8I-zRrm4zq5Pyz_N-DwPy5Bf3RqtDFDxJpfgHTY-axvUW6O-y8hOJukIFUD_gfdJUZuAss04VYHvTMazNkMNMdMhchcfVwKe4gFawTmrf5eF_ZJTRlZDB8NqgKhkwq8CQG4ZhSAFiiWcBasUQ-vHD20nfimPsoYTWOPVzLVZAHF6b-XJgsQWX7q11YtHJE5AQ1g8pV--vt951iRy8OMXwFaDxUPGp1QnM4PFHBfaueE0AyizaBdYAmnbTV__chCOobwVa" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="flex flex-col lg:flex-row gap-8">
+            <div class="lg:w-2/3">
+                <div class="relative aspect-video rounded-2xl overflow-hidden bg-slate-900 group">
+                    <img alt="Course Preview Thumbnail"
+                        class="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700"
+                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuAoxv0lnn9g0hqpV8k7IbB4nHlU5WRInPNUzsbsOw4MERt6qUu-wKJ8hZF1fP5O-AjmvXUsc5jRabFqVdbT7QHymxerTNfftiAKfaqUXneH0jyuu1m3pwea8k5jYqm7t9vGN4_SVlTGZT5NANZh8ZosozBi_L46evR9BzIZIkLuG_gk4P1TV31HsRiM_LvsfbXMJwk0UWfc25apMiGooKsz9O73_bVbnHGE97ZnziwtaSn9hnZzBxxQrky3czU-h_LG31PTYSYujV9S" />
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <button id="play-preview-btn"
+                            class="w-20 h-20 bg-primary/90 hover:bg-primary text-white rounded-full flex items-center justify-center shadow-2xl transition-all hover:scale-110">
+                            <span class="material-icons-round text-5xl translate-x-1">play_arrow</span>
+                        </button>
+                    </div>
+                    <div class="absolute bottom-6 left-6">
+                        <span
+                            class="px-3 py-1 bg-black/50 backdrop-blur-md text-white text-xs font-semibold rounded-full uppercase tracking-wider border border-white/20">
+                            Previewing: Intro to Course Design
+                        </span>
+                    </div>
+                </div>
+                <div class="mt-8">
+                    <h1 id="cd-title" class="text-3xl font-bold text-slate-900 dark:text-white leading-tight">Course
+                        Title Here</h1>
+                    <p id="cd-desc" class="mt-4 text-lg text-slate-600 dark:text-slate-400">Course description will load
+                        here.</p>
+                </div>
+                <div id="what-you-will-learn-section"
+                    class="mt-12 p-8 border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900/50">
+                    <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-6">What you'll learn / Description
+                    </h2>
+                    <div id="cd-description"
+                        class="text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">
+                        <!-- Description content will be injected here -->
+                    </div>
+                </div>
+                <div class="mt-12">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-xl font-bold text-slate-900 dark:text-white">Course Content</h2>
+                        <span id="cd-content-meta" class="text-sm text-slate-500"></span>
+                    </div>
+                    <div id="cd-curriculum" class="space-y-4">
+                        <!-- Curriculum loaded dynamically via JS -->
+                    </div>
+                </div>
+                <div
+                    class="mt-12 p-8 border border-slate-200 dark:border-slate-800 rounded-2xl bg-slate-50 dark:bg-slate-900/30">
+                    <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-6">About the Instructor</h2>
+                    <div class="flex flex-col md:flex-row gap-6">
+                        <img alt="Instructor Profile" class="w-24 h-24 rounded-full bg-slate-200"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuBF6HFrVI2kcn-BPUybMerUlA-H92AbBtqqd2-k0uXwm-WxI0CmK0F-p2DMzhklxge5LL9DjZgCbHWBai0UvPKqNWIdOS2KcV5sIWIE-MyV1f0Fyy93RfuXpqieQc-3jfbjk_gmfN4qX3XhKdDVoZ0h_h1XOo9dbp3lHdnmIcncaVgRLj9ybxirSUv24PIylpEGVZRjeICwhUVgh4SPEcdD3QlaamoCOdpJ4Q2yLFgTyiEWrlS18i-ZUUYoebR-zsrtu4AjAgI3jLeQ" />
+                        <div>
+                            <h3 id="cd-instructor" class="text-lg font-bold text-slate-900 dark:text-white">Instructor
+                                Name Here</h3>
+                            <p id="cd-instructor-role" class="text-primary text-sm font-medium mb-3">Instructor Role</p>
+                            <div class="flex gap-4 text-xs font-semibold text-slate-500 mb-4">
+                                <span class="flex items-center gap-1"><span
+                                        class="material-icons-round text-sm text-yellow-500">star</span> 0.0
+                                    RATING</span>
+                                <span class="flex items-center gap-1"><span
+                                        class="material-icons-round text-sm">people</span> 0 STUDENTS</span>
+                                <span class="flex items-center gap-1"><span
+                                        class="material-icons-round text-sm">play_circle_filled</span> 0 COURSES</span>
+                            </div>
+                            <p class="text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+                                This is a template placeholder for the instructor bio. Here you will find professional
+                                background, areas of expertise, and teaching philosophy. All instructors are vetted
+                                industry veterans who are passionate about sharing their knowledge and helping students
+                                succeed in their professional journey.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-12 mb-20">
+                    <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-6">Student Reviews</h2>
+                    <div class="flex flex-col md:flex-row gap-8 items-center mb-10">
+                        <div class="text-center">
+                            <div class="text-5xl font-black text-slate-900 dark:text-white">0.0</div>
+                            <div class="flex justify-center mt-2">
+                                <span class="material-icons-round text-slate-300">star</span>
+                                <span class="material-icons-round text-slate-300">star</span>
+                                <span class="material-icons-round text-slate-300">star</span>
+                                <span class="material-icons-round text-slate-300">star</span>
+                                <span class="material-icons-round text-slate-300">star</span>
+                            </div>
+                            <div class="text-xs font-semibold text-primary mt-2 uppercase tracking-wide">Course Rating
+                            </div>
+                        </div>
+                        <div class="flex-1 space-y-2 max-w-md w-full">
+                            <div class="flex items-center gap-4 text-xs font-medium text-slate-500">
+                                <div class="flex-1 h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                                    <div class="h-full bg-slate-300 w-0"></div>
+                                </div>
+                                <span class="w-12">5 stars</span>
+                                <span class="w-6">0%</span>
+                            </div>
+                            <div class="flex items-center gap-4 text-xs font-medium text-slate-500">
+                                <div class="flex-1 h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                                    <div class="h-full bg-slate-300 w-0"></div>
+                                </div>
+                                <span class="w-12">4 stars</span>
+                                <span class="w-6">0%</span>
+                            </div>
+                            <div class="flex items-center gap-4 text-xs font-medium text-slate-500">
+                                <div class="flex-1 h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                                    <div class="h-full bg-slate-300 w-0"></div>
+                                </div>
+                                <span class="w-12">3 stars</span>
+                                <span class="w-6">0%</span>
+                            </div>
+                            <div class="flex items-center gap-4 text-xs font-medium text-slate-500">
+                                <div class="flex-1 h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                                    <div class="h-full bg-slate-300 w-0"></div>
+                                </div>
+                                <span class="w-12">2 stars</span>
+                                <span class="w-6">0%</span>
+                            </div>
+                            <div class="flex items-center gap-4 text-xs font-medium text-slate-500">
+                                <div class="flex-1 h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                                    <div class="h-full bg-slate-300 w-0"></div>
+                                </div>
+                                <span class="w-12">1 star</span>
+                                <span class="w-6">0%</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div
+                            class="p-6 border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900/40">
+                            <div class="flex items-center gap-3 mb-4">
+                                <div
+                                    class="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center">
+                                    <span class="material-icons-round text-slate-400">person</span>
+                                </div>
+                                <div>
+                                    <div class="text-sm font-bold text-slate-900 dark:text-white">Student Name Here
+                                    </div>
+                                    <div class="text-[10px] text-slate-500 font-medium">Review date here</div>
+                                </div>
+                            </div>
+                            <div class="flex text-yellow-500 mb-3 scale-90 origin-left">
+                                <span class="material-icons-round text-sm">star</span>
+                                <span class="material-icons-round text-sm">star</span>
+                                <span class="material-icons-round text-sm">star</span>
+                                <span class="material-icons-round text-sm">star</span>
+                                <span class="material-icons-round text-sm">star</span>
+                            </div>
+                            <p class="text-sm text-slate-500 italic">
+                                "Student feedback will appear here once reviews are submitted. This course provides
+                                comprehensive training in user experience design principles."
+                            </p>
+                        </div>
+                        <div
+                            class="p-6 border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900/40 opacity-70">
+                            <div class="flex items-center gap-3 mb-4">
+                                <div
+                                    class="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center">
+                                    <span class="material-icons-round text-slate-400">person</span>
+                                </div>
+                                <div>
+                                    <div class="text-sm font-bold text-slate-900 dark:text-white">Student Name Here
+                                    </div>
+                                    <div class="text-[10px] text-slate-500 font-medium">Review date here</div>
+                                </div>
+                            </div>
+                            <div class="flex text-yellow-500 mb-3 scale-90 origin-left">
+                                <span class="material-icons-round text-sm">star</span>
+                                <span class="material-icons-round text-sm">star</span>
+                                <span class="material-icons-round text-sm">star</span>
+                                <span class="material-icons-round text-sm">star</span>
+                                <span class="material-icons-round text-sm">star</span>
+                            </div>
+                            <p class="text-sm text-slate-500 italic">
+                                "Placeholder feedback. The instructor was very knowledgeable and the course material was
+                                easy to follow."
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="lg:w-1/3">
+                <div class="sticky top-24 space-y-6">
+                    <div
+                        class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl overflow-hidden p-6">
+                        <div class="flex items-baseline gap-4 mb-6">
+                            <span id="cd-price" class="text-4xl font-bold text-slate-900 dark:text-white">$00.00</span>
+                            <span id="cd-original-price" class="text-lg text-slate-400 line-through"></span>
+                            <span id="cd-discount-badge"
+                                class="hidden text-xs font-bold text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded">DISCOUNT</span>
+                        </div>
+                        <div class="space-y-3">
+                            <button id="enroll-btn"
+                                class="w-full py-4 bg-primary hover:bg-indigo-600 text-white font-bold rounded-xl transition-all shadow-lg shadow-indigo-200 dark:shadow-none">
+                                Enroll Now
+                            </button>
+                            <button id="wishlist-btn"
+                                class="w-full py-4 bg-transparent border-2 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl transition-all">
+                                Add to Wishlist
+                            </button>
+                            <div class="flex items-center w-full group">
+                                <div class="relative flex-grow">
+                                    <span
+                                        class="material-icons-round absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg transition-colors group-focus-within:text-primary">sell</span>
+                                    <input
+                                        class="w-full pl-10 pr-4 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-l-lg focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all placeholder:text-slate-400 text-slate-700 dark:text-slate-200"
+                                        placeholder="Enter Coupon Code" type="text" />
+                                </div>
+                                <button
+                                    class="px-5 py-2 bg-primary hover:bg-indigo-600 text-white text-sm font-bold rounded-r-lg transition-all border border-primary">
+                                    Apply
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mt-8 border-t border-slate-100 dark:border-slate-800 pt-6">
+                            <h4 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-widest mb-4">
+                                This course includes:</h4>
+                            <ul id="cd-includes-list" class="space-y-4 text-sm text-slate-600 dark:text-slate-400">
+                                <!-- Dynamically populated by JS -->
+                                <li class="flex items-center gap-3"><span
+                                        class="material-icons-round text-primary text-lg">all_inclusive</span> Full
+                                    lifetime access</li>
+                                <li class="flex items-center gap-3"><span
+                                        class="material-icons-round text-primary text-lg">devices</span> Access on
+                                    mobile and TV</li>
+                                <li class="flex items-center gap-3"><span
+                                        class="material-icons-round text-primary text-lg">emoji_events</span>
+                                    Certificate of completion</li>
+                            </ul>
+                        </div>
+                        <div class="mt-8 flex justify-center gap-6 text-xs font-bold text-slate-400">
+                            <button
+                                class="hover:text-primary transition-colors flex items-center gap-1 uppercase tracking-wider">
+                                <span class="material-icons-round text-sm">share</span> Share Course
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    <footer class="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-12 mt-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-8">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                        <span class="material-icons-round text-white text-xl">school</span>
+                    </div>
+                    <span class="text-xl font-bold text-slate-900 dark:text-white">Tacliimi</span>
+                </div>
+                <div class="flex gap-8 text-sm font-medium text-slate-500 dark:text-slate-400">
+                    <a class="hover:text-primary transition-colors" href="#">About Us</a>
+                    <a class="hover:text-primary transition-colors" href="#">Support</a>
+                    <a class="hover:text-primary transition-colors" href="#">Terms</a>
+                    <a class="hover:text-primary transition-colors" href="#">Privacy</a>
+                </div>
+                <p class="text-sm text-slate-400">© 2024 Tacliimi Learn. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const enrollBtn = document.getElementById('enroll-btn');
+            const wishlistBtn = document.getElementById('wishlist-btn');
+
+            // Get URL parameter
+            const urlParams = new URLSearchParams(window.location.search);
+            const courseId = urlParams.get('id');
+            const courseData = TacliimiDB.getCourseById(courseId);
+
+            if (courseData) {
+                // Populate DOM
+                document.getElementById('cd-title').textContent = courseData.title;
+                document.title = 'Tacliimi Learn - ' + courseData.title;
+                document.getElementById('cd-instructor').textContent = courseData.instructor;
+                document.getElementById('cd-instructor-role').textContent = courseData.instructorRole || 'Instructor';
+
+                // Update Thumbnail / Video Preview
+                const thumbnailImg = document.querySelector('.aspect-video img');
+                if (thumbnailImg) thumbnailImg.src = courseData.thumbnailUrl;
+
+                const priceEl = document.getElementById('cd-price');
+                const origPriceEl = document.getElementById('cd-original-price');
+                const discountBadge = document.getElementById('cd-discount-badge');
+
+                priceEl.textContent = typeof courseData.price === 'number' ? '$' + courseData.price.toFixed(2) : courseData.price;
+
+                if (courseData.originalPrice) {
+                    origPriceEl.textContent = '$' + courseData.originalPrice.toFixed(2);
+                    origPriceEl.classList.remove('hidden');
+                    // Calculate discount
+                    if (typeof courseData.price === 'number') {
+                        const discount = Math.round((1 - (courseData.price / courseData.originalPrice)) * 100);
+                        discountBadge.textContent = discount + '% OFF';
+                        discountBadge.classList.remove('hidden');
+                    }
+                } else {
+                    origPriceEl.classList.add('hidden');
+                    discountBadge.classList.add('hidden');
+                }
+                // Populate Description into what you'll learn area
+                const descEl = document.getElementById('cd-description');
+                if (descEl) {
+                    descEl.textContent = courseData.description || 'No description provided for this course.';
+                }
+
+                // Calculate Course Stats
+                let totalSections = 0, totalLessons = 0, totalVideos = 0, totalQuizzes = 0, totalResources = 0;
+                let sourceCurriculum = courseData.sections || courseData.curriculum || [];
+                totalSections = sourceCurriculum.length;
+
+                sourceCurriculum.forEach(sec => {
+                    const items = sec.lessons || sec.items || [];
+                    totalLessons += items.length;
+                    items.forEach(item => {
+                        if (item.video || item.type === 'video') totalVideos++;
+                        if (item.quizzes && item.quizzes.length > 0) totalQuizzes += item.quizzes.length;
+                        if (item.resources && item.resources.length > 0) totalResources += item.resources.length;
+                    });
+                });
+
+                // Populate "This Course Includes"
+                const includesList = document.getElementById('cd-includes-list');
+                if (includesList) {
+                    let includesHtml = '';
+                    if (totalLessons > 0) {
+                        includesHtml += `<li class="flex items-center gap-3"><span class="material-icons-round text-primary text-lg">menu_book</span> ${totalLessons} Lessons</li>`;
+                    }
+                    if (totalVideos > 0) {
+                        includesHtml += `<li class="flex items-center gap-3"><span class="material-icons-round text-primary text-lg">play_circle</span> ${totalVideos} Videos</li>`;
+                    }
+                    if (totalQuizzes > 0) {
+                        includesHtml += `<li class="flex items-center gap-3"><span class="material-icons-round text-primary text-lg">quiz</span> ${totalQuizzes} Quizzes</li>`;
+                    }
+                    if (totalResources > 0) {
+                        includesHtml += `<li class="flex items-center gap-3"><span class="material-icons-round text-primary text-lg">description</span> ${totalResources} Downloadable Resources</li>`;
+                    }
+                    if (totalSections > 0) {
+                        includesHtml += `<li class="flex items-center gap-3"><span class="material-icons-round text-primary text-lg">folder</span> ${totalSections} Sections</li>`;
+                    }
+                    includesHtml += `<li class="flex items-center gap-3"><span class="material-icons-round text-primary text-lg">all_inclusive</span> Full lifetime access</li>`;
+                    includesHtml += `<li class="flex items-center gap-3"><span class="material-icons-round text-primary text-lg">devices</span> Access on mobile and TV</li>`;
+                    includesList.innerHTML = includesHtml;
+                }
+
+                // Render Curriculum
+                const currContainer = document.getElementById('cd-curriculum');
+                const currMetaEl = document.getElementById('cd-content-meta');
+
+                if (currContainer) {
+                    if (totalSections === 0) {
+                        currContainer.innerHTML = '<p class="text-sm text-slate-500">No content uploaded yet.</p>';
+                        if (currMetaEl) currMetaEl.textContent = '0 sections • 0 lectures';
+                    } else {
+                        let html = '';
+                        sourceCurriculum.forEach((section, index) => {
+                            const items = section.lessons || section.items || [];
+
+                            html += `
+                            <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden mb-4">
+                                <button class="w-full flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 text-left">
+                                    <div class="flex items-center gap-3">
+                                        <span class="material-icons-round text-slate-400 text-sm">keyboard_arrow_down</span>
+                                        <span class="font-semibold text-slate-900 dark:text-white">${section.title || `Section ${index + 1}`}</span>
+                                    </div>
+                                    <span class="text-xs text-slate-500">${items.length} items</span>
+                                </button>
+                                <div class="divide-y divide-slate-100 dark:divide-slate-800 pb-2">
+                            `;
+
+                            if (items.length > 0) {
+                                items.forEach(item => {
+                                    html += `
+                                    <div class="p-4 flex items-center justify-between text-sm group cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/30">
+                                        <div class="flex items-center gap-3 text-slate-600 dark:text-slate-400">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-700 ml-1"></span>
+                                            <span>${item.title || 'Untitled Lesson'}</span>
+                                        </div>
+                                    </div>
+                                    `;
+                                });
+                            } else {
+                                html += `<div class="p-4 text-sm text-slate-500 italic">Empty section</div>`;
+                            }
+
+                            html += `</div></div>`;
+                        });
+                        currContainer.innerHTML = html;
+                        if (currMetaEl) currMetaEl.textContent = `${totalSections} sections • ${totalLessons} lessons`;
+                    }
+                }
+
+                // Add Video Preview Handler
+                const playPreviewBtn = document.getElementById('play-preview-btn');
+                const videoModal = document.getElementById('video-modal');
+                const videoModalPlayer = document.getElementById('video-modal-player');
+
+                if (playPreviewBtn && videoModal && videoModalPlayer) {
+                    playPreviewBtn.addEventListener('click', () => {
+                        if (courseData.previewVideo) {
+                            videoModalPlayer.src = courseData.previewVideo;
+                            videoModal.classList.remove('hidden');
+                            videoModal.classList.add('flex');
+                            videoModalPlayer.play();
+                        } else {
+                            alert('No preview video available for this course.');
+                        }
+                    });
+                }
+            } else {
+                // Fallback or 404 handling if course not found
+                console.warn("Course not found for ID:", courseId);
+            }
+
+            // Enroll Action
+            enrollBtn.addEventListener('click', () => {
+                if (courseId) {
+                    TacliimiDB.enrollCourse(courseId);
+                    window.location.href = '/src/pages/learning/learning-interface/index.html?course=' + encodeURIComponent(courseId);
+                }
+            });
+
+            // Wishlist Action
+            function updateWishlistButtonState() {
+                if (!courseId) return;
+
+                if (TacliimiDB.isWishlisted(courseId)) {
+                    wishlistBtn.innerHTML = '<span class="material-icons-round text-sm align-middle mr-1 text-red-500">favorite</span> Wishlisted';
+                    wishlistBtn.classList.add('border-primary', 'text-primary');
+                    wishlistBtn.classList.remove('border-slate-200', 'text-slate-700');
+                } else {
+                    wishlistBtn.innerHTML = 'Add to Wishlist';
+                    wishlistBtn.classList.remove('border-primary', 'text-primary');
+                    wishlistBtn.classList.add('border-slate-200', 'text-slate-700');
+                }
+            }
+
+            updateWishlistButtonState();
+
+            wishlistBtn.addEventListener('click', () => {
+                if (!courseId) return;
+                TacliimiDB.toggleWishlist(courseId);
+                updateWishlistButtonState();
+            });
+        });
+
+        // Modal close logic
+        function closeVideoModal() {
+            const modal = document.getElementById('video-modal');
+            const player = document.getElementById('video-modal-player');
+            if (modal && player) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                player.pause();
+                player.src = '';
+            }
+        }
+    </script>
+
+    <!-- Video Modal -->
+    <div id="video-modal"
+        class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+        <div class="relative w-full max-w-4xl aspect-video bg-black rounded-lg overflow-hidden shadow-2xl">
+            <button onclick="closeVideoModal()"
+                class="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-black/50 hover:bg-black/80 text-white flex items-center justify-center transition-colors">
+                <span class="material-icons-round">close</span>
+            </button>
+            <video id="video-modal-player" class="w-full h-full object-contain" controls>
+                Your browser does not support the video tag.
+            </video>
+        </div>
+    </div>
+</body>
+
+</html>

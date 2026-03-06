@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Tacliimi Learn | Expert-Led E-Learning Platform</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script src="tacliimi_db.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#1e40af", // Deep educational blue
+                        accent: "#14b8a6",  // Soft teal
+                        "background-light": "#fcfcfd",
+                        "background-dark": "#0f172a",
+                        "charcoal": "#333333",
+                    },
+                    fontFamily: {
+                        display: ["Inter", "sans-serif"],
+                        body: ["Inter", "sans-serif"],
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.75rem",
+                    },
+                },
+            },
+        };
+    </script>
+    <style type="text/tailwindcss">
+        .course-card-shadow {
+            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.filled {
+            font-variation-settings: 'FILL' 1;
+        }
+    </style>
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-body transition-colors duration-300">
+    <nav
+        class="sticky top-0 z-50 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center gap-8">
+                    <a class="flex items-center gap-2" href="#">
+                        <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                            <span class="material-symbols-outlined text-white text-xl">school</span>
+                        </div>
+                        <span
+                            class="text-xl font-bold font-display tracking-tight text-primary dark:text-white">Tacliimi
+                            Learn</span>
+                    </a>
+                    <div class="hidden md:flex items-center gap-6">
+                        <a class="text-sm font-medium hover:text-primary transition-colors"
+                            href="/src/pages/marketplace/marketplace/">Categories</a>
+                        <a class="text-sm font-medium hover:text-primary transition-colors"
+                            href="/src/pages/mentorship/mentor-marketplace/index.html">Find a Mentor</a>
+                        <a class="text-sm font-medium hover:text-primary transition-colors"
+                            href="/src/pages/instructor/become-instructor/">Teach on Tacliimi</a>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <button class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                        id="theme-toggle">
+                        <span class="material-symbols-outlined text-[22px] dark:hidden">dark_mode</span>
+                        <span class="material-symbols-outlined text-[22px] hidden dark:block">light_mode</span>
+                    </button>
+                    <div class="hidden sm:flex items-center gap-3">
+                        <button onclick="window.location.href='/src/pages/auth/login/'"
+                            class="px-4 py-2 text-sm font-semibold border border-slate-300 dark:border-slate-700 rounded-md hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">Log
+                            in</button>
+                        <button onclick="window.location.href='/src/pages/auth/login/'"
+                            class="px-4 py-2 text-sm font-semibold bg-primary text-white rounded-md hover:bg-blue-700 transition-all shadow-sm">Sign
+                            up</button>
+                    </div>
+                    <button class="md:hidden p-2" id="mobile-menu-btn">
+                        <span class="material-symbols-outlined">menu</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- Mobile Menu -->
+        <div class="hidden md:hidden bg-white dark:bg-background-dark border-t border-slate-200 dark:border-slate-800 px-4 py-6 space-y-4 absolute w-full shadow-xl"
+            id="mobile-menu">
+            <a class="block text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors"
+                href="/src/pages/marketplace/marketplace/">Categories</a>
+            <a class="block text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors"
+                href="/src/pages/mentorship/mentor-marketplace/index.html">Find a Mentor</a>
+            <a class="block text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors"
+                href="/src/pages/instructor/become-instructor/">Teach on Tacliimi</a>
+            <div class="h-px bg-slate-200 dark:bg-slate-800 my-4"></div>
+            <button onclick="window.location.href='/src/pages/auth/login/'"
+                class="block w-full text-left text-base font-semibold text-slate-700 dark:text-slate-300">Log
+                in</button>
+            <button onclick="window.location.href='/src/pages/auth/login/'"
+                class="block w-full text-left text-base font-semibold text-primary mt-2">Sign up</button>
+        </div>
+    </nav>
+    <header class="relative pt-16 pb-24 overflow-hidden bg-[#F5F5F5] dark:bg-background-dark">
+        <div class="max-w-4xl mx-auto px-4 text-center">
+            <span
+                class="inline-block py-1 px-3 mb-6 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-sm font-semibold tracking-wide uppercase">
+                Unlock your potential
+            </span>
+            <h1
+                class="text-4xl md:text-6xl font-bold font-display mb-8 tracking-tight text-slate-900 dark:text-white leading-[1.1]">
+                Learn without limits from the <span
+                    class="text-primary underline decoration-blue-200 dark:decoration-blue-800 underline-offset-4">best
+                    institutions</span>
+            </h1>
+            <div class="relative max-w-2xl mx-auto mb-10 group">
+                <div class="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+                    <span
+                        class="material-symbols-outlined text-slate-400 group-focus-within:text-primary transition-colors">search</span>
+                </div>
+                <input
+                    class="block w-full pl-14 pr-32 py-5 bg-white dark:bg-slate-800 border-none rounded-2xl shadow-xl dark:shadow-none focus:ring-2 focus:ring-primary text-lg placeholder:text-slate-400 text-slate-900 dark:text-white transition-all"
+                    placeholder="What do you want to learn today?" type="text" />
+                <div class="absolute inset-y-2 right-2 flex items-center">
+                    <button
+                        class="h-full px-6 bg-primary text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors">Search</button>
+                </div>
+            </div>
+            <p class="text-charcoal dark:text-slate-300 text-lg max-w-2xl mx-auto font-medium leading-relaxed">
+                Empowering learners with accessible, world-class education tailored for your success.
+            </p>
+        </div>
+    </header>
+    <section class="py-20 bg-background-light dark:bg-background-dark">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-end mb-12">
+                <div>
+                    <h2 class="text-3xl md:text-4xl font-bold font-display text-slate-900 dark:text-white mb-4">
+                        Featured Courses
+                    </h2>
+                    <p class="text-slate-500 dark:text-slate-400 text-lg">Top-rated courses from our best instructors.
+                    </p>
+                </div>
+                <button onclick="window.location.href='/src/pages/marketplace/marketplace/'"
+                    class="hidden md:flex items-center gap-2 text-primary font-bold hover:text-blue-700 transition-colors">
+                    Explore all <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                </button>
+            </div>
+
+            <div id="featured-courses" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                <!-- Javascript will inject courses here -->
+            </div>
+
+            <button onclick="window.location.href='/src/pages/marketplace/marketplace/'"
+                class="w-full mt-8 md:hidden py-4 border-2 border-slate-200 dark:border-slate-700 rounded-xl font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                Explore all courses
+            </button>
+        </div>
+    </section>
+    <section class="py-20 bg-slate-50 dark:bg-slate-900/40">
+        <div class="max-w-7xl mx-auto px-4 text-center mb-12">
+            <h2 class="text-3xl font-bold font-display text-slate-900 dark:text-white mb-4">Top Categories</h2>
+            <p class="text-slate-500 dark:text-slate-400">Discover topics that interest you most.</p>
+        </div>
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                <a class="group p-6 bg-white dark:bg-slate-800 rounded-2xl border border-transparent hover:border-accent hover:shadow-lg transition-all text-center"
+                    href="#">
+                    <div
+                        class="w-14 h-14 bg-teal-50 dark:bg-teal-900/30 text-accent rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                        <span class="material-symbols-outlined text-3xl">terminal</span>
+                    </div>
+                    <span class="font-bold dark:text-white">Development</span>
+                </a>
+                <a class="group p-6 bg-white dark:bg-slate-800 rounded-2xl border border-transparent hover:border-accent hover:shadow-lg transition-all text-center"
+                    href="#">
+                    <div
+                        class="w-14 h-14 bg-teal-50 dark:bg-teal-900/30 text-accent rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                        <span class="material-symbols-outlined text-3xl">payments</span>
+                    </div>
+                    <span class="font-bold dark:text-white">Finance</span>
+                </a>
+                <a class="group p-6 bg-white dark:bg-slate-800 rounded-2xl border border-transparent hover:border-accent hover:shadow-lg transition-all text-center"
+                    href="#">
+                    <div
+                        class="w-14 h-14 bg-teal-50 dark:bg-teal-900/30 text-accent rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                        <span class="material-symbols-outlined text-3xl">brush</span>
+                    </div>
+                    <span class="font-bold dark:text-white">Design</span>
+                </a>
+                <a class="group p-6 bg-white dark:bg-slate-800 rounded-2xl border border-transparent hover:border-accent hover:shadow-lg transition-all text-center"
+                    href="#">
+                    <div
+                        class="w-14 h-14 bg-teal-50 dark:bg-teal-900/30 text-accent rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                        <span class="material-symbols-outlined text-3xl">trending_up</span>
+                    </div>
+                    <span class="font-bold dark:text-white">Marketing</span>
+                </a>
+                <a class="group p-6 bg-white dark:bg-slate-800 rounded-2xl border border-transparent hover:border-accent hover:shadow-lg transition-all text-center"
+                    href="#">
+                    <div
+                        class="w-14 h-14 bg-teal-50 dark:bg-teal-900/30 text-accent rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                        <span class="material-symbols-outlined text-3xl">biotech</span>
+                    </div>
+                    <span class="font-bold dark:text-white">Science</span>
+                </a>
+                <a class="group p-6 bg-white dark:bg-slate-800 rounded-2xl border border-transparent hover:border-accent hover:shadow-lg transition-all text-center"
+                    href="#">
+                    <div
+                        class="w-14 h-14 bg-teal-50 dark:bg-teal-900/30 text-accent rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                        <span class="material-symbols-outlined text-3xl">language</span>
+                    </div>
+                    <span class="font-bold dark:text-white">Languages</span>
+                </a>
+            </div>
+        </div>
+    </section>
+    <section class="pt-24 pb-12 px-4">
+        <div class="max-w-6xl mx-auto rounded-[2.5rem] bg-[#14b8a6] dark:bg-teal-900 overflow-hidden relative">
+            <div class="absolute inset-0 bg-gradient-to-r from-teal-600/50 to-transparent"></div>
+            <div class="relative grid md:grid-cols-2 items-center">
+                <div class="p-12 lg:p-20">
+                    <h2 class="text-3xl lg:text-5xl font-bold text-white mb-6 leading-tight">Find your perfect Mentor
+                        and accelerate your career.</h2>
+                    <p class="text-teal-50 text-lg mb-8 max-w-md">Connect with industry experts for 1-on-1 guidance,
+                        portfolio reviews, and career advice tailored to your goals.</p>
+                    <button onclick="window.location.href='/src/pages/mentorship/mentor-marketplace/index.html'"
+                        class="px-8 py-4 bg-white text-teal-700 font-bold rounded-xl hover:bg-slate-50 transition-all transform hover:scale-105 shadow-xl">Browse
+                        Mentors</button>
+                </div>
+                <div class="hidden md:flex h-full relative min-h-[400px] justify-center items-center">
+                    <img alt="Mentor teaching student" class="object-cover h-full w-full"
+                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuBdeL7ey6geMKt4sJfNGb4vc5Cu8IdcuXRF-dh7mD3_rei1vfJkzEg5WhNil-aFVVhgoKI5qpRSxo6pKL52urQ479CimgjvJ-Dhto1GOBB2YHSipFZsSL9L2RCAbOLP8XKaHUqGqYFrcpX88FV76WlbJDQapQCUEDClz5EIBeZxIe_d-70RfRuACBK0LJ3YGubyqA-peq2u_EUrrYRznpjIGhDBZ15l1VL7F8XqM2oQRzXuAysizol0I14zP1LA1jV0Ah2iOO2GYyk9" />
+                    <div class="absolute inset-0 bg-teal-900/20"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="py-12 px-4">
+        <div class="max-w-6xl mx-auto rounded-[2.5rem] bg-slate-900 dark:bg-slate-800 overflow-hidden relative">
+            <div class="absolute inset-0 bg-gradient-to-r from-primary/30 to-transparent"></div>
+            <div class="relative grid md:grid-cols-2 items-center">
+                <div class="p-12 lg:p-20">
+                    <h2 class="text-3xl lg:text-5xl font-bold text-white mb-6 leading-tight">Become an instructor and
+                        empower learners.</h2>
+                    <p class="text-slate-300 text-lg mb-8 max-w-md">Top instructors from around the world teach millions
+                        of learners on Tacliimi. We provide the tools and skills to teach what you love.</p>
+                    <button onclick="window.location.href='/src/pages/instructor/become-instructor/'"
+                        class="px-8 py-4 bg-primary text-white font-bold rounded-xl hover:bg-blue-700 transition-all transform hover:scale-105 shadow-xl">Start
+                        teaching today</button>
+                </div>
+                <div class="hidden md:block h-full relative min-h-[400px]">
+                    <img alt="Friendly professional instructor teaching online with laptop and microphone"
+                        class="h-full w-full object-cover"
+                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuA4EIKswHcq5PK9GCl9hRhGNVrd2cS567H_Pl0mkN4wnwoslKDaGHtXlZA-4jUzKn_nPKR315Y27NXZ1SSzrFXPCg4w3uoxuBIuNA0oQVRpl4sx5ZmaXsEuCnS1ACC6T-okgcoOBNyEOzaBqb-MC3NiwJFkMx6Lseugk-1cwQxxNGMHOw7uwifu04WHajgmhCn5JGy7QBB4sgX27ohd2WGOdZyQAM9oXdBgx3jF5wI9dlHIn0CTPTSjbuk5UfiVroNCzGJlEoZgf227" />
+                    <div class="absolute inset-0 bg-slate-900/10"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <footer class="pt-20 pb-10 border-t border-slate-200 dark:border-slate-800">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-12 mb-16">
+                <div class="col-span-2">
+                    <a class="flex items-center gap-2 mb-6" href="#">
+                        <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                            <span class="material-symbols-outlined text-white text-xl">school</span>
+                        </div>
+                        <span
+                            class="text-xl font-bold font-display tracking-tight text-primary dark:text-white">Tacliimi
+                            Learn</span>
+                    </a>
+                    <p class="text-slate-500 dark:text-slate-400 max-w-sm mb-6">
+                        Empowering global learners through accessible, high-quality education. Join our community of
+                        experts and students today.
+                    </p>
+                    <div class="flex gap-4">
+                        <a class="w-10 h-10 rounded-full border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-400 hover:text-primary transition-colors"
+                            href="#">
+                            <span class="material-symbols-outlined text-xl">alternate_email</span>
+                        </a>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="font-bold mb-6 dark:text-white">Platform</h4>
+                    <ul class="space-y-4 text-slate-500 dark:text-slate-400">
+                        <li><a class="hover:text-primary transition-colors" href="/src/pages/marketplace/marketplace/">Browse Courses</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold mb-6 dark:text-white">Community</h4>
+                    <ul class="space-y-4 text-slate-500 dark:text-slate-400">
+                        <li><a class="hover:text-primary transition-colors" href="/src/pages/instructor/become-instructor/">Instructors</a>
+                        </li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold mb-6 dark:text-white">Support</h4>
+                    <ul class="space-y-4 text-slate-500 dark:text-slate-400">
+                        <li><a class="hover:text-primary transition-colors" href="#">Help Center</a></li>
+                        <li><a class="hover:text-primary transition-colors" href="#">Privacy Policy</a></li>
+                        <li><a class="hover:text-primary transition-colors" href="#">Terms of Service</a></li>
+                        <li><a class="hover:text-primary transition-colors" href="#">Contact</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div
+                class="pt-8 border-t border-slate-200 dark:border-slate-800 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-slate-400">
+                <p>© 2024 Tacliimi Learn. All rights reserved.</p>
+                <div class="flex gap-6">
+                    <a class="hover:text-slate-900 dark:hover:text-white" href="#">Cookies</a>
+                    <a class="hover:text-slate-900 dark:hover:text-white" href="#">Accessibility</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <script>
+        const themeToggle = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            html.classList.add('dark');
+        } else {
+            html.classList.remove('dark');
+        }
+        themeToggle.addEventListener('click', () => {
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                localStorage.theme = 'light';
+            } else {
+                html.classList.add('dark');
+                localStorage.theme = 'dark';
+            }
+        });
+
+        // Mobile Menu Toggle
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        if (mobileMenuBtn && mobileMenu) {
+            mobileMenuBtn.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+        }
+
+        // Render Featured Courses Dynamically
+        function renderFeaturedCourses() {
+            const courses = TacliimiDB.getAllCourses().slice(0, 3); // Get top 3 courses
+            const grid = document.getElementById('featured-courses');
+
+            if (!grid) return;
+
+            let html = '';
+            courses.forEach(course => {
+                const categoryColor = course.category === 'Development' ? 'text-primary' :
+                    course.category === 'Data Science' ? 'text-indigo-500' :
+                        course.category === 'Design' ? 'text-pink-500' :
+                            course.category === 'IT & Software' ? 'text-red-500' :
+                                course.category === 'Marketing' ? 'text-green-500' :
+                                    'text-amber-500';
+
+                html += `
+                <div onclick="window.location.href='/src/pages/marketplace/course-details/index.html?id=${encodeURIComponent(course.id)}'"
+                    class="group bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl border border-transparent hover:border-primary/20 transition-all duration-300 cursor-pointer flex flex-col">
+                    <div class="relative h-40 overflow-hidden">
+                        <img alt="${course.title}"
+                            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            src="${course.thumbnailUrl}" />
+                        <div class="absolute top-4 right-4">
+                            <button onclick="event.stopPropagation(); TacliimiDB.toggleWishlist('${course.id}'); renderFeaturedCourses();"
+                                class="w-10 h-10 rounded-full bg-white/90 dark:bg-black/50 backdrop-blur-md flex items-center justify-center ${TacliimiDB.isWishlisted(course.id) ? 'text-red-500' : 'text-slate-400 hover:text-red-500'} transition-colors shadow-sm">
+                                <span class="material-symbols-outlined text-xl">${TacliimiDB.isWishlisted(course.id) ? 'favorite' : 'favorite_border'}</span>
+                            </button>
+                        </div>
+                        <div class="absolute bottom-4 left-4 flex gap-2">
+                            <span class="px-3 py-1 bg-white/90 dark:bg-black/70 backdrop-blur-md text-xs font-bold rounded-lg dark:text-white">${course.category}</span>
+                            ${course.isBestseller ? `<span class="px-3 py-1 bg-yellow-400 text-yellow-900 text-xs font-bold rounded-lg shadow-sm">Bestseller</span>` : ''}
+                        </div>
+                    </div>
+                    <div class="p-6 flex-1 flex flex-col">
+                        <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2 line-clamp-2 leading-snug group-hover:text-primary transition-colors">${course.title}</h3>
+                        <p class="text-slate-500 text-sm mb-4">${course.instructor} • ${course.instructorRole}</p>
+                        <div class="flex items-center gap-1 mb-4">
+                            <span class="font-bold text-yellow-500">${course.rating.toFixed(1)}</span>
+                            <div class="flex text-yellow-400">
+                                <span class="material-symbols-outlined text-sm font-light">star</span>
+                            </div>
+                            <span class="text-slate-400 text-sm ml-1">(${course.reviews.toLocaleString()})</span>
+                        </div>
+                        <div class="mt-auto border-t border-slate-100 dark:border-slate-700 pt-4 flex items-center justify-between">
+                            <div class="flex items-baseline gap-2">
+                                <span class="text-2xl font-bold text-slate-900 dark:text-white">${typeof course.price === 'number' ? '$' + course.price.toFixed(2) : course.price}</span>
+                                ${course.originalPrice ? `<span class="text-sm text-slate-400 line-through">$${course.originalPrice.toFixed(2)}</span>` : ''}
+                            </div>
+                            <div class="bg-primary/10 dark:bg-primary/20 text-primary p-2 rounded-xl group-hover:bg-primary group-hover:text-white transition-colors">
+                                <span class="material-symbols-outlined">arrow_forward</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                `;
+            });
+
+            grid.innerHTML = html;
+        }
+
+        document.addEventListener('DOMContentLoaded', renderFeaturedCourses);
+    </script>
+
+</body>
+
+</html>

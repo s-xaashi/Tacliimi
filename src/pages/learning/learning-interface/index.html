@@ -1,0 +1,555 @@
+<html class="light" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Tacliimi Learn | Student Interface</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
+    <script src="/src/services/tacliimi_db.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#4F46E5",
+                        "background-light": "#F9FAFB",
+                        "background-dark": "#111827",
+                    },
+                    fontFamily: {
+                        display: ["Inter", "sans-serif"],
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.5rem",
+                    },
+                },
+            },
+        };
+    </script>
+    <style type="text/tailwindcss">
+        body { font-family: 'Inter', sans-serif; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col transition-colors duration-200">
+    <header
+        class="h-16 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between px-6 sticky top-0 z-50">
+        <div class="flex items-center gap-4">
+            <a href="/src/pages/student/student-dashboard/index.html"
+                class="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary transition-colors">
+                <span class="material-symbols-outlined text-xl">arrow_back</span>
+                <span class="font-medium text-sm">Back to Dashboard</span>
+            </a>
+            <div class="h-6 w-px bg-slate-200 dark:bg-slate-800"></div>
+            <h1 id="li-course-title" class="text-sm font-semibold truncate max-w-[300px] lg:max-w-md">Course Title Here
+            </h1>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4">
+            <button class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                onclick="document.documentElement.classList.toggle('dark')">
+                <span class="material-symbols-outlined text-xl block dark:hidden">dark_mode</span>
+                <span class="material-symbols-outlined text-xl hidden dark:block">light_mode</span>
+            </button>
+            <div class="h-6 w-px bg-slate-200 dark:bg-slate-800 mx-1"></div>
+            <div class="flex items-center gap-3 pl-1">
+                <div class="text-right hidden sm:block">
+                    <p class="text-sm font-semibold text-slate-900 dark:text-white leading-none">Alex Johnson</p>
+                    <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Student</p>
+                </div>
+                <img alt="Student Profile"
+                    class="w-9 h-9 rounded-full border border-slate-200 dark:border-slate-700 object-cover"
+                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuBYpr7V8GQKMRkrAQqL7_ENhHW84nTpeO5cxojXWZxc400_fAyza1pAhDnuGlUN4DOzG4F42m5btoNAMFZWuv0Y0L1MvgOMTNj65pXbzLR7LpnuUsjBpKellhsVG5njUKmWZMlu35zbp9aMRc90kmhJrUzV7qfPkgNMp3mnmi26JRZA_mkpzseboPBJXMqyvE8GeXPXopx6IAWvNhTgHXwdOGM4KUf0O7zEDUbBxYocno1AXo7-B0DxBNrieS8bI2IISTwBmjGu9uwF" />
+            </div>
+        </div>
+    </header>
+    <main class="flex-1 flex flex-col md:flex-row overflow-hidden">
+        <section class="flex-1 overflow-y-auto no-scrollbar">
+            <div class="w-full aspect-video bg-black relative group">
+                <video id="main-video-player" class="w-full h-full object-contain" controls
+                    poster="https://lh3.googleusercontent.com/aida-public/AB6AXuDWOb0Y4fp9fMnPRy6C0RzOYw_tIf3Pcj162qHPZx-Yx3zx9lHECotSUcEGeBDau5wutQosd7kFtrVNeiivVgM4o0DbVUq3bl9g9JsPeMpxe2wxX80qy56CPkJUol8Q68xTf3jWENJ6-9bWZor9vPVmSDDRCtBLE9sSN_9ztPWP898i7Z0LEtkut_hi1gTfea3dlXXpcT95RJHHMPHyj54wPUWPr7-KFBtrZ_9D57nxDvuUd8ZxOlKLemEAIXB_fM-7WitWnR2grAnz">
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+            <div class="p-8 max-w-5xl mx-auto">
+                <div class="border-b border-slate-200 dark:border-slate-800 mb-6">
+                    <nav class="flex gap-8 overflow-x-auto no-scrollbar" id="li-tabs">
+                        <button
+                            class="pb-4 text-sm font-medium border-b-2 border-primary text-primary active-tab whitespace-nowrap hidden"
+                            data-tab="quiz">Quiz</button>
+                        <button
+                            class="pb-4 text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-colors whitespace-nowrap"
+                            data-tab="resources">Resources</button>
+                        <button
+                            class="pb-4 text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-colors whitespace-nowrap"
+                            data-tab="review">Give Review</button>
+                    </nav>
+                </div>
+                <div class="prose dark:prose-invert max-w-none">
+                    <h2 id="li-lesson-title" class="text-2xl font-bold mb-4">Loading Lesson...</h2>
+
+                    <div id="tab-content-quiz" class="tab-content">
+                        <p class="text-slate-600 dark:text-slate-400">No quizzes for this lesson.</p>
+                    </div>
+                    <div id="tab-content-resources" class="tab-content hidden">
+                        <p class="text-slate-600 dark:text-slate-400">There are no downloadable resources attached to
+                            this specific lesson.</p>
+                    </div>
+                    <div id="tab-content-review" class="tab-content hidden">
+                        <p class="text-slate-600 dark:text-slate-400">Loading review...</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <aside
+            class="w-full md:w-80 lg:w-96 border-l border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col h-full">
+            <div class="p-6 border-b border-slate-200 dark:border-slate-800">
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="font-bold text-slate-900 dark:text-white">Course Content</h3>
+                    <span class="text-xs font-semibold text-primary px-2 py-1 bg-primary/10 rounded">64% Complete</span>
+                </div>
+                <div class="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                    <div class="bg-primary h-full w-[64%] transition-all duration-1000"></div>
+                </div>
+            </div>
+            <div id="li-sidebar-curriculum" class="flex-1 overflow-y-auto">
+                <!-- Curriculum populated dynamically -->
+            </div>
+            <div class="p-6 border-t border-slate-200 dark:border-slate-800">
+                <button
+                    class="w-full py-3 bg-primary text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2">
+                    Next Lesson
+                    <span class="material-symbols-outlined">chevron_right</span>
+                </button>
+            </div>
+        </aside>
+    </main>
+    <div
+        class="md:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex justify-around p-3 fixed bottom-0 w-full">
+        <button class="flex flex-col items-center text-primary">
+            <span class="material-symbols-outlined">play_circle</span>
+            <span class="text-[10px] mt-1 font-medium">Player</span>
+        </button>
+        <button class="flex flex-col items-center text-slate-500">
+            <span class="material-symbols-outlined">list</span>
+            <span class="text-[10px] mt-1 font-medium">Lessons</span>
+        </button>
+        <button class="flex flex-col items-center text-slate-500">
+            <span class="material-symbols-outlined">quiz</span>
+            <span class="text-[10px] mt-1 font-medium">Quiz</span>
+        </button>
+    </div>
+
+    <script>
+        let currentCourseData = null;
+        let currentLessonData = null;
+
+        function loadReviews(lessonId) {
+            const reviewsStr = localStorage.getItem('tacliimi_lesson_reviews');
+            const reviews = reviewsStr ? JSON.parse(reviewsStr) : {};
+            return reviews[lessonId] || null;
+        }
+
+        function saveReview(lessonId, rating, comment) {
+            const reviewsStr = localStorage.getItem('tacliimi_lesson_reviews');
+            const reviews = reviewsStr ? JSON.parse(reviewsStr) : {};
+            reviews[lessonId] = { rating, comment, date: new Date().toISOString() };
+            localStorage.setItem('tacliimi_lesson_reviews', JSON.stringify(reviews));
+        }
+
+        function renderReviewTab(lessonId) {
+            const existingReview = loadReviews(lessonId);
+            const reviewContainer = document.getElementById('tab-content-review');
+            if (!reviewContainer) return;
+
+            if (existingReview) {
+                let stars = '';
+                for (let i = 1; i <= 5; i++) {
+                    stars += `<span class="material-symbols-outlined text-lg ${i <= existingReview.rating ? 'text-yellow-400' : 'text-slate-300'}">star</span>`;
+                }
+                reviewContainer.innerHTML = `
+                    <div class="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 mb-6 max-w-xl">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="font-bold text-slate-900 dark:text-white mb-1">Your Review</h3>
+                                <div class="flex gap-0.5">${stars}</div>
+                            </div>
+                            <span class="text-xs font-semibold text-slate-500 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full">${new Date(existingReview.date).toLocaleDateString()}</span>
+                        </div>
+                        <p class="text-slate-700 dark:text-slate-300 text-sm whitespace-pre-wrap leading-relaxed">${existingReview.comment}</p>
+                    </div>
+                    <button onclick="renderReviewForm('${lessonId}', ${existingReview.rating}, '${existingReview.comment.replace(/'/g, "\\'")}')" class="text-sm text-primary font-semibold hover:underline flex items-center gap-1"><span class="material-symbols-outlined text-sm">edit</span> Edit Review</button>
+                `;
+            } else {
+                renderReviewForm(lessonId);
+            }
+        }
+
+        window.renderReviewForm = function (lessonId, initRating = 0, initComment = '') {
+            const reviewContainer = document.getElementById('tab-content-review');
+            if (!reviewContainer) return;
+
+            let starsHtml = '';
+            for (let i = 1; i <= 5; i++) {
+                starsHtml += `<button type="button" onclick="setDraftRating(${i})" class="review-star-btn material-symbols-outlined text-3xl ${i <= initRating ? 'text-yellow-400' : 'text-slate-300'} hover:text-yellow-300 transition-colors" data-rating="${i}">star</button>`;
+            }
+
+            reviewContainer.innerHTML = `
+                <div class="max-w-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-xl">
+                    <h3 class="font-bold text-slate-900 dark:text-white mb-6">Leave a Review for this Lesson</h3>
+                    <div class="mb-6">
+                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wider text-[11px]">Rating</label>
+                        <div class="flex gap-2" id="review-stars-container" data-current="${initRating}">
+                            ${starsHtml}
+                        </div>
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wider text-[11px]">Comment</label>
+                        <textarea id="review-comment-input" rows="4" class="w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 focus:ring-primary focus:border-primary text-sm p-4 transition-colors" placeholder="What did you think of this lesson?">${initComment}</textarea>
+                    </div>
+                    <button onclick="submitReview('${lessonId}')" class="px-6 py-3 bg-primary hover:bg-indigo-600 text-white font-bold rounded-xl transition-all shadow-lg shadow-indigo-100 flex items-center gap-2"><span class="material-symbols-outlined text-sm">save</span> Save Review</button>
+                </div>
+            `;
+        }
+
+        window.setDraftRating = function (rating) {
+            const container = document.getElementById('review-stars-container');
+            container.setAttribute('data-current', rating);
+            const stars = container.querySelectorAll('.review-star-btn');
+            stars.forEach((star, index) => {
+                if (index < rating) {
+                    star.classList.remove('text-slate-300');
+                    star.classList.add('text-yellow-400');
+                } else {
+                    star.classList.add('text-slate-300');
+                    star.classList.remove('text-yellow-400');
+                }
+            });
+        };
+
+        window.submitReview = function (lessonId) {
+            const ratingStr = document.getElementById('review-stars-container').getAttribute('data-current');
+            const rating = parseInt(ratingStr, 10);
+            const comment = document.getElementById('review-comment-input').value.trim();
+
+            if (!rating) {
+                alert("Please select a rating.");
+                return;
+            }
+
+            saveReview(lessonId, rating, comment);
+            renderReviewTab(lessonId);
+        };
+
+        window.playLesson = function (sIdx, lIdx) {
+            if (!currentCourseData) return;
+            const sourceCurriculum = currentCourseData.sections || currentCourseData.curriculum || [];
+            const section = sourceCurriculum[sIdx];
+            const items = section.lessons || section.items || [];
+            const lesson = items[lIdx];
+
+            if (!lesson) return;
+            currentLessonData = lesson;
+
+            // Global lesson index calculation
+            let itemIndex = 1;
+            let currentGlobalIndex = 1;
+            sourceCurriculum.forEach((sec, sI) => {
+                const innerItems = sec.lessons || sec.items || [];
+                innerItems.forEach((it, lI) => {
+                    if (sI === sIdx && lI === lIdx) currentGlobalIndex = itemIndex;
+                    itemIndex++;
+                });
+            });
+
+            document.getElementById('li-lesson-title').textContent = `${currentGlobalIndex}. ${lesson.title || 'Untitled Lesson'}`;
+
+            // Video handling
+            const videoPlayer = document.getElementById('main-video-player');
+            const videoContainer = videoPlayer.parentElement;
+            if (lesson.video || lesson.previewUrl) {
+                videoPlayer.src = lesson.video ? (lesson.video.url || lesson.previewUrl) : lesson.previewUrl;
+                videoContainer.classList.remove('hidden');
+            } else {
+                videoPlayer.src = '';
+                videoContainer.classList.add('hidden');
+            }
+
+            // Quizzes Tab logic
+            const quizTabBtn = document.querySelector('button[data-tab="quiz"]');
+            const quizContent = document.getElementById('tab-content-quiz');
+            if (quizTabBtn && quizContent) {
+                if (lesson.quizzes && lesson.quizzes.length > 0) {
+                    quizTabBtn.classList.remove('hidden');
+                    quizTabBtn.innerHTML = `Quiz <span class="ml-1 bg-primary text-white font-bold text-[10px] py-0.5 px-2 rounded-full shadow-sm">${lesson.quizzes.length}</span>`;
+
+                    let quizHtml = `<div class="space-y-6">`;
+                    lesson.quizzes.forEach((quiz, qidx) => {
+                        let qCount = quiz.questions ? quiz.questions.length : 0;
+                        quizHtml += `
+                            <div class="p-6 border border-slate-200 dark:border-slate-800 rounded-2xl bg-slate-50 dark:bg-slate-800/50 hover:border-primary/50 transition-colors" id="quiz-container-${qidx}">
+                                <div class="flex items-start justify-between mb-4">
+                                    <div class="flex items-start gap-4">
+                                        <div class="w-12 h-12 rounded-xl bg-amber-100 dark:bg-amber-900/40 text-amber-600 flex items-center justify-center shrink-0">
+                                            <span class="material-symbols-outlined text-2xl">quiz</span>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-bold text-lg text-slate-900 dark:text-white mb-1">${quiz.title || 'Quiz ' + (qidx + 1)}</h4>
+                                            <p class="text-sm font-medium text-slate-500">${qCount} Question${qCount !== 1 ? 's' : ''}</p>
+                                        </div>
+                                    </div>
+                                    <button onclick="startQuiz(${sIdx}, ${lIdx}, ${qidx})" class="px-6 py-2.5 bg-primary text-white text-sm font-bold rounded-xl hover:bg-indigo-600 transition-colors shadow-lg shadow-indigo-200 dark:shadow-none whitespace-nowrap" id="start-btn-${qidx}">Start Quiz</button>
+                                </div>
+                                <div id="quiz-content-${qidx}" class="hidden mt-6 space-y-8 border-t border-slate-200 dark:border-slate-700 pt-6"></div>
+                            </div>
+                        `;
+                    });
+                    quizHtml += `</div>`;
+                    quizContent.innerHTML = quizHtml;
+                } else {
+                    quizTabBtn.classList.add('hidden');
+                    quizContent.innerHTML = `<p class="text-slate-600 dark:text-slate-400">No quizzes for this lesson.</p>`;
+                }
+            }
+
+            // Resources Tab logic
+            const resourcesTabBtn = document.querySelector('button[data-tab="resources"]');
+            const resourcesContent = document.getElementById('tab-content-resources');
+            if (resourcesTabBtn && resourcesContent) {
+                if (lesson.resources && lesson.resources.length > 0) {
+                    resourcesTabBtn.innerHTML = `Resources <span class="ml-1 bg-primary text-white font-bold text-[10px] py-0.5 px-2 rounded-full shadow-sm">${lesson.resources.length}</span>`;
+
+                    let resHtml = `<ul class="space-y-4">`;
+                    lesson.resources.forEach((res, ridx) => {
+                        resHtml += `
+                            <li class="flex items-center justify-between p-4 border border-slate-200 dark:border-slate-800 rounded-xl hover:bg-white dark:hover:bg-slate-800 hover:shadow-md hover:border-emerald-200 dark:hover:border-emerald-900/50 transition-all group">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                                        <span class="material-symbols-outlined">description</span>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-bold text-slate-900 dark:text-white mb-0.5">${res.title || 'Downloadable File'}</p>
+                                        <p class="text-xs font-semibold text-slate-400">PDF Document</p>
+                                    </div>
+                                </div>
+                                <button class="text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 font-bold text-sm px-4 py-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1.5 focus:opacity-100">
+                                    <span class="material-symbols-outlined text-sm shrink-0">download</span> <span class="hidden sm:inline">Download</span>
+                                </button>
+                            </li>
+                        `;
+                    });
+                    resHtml += `</ul>`;
+                    resourcesContent.innerHTML = resHtml;
+                } else {
+                    resourcesTabBtn.innerHTML = `Resources`;
+                    resourcesContent.innerHTML = `<p class="text-slate-600 dark:text-slate-400">There are no downloadable resources attached to this specific lesson.</p>`;
+                }
+            }
+
+            // Load & render review tab
+            const lessonId = `course-${currentCourseData.id}-s${sIdx}-l${lIdx}`;
+            renderReviewTab(lessonId);
+
+            // Auto-switch tabs if no video
+            if (!lesson.video && !lesson.previewUrl) {
+                if (lesson.quizzes && lesson.quizzes.length > 0) {
+                    document.querySelector('button[data-tab="quiz"]')?.click();
+                } else if (lesson.resources && lesson.resources.length > 0) {
+                    document.querySelector('button[data-tab="resources"]')?.click();
+                } else {
+                    document.querySelector('button[data-tab="review"]')?.click();
+                }
+            } else {
+                document.querySelector('button[data-tab="quiz"]')?.click();
+            }
+
+            // Highlight active sidebar item
+            document.querySelectorAll('.sidebar-lesson-btn').forEach(btn => {
+                btn.classList.remove('bg-white', 'dark:bg-slate-800', 'shadow-sm', 'border-l-4', 'border-primary', 'pl-5');
+                const dot = btn.querySelector('.lesson-active-dot');
+                if (dot) dot.classList.replace('bg-primary', 'bg-transparent');
+            });
+            const activeBtn = document.getElementById(`sidebar-btn-s${sIdx}-l${lIdx}`);
+            if (activeBtn) {
+                activeBtn.classList.add('bg-white', 'dark:bg-slate-800', 'shadow-sm', 'border-l-4', 'border-primary', 'pl-5');
+                const dot = activeBtn.querySelector('.lesson-active-dot');
+                if (dot) dot.classList.replace('bg-transparent', 'bg-primary');
+            }
+        };
+
+        window.startQuiz = function (sIdx, lIdx, qidx) {
+            const lesson = currentLessonData;
+            if (!lesson || !lesson.quizzes || !lesson.quizzes[qidx]) return;
+            const quiz = lesson.quizzes[qidx];
+
+            document.getElementById(`start-btn-${qidx}`).classList.add('hidden');
+            const container = document.getElementById(`quiz-content-${qidx}`);
+            container.classList.remove('hidden');
+
+            let questionsHtml = '';
+            (quiz.questions || []).forEach((q, ansIdx) => {
+                questionsHtml += `
+                    <div class="mb-8 p-4 bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 group" id="q-block-${qidx}-${ansIdx}">
+                        <h5 class="font-semibold text-slate-800 dark:text-slate-200 mb-4 text-[15px]"><span class="text-primary mr-2">${ansIdx + 1}.</span> ${q.text || q.question || 'Untitled Question'}</h5>
+                        <div class="space-y-3">
+                `;
+                (q.options || []).forEach((opt, oIdx) => {
+                    const isCorrect = opt.correct === true;
+                    // Support both object and string formats 
+                    const optText = opt.text || opt;
+                    questionsHtml += `
+                        <label class="flex items-center gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors"
+                               onclick="selectAnswer(this, ${qidx}, ${ansIdx}, ${isCorrect})">
+                            <input type="radio" name="q-${qidx}-${ansIdx}" class="form-radio text-primary focus:ring-primary border-slate-300 pointer-events-none">
+                            <span class="text-sm font-medium text-slate-700 dark:text-slate-300 flex-1">${optText}</span>
+                            <span class="status-icon hidden material-symbols-outlined text-xl"></span>
+                        </label>
+                    `;
+                });
+                questionsHtml += `</div></div>`;
+            });
+            container.innerHTML = questionsHtml;
+        };
+
+        window.selectAnswer = function (labelEl, qidx, ansIdx, isCorrect) {
+            const block = document.getElementById(`q-block-${qidx}-${ansIdx}`);
+            const labels = block.querySelectorAll('label');
+
+            labels.forEach(l => {
+                l.classList.add('pointer-events-none', 'opacity-70');
+                const radio = l.querySelector('input');
+                if (radio) radio.checked = false;
+            });
+
+            labelEl.classList.remove('opacity-70');
+            labelEl.classList.add('opacity-100');
+            labelEl.querySelector('input').checked = true;
+
+            const statusIcon = labelEl.querySelector('.status-icon');
+            statusIcon.classList.remove('hidden');
+
+            if (isCorrect) {
+                labelEl.classList.add('bg-emerald-50', 'dark:bg-emerald-900/20', 'border-emerald-200', 'dark:border-emerald-800');
+                labelEl.classList.remove('border-slate-200', 'dark:border-slate-700', 'hover:bg-slate-50', 'dark:hover:bg-slate-800');
+                statusIcon.textContent = 'check_circle';
+                statusIcon.classList.add('text-emerald-500');
+            } else {
+                labelEl.classList.add('bg-rose-50', 'dark:bg-rose-900/20', 'border-rose-200', 'dark:border-rose-800');
+                labelEl.classList.remove('border-slate-200', 'dark:border-slate-700', 'hover:bg-slate-50', 'dark:hover:bg-slate-800');
+                statusIcon.textContent = 'cancel';
+                statusIcon.classList.add('text-rose-500');
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const courseId = urlParams.get('course') || urlParams.get('id');
+
+            if (courseId) {
+                const courseData = TacliimiDB.getCourseById(courseId);
+                if (courseData) {
+                    currentCourseData = courseData;
+                    document.getElementById('li-course-title').textContent = courseData.title;
+                    document.title = courseData.title + ' - Learning Interface';
+
+                    const sidebarContainer = document.getElementById('li-sidebar-curriculum');
+                    if (sidebarContainer) {
+                        const sourceCurriculum = courseData.sections || courseData.curriculum || [];
+                        let html = '<div class="divide-y divide-slate-100 dark:divide-slate-800/50">';
+                        let itemIndex = 1;
+                        let firstSIdx = -1;
+                        let firstLIdx = -1;
+
+                        sourceCurriculum.forEach((section, sIdx) => {
+                            const secTitle = section.title || ('Section ' + (sIdx + 1));
+                            html += `
+                            <div class="bg-slate-50 dark:bg-slate-800/50 px-6 py-4 sticky top-0 z-10 backdrop-blur-md">
+                                <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">${secTitle}</span>
+                            </div>
+                            `;
+
+                            const items = section.lessons || section.items || [];
+                            if (items.length > 0) {
+                                items.forEach((item, lIdx) => {
+                                    if (firstSIdx === -1) {
+                                        firstSIdx = sIdx;
+                                        firstLIdx = lIdx;
+                                    }
+
+                                    const titleStr = `${itemIndex}. ${item.title || 'Untitled Lesson'}`;
+
+                                    let metaIconsHtml = '';
+                                    if (item.video || item.previewUrl || item.type === 'video') {
+                                        metaIconsHtml += `<div class="flex items-center gap-1 font-semibold text-primary"><span class="material-symbols-outlined text-[15px]">play_circle</span></div>`;
+                                    }
+                                    if (item.quizzes && item.quizzes.length > 0) {
+                                        metaIconsHtml += `<div class="flex items-center gap-1 font-bold text-amber-500"><span class="material-symbols-outlined text-[15px]">quiz</span><span class="text-[10px] bg-amber-100 dark:bg-amber-900/40 px-1.5 rounded-full">${item.quizzes.length}</span></div>`;
+                                    }
+                                    if (item.resources && item.resources.length > 0) {
+                                        metaIconsHtml += `<div class="flex items-center gap-1 font-bold text-emerald-500"><span class="material-symbols-outlined text-[15px]">attachment</span><span class="text-[10px] bg-emerald-100 dark:bg-emerald-900/40 px-1.5 rounded-full">${item.resources.length}</span></div>`;
+                                    }
+
+                                    html += `
+                                    <button id="sidebar-btn-s${sIdx}-l${lIdx}" onclick="playLesson(${sIdx}, ${lIdx})"
+                                        class="sidebar-lesson-btn w-full flex items-start gap-4 px-6 py-5 hover:bg-white dark:hover:bg-slate-800/80 text-left group transition-all border-l-4 border-transparent">
+                                        <div class="w-6 h-6 mt-0.5 rounded-full border-2 border-slate-200 dark:border-slate-700 shrink-0 flex items-center justify-center bg-white dark:bg-slate-900 group-hover:border-primary transition-colors">
+                                            <div class="lesson-active-dot w-2.5 h-2.5 bg-transparent rounded-full transition-colors"></div>
+                                        </div>
+                                        <div class="flex-1">
+                                            <p class="text-[13px] font-bold text-slate-700 dark:text-slate-300 mb-2 leading-snug group-hover:text-primary transition-colors">${titleStr}</p>
+                                            <div class="flex items-center gap-3">
+                                                ${metaIconsHtml}
+                                            </div>
+                                        </div>
+                                    </button>
+                                    `;
+                                    itemIndex++;
+                                });
+                            } else {
+                                html += `<div class="p-5 text-sm font-medium text-slate-400 italic px-6 text-center">Empty section</div>`;
+                            }
+                        });
+                        html += '</div>';
+                        sidebarContainer.innerHTML = html;
+
+                        // Load first lesson
+                        if (firstSIdx !== -1) {
+                            setTimeout(() => playLesson(firstSIdx, firstLIdx), 10);
+                        } else {
+                            document.getElementById('li-lesson-title').textContent = "1. Introduction to " + (courseData.category || "the course");
+                        }
+                    }
+                }
+            }
+
+            // Tab switching logic
+            const tabButtons = document.querySelectorAll('#li-tabs button');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+            tabButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    tabButtons.forEach(b => {
+                        b.className = b.className.replace('border-primary text-primary active-tab', 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200');
+                    });
+
+                    btn.className = btn.className.replace('border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200', 'border-primary text-primary active-tab');
+
+                    tabContents.forEach(c => c.classList.add('hidden'));
+
+                    const targetTab = btn.getAttribute('data-tab');
+                    const targetContent = document.getElementById('tab-content-' + targetTab);
+                    if (targetContent) targetContent.classList.remove('hidden');
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>

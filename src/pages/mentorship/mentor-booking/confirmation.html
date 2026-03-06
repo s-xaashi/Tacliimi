@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Updated Mentor Booking Confirmation | Tacliimi Learn</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#7f13ec",
+                        "background-light": "#f7f6f8",
+                        "background-dark": "#191022",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Lexend', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col">
+<header class="sticky top-0 z-50 w-full bg-white dark:bg-background-dark border-b border-primary/10 px-4 md:px-10 py-3">
+<div class="max-w-7xl mx-auto flex items-center justify-between">
+<div class="flex items-center gap-8">
+<a href="/src/pages/common/index.html" class="flex items-center gap-2 text-primary">
+<div class="size-8 bg-primary rounded-lg flex items-center justify-center text-white">
+<span class="material-symbols-outlined">school</span>
+</div>
+<h2 class="text-slate-900 dark:text-white text-xl font-bold tracking-tight">Tacliimi Learn</h2>
+</a>
+<nav class="hidden md:flex items-center gap-6">
+<a class="text-slate-600 dark:text-slate-300 text-sm font-medium hover:text-primary transition-colors" href="/src/pages/mentorship/mentor-marketplace/index.html">Browse Mentors</a>
+<a class="text-slate-600 dark:text-slate-300 text-sm font-medium hover:text-primary transition-colors" href="/src/pages/student/student-dashboard/index.html">My Courses</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button onclick="window.location.href='/src/pages/instructor/become-instructor/'" class="hidden sm:flex items-center justify-center rounded-lg bg-primary px-5 py-2 text-sm font-bold text-white hover:bg-primary/90 transition-all shadow-sm">
+                Become a Teacher
+            </button>
+<div class="size-10 rounded-full border-2 border-primary/20 bg-slate-100 flex items-center justify-center text-slate-400 overflow-hidden">
+<span class="material-symbols-outlined text-2xl">account_circle</span>
+</div>
+</div>
+</div>
+</header>
+<main class="flex-grow flex items-center justify-center py-12 px-4">
+<div class="max-w-2xl w-full">
+<div class="text-center mb-10">
+<div class="inline-flex items-center justify-center size-24 rounded-full bg-primary/10 text-primary mb-6 relative">
+<span class="material-symbols-outlined text-5xl">calendar_today</span>
+<div class="absolute -bottom-1 -right-1 size-8 bg-green-500 rounded-full border-4 border-background-light flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-sm font-bold">check</span>
+</div>
+</div>
+<h1 class="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-4">Session Booked Successfully!</h1>
+<p class="text-slate-600 dark:text-slate-400 text-lg max-w-lg mx-auto leading-relaxed">
+                You have a scheduled 1-on-1 session with Mentor Name Here. Please expect a phone call or email for the invitation details.
+            </p>
+</div>
+<div class="bg-white dark:bg-slate-900 rounded-xl shadow-xl shadow-primary/5 border border-slate-200 dark:border-slate-800 overflow-hidden mb-8">
+<div class="p-6 md:p-8">
+<div class="flex items-center justify-between mb-6">
+<h3 class="text-xl font-bold text-slate-900 dark:text-white">Session Details</h3>
+<span class="px-3 py-1 bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider rounded-full">Confirmed</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="flex items-start gap-4">
+<div class="size-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-2xl">account_circle</span>
+</div>
+<div>
+<p class="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">Mentor</p>
+<p class="text-slate-900 dark:text-white font-medium text-lg leading-tight">Mentor Name Here</p>
+</div>
+</div>
+<div class="flex items-start gap-4">
+<div class="size-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">event</span>
+</div>
+<div>
+<p class="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">Date &amp; Time</p>
+<p class="text-slate-900 dark:text-white font-medium text-lg leading-tight">Selected Date</p>
+<p class="text-slate-500 text-sm">Selected Time Slot</p>
+</div>
+</div>
+<div class="flex items-start gap-4 md:col-span-2">
+<div class="size-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">topic</span>
+</div>
+<div>
+<p class="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">Topic of Discussion</p>
+<p class="text-slate-900 dark:text-white font-medium text-lg leading-tight italic">Your selected topic will appear here</p>
+</div>
+</div>
+</div>
+</div>
+<div class="p-6 md:p-8 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row gap-4">
+<button onclick="window.location.href='/src/pages/student/student-dashboard/index.html#mentors'" class="flex-1 bg-primary hover:bg-primary/90 text-white font-bold py-3 px-6 rounded-lg flex items-center justify-center gap-2 transition-all">
+<span class="material-symbols-outlined text-xl">group</span>
+                    Go to My Mentors
+                </button>
+<button onclick="window.location.href='/src/pages/mentorship/mentor-marketplace/index.html'" class="flex-1 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 hover:border-primary text-slate-700 dark:text-slate-300 font-bold py-3 px-6 rounded-lg transition-all">
+                    Back to Marketplace
+                </button>
+</div>
+</div>
+<div class="bg-primary/5 rounded-xl p-6 border border-primary/10">
+<div class="flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-primary">lightbulb</span>
+<h4 class="font-bold text-slate-900 dark:text-white">Preparation Tips</h4>
+</div>
+<ul class="space-y-3">
+<li class="flex items-start gap-3 text-slate-600 dark:text-slate-400 text-sm">
+<span class="material-symbols-outlined text-primary text-lg">check_circle</span>
+                    Prepare 2-3 specific questions to make the most of your time.
+                </li>
+<li class="flex items-start gap-3 text-slate-600 dark:text-slate-400 text-sm">
+<span class="material-symbols-outlined text-primary text-lg">check_circle</span>
+                    Check your internet connection and microphone 5 minutes before.
+                </li>
+<li class="flex items-start gap-3 text-slate-600 dark:text-slate-400 text-sm">
+<span class="material-symbols-outlined text-primary text-lg">check_circle</span>
+                    Have your latest design project files or case studies ready to share.
+                </li>
+</ul>
+</div>
+<div class="mt-8 text-center">
+<button class="inline-flex items-center gap-2 text-primary text-sm font-semibold hover:underline">
+<span class="material-symbols-outlined text-sm">add_to_drive</span>
+                Add to Google Calendar
+            </button>
+</div>
+</div>
+</main>
+<footer class="bg-white dark:bg-background-dark border-t border-primary/10 py-8 px-4 md:px-10 mt-12">
+<div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+<div class="flex items-center gap-2 text-slate-400">
+<div class="size-6 bg-slate-200 dark:bg-slate-800 rounded flex items-center justify-center">
+<span class="material-symbols-outlined text-xs">school</span>
+</div>
+<p class="text-sm font-medium">© 2024 Tacliimi Learn. All rights reserved.</p>
+</div>
+<div class="flex gap-8">
+<a class="text-slate-400 hover:text-primary text-sm transition-colors" href="#">Privacy Policy</a>
+<a class="text-slate-400 hover:text-primary text-sm transition-colors" href="#">Terms of Service</a>
+<a class="text-slate-400 hover:text-primary text-sm transition-colors" href="#">Contact Support</a>
+</div>
+<div class="flex gap-4">
+<a class="size-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:bg-primary hover:text-white transition-all" href="#">
+<span class="material-symbols-outlined text-lg">public</span>
+</a>
+<a class="size-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:bg-primary hover:text-white transition-all" href="#">
+<span class="material-symbols-outlined text-lg">alternate_email</span>
+</a>
+</div>
+</div>
+</footer>
+
+</body></html>

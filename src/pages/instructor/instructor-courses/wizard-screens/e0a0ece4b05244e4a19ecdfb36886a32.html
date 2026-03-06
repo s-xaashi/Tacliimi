@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Demo: Publish &amp; Preview - Tacliimi Learn</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800;900&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#7f13ec",
+                        "background-light": "#f7f6f8",
+                        "background-dark": "#191022",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+    <style type="text/tailwindcss">
+        body {
+            font-family: 'Lexend', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .demo-badge {
+            @apply text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700;
+        }
+        .skeleton-pattern {
+            background: linear-gradient(90deg, transparent 25%, rgba(127, 19, 236, 0.05) 50%, transparent 75%);
+            background-size: 200% 100%;
+        }
+    </style>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col">
+    <header
+        class="sticky top-0 z-50 bg-white dark:bg-background-dark border-b border-primary/10 px-6 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-4">
+            <div
+                class="flex items-center justify-center size-10 rounded-full bg-primary text-white shadow-lg shadow-primary/20">
+                <span class="text-2xl font-black italic tracking-tighter">T</span>
+            </div>
+            <div>
+                <h1 class="text-lg font-bold leading-none">Tacliimi Learn</h1>
+                <p class="text-xs text-slate-500 dark:text-slate-400">Course Creation Wizard <span
+                        class="ml-1 text-primary font-semibold tracking-wide uppercase text-[9px] px-1 bg-primary/10 rounded">Demo</span>
+                </p>
+            </div>
+        </div>
+        <div class="flex items-center gap-3">
+            <button
+                class="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
+                Save Draft
+            </button>
+            <button
+                class="px-4 py-2 text-sm font-medium border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors">
+                Exit
+            </button>
+            <div class="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary ml-2">
+                <span class="material-symbols-outlined text-sm">person</span>
+            </div>
+        </div>
+    </header>
+    <main class="flex-grow flex flex-col items-center py-10 px-4">
+        <div class="w-full max-w-4xl space-y-8">
+            <div class="space-y-4">
+                <div class="flex justify-between items-center text-sm font-medium">
+                    <span class="text-primary flex items-center gap-2">
+                        Step 4 of 4: Publish &amp; Preview
+                        <span
+                            class="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full uppercase tracking-tighter">Final
+                            Review</span>
+                    </span>
+                    <span class="text-slate-500">100% Complete</span>
+                </div>
+                <div class="h-2 w-full bg-primary/10 rounded-full overflow-hidden">
+                    <div class="h-full bg-primary w-full rounded-full"></div>
+                </div>
+            </div>
+            <div class="text-center space-y-2">
+                <h2 class="text-3xl font-extrabold tracking-tight">Review Your Launch Demo</h2>
+                <p class="text-slate-500 dark:text-slate-400 max-w-lg mx-auto">This is a simulation of how your course
+                    will appear. Verify the details summarized from your previous steps.</p>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                <div class="lg:col-span-7 space-y-6">
+                    <section
+                        class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden relative">
+                        <div
+                            class="p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-primary text-lg">visibility</span>
+                                <h3
+                                    class="font-bold text-sm uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                                    Marketplace Preview</h3>
+                            </div>
+                            <span class="demo-badge">Preview Placeholder</span>
+                        </div>
+                        <div class="p-6">
+                            <div
+                                class="relative aspect-video rounded-lg bg-slate-50 dark:bg-slate-800/50 overflow-hidden mb-6 border-2 border-dashed border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center group">
+                                <div class="skeleton-pattern absolute inset-0 opacity-50"></div>
+                                <div class="z-10 flex flex-col items-center text-slate-400 dark:text-slate-500">
+                                    <span class="material-symbols-outlined text-5xl mb-2 opacity-20">image</span>
+                                    <span class="text-xs font-medium uppercase tracking-widest">Thumbnail Preview</span>
+                                    <span class="text-[10px] mt-1 opacity-60">1280 x 720 px recommended</span>
+                                </div>
+                                <div class="absolute bottom-3 right-3">
+                                    <span
+                                        class="demo-badge bg-white/90 dark:bg-slate-900/90 shadow-sm lowercase italic">!
+                                        User-uploaded image will show here</span>
+                                </div>
+                            </div>
+                            <div class="relative">
+                                <div class="absolute -top-6 left-0"><span class="demo-badge lowercase">Course
+                                        title</span></div>
+                                <h4 class="text-xl font-bold mb-2 text-slate-400 dark:text-slate-500 italic">Title of
+                                    your course will appear here</h4>
+                            </div>
+                            <div
+                                class="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400 mb-6 relative">
+                                <div class="absolute -bottom-5 left-0"><span class="demo-badge lowercase">Metadata
+                                        details</span></div>
+                                <span class="flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-amber-400 text-sm fill-1">star</span>
+                                    <span class="font-semibold text-slate-700 dark:text-slate-200">0.0</span>
+                                    (New)
+                                </span>
+                                <span>•</span>
+                                <span>0 Modules</span>
+                                <span>•</span>
+                                <span>Course Level</span>
+                            </div>
+                            <div
+                                class="flex items-center gap-3 pt-6 border-t border-slate-100 dark:border-slate-800 relative">
+                                <div class="absolute -top-3 right-0"><span class="demo-badge lowercase">Instructor &amp;
+                                        Price</span></div>
+                                <div
+                                    class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                                    <span class="material-symbols-outlined">person</span>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-bold leading-none">Instructor Name</p>
+                                    <p class="text-xs text-slate-500 mt-1">Professional Title</p>
+                                </div>
+                                <div class="ml-auto text-xl font-black text-primary">$00.00</div>
+                            </div>
+                        </div>
+                    </section>
+                    <section
+                        class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-6">
+                        <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary">lock_open</span>
+                            Privacy Settings
+                        </h3>
+                        <div class="space-y-4">
+                            <label
+                                class="relative flex items-start gap-4 p-4 rounded-lg border-2 border-primary bg-primary/5 cursor-pointer">
+                                <input checked="" class="mt-1 text-primary focus:ring-primary h-4 w-4" name="privacy"
+                                    type="radio" value="public" />
+                                <div class="flex flex-col">
+                                    <span class="font-bold text-slate-900 dark:text-slate-100">Public</span>
+                                    <span class="text-sm text-slate-600 dark:text-slate-400">Available to everyone on
+                                        Tacliimi Marketplace. Searchable and discoverable.</span>
+                                </div>
+                            </label>
+                            <label
+                                class="relative flex items-start gap-4 p-4 rounded-lg border-2 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 cursor-pointer">
+                                <input class="mt-1 text-primary focus:ring-primary h-4 w-4" name="privacy" type="radio"
+                                    value="private" />
+                                <div class="flex flex-col">
+                                    <span class="font-bold text-slate-900 dark:text-slate-100">Private (Link
+                                        Only)</span>
+                                    <span class="text-sm text-slate-600 dark:text-slate-400">Not searchable. Only
+                                        students with the direct enrollment link can access it.</span>
+                                </div>
+                            </label>
+                        </div>
+                    </section>
+                </div>
+                <div class="lg:col-span-5 space-y-6">
+                    <section
+                        class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-6">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="font-bold text-lg">Completion Summary</h3>
+                            <span
+                                class="text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded uppercase">Step
+                                1-3 Summary</span>
+                        </div>
+                        <p class="text-xs text-slate-500 mb-5">Review the data collected from previous wizard steps:</p>
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between group">
+                                <div class="flex items-center gap-3">
+                                    <span
+                                        class="material-symbols-outlined text-emerald-500 bg-emerald-100 dark:bg-emerald-900/30 rounded-full p-1 text-base">check</span>
+                                    <div class="flex flex-col">
+                                        <span class="text-sm font-medium text-slate-700 dark:text-slate-200">Basic
+                                            Information</span>
+                                        <span class="text-[10px] text-slate-400">Title, Description, Category</span>
+                                    </div>
+                                </div>
+                                <button class="text-xs text-primary hover:underline">Edit</button>
+                            </div>
+                            <div class="flex items-center justify-between group">
+                                <div class="flex items-center gap-3">
+                                    <span
+                                        class="material-symbols-outlined text-emerald-500 bg-emerald-100 dark:bg-emerald-900/30 rounded-full p-1 text-base">check</span>
+                                    <div class="flex flex-col">
+                                        <span class="text-sm font-medium text-slate-700 dark:text-slate-200">Curriculum
+                                            Structure</span>
+                                        <span class="text-[10px] text-slate-400">Lessons and Quizzes recorded</span>
+                                    </div>
+                                </div>
+                                <button class="text-xs text-primary hover:underline">Edit</button>
+                            </div>
+                            <div class="flex items-center justify-between group">
+                                <div class="flex items-center gap-3">
+                                    <span
+                                        class="material-symbols-outlined text-emerald-500 bg-emerald-100 dark:bg-emerald-900/30 rounded-full p-1 text-base">check</span>
+                                    <div class="flex flex-col">
+                                        <span class="text-sm font-medium text-slate-700 dark:text-slate-200">Pricing
+                                            &amp; Discounts</span>
+                                        <span class="text-[10px] text-slate-400">Payment type and pricing details</span>
+                                    </div>
+                                </div>
+                                <button class="text-xs text-primary hover:underline">Edit</button>
+                            </div>
+                            <div
+                                class="mt-6 p-4 bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30 rounded-lg">
+                                <div class="flex gap-3">
+                                    <span class="material-symbols-outlined text-amber-500 shrink-0">info</span>
+                                    <div class="space-y-1">
+                                        <p
+                                            class="text-xs font-bold text-amber-800 dark:text-amber-200 uppercase tracking-wide">
+                                            Final Review Needed</p>
+                                        <p class="text-xs text-amber-700 dark:text-amber-300 leading-relaxed">
+                                            Please verify that all video captions are uploaded and quizzes are correctly
+                                            mapped to their lessons.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                    <div class="p-4 bg-primary/5 rounded-xl border border-primary/10">
+                        <p class="text-xs text-slate-500 dark:text-slate-400 italic">
+                            By clicking "Publish Course", you agree to the Tacliimi Learn Instructor Terms of Service.
+                            Your course will be processed and live within 2-4 hours.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    <footer
+        class="sticky bottom-0 bg-white dark:bg-background-dark border-t border-primary/10 px-6 py-6 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+        <div class="max-w-4xl mx-auto flex items-center justify-between">
+            <button
+                class="flex items-center gap-2 px-6 py-3 font-semibold text-slate-600 dark:text-slate-300 hover:text-primary transition-colors">
+                <span class="material-symbols-outlined">arrow_back</span>
+                Previous: Pricing
+            </button>
+            <div class="flex items-center gap-4">
+                <button onclick="publishCourse()"
+                    class="px-10 py-3.5 bg-primary hover:bg-primary/90 text-white font-extrabold rounded-lg shadow-lg shadow-primary/20 transition-all flex items-center gap-2">
+                    Publish Course
+                    <span class="material-symbols-outlined">rocket_launch</span>
+                </button>
+            </div>
+        </div>
+    </footer>
+
+    <script src="/src/services/tacliimi_db.js"></script>
+    <script>
+        function publishCourse() {
+            try {
+                const savedWizardData = JSON.parse(localStorage.getItem('course_wizard_data')) || {};
+                const newId = 'course-' + Math.random().toString(36).substr(2, 9);
+                const newCourse = {
+                    id: newId,
+                    title: savedWizardData.title?.trim() || 'Untitled New Course',
+                    description: savedWizardData.description || 'No description provided.',
+                    category: savedWizardData.category || 'Development',
+                    instructor: 'Your Name (Instructor)',
+                    instructorRole: 'Course Creator',
+                    thumbnailUrl: savedWizardData.thumbnailPreview || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?ixlib=rb-4.0.3&auto=format&fit=crop&w=1740&q=80',
+                    price: savedWizardData.price && savedWizardData.price !== "0" ? parseFloat(savedWizardData.price) : "Free",
+                    originalPrice: null,
+                    rating: 0,
+                    reviews: 0,
+                    duration: '0h',
+                    isBestseller: false,
+                    previewVideo: savedWizardData.promoVideoPreview || ''
+                };
+
+                if (typeof TacliimiDB !== 'undefined') {
+                    TacliimiDB.addCourse(newCourse);
+                } else {
+                    console.error("TacliimiDB not imported.");
+                }
+            } catch (e) {
+                console.error("Could not save to mock DB:", e);
+            }
+
+            alert("Course Published Successfully!");
+            window.location.href = '/src/pages/marketplace/marketplace/index.html';
+        }
+    </script>
+</body>
+
+</html>

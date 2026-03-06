@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Student Registration | Tacliimi Learn</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#4F46E5",
+                        "background-light": "#F9FAFB",
+                        "background-dark": "#111827",
+                    },
+                    fontFamily: {
+                        display: ["Inter", "sans-serif"],
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.5rem",
+                    },
+                },
+            },
+        };
+    </script>
+    <style type="text/tailwindcss">
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .bg-pattern {
+            background-color: #4f46e5;
+            background-image: radial-gradient(#ffffff 1px, transparent 1px);
+            background-size: 20px 20px;
+            opacity: 0.1;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark min-h-screen flex items-center justify-center p-4">
+    <button
+        class="fixed top-6 right-6 p-2 rounded-full bg-white dark:bg-gray-800 shadow-md text-gray-600 dark:text-gray-300 hover:scale-110 transition-transform"
+        onclick="document.documentElement.classList.toggle('dark')">
+        <span class="material-icons-outlined">dark_mode</span>
+    </button>
+    <main
+        class="w-full max-w-6xl bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row min-h-[700px]">
+        <section class="hidden md:flex md:w-1/2 relative bg-primary items-center justify-center p-12 overflow-hidden">
+            <div class="absolute inset-0 bg-pattern"></div>
+            <div class="relative z-10 text-white max-w-md">
+                <div
+                    class="mb-8 inline-flex items-center space-x-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full border border-white/20">
+                    <span class="material-icons-outlined text-white">school</span>
+                    <span class="font-semibold tracking-wide uppercase text-sm">Tacliimi Learn</span>
+                </div>
+                <h1 class="text-5xl font-bold leading-tight mb-6">Start your learning journey today.</h1>
+                <p class="text-indigo-100 text-lg mb-8 leading-relaxed">
+                    Join our growing community and unlock access to premium courses from global experts.
+                </p>
+                <div class="grid grid-cols-2 gap-6 pt-6 border-t border-indigo-400/30">
+                    <div class="flex items-center space-x-3">
+                        <span class="material-icons-outlined text-indigo-200">verified_user</span>
+                        <span class="text-sm font-medium">Secure Access</span>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <span class="material-icons-outlined text-indigo-200">public</span>
+                        <span class="text-sm font-medium">Global Network</span>
+                    </div>
+                </div>
+            </div>
+            <div class="absolute -bottom-16 -left-16 w-64 h-64 bg-indigo-400/20 rounded-full blur-3xl"></div>
+            <div class="absolute -top-16 -right-16 w-80 h-80 bg-white/10 rounded-full blur-3xl"></div>
+        </section>
+        <section class="w-full md:w-1/2 p-8 md:p-16 flex flex-col justify-center">
+            <div class="max-w-md mx-auto w-full">
+                <div class="md:hidden flex items-center space-x-2 mb-8 text-primary">
+                    <span class="material-icons-outlined text-3xl">school</span>
+                    <span class="text-2xl font-bold tracking-tight">Tacliimi Learn</span>
+                </div>
+                <div class="mb-10 text-center md:text-left">
+                    <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Join Tacliimi Learn</h2>
+                    <p class="text-gray-500 dark:text-gray-400">Create your student profile today.</p>
+                </div>
+                <div class="mb-8">
+                    <button
+                        class="w-full flex items-center justify-center px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors group shadow-sm">
+                        <svg class="w-5 h-5 mr-3" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                            <path
+                                d="M44.5 20H24v8.5h11.8C34.7 33.9 30.1 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22c11 0 21-8 21-22 0-1.3-.2-2.7-.5-4z"
+                                fill="#4285F4"></path>
+                            <path
+                                d="M6.3 14.7l6.6 4.8C14.6 15.8 19 13 24 13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 16.1 2 9.4 6.2 6.3 12.4z"
+                                fill="#EA4335"></path>
+                            <path
+                                d="M24 46c5.9 0 10.9-2 14.9-5.4l-7.1-6c-2.2 1.5-5.1 2.4-7.8 2.4-6.1 0-11.2-4.1-13.1-9.7l-6.8 5.2C8.7 39.4 15.8 46 24 46z"
+                                fill="#34A853"></path>
+                            <path
+                                d="M10.9 27.3c-.5-1.5-.8-3.1-.8-4.8s.3-3.3.8-4.8l-6.6-4.8C2.8 16.2 2 20 2 24s.8 7.8 2.3 11.1l6.6-4.8z"
+                                fill="#FBBC05"></path>
+                        </svg>
+                        <span class="text-sm font-semibold text-gray-700 dark:text-gray-200">Sign in with Google</span>
+                    </button>
+                </div>
+                <div class="relative mb-8">
+                    <div class="absolute inset-0 flex items-center">
+                        <div class="w-full border-t border-gray-200 dark:border-gray-700"></div>
+                    </div>
+                    <div class="relative flex justify-center text-sm">
+                        <span
+                            class="px-4 bg-white dark:bg-gray-900 text-gray-500 uppercase tracking-wider text-xs font-semibold">Or
+                            continue with email</span>
+                    </div>
+                </div>
+                <form onsubmit="event.preventDefault(); window.location.href='/src/pages/student/student-dashboard/index.html';"
+                    class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5"
+                            for="fullname">Full Name</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                                <span class="material-icons-outlined text-xl">person</span>
+                            </span>
+                            <input
+                                class="block w-full pl-10 pr-4 py-3 rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-primary focus:border-primary transition-all sm:text-sm"
+                                id="fullname" name="fullname" placeholder="John Doe" required="" type="text" />
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5"
+                            for="email">Email address</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                                <span class="material-icons-outlined text-xl">mail</span>
+                            </span>
+                            <input
+                                class="block w-full pl-10 pr-4 py-3 rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-primary focus:border-primary transition-all sm:text-sm"
+                                id="email" name="email" placeholder="you@institution.edu" required="" type="email" />
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5"
+                            for="password">Password</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                                <span class="material-icons-outlined text-xl">lock</span>
+                            </span>
+                            <input
+                                class="block w-full pl-10 pr-12 py-3 rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-primary focus:border-primary transition-all sm:text-sm"
+                                id="password" name="password" placeholder="••••••••" required="" type="password" />
+                            <button
+                                class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                                type="button">
+                                <span class="material-icons-outlined text-xl">visibility_off</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="flex items-center">
+                        <input
+                            class="h-4 w-4 text-primary focus:ring-primary border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-800 transition-colors"
+                            id="remember-me" name="remember-me" type="checkbox" />
+                        <label class="ml-2 block text-sm text-gray-600 dark:text-gray-400" for="remember-me">Remember
+                            this device</label>
+                    </div>
+                    <button
+                        class="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-primary hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all duration-200 transform active:scale-[0.98]"
+                        type="submit">
+                        Create Student Account
+                    </button>
+                </form>
+                <p class="mt-10 text-center text-sm text-gray-600 dark:text-gray-400">
+                    Already have a student account?
+                    <a class="font-bold text-primary hover:text-indigo-500 transition-colors"
+                        href="/src/pages/auth/user-login/index.html">Log in here</a>
+                </p>
+                <div
+                    class="mt-12 pt-8 border-t border-gray-100 dark:border-gray-800 flex flex-col items-center space-y-4">
+                    <div class="flex items-center space-x-1.5 text-xs text-gray-400">
+                        <span class="material-icons-outlined text-sm">shield</span>
+                        <span>Secure 256-bit SSL encrypted connection</span>
+                    </div>
+                    <div class="flex space-x-4 text-xs font-medium text-gray-400">
+                        <a class="hover:text-gray-600 dark:hover:text-gray-300" href="#">Help Center</a>
+                        <span>•</span>
+                        <a class="hover:text-gray-600 dark:hover:text-gray-300" href="#">Privacy Policy</a>
+                        <span>•</span>
+                        <a class="hover:text-gray-600 dark:hover:text-gray-300" href="#">Terms</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+    <div class="fixed top-0 left-0 -z-10 w-1/2 h-full bg-indigo-50 dark:bg-gray-950/50 hidden lg:block"></div>
+
+</body>
+
+</html>
