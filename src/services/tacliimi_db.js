@@ -511,15 +511,46 @@ class TacliimiDB {
             });
         });
 
-        // Filter out nodes that are ancestors of other matched nodes.
-        // This ensures we only target the innermost specific auth links/profiles
-        // and leave the outer navigation containers perfectly intact!
+        // Filter out nodes that are ancestors of other matched nodes,
+        // AND STRICTLY require that the elements are inside a <header> or <nav>
         authElements = authElements.filter(el => {
-            return !authElements.some(other => other !== el && el.contains(other));
+            const isInsideHeader = el.closest('header') || el.closest('nav');
+            return isInsideHeader && !authElements.some(other => other !== el && el.contains(other));
         });
 
         // Group auth elements by parent so we can replace them collectively per-navbar
         const parentMap = new Map();
+
+        if (authElements.length === 0) {
+            // Find a suitable right-aligned header container to attach to
+            let fallbackContainer = null;
+
+            // First, see if the developer explicitly left the TacliimiDB comment placeholder
+            document.querySelectorAll('div').forEach(div => {
+                if (div.innerHTML.includes('Global Profile Injected Below via TacliimiDB') && (div.closest('header') || div.closest('nav'))) {
+                    fallbackContainer = div;
+                }
+            });
+
+            // If not found, intelligently target the far-right controls container inside the nav/header
+            if (!fallbackContainer) {
+                const navOrHeader = document.querySelector('header') || document.querySelector('nav');
+                if (navOrHeader) {
+                    // Get the last div child which usually represents the right side flex container
+                    const rootDivs = Array.from(navOrHeader.children).filter(c => c.tagName === 'DIV');
+                    if (rootDivs.length > 0) {
+                        fallbackContainer = rootDivs[rootDivs.length - 1]; // Far right group
+                    } else {
+                        fallbackContainer = navOrHeader;
+                    }
+                }
+            }
+
+            if (fallbackContainer && !fallbackContainer.closest('.tacliimi-injected-profile')) {
+                parentMap.set(fallbackContainer, []);
+            }
+        }
+
         authElements.forEach(el => {
             // Avoid selecting the injected profile again if running multiple times
             if (el.closest('.tacliimi-injected-profile')) return;
@@ -527,57 +558,124 @@ class TacliimiDB {
             parentMap.get(el.parentElement).push(el);
         });
 
-        // Compute template variables once outside the loop
+        const roleDesc = session.role === 'instructor' ? 'Instructor' : 'Student';
+        let defaultName = roleDesc;
+        if (session.email) {
+            let prefix = session.email.split('@')[0];
+            defaultName = prefix.charAt(0).toUpperCase() + prefix.slice(1);
+        }
+        const displayName = session.displayName || session.fullName || defaultName;
+        const profileImage = session.profileImage || session.profilePicture;
+
         const dashboardLink = session.role === 'instructor' ? '/src/pages/instructor/instructor-dashboard/index.html' : '/src/pages/student/student-dashboard/index.html';
         const roleName = session.role === 'instructor' ? 'Instructor' : 'Student';
-        const imgSrc = session.profileImage || session.profilePicture;
+        const imgSrc = profileImage;
         const picHtml = imgSrc
             ? `<img src="${imgSrc}" class="w-full h-full object-cover rounded-full" />`
             : `<span class="material-symbols-outlined text-2xl relative top-0.5">account_circle</span>`;
         const settingsLink = session.role === 'instructor' ? '/src/pages/instructor/instructor-profile/index.html' : '/src/pages/student/account-settings/index.html';
 
+        const isPublicPage = !window.location.pathname.includes('dashboard') && !window.location.pathname.includes('settings') && !window.location.pathname.includes('profile') && !window.location.pathname.includes('admin');
+
         parentMap.forEach((elementsToRemove, container) => {
-            // Remove existing duplicate notification bells in the navigation beforehand
+            // Remove existing duplicate notification bells and theme toggles in the navigation beforehand
             document.querySelectorAll('nav button, header button').forEach(btn => {
-                if (btn.innerText.includes('notifications') || btn.innerHTML.includes('notifications')) {
-                    btn.remove();
+                const text = (btn.innerText + btn.innerHTML).toLowerCase();
+                const title = (btn.getAttribute('title') || '').toLowerCase();
+                const id = btn.id || '';
+                if (text.includes('notifications') || text.includes('dark_mode') || text.includes('light_mode') || title.includes('theme') || id.includes('theme')) {
+                    if (!btn.closest('.tacliimi-injected-profile')) {
+                        btn.remove();
+                    }
                 }
             });
 
-            const dropdownHtml = `
-                <div class="flex items-center gap-1 tacliimi-injected-profile">
-                    <button class="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full mr-1 hidden sm:flex items-center justify-center transition-colors !outline-none" onclick="window.location.href='/src/pages/instructor/instructor-dashboard/index.html'">
-                        <span class="material-symbols-outlined">notifications</span>
+            // Theme toggle icon (Sun/Moon).
+            const themeToggleHtml = `
+                <button type="button" onclick="event.preventDefault(); event.stopPropagation(); TacliimiDB.toggleTheme();" id="global-theme-toggle" class="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full flex items-center justify-center transition-colors !outline-none" title="Toggle Theme">
+                    <span class="material-symbols-outlined dark:hidden text-[22px]">dark_mode</span>
+                    <span class="material-symbols-outlined hidden dark:block text-[22px]">light_mode</span>
+                </button>
+            `;
+
+            // Logout icon.
+            const logoutHtml = `
+                <button onclick="TacliimiDB.logout(); window.location.href='/src/pages/auth/login-select/index.html';" class="p-2 text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 dark:hover:text-red-400 rounded-full flex items-center justify-center transition-colors !outline-none" title="Log Out">
+                    <span class="material-symbols-outlined text-[20px]">logout</span>
+                </button>
+            `;
+
+            // Avatar and name dropdown logic. Now always shown.
+            const avatarHtml = `
+            <div class="relative group flex items-center gap-3 cursor-pointer" id="global-profile-dropdown">
+                <div class="hidden sm:block text-right group-hover:opacity-80 transition-opacity">
+                    <p class="user-display-name text-sm font-semibold text-slate-900 dark:text-white capitalize">${displayName}</p>
+                </div>
+                <div class="h-10 w-10 shrink-0 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center border-2 border-primary/20 text-slate-400 overflow-hidden" data-role="profile-image">
+                    ${picHtml}
+                </div>
+            
+                <!-- Dropdown Menu -->
+                <div class="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-slate-800 rounded-xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[100] overflow-hidden text-left cursor-default">
+                    <div class="p-4 border-b border-slate-100 dark:border-slate-700">
+                        <p class="text-sm font-semibold text-slate-900 dark:text-white">${displayName}</p>
+                        <p class="text-xs text-slate-500">${session.email || roleName}</p>
+                    </div>
+                    <a href="${dashboardLink}" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:text-primary transition-colors border-b border-slate-100 dark:border-slate-700/50">
+                        <span class="material-symbols-outlined text-lg">dashboard</span> Dashboard
+                    </a>
+                    <a href="${settingsLink}" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:text-primary transition-colors border-b border-slate-100 dark:border-slate-700/50">
+                        <span class="material-symbols-outlined text-lg">settings</span> Settings
+                    </a>
+                    <button onclick="TacliimiDB.logout(); window.location.href='/src/pages/auth/login-select/index.html';" class="w-full text-left flex items-center gap-3 px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                        <span class="material-symbols-outlined text-lg">logout</span> Logout
                     </button>
-                    <div class="relative group flex items-center justify-end gap-3 pl-3 border-l border-slate-200 dark:border-slate-700 cursor-pointer">
-                    <div class="h-10 w-10 shrink-0 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center border-2 border-primary text-slate-400 overflow-hidden" data-role="profile-image">
-                        ${picHtml}
-                    </div>
-                    
-                    <!-- Dropdown Menu -->
-                    <div class="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-slate-800 rounded-xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[100] overflow-hidden text-left cursor-default">
-                        <div class="p-4 border-b border-slate-100 dark:border-slate-700 md:hidden">
-                            <p class="text-sm font-semibold text-slate-900 dark:text-white">${session.displayName || session.fullName || 'User'}</p>
-                            <p class="text-xs text-slate-500">${session.email || roleName}</p>
-                        </div>
-                        <a href="${dashboardLink}" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:text-primary transition-colors border-b border-slate-100 dark:border-slate-700/50">
-                            <span class="material-symbols-outlined text-lg">dashboard</span> Dashboard
-                        </a>
-                        <a href="${settingsLink}" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:text-primary transition-colors border-b border-slate-100 dark:border-slate-700/50">
-                            <span class="material-symbols-outlined text-lg">settings</span> Settings
-                        </a>
-                        <button onclick="TacliimiDB.logout(); window.location.href='/src/pages/auth/login-select/index.html';" class="w-full text-left flex items-center gap-3 px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
-                            <span class="material-symbols-outlined text-lg">logout</span> Logout
-                        </button>
-                    </div>
                 </div>
+            </div>
+            `;
+
+            const headerControlsHtml = `
+            <div class="flex items-center gap-1 tacliimi-injected-profile">
+                <!-- Notifications Block -->
+                <button class="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full hidden sm:flex items-center justify-center transition-colors !outline-none relative">
+                    <span class="material-symbols-outlined text-[22px]">notifications</span>
+                    <span class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
+                </button>
+                
+                ${themeToggleHtml}
+                ${!isPublicPage ? logoutHtml : ''}
+
+                <div class="flex items-center justify-end pl-3 ml-2 border-l border-slate-200 dark:border-slate-700">
+                    ${avatarHtml}
                 </div>
+            </div>
             `;
 
             if (!container.querySelector('.tacliimi-injected-profile')) {
-                elementsToRemove[0].insertAdjacentHTML('beforebegin', dropdownHtml);
+                container.insertAdjacentHTML('beforeend', headerControlsHtml);
             }
-            elementsToRemove.forEach(el => el.remove());
+            elementsToRemove.forEach(el => {
+                if (el && el.parentNode) {
+                    // Remove adjacent hardcoded text blocks (like Name & ID) if present
+                    const sibling = el.previousElementSibling;
+                    if (sibling && (sibling.innerText.includes(session.displayName) || sibling.innerText.includes('Student Name') || sibling.innerText.includes('Instructor Account') || sibling.innerText.includes('ID:'))) {
+                        sibling.remove();
+                    }
+                    el.remove();
+                }
+            });
+
+            // Additionally clean up empty placeholder divs in the header
+            container.querySelectorAll('div').forEach(emptyDiv => {
+                if (emptyDiv !== container && emptyDiv.innerHTML.trim() === '<!-- Global Profile Injected Below via TacliimiDB -->') {
+                    emptyDiv.remove();
+                }
+            });
+        });
+
+        // Globally update generic "Welcome, Instructor!" labels and display names
+        document.querySelectorAll('.auto-welcome-name, .user-display-name').forEach(el => {
+            el.innerText = displayName;
         });
 
         // Update mobile menu buttons if they exist
@@ -613,15 +711,6 @@ document.addEventListener('DOMContentLoaded', () => {
         TacliimiDB.applyGlobalProfile();
 
         // 1. Universal Profile Updates: Also find anything with data-role="profile-meta" or raw ID labels
-        // and replace them with "Student" or "Instructor"
-        const metaRoleElements = document.querySelectorAll('[data-role="profile-meta"], .uppercase.tracking-wider');
-        metaRoleElements.forEach(el => {
-            const txt = (el.innerText || '').toLowerCase();
-            if (txt.includes('id:') || el.getAttribute('data-role') === 'profile-meta') {
-                el.innerText = session.role === 'instructor' ? 'Instructor' : 'Student';
-                el.setAttribute('data-role', 'profile-meta');
-            }
-        });
 
         // Auto-save form mechanism for all dashboards
         const session = TacliimiDB.getCurrentSession();
@@ -646,21 +735,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         input.value = session[key];
                     }
 
-                    // Auto-save on change
-                    input.addEventListener('change', (e) => {
-                        TacliimiDB.updateProfileInfo({ [key]: e.target.value });
-
-                        // Immediately re-apply the global profile to update the header
-                        TacliimiDB.applyGlobalProfile();
-
-                        // Show a subtle toast if we have a save button context, but silently save anyway
-                        const saveBtn = document.querySelector('button:has(.material-symbols-outlined:contains("save")), button#save-profile-btn');
-                        if (saveBtn) {
-                            const origText = saveBtn.innerHTML;
-                            saveBtn.innerHTML = `<span class="material-symbols-outlined text-[18px]">check</span> Saved`;
-                            setTimeout(() => { saveBtn.innerHTML = origText; }, 2000);
-                        }
-                    });
+                    // REMOVED 'change' auto-save listener. Profile only saves on 'Save Changes' button click.
                 }
             });
 
@@ -672,10 +747,16 @@ document.addEventListener('DOMContentLoaded', () => {
                         e.preventDefault();
 
                         // If it's the personal info form, trigger the inputs to save
-                        const form = btn.closest('form');
+                        const form = btn.closest('form, .settings-panel, section, main');
                         if (form) {
-                            form.querySelectorAll('input, select').forEach(input => {
-                                const key = input.id || input.name || (input.previousElementSibling && input.previousElementSibling.innerText.trim().replace(/\s+/g, '_').toLowerCase());
+                            form.querySelectorAll('input, select, textarea').forEach(input => {
+                                let key = input.id || input.name;
+                                if (!key && input.previousElementSibling && input.previousElementSibling.tagName === 'LABEL') {
+                                    key = input.previousElementSibling.innerText.trim().replace(/\s+/g, '_').toLowerCase();
+                                }
+                                if (key === 'full-name' || key === 'full_name' || key.toLowerCase() === 'fullname') key = 'fullName';
+                                if (key === 'display-name' || key.toLowerCase() === 'displayname') key = 'displayName';
+
                                 if (key) TacliimiDB.updateProfileInfo({ [key]: input.value });
                             });
                             // Immediately re-apply the global profile to update the header
@@ -689,21 +770,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
 
-            // Add logout button next to dashboard profile blocks if missing
-            const nameDisplays = document.querySelectorAll('.user-display-name');
-            if (nameDisplays.length > 0) {
-                nameDisplays.forEach(nameDisplay => {
-                    const flexContainer = nameDisplay.closest('.flex.items-center.gap-3');
-                    if (flexContainer && flexContainer.parentNode && !flexContainer.parentNode.querySelector('.logout-btn')) {
-                        const logoutBtn = document.createElement('button');
-                        logoutBtn.className = 'logout-btn p-2 text-slate-500 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500 rounded-full transition-colors mr-2';
-                        logoutBtn.innerHTML = '<span class="material-symbols-outlined relative top-0.5 text-[22px]">logout</span>';
-                        logoutBtn.title = 'Log Out';
-                        logoutBtn.onclick = () => { TacliimiDB.logout(); window.location.href = '/src/pages/auth/login-select/index.html'; };
-                        flexContainer.parentNode.insertBefore(logoutBtn, flexContainer);
-                    }
-                });
-            }
+            // Add logout button next to dashboard profile blocks logic removed,
+            // as the global logout button injection now handles logout consistently.
+
 
         } // End of if (session)
 
@@ -724,8 +793,8 @@ document.addEventListener('DOMContentLoaded', () => {
             // Always sync on page load
             applyTheme();
 
-            // Find and bind all known theme toggle buttons globally
-            const themeToggleButtons = document.querySelectorAll('#theme-toggle, #themeToggle, button[onclick*="dark"]');
+            // Find and bind all known theme toggle buttons globally, including our newly injected one
+            const themeToggleButtons = document.querySelectorAll('#theme-toggle, #themeToggle, #global-theme-toggle, button[onclick*="dark"]');
             themeToggleButtons.forEach(btn => {
                 // Remove inline onclick so our robust logic takes over
                 if (btn.hasAttribute('onclick') && (btn.getAttribute('onclick').includes('toggle') || btn.getAttribute('onclick').includes('dark'))) {

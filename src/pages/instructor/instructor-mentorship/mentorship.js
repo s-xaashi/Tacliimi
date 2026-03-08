@@ -47,8 +47,25 @@ function initMentorship() {
                     const startApplicationBtn = container.querySelector('#start-mentorship-application-btn');
                     if (startApplicationBtn) {
                         startApplicationBtn.addEventListener('click', (e) => {
-                            e.preventDefault();
-                            // Switch to the main dashboard "upcoming" after setup is complete (simulated)
+                            // Check validation
+                            const formInputs = container.querySelectorAll('input:not([type="hidden"]), select');
+                            let isValid = true;
+                            formInputs.forEach(input => {
+                                if (!input.value || input.value === 'Select Gender' || input.value.trim() === '') {
+                                    isValid = false;
+                                    input.classList.remove('border-slate-200', 'dark:border-slate-700', 'focus:border-brand-purple', 'focus:ring-brand-purple');
+                                    input.classList.add('!border-red-500', '!ring-red-500', 'ring-1');
+                                } else {
+                                    input.classList.remove('!border-red-500', '!ring-red-500', 'ring-1');
+                                    input.classList.add('border-slate-200', 'dark:border-slate-700', 'focus:border-brand-purple', 'focus:ring-brand-purple');
+                                }
+                            });
+
+                            if (!isValid) {
+                                // Add a shake animation or simple alert representation if preferred
+                                // We'll just highlight red for now.
+                                return; // Stop submission
+                            }
 
                             // 1. Hide the setup tab entirely
                             const setupTabBtn = document.querySelector('.mentorship-tab[data-tab="setup"]');
@@ -66,6 +83,14 @@ function initMentorship() {
                                         lockIcon.remove();
                                     }
                                 }
+                            });
+
+                            // 2.5: Unlock the dashboard preview cards!
+                            const lockedCards = document.querySelectorAll('.locked-card');
+                            lockedCards.forEach(card => {
+                                card.classList.remove('locked-card', 'opacity-60', 'grayscale-[0.5]');
+                                const lockBadge = card.querySelector('.lock-badge');
+                                if (lockBadge) lockBadge.remove();
                             });
 
                             // 3. Manually update tab state to upcoming

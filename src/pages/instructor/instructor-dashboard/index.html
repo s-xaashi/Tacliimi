@@ -56,7 +56,7 @@
     <aside
         class="fixed left-0 top-0 h-full w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 hidden lg:flex flex-col z-20">
         <div class="p-6 border-b border-slate-100 dark:border-slate-800">
-            <div class="flex items-center gap-2 cursor-pointer" onclick="window.location.href='/src/pages/common/index.html'">
+            <div class="flex items-center gap-2 cursor-pointer" onclick="window.location.href='/index.html'">
                 <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                     <span class="material-symbols-outlined text-white text-lg">school</span>
                 </div>
@@ -125,12 +125,48 @@
         </header>
 
         <!-- DYNAMIC CONTENT AREA -->
-        <main id="instructor-content-area" class="flex-1 bg-background-light dark:bg-background-dark pb-20">
+        <main id="instructor-content-area" class="flex-1 bg-background-light dark:bg-background-dark pb-20 relative">
 
+            <!-- MANDATORY PROFILE COMPLETION BLOCKER -->
+            <div id="mandatory-profile-blocker"
+                class="fixed inset-0 z-[100] bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-sm hidden items-center justify-center">
+                <div
+                    class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-8 max-w-lg w-full mx-4 shadow-2xl text-center">
+                    <div
+                        class="w-16 h-16 bg-amber-50 dark:bg-amber-900/30 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <span class="material-symbols-outlined text-3xl">how_to_reg</span>
+                    </div>
+                    <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-3">Profile Incomplete</h2>
+                    <p class="text-slate-500 dark:text-slate-400 mb-8">
+                        Complete your Instructor Profile to unlock your dashboard features. You must finish setting up
+                        your personal info, teaching details, and payout methods before continuing.
+                    </p>
+                    <button
+                        onclick="window.location.href='/src/pages/instructor/instructor-profile/index.html?setup=true'"
+                        class="w-full bg-primary hover:bg-indigo-700 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all">
+                        Complete Profile Setup <span class="material-symbols-outlined text-xl">arrow_forward</span>
+                    </button>
+                </div>
+            </div>
+            <script>
+                document.addEventListener('DOMContentLoaded', () => {
+                    const session = TacliimiDB.getCurrentSession();
+                    const isLegacyFilled = session && session.fullName && session.shortBio && session.teachingExperience;
+                    if (session && session.role === 'instructor' && !session.profileCompleted && !isLegacyFilled) {
+                        const blocker = document.getElementById('mandatory-profile-blocker');
+                        if (blocker) {
+                            blocker.classList.remove('hidden');
+                            blocker.classList.add('flex');
+                            document.body.style.overflow = 'hidden'; // Prevent scrolling
+                        }
+                    }
+                });
+            </script>
 
             <div class="px-8 pb-8 pt-2 max-w-7xl mx-auto">
                 <div class="mb-10">
-                    <h2 class="text-3xl font-bold dark:text-white">Welcome to Tacliimi, Instructor!</h2>
+                    <h2 class="text-3xl font-bold dark:text-white">Welcome to Tacliimi, <span
+                            class="auto-welcome-name capitalize">Instructor</span>!</h2>
                     <p class="text-slate-500 mt-2 text-lg">Your dashboard provides an overview of your teaching success.
                     </p>
                 </div>

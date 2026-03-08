@@ -82,20 +82,7 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-4">
-                    <button class="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full">
-                        <span class="material-symbols-outlined">notifications</span>
-                    </button>
-                    <div class="flex items-center gap-3">
-                        <div class="text-right hidden sm:block">
-                            <p class="user-display-name text-sm font-semibold text-slate-900 dark:text-white">Student
-                                Name</p>
-                            <p class="text-[10px] text-slate-500 uppercase tracking-wider">ID: 32342</p>
-                        </div>
-                        <div
-                            class="h-10 w-10 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center border-2 border-primary text-slate-400">
-                            <span class="material-symbols-outlined text-2xl">account_circle</span>
-                        </div>
-                    </div>
+                    <!-- Global Profile Injected Below via TacliimiDB -->
                 </div>
             </div>
         </div>
@@ -862,17 +849,21 @@
         function handleProfileUpload(event) {
             const file = event.target.files[0];
             if (file) {
-                try {
-                    const objectUrl = URL.createObjectURL(file);
-                    TacliimiDB.updateProfileImage(objectUrl);
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    const base64String = reader.result;
+                    try {
+                        TacliimiDB.updateProfileImage(base64String);
 
-                    const profileImgContainer = document.querySelector('.w-28.h-28');
-                    if (profileImgContainer) {
-                        profileImgContainer.innerHTML = `<img src="${objectUrl}" class="w-full h-full object-cover" />`;
+                        const profileImgContainer = document.querySelector('.w-28.h-28');
+                        if (profileImgContainer) {
+                            profileImgContainer.innerHTML = `<img src="${base64String}" class="w-full h-full object-cover" />`;
+                        }
+                    } catch (err) {
+                        alert(err.message);
                     }
-                } catch (err) {
-                    alert(err.message);
-                }
+                };
+                reader.readAsDataURL(file);
             }
         }
 

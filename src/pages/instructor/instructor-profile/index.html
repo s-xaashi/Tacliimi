@@ -60,7 +60,7 @@
         <header
             class="sticky top-0 z-50 flex h-16 w-full items-center justify-between border-b border-slate-200 bg-white px-4 md:px-10 dark:border-slate-800 dark:bg-background-dark">
             <div class="flex items-center gap-8">
-                <div class="flex items-center gap-3 cursor-pointer" onclick="window.location.href='/src/pages/common/index.html'">
+                <div class="flex items-center gap-3 cursor-pointer" onclick="window.location.href='/index.html'">
                     <div class="flex size-9 items-center justify-center rounded-lg bg-primary text-white">
                         <span class="material-symbols-outlined">school</span>
                     </div>
@@ -69,7 +69,7 @@
                 </div>
                 <nav class="hidden items-center gap-6 lg:flex">
                     <a class="text-sm font-medium text-slate-600 hover:text-primary dark:text-slate-400 dark:hover:text-white transition-colors"
-                        href="/src/pages/common/index.html">Home</a>
+                        href="/index.html">Home</a>
                     <a class="text-sm font-medium text-slate-600 hover:text-primary dark:text-slate-400 dark:hover:text-white transition-colors"
                         href="/src/pages/instructor/instructor-dashboard/index.html">Dashboard</a>
                 </nav>
@@ -80,15 +80,7 @@
                     <span class="material-symbols-outlined">notifications</span>
                 </button>
                 <div class="flex items-center gap-3 border-l border-slate-200 pl-4 ml-2 dark:border-slate-800">
-                    <div class="text-right hidden sm:block">
-                        <p class="text-[13px] font-bold leading-none text-slate-900 dark:text-white">Instructor Account
-                        </p>
-                        <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400">ID: 32342</p>
-                    </div>
-                    <div
-                        class="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border-2 border-primary/20 bg-slate-100 text-slate-400 dark:bg-slate-800">
-                        <span class="material-symbols-outlined text-2xl">account_circle</span>
-                    </div>
+                    <!-- Global Profile Injected Below via TacliimiDB -->
                 </div>
             </div>
         </header>
@@ -174,30 +166,29 @@
                                     <div class="flex flex-col gap-2">
                                         <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Full
                                             Name</label>
-                                        <input
+                                        <input id="fullName"
                                             class="h-12 rounded-lg border border-slate-200 px-4 text-slate-900 focus:border-primary focus:ring-1 focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white placeholder:opacity-40 placeholder:font-light"
-                                            placeholder="Enter your full name" type="text" value="Alex Richardson" />
+                                            placeholder="Enter your full name" type="text" />
                                     </div>
                                     <div class="flex flex-col gap-2">
-                                        <label
-                                            class="text-sm font-semibold text-slate-700 dark:text-slate-300">Professional
+                                        <label class="text-sm font-semibold text-slate-700 dark:text-slate-300"
+                                            for="professionalTitle">Professional
                                             Title</label>
-                                        <input
+                                        <input id="professionalTitle"
                                             class="h-12 rounded-lg border border-slate-200 px-4 text-slate-900 focus:border-primary focus:ring-1 focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white placeholder:opacity-40 placeholder:font-light"
-                                            placeholder="e.g. Senior Software Engineer" type="text"
-                                            value="Senior Cloud Architect &amp; Educator" />
+                                            placeholder="e.g. Senior Software Engineer" type="text" />
                                     </div>
                                     <div class="col-span-full flex flex-col gap-2">
                                         <div class="flex items-center justify-between">
-                                            <label
-                                                class="text-sm font-semibold text-slate-700 dark:text-slate-300">Short
+                                            <label class="text-sm font-semibold text-slate-700 dark:text-slate-300"
+                                                for="shortBio">Short
                                                 Bio</label>
                                             <span class="text-xs text-slate-400">142 / 500 characters</span>
                                         </div>
-                                        <textarea
+                                        <textarea id="shortBio"
                                             class="rounded-lg border border-slate-200 p-4 text-slate-900 focus:border-primary focus:ring-1 focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white placeholder:opacity-40 placeholder:font-light"
                                             placeholder="Briefly describe your background and expertise"
-                                            rows="4">Passionate cloud architect with over 10 years of experience in distributed systems. I love breaking down complex topics into digestible lessons for students of all levels.</textarea>
+                                            rows="4"></textarea>
                                     </div>
                                 </div>
                             </section>
@@ -214,7 +205,7 @@
                                         <div class="flex-1">
                                             <label class="text-xs font-bold uppercase text-slate-400">LinkedIn
                                                 Profile</label>
-                                            <input
+                                            <input id="linkedinUrl"
                                                 class="mt-1 h-11 w-full rounded-lg border border-slate-200 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white placeholder:opacity-40 placeholder:font-light"
                                                 placeholder="https://linkedin.com/in/username" type="url"
                                                 value="https://linkedin.com/in/alex-richardson" />
@@ -223,12 +214,15 @@
                                     <div class="flex items-center gap-3">
                                         <div
                                             class="flex size-11 items-center justify-center rounded-lg bg-slate-50 text-slate-900 dark:bg-slate-900/40">
-                                            <span class="material-symbols-outlined">alternate_email</span>
+                                            <svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+                                                <path
+                                                    d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 22.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                                            </svg>
                                         </div>
                                         <div class="flex-1">
                                             <label class="text-xs font-bold uppercase text-slate-400">Twitter / X
                                                 Profile</label>
-                                            <input
+                                            <input id="twitterUrl"
                                                 class="mt-1 h-11 w-full rounded-lg border border-slate-200 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white placeholder:opacity-40 placeholder:font-light"
                                                 placeholder="https://twitter.com/username" type="url"
                                                 value="https://twitter.com/alexcloud" />
@@ -242,7 +236,7 @@
                                         <div class="flex-1">
                                             <label class="text-xs font-bold uppercase text-slate-400">Facebook
                                                 Profile</label>
-                                            <input
+                                            <input id="facebookUrl"
                                                 class="mt-1 h-11 w-full rounded-lg border border-slate-200 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white placeholder:opacity-40 placeholder:font-light"
                                                 placeholder="https://facebook.com/username" type="url"
                                                 value="https://facebook.com/alex.richardson.teach" />
@@ -265,19 +259,6 @@
                                 background to potential students.</p>
                         </div>
                         <div class="space-y-6">
-                            <section
-                                class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-background-dark">
-                                <label class="block text-sm font-bold text-slate-900 dark:text-white"
-                                    for="headline">Professional Headline</label>
-                                <p class="mb-4 text-xs text-slate-500">Add a catchy headline to summarize your
-                                    professional identity.</p>
-                                <input
-                                    class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm font-light text-slate-900 placeholder:text-slate-400 focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                                    id="headline"
-                                    placeholder="e.g. Senior Software Engineer &amp; Mathematics Specialist"
-                                    type="text" />
-                            </section>
-
                             <section
                                 class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-background-dark">
                                 <h3 class="text-sm font-bold text-slate-900 dark:text-white mb-2">Introduction Video
@@ -437,28 +418,107 @@
                                     </button>
                                 </div>
                                 <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-                                    <div
-                                        class="group relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-white p-6 text-center transition-colors hover:border-primary/50 dark:border-slate-800 dark:bg-background-dark">
+                                    <button id="btn-bank" type="button"
+                                        class="payout-method-btn group relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-white p-6 text-center transition-colors hover:border-primary/50 focus:border-primary focus:ring-2 focus:ring-primary/20 dark:border-slate-800 dark:bg-background-dark outline-none cursor-pointer">
                                         <span
-                                            class="material-symbols-outlined mb-2 text-slate-400">account_balance</span>
+                                            class="material-symbols-outlined mb-2 text-slate-400 group-hover:text-primary transition-colors">account_balance</span>
                                         <h4 class="text-sm font-bold text-slate-900 dark:text-white">Bank Transfer</h4>
                                         <p class="mt-1 text-xs text-slate-500 leading-tight">Direct transfer to your
                                             local bank</p>
-                                    </div>
-                                    <div
-                                        class="group relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-white p-6 text-center transition-colors hover:border-primary/50 dark:border-slate-800 dark:bg-background-dark">
-                                        <span class="material-symbols-outlined mb-2 text-slate-400">payments</span>
+                                    </button>
+                                    <button id="btn-cod" type="button"
+                                        class="payout-method-btn group relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-white p-6 text-center transition-colors hover:border-primary/50 focus:border-primary focus:ring-2 focus:ring-primary/20 dark:border-slate-800 dark:bg-background-dark outline-none cursor-pointer">
+                                        <span
+                                            class="material-symbols-outlined mb-2 text-slate-400 group-hover:text-primary transition-colors">payments</span>
                                         <h4 class="text-sm font-bold text-slate-900 dark:text-white">Cash on Delivery
                                         </h4>
                                         <p class="mt-1 text-xs text-slate-500 leading-tight">Receive physical payment
                                             upon delivery</p>
-                                    </div>
-                                    <div
-                                        class="group relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-white p-6 text-center transition-colors hover:border-primary/50 dark:border-slate-800 dark:bg-background-dark">
-                                        <span class="material-symbols-outlined mb-2 text-slate-400">smartphone</span>
+                                    </button>
+                                    <button id="btn-mm" type="button"
+                                        class="payout-method-btn group relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-white p-6 text-center transition-colors hover:border-primary/50 focus:border-primary focus:ring-2 focus:ring-primary/20 dark:border-slate-800 dark:bg-background-dark outline-none cursor-pointer">
+                                        <span
+                                            class="material-symbols-outlined mb-2 text-slate-400 group-hover:text-primary transition-colors">smartphone</span>
                                         <h4 class="text-sm font-bold text-slate-900 dark:text-white">Mobile Money</h4>
                                         <p class="mt-1 text-xs text-slate-500 leading-tight">Regional mobile wallet
                                             payout</p>
+                                    </button>
+                                </div>
+
+                                <div id="payout-forms" class="mt-6 space-y-4 hidden">
+                                    <input type="hidden" id="selectedPayoutMethod" value="" />
+
+                                    <div id="form-bank-transfer"
+                                        class="payout-form hidden rounded-xl bg-slate-50 p-6 dark:bg-slate-800/50 text-center">
+                                        <div
+                                            class="inline-flex size-12 items-center justify-center rounded-full bg-blue-100 text-blue-600 mb-4 dark:bg-blue-900/30 dark:text-blue-400">
+                                            <span class="material-symbols-outlined">info</span>
+                                        </div>
+                                        <h4 class="text-lg font-bold text-slate-900 dark:text-white">Bank Transfer
+                                            Coming Soon</h4>
+                                        <p class="text-sm text-slate-500 mt-2 max-w-md mx-auto">We are working hard to
+                                            integrate direct bank transfers in your region. Please select an alternative
+                                            payout method for now.</p>
+                                    </div>
+
+                                    <div id="form-mobile-money"
+                                        class="payout-form hidden rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900/50">
+                                        <h4 class="mb-4 text-base font-bold text-slate-900 dark:text-white">Mobile Money
+                                            Details</h4>
+                                        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                            <div>
+                                                <label class="mb-2 block text-xs font-bold uppercase text-slate-500"
+                                                    for="mm-provider">Provider</label>
+                                                <select id="mm-provider"
+                                                    class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white">
+                                                    <option value="">Select Provider</option>
+                                                    <option value="zaad">Zaad Service</option>
+                                                    <option value="edahab">eDahab</option>
+                                                    <option value="sahal">Sahal</option>
+                                                    <option value="mpesa">M-Pesa</option>
+                                                    <option value="hormuud">Hormuud (EVC Plus)</option>
+                                                    <option value="golis">Golis (Sahal)</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label class="mb-2 block text-xs font-bold uppercase text-slate-500"
+                                                    for="mm-phone">Phone Number</label>
+                                                <input id="mm-phone" type="tel"
+                                                    class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                                                    placeholder="+252 6X XXXXXXX" />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div id="form-cod"
+                                        class="payout-form hidden rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900/50">
+                                        <h4 class="mb-4 text-base font-bold text-slate-900 dark:text-white">Cash on
+                                            Delivery Details</h4>
+                                        <div class="space-y-4">
+                                            <div>
+                                                <label class="mb-2 block text-xs font-bold uppercase text-slate-500"
+                                                    for="cod-address">Street Address</label>
+                                                <input id="cod-address" type="text"
+                                                    class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                                                    placeholder="123 Main St, Apartment 4B" />
+                                            </div>
+                                            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                                <div>
+                                                    <label class="mb-2 block text-xs font-bold uppercase text-slate-500"
+                                                        for="cod-city">City</label>
+                                                    <input id="cod-city" type="text"
+                                                        class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                                                        placeholder="Hargeisa" />
+                                                </div>
+                                                <div>
+                                                    <label class="mb-2 block text-xs font-bold uppercase text-slate-500"
+                                                        for="cod-phone">Contact Phone</label>
+                                                    <input id="cod-phone" type="tel"
+                                                        class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                                                        placeholder="+252 6X XXXXXXX" />
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </section>
@@ -557,24 +617,7 @@
                                             id="confirm-password" placeholder="Re-type new password" type="password" />
                                     </div>
                                 </div>
-                                <div
-                                    class="mt-8 flex items-center justify-between rounded-lg bg-slate-50 p-4 dark:bg-slate-800/50">
-                                    <div class="flex items-center gap-3">
-                                        <span class="material-symbols-outlined text-slate-400">security</span>
-                                        <div>
-                                            <p class="text-sm font-bold text-slate-900 dark:text-white">Two-Factor
-                                                Authentication</p>
-                                            <p class="text-xs text-slate-500">Secure your account with an extra layer of
-                                                protection.</p>
-                                        </div>
-                                    </div>
-                                    <label class="relative inline-flex cursor-pointer items-center">
-                                        <input class="peer sr-only" type="checkbox" />
-                                        <div
-                                            class="peer h-6 w-11 rounded-full bg-slate-300 transition-colors after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-primary peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none dark:bg-slate-700">
-                                        </div>
-                                    </label>
-                                </div>
+
                             </section>
                             <section
                                 class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-background-dark">
@@ -641,7 +684,7 @@
                                 </div>
                                 <div class="space-y-4">
                                     <label class="flex items-start gap-3 cursor-pointer group">
-                                        <input
+                                        <input id="tos-checkbox"
                                             class="mt-0.5 h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800"
                                             type="checkbox" />
                                         <span
@@ -649,16 +692,6 @@
                                             I agree to the <a
                                                 class="font-semibold text-primary underline underline-offset-2"
                                                 href="#">Instructor Terms of Service</a> and Privacy Policy.
-                                        </span>
-                                    </label>
-                                    <label class="flex items-start gap-3 cursor-pointer group">
-                                        <input
-                                            class="mt-0.5 h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800"
-                                            type="checkbox" />
-                                        <span
-                                            class="text-sm text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-200 transition-colors">
-                                            I understand the course moderation process and that approval may take up to
-                                            3-5 business days.
                                         </span>
                                     </label>
                                 </div>
@@ -677,7 +710,7 @@
                     class="rounded-lg px-6 py-2 text-sm font-bold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">
                     Discard changes
                 </button>
-                <button
+                <button id="save-profile-btn"
                     class="flex items-center gap-2 rounded-lg bg-primary px-8 py-3 text-sm font-bold text-white shadow-lg shadow-primary/20 transition-transform active:scale-95">
                     <span class="material-symbols-outlined text-[18px]">save</span>
                     Save Changes
@@ -690,6 +723,26 @@
     <script>
         function switchPanel(panelId, event) {
             if (event) event.preventDefault();
+
+            // SETUP MODE ENFORCEMENT
+            const session = TacliimiDB.getCurrentSession();
+            if (session && session.role === 'instructor' && !session.profileCompleted) {
+                const targetStep = panelId === 'panel-personal' ? 1 :
+                    panelId === 'panel-teaching' ? 2 :
+                        panelId === 'panel-payout' ? 3 :
+                            panelId === 'panel-security' ? 4 : 1;
+                const maxStep = session.setupProgress || 1;
+
+                if (targetStep > maxStep) {
+                    // Temporarily highlight the save button to hint at the requirement
+                    const saveBtn = document.querySelector('button:has(.material-symbols-outlined:contains("save")), button#save-profile-btn');
+                    if (saveBtn) {
+                        saveBtn.classList.add('ring-4', 'ring-red-500/50', 'animate-pulse');
+                        setTimeout(() => saveBtn.classList.remove('ring-4', 'ring-red-500/50', 'animate-pulse'), 1000);
+                    }
+                    return; // BLOCKED
+                }
+            }
 
             // Hide all panels
             document.querySelectorAll('.profile-panel').forEach(el => {
@@ -789,7 +842,7 @@
                         <button type="button" class="material-symbols-outlined text-[16px] text-green-500 hover:text-green-600 transition-colors" id="save-expertise-btn">check_circle</button>
                         <button type="button" class="material-symbols-outlined text-[16px] text-red-400 hover:text-red-500 transition-colors" id="cancel-expertise-btn">cancel</button>
                     `;
-                    expertiseContainer.appendChild(inputContainer);
+                    expertiseContainer.insertBefore(inputContainer, addExpertiseBtn);
 
                     const input = document.getElementById('new-expertise-input');
                     const saveBtn = document.getElementById('save-expertise-btn');
@@ -871,7 +924,7 @@
                         <button type="button" class="material-symbols-outlined text-[16px] text-green-500 hover:text-green-600 transition-colors" id="save-lang-btn">check_circle</button>
                         <button type="button" class="material-symbols-outlined text-[16px] text-red-400 hover:text-red-500 transition-colors" id="cancel-lang-btn">cancel</button>
                     `;
-                    languagesContainer.appendChild(inputContainer);
+                    languagesContainer.insertBefore(inputContainer, editLanguagesBtn);
 
                     const input = document.getElementById('new-lang-input');
                     const saveBtn = document.getElementById('save-lang-btn');
@@ -922,19 +975,23 @@
         function handleProfileUpload(event) {
             const file = event.target.files[0];
             if (file) {
-                try {
-                    const objectUrl = URL.createObjectURL(file);
-                    TacliimiDB.updateProfileImage(objectUrl);
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    const base64String = reader.result;
+                    try {
+                        TacliimiDB.updateProfileImage(base64String);
 
-                    // Force DOM update directly to bypass querySelector issues with generic elements on this page
-                    const mainProfileNode = document.querySelector('.size-24');
-                    if (mainProfileNode) {
-                        mainProfileNode.innerHTML = `<img src="${objectUrl}" class="w-full h-full object-cover rounded-full" />`;
-                        mainProfileNode.classList.add('overflow-hidden');
+                        // Force DOM update directly to bypass querySelector issues with generic elements on this page
+                        const mainProfileNode = document.querySelector('.size-24');
+                        if (mainProfileNode) {
+                            mainProfileNode.innerHTML = `<img src="${base64String}" class="w-full h-full object-cover rounded-full" />`;
+                            mainProfileNode.classList.add('overflow-hidden');
+                        }
+                    } catch (err) {
+                        alert(err.message);
                     }
-                } catch (err) {
-                    alert(err.message);
-                }
+                };
+                reader.readAsDataURL(file);
             }
         }
 
@@ -951,6 +1008,258 @@
                 alert(err.message);
             }
         }
+    </script>
+    <script>
+        // Custom Setup Validation & Progression Logic
+        document.addEventListener('DOMContentLoaded', () => {
+            const saveBtn = document.getElementById('save-profile-btn');
+
+            saveBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const session = TacliimiDB.getCurrentSession();
+                const isSetupMode = session && session.role === 'instructor' && !session.profileCompleted;
+
+                // Determine active tab
+                const activeTab = document.querySelector('.profile-panel.block');
+                const activeTabId = activeTab ? activeTab.id : null;
+
+                let tabValid = true;
+
+                if (activeTabId === 'panel-personal') {
+                    // Validations for Tab 1
+                    const fullNameInput = document.getElementById('fullName');
+                    const titleInput = document.getElementById('professionalTitle');
+                    const bioInput = document.getElementById('shortBio');
+
+                    const fullName = fullNameInput.value.trim();
+                    const title = titleInput.value.trim();
+                    const bio = bioInput.value.trim();
+
+                    // Reset styling
+                    [fullNameInput, titleInput, bioInput].forEach(el => {
+                        el.classList.remove('border-red-500', 'ring-1', 'ring-red-500');
+                    });
+                    const profileWrapper = document.querySelector('.size-24');
+                    if (profileWrapper) profileWrapper.classList.remove('ring-2', 'ring-red-500', 'ring-offset-2');
+
+                    if (!fullName || !title || !bio || !session.profileImage) {
+                        if (!fullName) fullNameInput.classList.add('border-red-500', 'ring-1', 'ring-red-500');
+                        if (!title) titleInput.classList.add('border-red-500', 'ring-1', 'ring-red-500');
+                        if (!bio) bioInput.classList.add('border-red-500', 'ring-1', 'ring-red-500');
+                        if (!session.profileImage && profileWrapper) {
+                            profileWrapper.classList.add('ring-2', 'ring-red-500', 'ring-offset-2');
+                        }
+                        tabValid = false;
+                    } else {
+                        const linkedinUrl = document.getElementById('linkedinUrl')?.value.trim();
+                        const twitterUrl = document.getElementById('twitterUrl')?.value.trim();
+                        const facebookUrl = document.getElementById('facebookUrl')?.value.trim();
+                        TacliimiDB.updateProfileInfo({ fullName, professionalTitle: title, shortBio: bio, displayName: fullName, socialLinks: { linkedin: linkedinUrl, twitter: twitterUrl, facebook: facebookUrl } });
+                    }
+                } else if (activeTabId === 'panel-teaching') {
+                    // Validations for Tab 2
+                    const expertiseContainer = document.getElementById('expertise-container');
+                    const expertiseInputWrapper = expertiseContainer.parentElement;
+                    expertiseInputWrapper.classList.remove('border-red-500', 'ring-1', 'ring-red-500', 'p-2', 'rounded-lg');
+
+                    const expertiseTags = expertiseContainer.querySelectorAll('span');
+                    if (expertiseTags.length === 0) {
+                        expertiseInputWrapper.classList.add('border-red-500', 'ring-1', 'ring-red-500', 'p-2', 'rounded-lg');
+                        tabValid = false;
+                    } else {
+                        const experience = document.getElementById('experience').value;
+                        const expertiseList = Array.from(expertiseTags).map(span => span.innerText.replace('close', '').trim());
+
+                        // Capture Education
+                        const educationList = [];
+                        document.querySelectorAll('.education-item').forEach(item => {
+                            const uni = item.querySelector('input[id^="university"]')?.value.trim();
+                            const deg = item.querySelector('input[id^="degree"]')?.value.trim();
+                            if (uni && deg) educationList.push({ university: uni, degree: deg });
+                        });
+
+                        // Capture Languages
+                        const languageTags = document.querySelectorAll('#languages-container span.rounded-lg:not(.material-symbols-outlined)');
+                        const languageList = Array.from(languageTags).map(span => span.innerText.replace('close', '').trim());
+
+                        TacliimiDB.updateProfileInfo({ teachingExperience: experience, expertiseList, educationList, languageList });
+                    }
+                } else if (activeTabId === 'panel-payout') {
+                    // Validations for Tab 3
+                    const selectedMethod = document.getElementById('selectedPayoutMethod').value;
+                    const mmProviderInput = document.getElementById('mm-provider');
+                    const mmPhoneInput = document.getElementById('mm-phone');
+                    const codAddressInput = document.getElementById('cod-address');
+                    const codCityInput = document.getElementById('cod-city');
+                    const codPhoneInput = document.getElementById('cod-phone');
+
+                    // Reset styling
+                    [mmProviderInput, mmPhoneInput, codAddressInput, codCityInput, codPhoneInput].forEach(el => {
+                        if (el) el.classList.remove('border-red-500', 'ring-1', 'ring-red-500');
+                    });
+
+                    if (!selectedMethod || selectedMethod === 'bank') {
+                        // Flash buttons red if no valid method selected
+                        document.querySelectorAll('.payout-method-btn').forEach(btn => {
+                            btn.classList.add('border-red-500');
+                            setTimeout(() => btn.classList.remove('border-red-500'), 1000);
+                        });
+                        tabValid = false;
+                    } else if (selectedMethod === 'mm') {
+                        const mmProvider = mmProviderInput.value;
+                        const mmPhone = mmPhoneInput.value.trim();
+                        if (!mmProvider || !mmPhone) {
+                            if (!mmProvider) mmProviderInput.classList.add('border-red-500', 'ring-1', 'ring-red-500');
+                            if (!mmPhone) mmPhoneInput.classList.add('border-red-500', 'ring-1', 'ring-red-500');
+                            tabValid = false;
+                        } else {
+                            TacliimiDB.updateProfileInfo({ payoutMethod: 'Mobile Money', payoutDetails: { provider: mmProvider, phone: mmPhone } });
+                        }
+                    } else if (selectedMethod === 'cod') {
+                        const address = codAddressInput.value.trim();
+                        const city = codCityInput.value.trim();
+                        const phone = codPhoneInput.value.trim();
+                        if (!address || !city || !phone) {
+                            if (!address) codAddressInput.classList.add('border-red-500', 'ring-1', 'ring-red-500');
+                            if (!city) codCityInput.classList.add('border-red-500', 'ring-1', 'ring-red-500');
+                            if (!phone) codPhoneInput.classList.add('border-red-500', 'ring-1', 'ring-red-500');
+                            tabValid = false;
+                        } else {
+                            TacliimiDB.updateProfileInfo({ payoutMethod: 'Cash on Delivery', payoutDetails: { address, city, phone } });
+                        }
+                    }
+                } else if (activeTabId === 'panel-security') {
+                    // Validations for Tab 4
+                    const tosCheckbox = document.getElementById('tos-checkbox');
+                    tosCheckbox.classList.remove('ring-2', 'ring-red-500', 'border-red-500');
+
+                    const tosChecked = tosCheckbox.checked;
+                    if (!tosChecked) {
+                        tosCheckbox.classList.add('ring-2', 'ring-red-500', 'border-red-500');
+                        tabValid = false;
+                    }
+                }
+
+                if (!tabValid) return; // Stop if validation fails
+
+                // If in Setup Mode, increment progress and move to next
+                if (isSetupMode) {
+                    let currentProgress = session.setupProgress || 1;
+                    let nextTabId = null;
+
+                    if (activeTabId === 'panel-personal' && currentProgress === 1) {
+                        currentProgress = 2;
+                        nextTabId = 'panel-teaching';
+                    } else if (activeTabId === 'panel-teaching' && currentProgress === 2) {
+                        currentProgress = 3;
+                        nextTabId = 'panel-payout';
+                    } else if (activeTabId === 'panel-payout' && currentProgress === 3) {
+                        currentProgress = 4;
+                        nextTabId = 'panel-security';
+                    } else if (activeTabId === 'panel-security' && currentProgress === 4) {
+                        TacliimiDB.updateProfileInfo({ profileCompleted: true });
+                        alert('Congratulations! Your Instructor Profile Setup is complete.');
+                        window.location.href = '../instructor-dashboard/index.html';
+                        return; // Done
+                    }
+
+                    TacliimiDB.updateProfileInfo({ setupProgress: currentProgress });
+
+                    // Transition to next tab if needed
+                    if (nextTabId) {
+                        // Create a fake click on the sidebar to visually switch
+                        const links = document.querySelectorAll('aside nav a');
+                        links.forEach(link => {
+                            if (link.getAttribute('onclick') && link.getAttribute('onclick').includes(nextTabId)) {
+                                link.click();
+                            }
+                        });
+                    }
+                } else {
+                    // Normal save logic when not in setup mode
+                    if (activeTabId === 'panel-personal') {
+                        const fullName = document.getElementById('fullName').value.trim();
+                        const title = document.getElementById('professionalTitle').value.trim();
+                        const bio = document.getElementById('shortBio').value.trim();
+                        const linkedinUrl = document.getElementById('linkedinUrl')?.value.trim();
+                        const twitterUrl = document.getElementById('twitterUrl')?.value.trim();
+                        const facebookUrl = document.getElementById('facebookUrl')?.value.trim();
+                        TacliimiDB.updateProfileInfo({ fullName, professionalTitle: title, shortBio: bio, displayName: fullName, socialLinks: { linkedin: linkedinUrl, twitter: twitterUrl, facebook: facebookUrl } });
+                    } else if (activeTabId === 'panel-teaching') {
+                        const experience = document.getElementById('experience').value;
+                        const expertiseTags = document.querySelectorAll('#expertise-container span');
+                        const expertiseList = Array.from(expertiseTags).map(span => span.innerText.replace('close', '').trim());
+
+                        const educationList = [];
+                        document.querySelectorAll('.education-item').forEach(item => {
+                            const uni = item.querySelector('input[id^="university"]')?.value.trim();
+                            const deg = item.querySelector('input[id^="degree"]')?.value.trim();
+                            if (uni && deg) educationList.push({ university: uni, degree: deg });
+                        });
+
+                        const languageTags = document.querySelectorAll('#languages-container span.rounded-lg:not(.material-symbols-outlined)');
+                        const languageList = Array.from(languageTags).map(span => span.innerText.replace('close', '').trim());
+
+                        TacliimiDB.updateProfileInfo({ teachingExperience: experience, expertiseList, educationList, languageList });
+                    } else if (activeTabId === 'panel-payout') {
+                        const selectedMethod = document.getElementById('selectedPayoutMethod').value;
+                        if (selectedMethod === 'mm') {
+                            const mmProvider = document.getElementById('mm-provider').value;
+                            const mmPhone = document.getElementById('mm-phone').value.trim();
+                            TacliimiDB.updateProfileInfo({ payoutMethod: 'Mobile Money', payoutDetails: { provider: mmProvider, phone: mmPhone } });
+                        } else if (selectedMethod === 'cod') {
+                            const address = document.getElementById('cod-address').value.trim();
+                            const city = document.getElementById('cod-city').value.trim();
+                            const phone = document.getElementById('cod-phone').value.trim();
+                            TacliimiDB.updateProfileInfo({ payoutMethod: 'Cash on Delivery', payoutDetails: { address, city, phone } });
+                        }
+                    }
+                }
+
+                TacliimiDB.applyGlobalProfile();
+
+                // Show visual feedback on the button
+                const origText = saveBtn.innerHTML;
+                saveBtn.innerHTML = `<span class="material-symbols-outlined text-[18px]">check</span> Saved`;
+                setTimeout(() => { saveBtn.innerHTML = origText; }, 2000);
+            });
+
+            // Payout Method Selector Logic
+            const payoutBtns = document.querySelectorAll('.payout-method-btn');
+            const payoutFormsContainer = document.getElementById('payout-forms');
+            const payoutForms = document.querySelectorAll('.payout-form');
+            const selectedPayoutMethod = document.getElementById('selectedPayoutMethod');
+
+            payoutBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    // Reset all buttons styling
+                    payoutBtns.forEach(b => {
+                        b.classList.remove('border-primary', 'bg-primary/5');
+                        b.classList.add('border-slate-200', 'bg-white', 'dark:border-slate-800', 'dark:bg-background-dark');
+                    });
+
+                    // Activate this button
+                    btn.classList.add('border-primary', 'bg-primary/5');
+                    btn.classList.remove('border-slate-200', 'bg-white', 'dark:border-slate-800', 'dark:bg-background-dark');
+
+                    // Hide all forms
+                    payoutForms.forEach(form => form.classList.add('hidden'));
+                    payoutFormsContainer.classList.remove('hidden');
+
+                    // Show correct form logic
+                    if (btn.id === 'btn-bank') {
+                        document.getElementById('form-bank-transfer').classList.remove('hidden');
+                        selectedPayoutMethod.value = 'bank';
+                    } else if (btn.id === 'btn-mm') {
+                        document.getElementById('form-mobile-money').classList.remove('hidden');
+                        selectedPayoutMethod.value = 'mm';
+                    } else if (btn.id === 'btn-cod') {
+                        document.getElementById('form-cod').classList.remove('hidden');
+                        selectedPayoutMethod.value = 'cod';
+                    }
+                });
+            });
+        });
     </script>
 </body>
 

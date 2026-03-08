@@ -56,7 +56,7 @@
     <aside
         class="fixed left-0 top-0 h-full w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 hidden lg:flex flex-col z-20">
         <div class="p-6 border-b border-slate-100 dark:border-slate-800">
-            <div class="flex items-center gap-2 cursor-pointer" onclick="window.location.href='/src/pages/common/index.html'">
+            <div class="flex items-center gap-2 cursor-pointer" onclick="window.location.href='/index.html'">
                 <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                     <span class="material-symbols-outlined text-white text-lg">school</span>
                 </div>
@@ -127,7 +127,7 @@
         <!-- DYNAMIC CONTENT AREA -->
         <main id="instructor-content-area" class="flex-1 bg-background-light dark:bg-background-dark pb-20">
 
-            
+
             <div class="flex-1 overflow-y-auto px-8 pb-8 pt-2 bg-background-light dark:bg-background-dark">
                 <div class="max-w-6xl mx-auto space-y-8">
                     <div class="flex flex-col gap-1">
@@ -208,12 +208,6 @@
                                 </button>
                                 <button
                                     class="mentorship-tab py-4 border-b-2 border-transparent text-slate-400 dark:text-slate-500 text-sm font-bold flex items-center gap-2 cursor-not-allowed"
-                                    disabled data-tab="scheduled">
-                                    <span>Scheduled</span>
-                                    <span class="material-symbols-outlined text-[14px]">lock</span>
-                                </button>
-                                <button
-                                    class="mentorship-tab py-4 border-b-2 border-transparent text-slate-400 dark:text-slate-500 text-sm font-bold flex items-center gap-2 cursor-not-allowed"
                                     disabled data-tab="completed">
                                     <span>Completed</span>
                                     <span class="material-symbols-outlined text-[14px]">lock</span>
@@ -230,6 +224,12 @@
                                     <span>Pricing</span>
                                     <span class="material-symbols-outlined text-[14px]">lock</span>
                                 </button>
+                                <button
+                                    class="mentorship-tab py-4 border-b-2 border-transparent text-slate-400 dark:text-slate-500 text-sm font-bold flex items-center gap-2 cursor-not-allowed"
+                                    disabled data-tab="privacy">
+                                    <span>Privacy</span>
+                                    <span class="material-symbols-outlined text-[14px]">lock</span>
+                                </button>
                             </div>
                         </div>
                         <!-- DYNAMIC CONTENT -->
@@ -238,7 +238,7 @@
                     </div>
                 </div>
             </div>
-        
+
         </main>
     </div>
 

@@ -1,12 +1,17 @@
 <!DOCTYPE html>
-<html lang="en"><head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Refined Mentorship Registration Overview | Tacliimi Learn</title>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<script id="tailwind-config">
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Refined Mentorship Registration Overview | Tacliimi Learn</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800;900&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script id="tailwind-config">
         tailwind.config = {
             darkMode: "class",
             theme: {
@@ -30,7 +35,7 @@
             },
         }
     </script>
-<style type="text/tailwindcss">
+    <style type="text/tailwindcss">
         body {
             font-family: 'Lexend', sans-serif;
             @apply bg-background-warm text-slate-900;
@@ -55,188 +60,247 @@
         }
     </style>
 </head>
-<body class="antialiased">
-<div class="flex h-screen overflow-hidden">
-<aside class="w-64 flex-shrink-0 bg-sidebar-bg border-r border-slate-200 flex flex-col">
-<div class="p-6 flex items-center gap-3">
-<div class="w-10 h-10 rounded-xl bg-brand-purple flex items-center justify-center text-white shadow-lg shadow-brand-purple/20">
-<span class="material-symbols-outlined text-2xl fill-icon">school</span>
-</div>
-<span class="font-extrabold text-lg tracking-tight text-slate-900">Tacliimi <span class="text-brand-purple">Learn</span></span>
-</div>
-<nav class="flex-1 px-4 space-y-1 mt-4">
-<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-500 hover:bg-slate-50 transition-colors" href="#">
-<span class="material-symbols-outlined">dashboard</span>
-<span class="text-sm font-medium">Dashboard</span>
-</a>
-<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-500 hover:bg-slate-50 transition-colors" href="#">
-<span class="material-symbols-outlined">book_5</span>
-<span class="text-sm font-medium">My Courses</span>
-</a>
-<a class="flex items-center gap-3 px-4 py-3 rounded-lg sidebar-item-active" href="#">
-<span class="material-symbols-outlined fill-icon">group</span>
-<span class="text-sm">Mentorship</span>
-</a>
-<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-500 hover:bg-slate-50 transition-colors" href="#">
-<span class="material-symbols-outlined">bar_chart</span>
-<span class="text-sm font-medium">Analytics</span>
-</a>
-<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-500 hover:bg-slate-50 transition-colors" href="#">
-<span class="material-symbols-outlined">account_balance_wallet</span>
-<span class="text-sm font-medium">Earnings</span>
-</a>
-<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-500 hover:bg-slate-50 transition-colors" href="#">
-<span class="material-symbols-outlined">chat</span>
-<span class="text-sm font-medium">Communications</span>
-</a>
-</nav>
-</aside>
-<main class="flex-1 flex flex-col overflow-hidden">
-<header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 z-10">
-<div class="flex items-center">
-<h2 class="text-lg font-bold text-slate-800">Mentorship Bookings</h2>
-</div>
-<div class="flex items-center gap-3">
-<button class="p-2 text-slate-400 hover:text-brand-purple hover:bg-slate-50 rounded-full transition-colors">
-<span class="material-symbols-outlined">notifications</span>
-</button>
-<button class="p-2 text-slate-400 hover:text-brand-purple hover:bg-slate-50 rounded-full transition-colors">
-<span class="material-symbols-outlined">help</span>
-</button>
-<div class="h-8 w-px bg-slate-200 mx-2"></div>
-<div class="flex flex-col text-right">
-<span class="text-sm font-bold text-slate-900 leading-none">Instructor account</span>
-<span class="text-[11px] font-semibold text-slate-400 mt-1 uppercase tracking-wider">ID: 32342</span>
-</div>
-</div>
-</header>
-<div class="flex-1 overflow-y-auto p-8">
-<div class="max-w-5xl mx-auto space-y-8">
-<div>
-<h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Mentorship Overview</h1>
-<p class="text-slate-500 mt-1">Manage your sessions, students, and profile settings.</p>
-</div>
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-<div class="locked-card rounded-2xl p-6 shadow-sm">
-<div class="lock-badge"><span class="material-symbols-outlined text-[18px]">lock</span></div>
-<div class="flex items-center justify-between mb-4">
-<div class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
-<span class="material-symbols-outlined text-blue-600">calendar_today</span>
-</div>
-<span class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.1em]">METRICS</span>
-</div>
-<p class="text-slate-500 text-sm font-medium">Upcoming Sessions</p>
-<p class="text-slate-900 text-4xl font-extrabold mt-1">0</p>
-</div>
-<div class="locked-card rounded-2xl p-6 shadow-sm">
-<div class="lock-badge"><span class="material-symbols-outlined text-[18px]">lock</span></div>
-<div class="flex items-center justify-between mb-4">
-<div class="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center">
-<span class="material-symbols-outlined text-green-600">avg_pace</span>
-</div>
-<span class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.1em]">HISTORICAL</span>
-</div>
-<p class="text-slate-500 text-sm font-medium">Total Hours Guided</p>
-<p class="text-slate-900 text-4xl font-extrabold mt-1">0</p>
-</div>
-<div class="locked-card rounded-2xl p-6 shadow-sm">
-<div class="lock-badge"><span class="material-symbols-outlined text-[18px]">lock</span></div>
-<div class="flex items-center justify-between mb-4">
-<div class="w-10 h-10 rounded-lg bg-orange-50 flex items-center justify-center">
-<span class="material-symbols-outlined text-orange-600">notifications_active</span>
-</div>
-<span class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.1em]">ALERTS</span>
-</div>
-<p class="text-slate-500 text-sm font-medium">New Requests</p>
-<p class="text-slate-900 text-4xl font-extrabold mt-1">0</p>
-</div>
-</div>
-<div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-<div class="border-b border-slate-100 px-6 overflow-x-auto bg-slate-50/30">
-<div class="flex gap-8 whitespace-nowrap">
-<button class="py-4 border-b-2 border-brand-purple text-brand-purple text-sm font-bold">
-                                Get Started
-                            </button>
-<button class="py-4 border-b-2 border-transparent text-slate-400 text-sm font-bold flex items-center gap-2 cursor-not-allowed" disabled="">
-<span>Requests</span>
-<span class="material-symbols-outlined text-[14px]">lock</span>
-</button>
-<button class="py-4 border-b-2 border-transparent text-slate-400 text-sm font-bold flex items-center gap-2 cursor-not-allowed" disabled="">
-<span>Scheduled</span>
-<span class="material-symbols-outlined text-[14px]">lock</span>
-</button>
-<button class="py-4 border-b-2 border-transparent text-slate-400 text-sm font-bold flex items-center gap-2 cursor-not-allowed" disabled="">
-<span>Completed</span>
-<span class="material-symbols-outlined text-[14px]">lock</span>
-</button>
-<button class="py-4 border-b-2 border-transparent text-slate-400 text-sm font-bold flex items-center gap-2 cursor-not-allowed" disabled="">
-<span>Availability</span>
-<span class="material-symbols-outlined text-[14px]">lock</span>
-</button>
-<button class="py-4 border-b-2 border-transparent text-slate-400 text-sm font-bold flex items-center gap-2 cursor-not-allowed" disabled="">
-<span>Pricing</span>
-<span class="material-symbols-outlined text-[14px]">lock</span>
-</button>
-</div>
-</div>
-<div class="p-8 md:p-12 bg-white">
-<div class="max-w-2xl mx-auto">
-<div class="text-center mb-10">
-<h3 class="text-2xl font-bold text-slate-900">Join the Mentorship Program</h3>
-<p class="text-slate-500 mt-2">
-                                    Apply now to become a mentor and guide students through their learning journey.
-                                </p>
-</div>
-<div class="bg-slate-50 rounded-2xl p-8 border border-slate-100">
-<form class="space-y-5">
-<div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-<div class="md:col-span-2">
-<label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2" for="full-name">Full Name</label>
-<input class="w-full bg-white border-slate-200 rounded-xl py-3 px-4 text-sm focus:border-brand-purple focus:ring-brand-purple transition-all" id="full-name" placeholder="Full Name" type="text" value="John Doe"/>
-</div>
-<div>
-<label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2" for="email">Gmail Address</label>
-<input class="w-full bg-white border-slate-200 rounded-xl py-3 px-4 text-sm focus:border-brand-purple focus:ring-brand-purple transition-all" id="email" placeholder="example@gmail.com" type="email" value="example@gmail.com"/>
-</div>
-<div>
-<label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2" for="phone">Phone Number</label>
-<input class="w-full bg-white border-slate-200 rounded-xl py-3 px-4 text-sm focus:border-brand-purple focus:ring-brand-purple transition-all" id="phone" placeholder="1234567890" type="tel" value="1234567890"/>
-</div>
-<div>
-<label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2" for="country">Country</label>
-<input class="w-full bg-white border-slate-200 rounded-xl py-3 px-4 text-sm focus:border-brand-purple focus:ring-brand-purple transition-all" id="country" placeholder="Country" type="text" value="Somalia"/>
-</div>
-<div>
-<label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2" for="city">City</label>
-<input class="w-full bg-white border-slate-200 rounded-xl py-3 px-4 text-sm focus:border-brand-purple focus:ring-brand-purple transition-all" id="city" placeholder="City" type="text" value="Mogadishu"/>
-</div>
-<div class="md:col-span-2">
-<label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2" for="gender">Gender</label>
-<select class="w-full bg-white border-slate-200 rounded-xl py-3 px-4 text-sm focus:border-brand-purple focus:ring-brand-purple transition-all appearance-none" id="gender">
-<option disabled="">Select Gender</option>
-<option selected="" value="male">Male</option>
-<option value="female">Female</option>
-<option value="other">Other</option>
-</select>
-</div>
-</div>
-<button class="w-full flex items-center justify-center gap-3 px-8 py-4 bg-brand-purple hover:bg-brand-purple/90 text-white font-bold rounded-xl transition-all shadow-lg shadow-brand-purple/20 mt-8 group">
-<span>Start Application</span>
-<span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
-</button>
-<div class="pt-6 mt-6 border-t border-slate-200/60">
-<p class="text-slate-400 text-[11px] leading-relaxed italic text-center">
-                                            Mentorship on Tacliimi is about closer learning. Our mentors must be willing to teach both online and in-person.
-                                        </p>
-</div>
-</form>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</main>
-</div>
 
-</body></html>
+<body class="antialiased">
+    <div class="flex h-screen overflow-hidden">
+        <aside class="w-64 flex-shrink-0 bg-sidebar-bg border-r border-slate-200 flex flex-col">
+            <div class="p-6 flex items-center gap-3">
+                <div
+                    class="w-10 h-10 rounded-xl bg-brand-purple flex items-center justify-center text-white shadow-lg shadow-brand-purple/20">
+                    <span class="material-symbols-outlined text-2xl fill-icon">school</span>
+                </div>
+                <span class="font-extrabold text-lg tracking-tight text-slate-900">Tacliimi <span
+                        class="text-brand-purple">Learn</span></span>
+            </div>
+            <nav class="flex-1 px-4 space-y-1 mt-4">
+                <a class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-500 hover:bg-slate-50 transition-colors"
+                    href="#">
+                    <span class="material-symbols-outlined">dashboard</span>
+                    <span class="text-sm font-medium">Dashboard</span>
+                </a>
+                <a class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-500 hover:bg-slate-50 transition-colors"
+                    href="#">
+                    <span class="material-symbols-outlined">book_5</span>
+                    <span class="text-sm font-medium">My Courses</span>
+                </a>
+                <a class="flex items-center gap-3 px-4 py-3 rounded-lg sidebar-item-active" href="#">
+                    <span class="material-symbols-outlined fill-icon">group</span>
+                    <span class="text-sm">Mentorship</span>
+                </a>
+                <a class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-500 hover:bg-slate-50 transition-colors"
+                    href="#">
+                    <span class="material-symbols-outlined">bar_chart</span>
+                    <span class="text-sm font-medium">Analytics</span>
+                </a>
+                <a class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-500 hover:bg-slate-50 transition-colors"
+                    href="#">
+                    <span class="material-symbols-outlined">account_balance_wallet</span>
+                    <span class="text-sm font-medium">Earnings</span>
+                </a>
+                <a class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-500 hover:bg-slate-50 transition-colors"
+                    href="#">
+                    <span class="material-symbols-outlined">chat</span>
+                    <span class="text-sm font-medium">Communications</span>
+                </a>
+            </nav>
+        </aside>
+        <main class="flex-1 flex flex-col overflow-hidden">
+            <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 z-10">
+                <div class="flex items-center">
+                    <h2 class="text-lg font-bold text-slate-800">Mentorship Bookings</h2>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button
+                        class="p-2 text-slate-400 hover:text-brand-purple hover:bg-slate-50 rounded-full transition-colors">
+                        <span class="material-symbols-outlined">notifications</span>
+                    </button>
+                    <button
+                        class="p-2 text-slate-400 hover:text-brand-purple hover:bg-slate-50 rounded-full transition-colors">
+                        <span class="material-symbols-outlined">help</span>
+                    </button>
+                    <div class="h-8 w-px bg-slate-200 mx-2"></div>
+                    <div class="flex flex-col text-right">
+                        <span class="text-sm font-bold text-slate-900 leading-none">Instructor account</span>
+                        <span class="text-[11px] font-semibold text-slate-400 mt-1 uppercase tracking-wider">ID:
+                            32342</span>
+                    </div>
+                </div>
+            </header>
+            <div class="flex-1 overflow-y-auto p-8">
+                <div class="max-w-5xl mx-auto space-y-8">
+                    <div>
+                        <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Mentorship Overview</h1>
+                        <p class="text-slate-500 mt-1">Manage your sessions, students, and profile settings.</p>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="locked-card rounded-2xl p-6 shadow-sm">
+                            <div class="lock-badge"><span class="material-symbols-outlined text-[18px]">lock</span>
+                            </div>
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-blue-600">calendar_today</span>
+                                </div>
+                                <span
+                                    class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.1em]">METRICS</span>
+                            </div>
+                            <p class="text-slate-500 text-sm font-medium">Upcoming Sessions</p>
+                            <p class="text-slate-900 text-4xl font-extrabold mt-1">0</p>
+                        </div>
+                        <div class="locked-card rounded-2xl p-6 shadow-sm">
+                            <div class="lock-badge"><span class="material-symbols-outlined text-[18px]">lock</span>
+                            </div>
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-green-600">avg_pace</span>
+                                </div>
+                                <span
+                                    class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.1em]">HISTORICAL</span>
+                            </div>
+                            <p class="text-slate-500 text-sm font-medium">Total Hours Guided</p>
+                            <p class="text-slate-900 text-4xl font-extrabold mt-1">0</p>
+                        </div>
+                        <div class="locked-card rounded-2xl p-6 shadow-sm">
+                            <div class="lock-badge"><span class="material-symbols-outlined text-[18px]">lock</span>
+                            </div>
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="w-10 h-10 rounded-lg bg-orange-50 flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-orange-600">notifications_active</span>
+                                </div>
+                                <span
+                                    class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.1em]">ALERTS</span>
+                            </div>
+                            <p class="text-slate-500 text-sm font-medium">New Requests</p>
+                            <p class="text-slate-900 text-4xl font-extrabold mt-1">0</p>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+                        <div class="border-b border-slate-100 px-6 overflow-x-auto bg-slate-50/30">
+                            <div class="flex gap-8 whitespace-nowrap">
+                                <button class="py-4 border-b-2 border-brand-purple text-brand-purple text-sm font-bold">
+                                    Get Started
+                                </button>
+                                <button
+                                    class="py-4 border-b-2 border-transparent text-slate-400 text-sm font-bold flex items-center gap-2 cursor-not-allowed"
+                                    disabled="">
+                                    <span>Requests</span>
+                                    <span class="material-symbols-outlined text-[14px]">lock</span>
+                                </button>
+                                <button
+                                    class="py-4 border-b-2 border-transparent text-slate-400 text-sm font-bold flex items-center gap-2 cursor-not-allowed"
+                                    disabled="">
+                                    <span>Scheduled</span>
+                                    <span class="material-symbols-outlined text-[14px]">lock</span>
+                                </button>
+                                <button
+                                    class="py-4 border-b-2 border-transparent text-slate-400 text-sm font-bold flex items-center gap-2 cursor-not-allowed"
+                                    disabled="">
+                                    <span>Completed</span>
+                                    <span class="material-symbols-outlined text-[14px]">lock</span>
+                                </button>
+                                <button
+                                    class="py-4 border-b-2 border-transparent text-slate-400 text-sm font-bold flex items-center gap-2 cursor-not-allowed"
+                                    disabled="">
+                                    <span>Availability</span>
+                                    <span class="material-symbols-outlined text-[14px]">lock</span>
+                                </button>
+                                <button
+                                    class="py-4 border-b-2 border-transparent text-slate-400 text-sm font-bold flex items-center gap-2 cursor-not-allowed"
+                                    disabled="">
+                                    <span>Pricing</span>
+                                    <span class="material-symbols-outlined text-[14px]">lock</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="p-8 md:p-12 bg-white dark:bg-transparent">
+                            <div class="max-w-2xl mx-auto">
+                                <div class="text-center mb-10">
+                                    <h3 class="text-2xl font-bold text-slate-900 dark:text-white">Join the Mentorship
+                                        Program</h3>
+                                    <p class="text-slate-500 mt-2">
+                                        Apply now to become a mentor and guide students through their learning journey.
+                                    </p>
+                                </div>
+                                <div
+                                    class="bg-slate-50 dark:bg-slate-800 rounded-2xl p-8 border border-slate-100 dark:border-slate-700 shadow-sm">
+                                    <form class="space-y-5">
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                            <div class="md:col-span-2">
+                                                <label
+                                                    class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2"
+                                                    for="full-name">Full Name</label>
+                                                <input
+                                                    class="w-full bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 dark:text-white rounded-xl py-3 px-4 text-sm focus:border-brand-purple focus:dark:border-brand-purple focus:ring-brand-purple transition-all"
+                                                    id="full-name" placeholder="Full Name" type="text"
+                                                    value="John Doe" />
+                                            </div>
+                                            <div>
+                                                <label
+                                                    class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2"
+                                                    for="email">Gmail Address</label>
+                                                <input
+                                                    class="w-full bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 dark:text-white rounded-xl py-3 px-4 text-sm focus:border-brand-purple focus:dark:border-brand-purple focus:ring-brand-purple transition-all"
+                                                    id="email" placeholder="example@gmail.com" type="email"
+                                                    value="example@gmail.com" />
+                                            </div>
+                                            <div>
+                                                <label
+                                                    class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2"
+                                                    for="phone">Phone Number</label>
+                                                <input
+                                                    class="w-full bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 dark:text-white rounded-xl py-3 px-4 text-sm focus:border-brand-purple focus:dark:border-brand-purple focus:ring-brand-purple transition-all"
+                                                    id="phone" placeholder="1234567890" type="tel" value="1234567890" />
+                                            </div>
+                                            <div>
+                                                <label
+                                                    class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2"
+                                                    for="country">Country</label>
+                                                <input
+                                                    class="w-full bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 dark:text-white rounded-xl py-3 px-4 text-sm focus:border-brand-purple focus:dark:border-brand-purple focus:ring-brand-purple transition-all"
+                                                    id="country" placeholder="Country" type="text" value="Somalia" />
+                                            </div>
+                                            <div>
+                                                <label
+                                                    class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2"
+                                                    for="city">City</label>
+                                                <input
+                                                    class="w-full bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 dark:text-white rounded-xl py-3 px-4 text-sm focus:border-brand-purple focus:dark:border-brand-purple focus:ring-brand-purple transition-all"
+                                                    id="city" placeholder="City" type="text" value="Mogadishu" />
+                                            </div>
+                                            <div class="md:col-span-2">
+                                                <label
+                                                    class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2"
+                                                    for="gender">Gender</label>
+                                                <select
+                                                    class="w-full bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 dark:text-white rounded-xl py-3 px-4 text-sm focus:border-brand-purple focus:dark:border-brand-purple focus:ring-brand-purple transition-all"
+                                                    id="gender">
+                                                    <option disabled="">Select Gender</option>
+                                                    <option selected="" value="male">Male</option>
+                                                    <option value="female">Female</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <button
+                                            class="w-full flex items-center justify-center gap-3 px-8 py-4 bg-brand-purple hover:bg-brand-purple/90 text-white font-bold rounded-xl transition-all shadow-lg shadow-brand-purple/20 mt-8 group">
+                                            <span>Start Application</span>
+                                            <span
+                                                class="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                                        </button>
+                                        <div class="pt-6 mt-6 border-t border-slate-200/60">
+                                            <p class="text-slate-400 text-[11px] leading-relaxed italic text-center">
+                                                Mentorship on Tacliimi is about closer learning. Our mentors must be
+                                                willing to teach both online and in-person.
+                                            </p>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+</body>
+
+</html>
