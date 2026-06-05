@@ -9,9 +9,23 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap"
         rel="stylesheet" />
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet" />
-    <link
-        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
-        rel="stylesheet" />
+    <script type="module" src="/src/services/globalProfile.js"></script>
+    <script type="module">
+        import { AuthService } from '/src/services/authService.js';
+        // Prevent access if already logged in
+        AuthService.getSession().then(async session => {
+            if (session) {
+                const profile = await AuthService.getCurrentProfile();
+                if (profile && profile.role === 'admin') {
+                    window.location.href = '/src/pages/admin/dashboard/index.html';
+                } else if (profile && profile.role === 'instructor') {
+                    window.location.href = '/src/pages/instructor/instructor-dashboard/index.html';
+                } else {
+                    window.location.href = '/src/pages/student/student-dashboard/index.html';
+                }
+            }
+        });
+    </script>
     <script>
         tailwind.config = {
             darkMode: "class",
@@ -122,18 +136,17 @@
                             continue with email</span>
                     </div>
                 </div>
-                <form onsubmit="event.preventDefault(); window.location.href='/src/pages/student/student-dashboard/index.html';"
-                    class="space-y-6">
+                <form id="student-login-form" class="space-y-6">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5"
                             for="email">Email address</label>
                         <div class="relative">
                             <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
-                                <span class="material-icons-outlined text-xl">mail</span>
+                                <span class="material-symbols-outlined text-xl">mail</span>
                             </span>
                             <input
                                 class="block w-full pl-10 pr-4 py-3 rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-primary focus:border-primary transition-all sm:text-sm"
-                                id="email" name="email" placeholder="you@institution.edu" required="" type="email" />
+                                id="email" name="email" placeholder="you@institution.edu" required="" type="text" />
                         </div>
                     </div>
                     <div>
@@ -145,14 +158,14 @@
                         </div>
                         <div class="relative">
                             <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
-                                <span class="material-icons-outlined text-xl">lock</span>
+                                <span class="material-symbols-outlined text-xl">lock</span>
                             </span>
                             <input
                                 class="block w-full pl-10 pr-12 py-3 rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-primary focus:border-primary transition-all sm:text-sm"
                                 id="password" name="password" placeholder="••••••••" required="" type="password" />
                             <button
                                 class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                                type="button">
+                                type="button" onclick="const p = document.getElementById('password'); p.type = p.type === 'password' ? 'text' : 'password';">
                                 <span class="material-icons-outlined text-xl">visibility_off</span>
                             </button>
                         </div>
@@ -170,6 +183,38 @@
                         Sign in to Student Dashboard
                     </button>
                 </form>
+
+                <script type="module">
+                    import { AuthService } from '/src/services/authService.js';
+                    import { supabase } from '/src/services/supabaseClient.js';
+
+                    document.getElementById('student-login-form').addEventListener('submit', async (e) => {
+                        e.preventDefault();
+                        const email = document.getElementById('email').value.trim();
+                        const password = document.getElementById('password').value;
+                        const btn = e.target.querySelector('button[type="submit"]');
+
+                        try {
+                            btn.innerText = 'Signing in...';
+                            btn.disabled = true;
+
+                            const data = await AuthService.login(email, password);
+                            const profile = await AuthService.getCurrentProfile();
+
+                            if (profile && profile.role === 'admin') {
+                                btn.innerText = 'Admin Access Granted';
+                                setTimeout(() => window.location.href = '/src/pages/admin/dashboard/index.html', 500);
+                                return;
+                            }
+
+                            window.location.href = (profile && profile.role === 'instructor') ? '/src/pages/instructor/instructor-dashboard/index.html' : '/src/pages/student/student-dashboard/index.html';
+                        } catch (err) {
+                            alert(err.message);
+                            btn.innerText = 'Sign in to Student Dashboard';
+                            btn.disabled = false;
+                        }
+                    });
+                </script>
                 <p class="mt-10 text-center text-sm text-gray-600 dark:text-gray-400">
                     Don't have a student account?
                     <a class="font-bold text-primary hover:text-indigo-500 transition-colors"

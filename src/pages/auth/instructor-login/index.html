@@ -49,12 +49,24 @@
                 <p class="text-slate-500 text-sm">Log in to manage your courses and students.</p>
             </div>
 
+            <button type="button" id="google-login-btn"
+                class="w-full flex items-center justify-center gap-3 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold py-3.5 rounded-xl transition-all shadow-sm mb-6">
+                <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" class="w-5 h-5">
+                Sign in with Google
+            </button>
+
+            <div class="relative flex py-5 items-center">
+                <div class="flex-grow border-t border-slate-200"></div>
+                <span class="flex-shrink-0 mx-4 text-slate-400 text-sm">Or continue with email</span>
+                <div class="flex-grow border-t border-slate-200"></div>
+            </div>
+
             <form id="instructorLoginForm" class="space-y-6">
                 <div>
-                    <label class="block text-sm font-semibold mb-2" for="email">Email Address</label>
+                    <label class="block text-sm font-semibold mb-2" for="identifier">Email or Username</label>
                     <input
                         class="w-full bg-slate-50 border-slate-200 rounded-xl px-4 py-3.5 focus:ring-primary focus:border-primary transition-all text-slate-900 placeholder:text-slate-400"
-                        id="email" placeholder="example@gmail.com" type="email" value="" required />
+                        id="identifier" placeholder="Email or admin username" required />
                 </div>
                 <div>
                     <div class="flex items-center justify-between mb-2">
@@ -74,43 +86,78 @@
                 </button>
             </form>
 
-            <script src="/src/services/tacliimi_db.js"></script>
-            <script>
-                // Prevent access if already logged in as instructor
-                const session = TacliimiDB.getCurrentSession();
-                if (session && session.role === 'instructor') {
-                    window.location.href = '/src/pages/instructor/instructor-dashboard/index.html';
-                }
+            <script type="module">
+                import { AuthService } from '/src/services/authService.js';
+                import { supabase } from '/src/services/supabaseClient.js';
 
-                document.getElementById('instructorLoginForm').addEventListener('submit', (e) => {
+                // Prevent access if already logged in
+                AuthService.getSession().then(async session => {
+                    if (session) {
+                        const profile = await AuthService.getCurrentProfile();
+                    if (profile && profile.role === 'admin') {
+                        window.location.href = '/src/pages/admin/dashboard/index.html';
+                    } else {
+                        window.location.href = '/src/pages/instructor/instructor-dashboard/index.html';
+                    }
+                    }
+                });
+
+                // Google OAuth Flow
+                document.getElementById('google-login-btn').addEventListener('click', async () => {
+                    const btn = document.getElementById('google-login-btn');
+                    btn.innerHTML = '<span class="material-symbols-outlined animate-spin mr-2">refresh</span> Connecting...';
+                    try {
+                        await AuthService.signInWithGoogle('instructor');
+                    } catch (err) {
+                        btn.innerHTML = `<img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" class="w-5 h-5"> Sign in with Google`;
+                        alert("Google Sign-In failed: " + err.message);
+                    }
+                });
+
+                document.getElementById('instructorLoginForm').addEventListener('submit', async (e) => {
                     e.preventDefault();
 
-                    const email = document.getElementById('email').value.trim();
+                    const identifier = document.getElementById('identifier').value.trim();
                     const password = document.getElementById('password').value;
                     const btn = e.target.querySelector('button[type="submit"]');
                     const originalText = btn.innerHTML;
 
                     try {
                         btn.innerText = 'Verifying...';
+                        btn.disabled = true;
 
-                        // Log them in
-                        let sessionUser = TacliimiDB.loginUser(email, password);
+                        // Log them in via Supabase
+                        const data = await AuthService.login(identifier, password);
 
                         // If they are a student, upgrade them to an instructor because they logged in via the instructor portal
-                        if (sessionUser.role !== 'instructor') {
-                            TacliimiDB.updateProfileInfo({ role: 'instructor' });
-                            sessionUser.role = 'instructor';
+                        const profile = await AuthService.getCurrentProfile();
+                        
+                        // Admin Redirection
+                        if (profile && profile.role === 'admin') {
+                            btn.innerHTML = 'Admin Success <span class="material-icons-round text-xl">check</span>';
+                            btn.classList.replace('bg-primary', 'bg-emerald-500');
+                            setTimeout(() => {
+                                window.location.href = '/src/pages/admin/dashboard/index.html';
+                            }, 500);
+                            return;
                         }
 
-                        if (sessionUser) {
-                            btn.innerHTML = 'Success <span class="material-icons-round text-xl">check</span>';
-                            btn.classList.replace('bg-primary', 'bg-green-500');
-                            setTimeout(() => {
-                                window.location.href = '/src/pages/instructor/instructor-dashboard/index.html';
-                            }, 500);
+                        if (profile && profile.role !== 'instructor') {
+                            await supabase
+                                .from('profiles')
+                                .update({ role: 'instructor' })
+                                .eq('id', profile.id);
                         }
+
+                        btn.innerHTML = 'Success <span class="material-icons-round text-xl">check</span>';
+                        btn.classList.replace('bg-primary', 'bg-green-500');
+                        setTimeout(() => {
+                            window.location.href = '/src/pages/instructor/instructor-dashboard/index.html';
+                        }, 500);
+
                     } catch (err) {
                         btn.innerHTML = originalText;
+                        btn.disabled = false;
 
                         // Clear existing errors
                         const oldErr = document.getElementById('login-error');
@@ -121,7 +168,8 @@
                         errDiv.className = 'text-red-500 text-sm font-medium mt-2 p-3 bg-red-50 rounded-lg border border-red-100 flex items-center gap-2';
                         errDiv.innerHTML = `<span class="material-icons-round text-lg">error_outline</span> ${err.message}`;
 
-                        e.target.insertBefore(errDiv, e.target.querySelector('button[type="submit"]'));
+                        // Insert before the wrapper div holding the password input, so it appears above the submit button properly
+                        e.target.insertBefore(errDiv, btn);
                     }
                 });
             </script>
@@ -129,7 +177,8 @@
             <div class="mt-8 text-center border-t border-slate-100 pt-8">
                 <p class="text-slate-500 text-sm">
                     Don't have an instructor account?
-                    <a class="text-primary font-bold hover:underline ml-1" href="/src/pages/auth/instructor-register/index.html">Sign
+                    <a class="text-primary font-bold hover:underline ml-1"
+                        href="/src/pages/auth/instructor-register/index.html">Sign
                         up here</a>
                 </p>
             </div>

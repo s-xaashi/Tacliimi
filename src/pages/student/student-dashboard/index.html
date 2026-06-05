@@ -101,35 +101,46 @@
         <header class="mb-8">
             <h1 class="text-3xl font-bold text-slate-900 dark:text-white">Welcome back, <span
                     class="user-display-name">Student Name</span>! 👋</h1>
-            <p class="text-slate-600 dark:text-slate-400 mt-1">Your weekly progress and goals will appear here once you
+            <p id="dashboard-welcome-msg" class="text-slate-600 dark:text-slate-400 mt-1">Your weekly progress and goals will appear here once you
                 start learning.</p>
         </header>
-        <section class="mb-12">
-            <div class="p-12 text-center" id="courses-empty-state">
-                <div
-                    class="w-20 h-20 bg-white dark:bg-slate-800 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-sm border border-slate-100 dark:border-slate-700">
-                    <span class="material-symbols-outlined text-4xl text-primary">school</span>
-                </div>
-                <h3 class="text-2xl font-bold dark:text-white mb-2">Ready to start your learning journey?</h3>
-                <p class="text-slate-500 mb-8 max-w-md mx-auto">You haven't enrolled in any courses yet. Explore our
-                    marketplace to find the perfect course and start acquiring new skills today.</p>
-                <div class="flex items-center justify-center gap-4">
-                    <button onclick="window.location.href='/src/pages/marketplace/marketplace/index.html'"
-                        class="px-6 py-3 bg-primary text-white font-bold rounded-xl hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/30 flex items-center gap-2">
-                        <span class="material-symbols-outlined text-sm">explore</span> Browse Courses
-                    </button>
-                    <button onclick="window.location.href='/src/pages/student/account-settings/index.html?tab=interests'"
-                        class="px-6 py-3 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700 flex items-center gap-2">
-                        <span class="material-symbols-outlined text-sm">category</span> Set Interests
-                    </button>
-                </div>
-            </div>
 
-            <!-- Grid added dynamically -->
-            <div id="enrolled-courses-grid" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Cards will be populated here -->
+        <section id="continue-learning-section" class="mb-12 hidden">
+            <!-- Latest course rendered here -->
+        </section>
+
+        <section id="new-student-section" class="mb-12 hidden">
+            <div class="bg-gradient-to-br from-primary/10 to-purple-600/10 dark:from-primary/20 dark:to-purple-600/20 rounded-3xl p-8 border border-primary/20 relative overflow-hidden">
+                <div class="absolute -right-20 -top-20 w-64 h-64 bg-primary/10 rounded-full blur-3xl"></div>
+                <div class="relative z-10 flex flex-col md:flex-row items-center gap-8">
+                    <div class="w-32 h-32 bg-white dark:bg-slate-800 rounded-3xl flex items-center justify-center shadow-xl shadow-primary/10 border border-primary/10">
+                        <span class="material-symbols-outlined text-6xl text-primary">auto_awesome</span>
+                    </div>
+                    <div class="text-center md:text-left space-y-4">
+                        <h2 class="text-2xl font-bold dark:text-white">Begin your learning adventure!</h2>
+                        <p class="text-slate-600 dark:text-slate-400 max-w-xl">Tacliimi Learn offers a wide range of courses specifically designed for beginners. From coding to creative arts, start building your skills today with our expert-led modules.</p>
+                        <div class="flex flex-wrap items-center justify-center md:justify-start gap-4">
+                            <button onclick="window.location.href='/src/pages/marketplace/marketplace/index.html?level=Beginner'"
+                                class="px-6 py-3 bg-primary text-white font-bold rounded-xl hover:bg-purple-600 transition-all shadow-lg shadow-primary/20 flex items-center gap-2">
+                                <span class="material-symbols-outlined text-sm">rocket_launch</span> Explore Beginner Courses
+                            </button>
+                            <button onclick="window.location.href='/src/pages/student/account-settings/index.html?tab=interests'"
+                                class="px-6 py-3 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold rounded-xl hover:shadow-md transition-all border border-slate-200 dark:border-slate-700 flex items-center gap-2">
+                                <span class="material-symbols-outlined text-sm">settings_heart</span> Personalize Interests
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
+        <!-- Empty state for specific tabs if needed, but handled globally by dashboard.js -->
+        <div id="global-courses-empty-state" class="hidden py-12 text-center">
+            <div class="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <span class="material-symbols-outlined text-3xl text-slate-400">inventory_2</span>
+            </div>
+            <h3 class="text-xl font-bold dark:text-white">No courses enrolled yet</h3>
+            <p class="text-slate-500 mt-2">Browse the marketplace to find courses that interest you.</p>
+        </div>
         <div class="flex items-center justify-between mb-6 border-b border-slate-200 dark:border-slate-800">
             <div class="flex gap-8">
                 <button id="tab-my-courses" onclick="switchDashboardTab('my-courses')"
@@ -159,7 +170,9 @@
             </div>
         </div>
         <div id="content-my-courses">
-            <!-- Content for My Courses will be rendered by JS -->
+            <div id="enrolled-courses-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Cards will be populated here by JS -->
+            </div>
         </div>
 
         <div id="content-my-mentors" class="hidden">
@@ -243,171 +256,8 @@
     </footer>
     
 
-    <script>
-        function switchDashboardTab(tabId) {
-            // Update Tab Button Styles
-            const tabs = ['my-courses', 'my-mentors', 'wishlist'];
-            tabs.forEach(tab => {
-                const btn = document.getElementById('tab-' + tab);
-                if (tab === tabId) {
-                    btn.className = "pb-4 text-primary font-semibold border-b-2 border-primary flex items-center gap-2 transition-colors";
-                } else {
-                    btn.className = "pb-4 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium flex items-center gap-2 border-b-2 border-transparent transition-colors";
-                }
-            });
-
-            // Update Content Visibility
-            tabs.forEach(tab => {
-                const content = document.getElementById('content-' + tab);
-                if (tab === tabId) {
-                    content.classList.remove('hidden');
-                } else {
-                    content.classList.add('hidden');
-                }
-            });
-            // The original instruction had a misplaced `switchLayout('wishlist');` here.
-            // Assuming it was meant to be part of the state management logic or a separate function call.
-            // For now, it's removed as it doesn't fit the context of `switchDashboardTab`.
-        }
-
-        /* --- Global App State Management --- */
-        const APP_STATE_KEY = 'tacliimi_app_state';
-
-        // Initialize default state if empty
-        function getAppState() {
-            const saved = localStorage.getItem(APP_STATE_KEY);
-            if (saved) return JSON.parse(saved);
-
-            return {
-                displayName: 'Student Name',
-                fullName: 'Alex Thompson',
-                selectedInterests: ['AI', 'Languages', 'Design']
-            };
-        }
-
-        // Apply state to DOM elements
-        function applyStateToDOM() {
-            const state = getAppState();
-
-            // Update all display name instances
-            // (Handled by TacliimiDB global profile injection now to prevent overriding with default state)
-        }
-
-        // Dynamically Render Enrolled Courses
-        function renderMyCourses() {
-            const courses = TacliimiDB.getEnrolledCourses();
-            const container = document.getElementById('content-my-courses'); // Target the content div
-            const emptyState = document.getElementById('courses-empty-state');
-            const enrolledCoursesGrid = document.getElementById('enrolled-courses-grid');
-
-            if (courses.length === 0) {
-                enrolledCoursesGrid.classList.add('hidden');
-                emptyState.classList.remove('hidden');
-            } else {
-                emptyState.classList.add('hidden');
-                enrolledCoursesGrid.classList.remove('hidden');
-
-                let html = '';
-                courses.forEach(course => {
-                    html += `
-                <div class="flex flex-col group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer h-full" onclick="window.location.href='/src/pages/learning/learning-interface/index.html?course=${encodeURIComponent(course.id)}'">
-                    <div class="aspect-video relative overflow-hidden bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0">
-                        ${course.thumbnailUrl ? `<img src="${course.thumbnailUrl}" alt="${course.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />` : `<span class="material-symbols-outlined text-slate-300 dark:text-slate-700 text-4xl">image</span>`}
-                    </div>
-                    <div class="p-5 flex flex-col flex-1">
-                        <div class="flex items-center gap-2 mb-3 shrink-0">
-                            <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-100 dark:bg-slate-800 text-slate-500">${course.category || 'Course'}</span>
-                        </div>
-                        <h4 class="font-bold text-slate-900 dark:text-white mb-4 line-clamp-2 min-h-[3rem] group-hover:text-primary transition-colors shrink-0">${course.title}</h4>
-                        <div class="space-y-3 shrink-0">
-                            <div class="flex items-center justify-between text-xs text-slate-500 mb-1">
-                                <span>Progress</span>
-                                <span class="font-semibold text-slate-400">15%</span>
-                            </div>
-                            <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
-                                <div class="bg-primary h-full rounded-full" style="width: 15%"></div>
-                            </div>
-                        </div>
-                        <div class="mt-auto flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800">
-                            <div class="flex items-center gap-2 text-slate-500 shrink-0">
-                                <span class="material-symbols-outlined text-xl">account_circle</span>
-                                <span class="text-xs truncate max-w-[120px]">${course.instructor || 'Instructor'}</span>
-                            </div>
-                            <span class="text-primary text-sm font-semibold group-hover:underline shrink-0">Start</span>
-                        </div>
-                    </div>
-                </div>
-                    `;
-                });
-                enrolledCoursesGrid.innerHTML = html;
-            }
-        }
-
-        // Dynamically Render Wishlist
-        function renderWishlist() {
-            const wishlistContainer = document.getElementById('wishlist-container');
-            const wishlistEmptyState = document.getElementById('wishlist-empty-state');
-
-            const wishlistedCourses = TacliimiDB.getWishlistedCourses();
-
-            if (wishlistedCourses.length === 0) {
-                wishlistContainer.innerHTML = '';
-                wishlistContainer.appendChild(wishlistEmptyState);
-            } else {
-                wishlistContainer.innerHTML = '<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-6"></div>';
-                const grid = wishlistContainer.querySelector('.grid');
-
-                wishlistedCourses.forEach(course => {
-                    const priceDisplay = typeof course.price === 'number' ? '$' + course.price.toFixed(2) : course.price;
-                    const ratingDisplay = typeof course.rating === 'number' ? course.rating.toFixed(1) : course.rating;
-
-                    const cardHTML = `
-                        <div onclick="window.location.href='/src/pages/marketplace/course-details/index.html?id=${encodeURIComponent(course.id)}'"
-                            class="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 group border border-slate-200 dark:border-slate-700 hover:border-primary/50 cursor-pointer flex flex-col relative">
-                            
-                            <!-- Remove Wishlist Button (Stop propagation to not trigger card click) -->
-                            <button onclick="event.stopPropagation(); TacliimiDB.removeFromWishlist('${course.id}'); renderWishlist();" 
-                                class="absolute top-3 right-3 z-10 w-8 h-8 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md rounded-full flex items-center justify-center text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 transition-all shadow-sm">
-                                <span class="material-symbols-outlined text-[18px]">favorite</span>
-                            </button>
-
-                            <div class="relative aspect-video">
-                                <img alt="${course.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="${course.thumbnailUrl}" />
-                            </div>
-                            <div class="p-5 flex flex-col flex-1">
-                                <div class="text-xs text-primary font-bold uppercase tracking-widest mb-2">${course.category || 'Course'}</div>
-                                <h3 class="font-bold text-slate-900 dark:text-white mb-2 line-clamp-2 leading-snug group-hover:text-primary transition-colors">${course.title}</h3>
-                                <p class="text-sm text-slate-500 mb-4">${course.instructor}</p>
-                                
-                                <div class="flex items-center gap-1 mb-4 mt-auto">
-                                    <span class="font-bold text-sm text-yellow-500">${ratingDisplay}</span>
-                                    <div class="flex text-yellow-400">
-                                        <span class="material-symbols-outlined text-[14px]">star</span>
-                                    </div>
-                                    <span class="text-xs text-slate-400">(${course.reviews})</span>
-                                </div>
-                                
-                                <div class="flex items-center justify-between border-t border-slate-100 dark:border-slate-700 pt-4 mt-2">
-                                    <span class="text-lg font-bold text-slate-900 dark:text-white">${priceDisplay}</span>
-                                    <button onclick="event.stopPropagation(); TacliimiDB.enrollCourse('${course.id}'); renderMyCourses(); renderWishlist(); window.location.href='/src/pages/learning/learning-interface/index.html?course=${encodeURIComponent(course.id)}';" 
-                                        class="px-4 py-2 bg-primary/10 text-primary hover:bg-primary font-medium hover:text-white rounded-lg transition-colors text-sm">
-                                        Enroll Now
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                    grid.insertAdjacentHTML('beforeend', cardHTML);
-                });
-            }
-        }
-
-        // Initialize on load
-        document.addEventListener('DOMContentLoaded', () => {
-            applyStateToDOM();
-            renderWishlist();
-        });
-    </script>
+    
+    <script type="module" src="./dashboard.js"></script>
 </body>
 
 </html>

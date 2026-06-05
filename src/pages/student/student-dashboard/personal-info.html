@@ -11,9 +11,9 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
         rel="stylesheet" />
-    <script src="/src/services/tacliimi_db.js"></script>
+    <script type="module" src="/src/services/globalProfile.js"></script>
     <script>
-        if (!TacliimiDB.getCurrentSession()) window.location.href = '/src/pages/auth/login/index.html';
+        // Removed synchronous Auth check
     </script>
     <script>
         tailwind.config = {
@@ -46,6 +46,20 @@
             font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
         }
     </style>
+
+    <script type="module">
+        import { AuthService } from '/src/services/authService.js';
+        
+        // If the URL contains an access token from an email link or OAuth, do not prematurely redirect
+        const isOAuthRedirect = window.location.hash.includes('access_token=');
+        
+        if (!isOAuthRedirect) {
+            AuthService.getSession().then(session => {
+                if (!session) window.location.href = '/src/pages/auth/login-select/index.html';
+            });
+        }
+    </script>
+
 </head>
 
 <body

@@ -4,9 +4,9 @@
 const TACLIIMI_DB_KEY = 'tacliimi_courses';
 const TACLIIMI_ENROLLED_KEY = 'tacliimi_enrolled';
 const TACLIIMI_WISHLIST_KEY = 'tacliimi_wishlist';
-const TACLIIMI_USERS_KEY = 'tacliimi_users';
-const TACLIIMI_SESSION_KEY = 'tacliimi_session';
-const TACLIIMI_RESETS_KEY = 'tacliimi_password_resets';
+
+// Removed local Auth Keys
+
 
 const defaultCourses = [
     {
@@ -97,12 +97,6 @@ class TacliimiDB {
         }
         if (!localStorage.getItem(TACLIIMI_ENROLLED_KEY)) {
             localStorage.setItem(TACLIIMI_ENROLLED_KEY, JSON.stringify([]));
-        }
-        if (!localStorage.getItem(TACLIIMI_USERS_KEY)) {
-            localStorage.setItem(TACLIIMI_USERS_KEY, JSON.stringify([]));
-        }
-        if (!localStorage.getItem(TACLIIMI_RESETS_KEY)) {
-            localStorage.setItem(TACLIIMI_RESETS_KEY, JSON.stringify([]));
         }
         if (!localStorage.getItem(TACLIIMI_WISHLIST_KEY)) {
             // Check legacy wishlist key used in earlier version
@@ -211,256 +205,60 @@ class TacliimiDB {
     }
 
     // ==========================================
-    // AUTHENTICATION & USERS
+    // AUTHENTICATION & USERS (MIGRATED TO SUPABASE)
     // ==========================================
 
-    /**
-     * Helper to simulate hashing (for demonstration purposes)
-     */
-    static _hashPassword(password) {
-        // In a real app this would use bcrypt/argon2.
-        // For the frontend simulator, a basic base64 or custom string shift is enough to "hash" it.
-        return btoa(password + "_tacliimi_salt");
-    }
-
-    static getAllUsers() {
-        this.init();
-        return JSON.parse(localStorage.getItem(TACLIIMI_USERS_KEY)) || [];
-    }
-
-    static saveUsers(users) {
-        localStorage.setItem(TACLIIMI_USERS_KEY, JSON.stringify(users));
-    }
-
-    /**
-     * Registers a new user. Throws error if email already exists.
-     */
-    static registerUser(userData) {
-        const users = this.getAllUsers();
-        if (users.find(u => u.email === userData.email)) {
-            throw new Error("Email is already registered.");
-        }
-
-        const newUser = {
-            id: 'user_' + Date.now().toString(36) + Math.random().toString(36).substr(2),
-            fullName: userData.fullName || '',
-            displayName: userData.displayName || userData.fullName,
-            email: userData.email,
-            passwordHash: this._hashPassword(userData.password),
-            role: userData.role || 'student', // 'student' or 'instructor'
-            profileImage: null,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-        };
-
-        users.push(newUser);
-        this.saveUsers(users);
-
-        // Auto-login after registration
-        this._createSession(newUser);
-        return newUser;
-    }
-
-    /**
-     * Log in a user. Strictly validates email and password constraints.
-     */
-    static loginUser(email, password) {
-        const users = this.getAllUsers();
-        const user = users.find(u => u.email === email);
-
-        if (!user) {
-            throw new Error("Account not found");
-        }
-
-        if (user.passwordHash !== this._hashPassword(password)) {
-            throw new Error("Incorrect password");
-        }
-
-        this._createSession(user);
-        return user;
-    }
-
-    static logout() {
-        localStorage.removeItem(TACLIIMI_SESSION_KEY);
-    }
-
-    static _createSession(user) {
-        const session = {
-            userId: user.id,
-            role: user.role,
-            email: user.email,
-            displayName: user.displayName,
-            fullName: user.fullName,
-            expires: Date.now() + 24 * 60 * 60 * 1000 // 24 hours
-        };
-        localStorage.setItem(TACLIIMI_SESSION_KEY, JSON.stringify(session));
-    }
-
-    static getCurrentSession() {
-        const sessionData = localStorage.getItem(TACLIIMI_SESSION_KEY);
-        if (!sessionData) return null;
-
-        const session = JSON.parse(sessionData);
-        if (Date.now() > session.expires) {
-            this.logout();
-            return null;
-        }
-        return session;
-    }
-
-    static getCurrentUser() {
-        const session = this.getCurrentSession();
-        if (!session) return null;
-
-        const users = this.getAllUsers();
-        return users.find(u => u.id === session.userId) || null;
-    }
-
-    /**
-     * Change user password (for logged-in users inside Account Settings)
-     */
-    static changePassword(currentPassword, newPassword) {
-        const session = this.getCurrentSession();
-        if (!session) throw new Error("Must be logged in to change password.");
-
-        const users = this.getAllUsers();
-        let userIndex = users.findIndex(u => u.id === session.userId);
-
-        if (userIndex === -1) throw new Error("User not found.");
-
-        let user = users[userIndex];
-        if (user.passwordHash !== this._hashPassword(currentPassword)) {
-            throw new Error("Current password is incorrect.");
-        }
-
-        user.passwordHash = this._hashPassword(newPassword);
-        user.updatedAt = new Date().toISOString();
-        users[userIndex] = user;
-        this.saveUsers(users);
-        return true;
-    }
-
-    // ==========================================
-    // PASSWORD RESET (Forgot Password Flow)
-    // ==========================================
-    static createResetToken(email) {
-        const users = this.getAllUsers();
-        const user = users.find(u => u.email === email);
-        if (!user) {
-            throw new Error("No account is registered with this email.");
-        }
-
-        let resets = JSON.parse(localStorage.getItem(TACLIIMI_RESETS_KEY)) || [];
-        // Clean out older tokens for this user
-        resets = resets.filter(r => r.userId !== user.id);
-
-        const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-        const resetData = {
-            token,
-            userId: user.id,
-            expires: Date.now() + 10 * 60 * 1000 // 10 minutes from now
-        };
-
-        resets.push(resetData);
-        localStorage.setItem(TACLIIMI_RESETS_KEY, JSON.stringify(resets));
-        return token;
-    }
-
-    static verifyResetToken(token) {
-        let resets = JSON.parse(localStorage.getItem(TACLIIMI_RESETS_KEY)) || [];
-        const resetData = resets.find(r => r.token === token);
-
-        if (!resetData) return false;
-        if (Date.now() > resetData.expires) {
-            // Expired, clear it out
-            resets = resets.filter(r => r.token !== token);
-            localStorage.setItem(TACLIIMI_RESETS_KEY, JSON.stringify(resets));
-            return false;
-        }
-        return resetData;
-    }
-
-    static applyPasswordReset(token, newPassword) {
-        const resetData = this.verifyResetToken(token);
-        if (!resetData) {
-            throw new Error("Invalid or expired reset token.");
-        }
-
-        const users = this.getAllUsers();
-        const userIndex = users.findIndex(u => u.id === resetData.userId);
-
-        if (userIndex === -1) throw new Error("User associated with this token no longer exists.");
-
-        let user = users[userIndex];
-        user.passwordHash = this._hashPassword(newPassword);
-        user.updatedAt = new Date().toISOString();
-        users[userIndex] = user;
-        this.saveUsers(users);
-
-        // Remove token now that it is consumed
-        let resets = JSON.parse(localStorage.getItem(TACLIIMI_RESETS_KEY)) || [];
-        resets = resets.filter(r => r.token !== token);
-        localStorage.setItem(TACLIIMI_RESETS_KEY, JSON.stringify(resets));
-
-        // Auto login user after successful reset
-        this._createSession(user);
-        return user;
-    }
+    static registerUser() { throw new Error("Authentication has been migrated to Supabase. Use AuthService.signUpInstructor"); }
+    static loginUser() { throw new Error("Authentication has been migrated to Supabase. Use AuthService.login"); }
+    static logout() { throw new Error("Authentication has been migrated to Supabase. Use AuthService.logout"); }
+    static getCurrentSession() { throw new Error("Authentication has been migrated to Supabase. Use await AuthService.getSession()"); }
+    static getCurrentUser() { throw new Error("Authentication has been migrated to Supabase."); }
+    static changePassword() { throw new Error("Authentication has been migrated to Supabase."); }
+    static createResetToken() { throw new Error("Authentication has been migrated to Supabase."); }
+    static verifyResetToken() { throw new Error("Authentication has been migrated to Supabase."); }
+    static applyPasswordReset() { throw new Error("Authentication has been migrated to Supabase."); }
 
     // ==========================================
     // GLOBAL PROFILE HELPER
     // ==========================================
-    static updateProfileInfo(info) {
-        const session = this.getCurrentSession();
-        if (!session) return;
-
-        const users = this.getAllUsers();
-        let userIndex = users.findIndex(u => u.id === session.userId);
-        if (userIndex !== -1) {
-            users[userIndex] = { ...users[userIndex], ...info };
-            this.saveUsers(users);
-        }
-
-        Object.assign(session, info);
-        localStorage.setItem(TACLIIMI_SESSION_KEY, JSON.stringify(session));
-
-        this.applyGlobalProfile();
+    static async updateProfileInfo(info) {
+        // Disabled local save. Should interact with Supabase profiles table directly now.
+        console.warn("Local updateProfileInfo called, but profiles are now in Supabase.");
+        await this.applyGlobalProfile();
     }
 
-    static updateProfileImage(imageUrl) {
-        const session = this.getCurrentSession();
-        if (!session) throw new Error("Must be logged in.");
-
-        const users = this.getAllUsers();
-        let userIndex = users.findIndex(u => u.id === session.userId);
-        if (userIndex !== -1) {
-            users[userIndex].profileImage = imageUrl;
-            this.saveUsers(users);
-        }
-
-        // Also update session
-        session.profileImage = imageUrl;
-        localStorage.setItem(TACLIIMI_SESSION_KEY, JSON.stringify(session));
-
-        // Immediately apply
-        this.applyGlobalProfile();
+    static async updateProfileImage(imageUrl) {
+        console.warn("Local updateProfileImage called, but profiles are now in Supabase.");
+        await this.applyGlobalProfile();
     }
 
-    static applyGlobalProfile() {
-        const session = this.getCurrentSession();
+    static async applyGlobalProfile() {
+        // Now depends on AuthService explicitly being loaded. If it's not, we skip.
+        if (typeof AuthService === 'undefined') return;
+
+        let session = null;
+        let profile = null;
+        try {
+            session = await AuthService.getSession();
+            if (session) {
+                profile = await AuthService.getCurrentProfile();
+            }
+        } catch (e) { console.error("Error fetching session for global profile", e); }
+
         if (!session) return;
 
         // Common classes in Tacliimi for name displays
         const nameElements = document.querySelectorAll('.text-right p.font-semibold, .user-display-name, h1.text-3xl.font-bold, .profile-name');
 
         nameElements.forEach(el => {
+            const fullName = (profile && profile.full_name) ? profile.full_name : 'Instructor';
             if (el.tagName === 'H1' && el.textContent.includes('Welcome back')) {
                 // Keep the emoji structure
-                el.innerText = `Welcome back, ${session.displayName || session.fullName}! 👋`;
+                el.innerText = `Welcome back, ${fullName}! 👋`;
             } else if (!el.classList.contains('text-3xl')) {
                 // Regular names
                 if (el.closest('.text-right') || el.classList.contains('user-display-name') || el.classList.contains('profile-name')) {
-                    el.innerText = session.displayName || session.fullName || 'Learner';
+                    el.innerText = fullName;
                 }
             }
         });
@@ -469,13 +267,14 @@ class TacliimiDB {
         idElements.forEach(el => {
             const txt = (el.innerText || '').toLowerCase();
             if (txt.includes('id:') || txt.includes('account') || txt.includes('student') || txt.includes('instructor')) {
-                el.innerText = session.role === 'instructor' ? "Instructor Account" : "Student Account";
+                const role = profile ? profile.role : 'student';
+                el.innerText = role === 'instructor' ? "Instructor Account" : "Student Account";
             }
         });
 
         // Profile pictures
-        if (session.profileImage || session.profilePicture) {
-            const imgSrc = session.profileImage || session.profilePicture;
+        if (profile && profile.avatar_url) {
+            const imgSrc = profile.avatar_url;
             // Use safe data attributes instead of bracketed tailwind selectors
             const imgElements = document.querySelectorAll('[data-role="profile-image"] img, img.profile-picture-img');
             imgElements.forEach(img => {
@@ -558,22 +357,23 @@ class TacliimiDB {
             parentMap.get(el.parentElement).push(el);
         });
 
-        const roleDesc = session.role === 'instructor' ? 'Instructor' : 'Student';
+        const authRole = profile ? profile.role : 'student';
+        const roleDesc = authRole === 'instructor' ? 'Instructor' : 'Student';
         let defaultName = roleDesc;
-        if (session.email) {
-            let prefix = session.email.split('@')[0];
+        if (session.user.email) {
+            let prefix = session.user.email.split('@')[0];
             defaultName = prefix.charAt(0).toUpperCase() + prefix.slice(1);
         }
-        const displayName = session.displayName || session.fullName || defaultName;
-        const profileImage = session.profileImage || session.profilePicture;
+        const displayName = (profile && profile.full_name) ? profile.full_name : defaultName;
+        const profileImage = profile ? profile.avatar_url : null;
 
-        const dashboardLink = session.role === 'instructor' ? '/src/pages/instructor/instructor-dashboard/index.html' : '/src/pages/student/student-dashboard/index.html';
-        const roleName = session.role === 'instructor' ? 'Instructor' : 'Student';
+        const dashboardLink = authRole === 'instructor' ? '/src/pages/instructor/instructor-dashboard/index.html' : '/src/pages/student/student-dashboard/index.html';
+        const roleName = authRole === 'instructor' ? 'Instructor' : 'Student';
         const imgSrc = profileImage;
         const picHtml = imgSrc
             ? `<img src="${imgSrc}" class="w-full h-full object-cover rounded-full" />`
             : `<span class="material-symbols-outlined text-2xl relative top-0.5">account_circle</span>`;
-        const settingsLink = session.role === 'instructor' ? '/src/pages/instructor/instructor-profile/index.html' : '/src/pages/student/account-settings/index.html';
+        const settingsLink = authRole === 'instructor' ? '/src/pages/instructor/instructor-profile/index.html' : '/src/pages/student/account-settings/index.html';
 
         const isPublicPage = !window.location.pathname.includes('dashboard') && !window.location.pathname.includes('settings') && !window.location.pathname.includes('profile') && !window.location.pathname.includes('admin');
 
@@ -600,7 +400,7 @@ class TacliimiDB {
 
             // Logout icon.
             const logoutHtml = `
-                <button onclick="TacliimiDB.logout(); window.location.href='/src/pages/auth/login-select/index.html';" class="p-2 text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 dark:hover:text-red-400 rounded-full flex items-center justify-center transition-colors !outline-none" title="Log Out">
+                <button onclick="if(typeof AuthService !== 'undefined') { AuthService.logout().then(() => window.location.href='/src/pages/auth/login-select/index.html'); }" class="p-2 text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 dark:hover:text-red-400 rounded-full flex items-center justify-center transition-colors !outline-none" title="Log Out">
                     <span class="material-symbols-outlined text-[20px]">logout</span>
                 </button>
             `;
@@ -619,7 +419,7 @@ class TacliimiDB {
                 <div class="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-slate-800 rounded-xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[100] overflow-hidden text-left cursor-default">
                     <div class="p-4 border-b border-slate-100 dark:border-slate-700">
                         <p class="text-sm font-semibold text-slate-900 dark:text-white">${displayName}</p>
-                        <p class="text-xs text-slate-500">${session.email || roleName}</p>
+                        <p class="text-xs text-slate-500">${session.user.email || roleName}</p>
                     </div>
                     <a href="${dashboardLink}" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:text-primary transition-colors border-b border-slate-100 dark:border-slate-700/50">
                         <span class="material-symbols-outlined text-lg">dashboard</span> Dashboard
@@ -627,7 +427,7 @@ class TacliimiDB {
                     <a href="${settingsLink}" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:text-primary transition-colors border-b border-slate-100 dark:border-slate-700/50">
                         <span class="material-symbols-outlined text-lg">settings</span> Settings
                     </a>
-                    <button onclick="TacliimiDB.logout(); window.location.href='/src/pages/auth/login-select/index.html';" class="w-full text-left flex items-center gap-3 px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                    <button onclick="if(typeof AuthService !== 'undefined') { AuthService.logout().then(() => window.location.href='/src/pages/auth/login-select/index.html'); }" class="w-full text-left flex items-center gap-3 px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
                         <span class="material-symbols-outlined text-lg">logout</span> Logout
                     </button>
                 </div>
@@ -658,7 +458,7 @@ class TacliimiDB {
                 if (el && el.parentNode) {
                     // Remove adjacent hardcoded text blocks (like Name & ID) if present
                     const sibling = el.previousElementSibling;
-                    if (sibling && (sibling.innerText.includes(session.displayName) || sibling.innerText.includes('Student Name') || sibling.innerText.includes('Instructor Account') || sibling.innerText.includes('ID:'))) {
+                    if (sibling && (sibling.innerText.includes(displayName) || sibling.innerText.includes('Student Name') || sibling.innerText.includes('Instructor Account') || sibling.innerText.includes('ID:'))) {
                         sibling.remove();
                     }
                     el.remove();
@@ -685,11 +485,11 @@ class TacliimiDB {
             mobileMenuAuth[0].onclick = () => window.location.href = dashboardLink;
             mobileMenuAuth[1].innerText = 'Log Out';
             mobileMenuAuth[1].classList.add('!text-red-500');
-            mobileMenuAuth[1].onclick = () => { TacliimiDB.logout(); window.location.href = '/src/pages/auth/login-select/index.html'; };
+            mobileMenuAuth[1].onclick = () => { if (typeof AuthService !== 'undefined') { AuthService.logout().then(() => window.location.href = '/src/pages/auth/login-select/index.html'); } };
         }
 
         // Hide instructor CTA links for logged-in instructors
-        if (session.role === 'instructor') {
+        if (authRole === 'instructor') {
             document.querySelectorAll('a, button').forEach(el => {
                 const attr = el.getAttribute('href') || el.getAttribute('onclick') || '';
                 const txt = (el.innerText || '').toLowerCase();
@@ -712,69 +512,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 1. Universal Profile Updates: Also find anything with data-role="profile-meta" or raw ID labels
 
-        // Auto-save form mechanism for all dashboards
-        const session = TacliimiDB.getCurrentSession();
-        if (session) {
-            // Target all data-entry fields except passwords, files, and hidden inputs
-            const inputs = document.querySelectorAll('input:not([type="password"]):not([type="file"]):not([type="hidden"]), textarea, select');
-
-            inputs.forEach(input => {
-                // Generate a reliable key based on ID, name, or preceding label text
-                let key = input.id || input.name;
-                if (!key && input.previousElementSibling && input.previousElementSibling.tagName === 'LABEL') {
-                    key = input.previousElementSibling.innerText.trim().replace(/\s+/g, '_').toLowerCase();
-                }
-
-                if (key) {
-                    // Map common variations of full name
-                    if (key === 'full-name' || key.toLowerCase() === 'fullname') key = 'fullName';
-                    if (key === 'display-name' || key.toLowerCase() === 'displayname') key = 'displayName';
-
-                    // Load saved data into input
-                    if (session[key] !== undefined) {
-                        input.value = session[key];
-                    }
-
-                    // REMOVED 'change' auto-save listener. Profile only saves on 'Save Changes' button click.
-                }
-            });
-
-            // For instructor specific "Save Changes" buttons to provide manual feedback
-            const saveBtns = document.querySelectorAll('button');
-            saveBtns.forEach(btn => {
-                if (btn.innerText.includes('Save Changes') || btn.innerText.includes('Save Profile')) {
-                    btn.addEventListener('click', (e) => {
-                        e.preventDefault();
-
-                        // If it's the personal info form, trigger the inputs to save
-                        const form = btn.closest('form, .settings-panel, section, main');
-                        if (form) {
-                            form.querySelectorAll('input, select, textarea').forEach(input => {
-                                let key = input.id || input.name;
-                                if (!key && input.previousElementSibling && input.previousElementSibling.tagName === 'LABEL') {
-                                    key = input.previousElementSibling.innerText.trim().replace(/\s+/g, '_').toLowerCase();
-                                }
-                                if (key === 'full-name' || key === 'full_name' || key.toLowerCase() === 'fullname') key = 'fullName';
-                                if (key === 'display-name' || key.toLowerCase() === 'displayname') key = 'displayName';
-
-                                if (key) TacliimiDB.updateProfileInfo({ [key]: input.value });
-                            });
-                            // Immediately re-apply the global profile to update the header
-                            TacliimiDB.applyGlobalProfile();
-                        }
-
-                        const origText = btn.innerHTML;
-                        btn.innerHTML = `<span class="material-symbols-outlined text-[18px]">check</span> Saved Successfully`;
-                        setTimeout(() => { btn.innerHTML = origText; }, 2000);
-                    });
-                }
-            });
-
-            // Add logout button next to dashboard profile blocks logic removed,
-            // as the global logout button injection now handles logout consistently.
-
-
-        } // End of if (session)
+        // TacliimiDB form auto-load logic removed as it's not compatible with Supabase profiles immediately.
+        // Custom profile forms should fetch from Supabase manually.
 
         // Global Theme Manager Initialization
         (function initGlobalTheme() {

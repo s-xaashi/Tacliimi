@@ -10,7 +10,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
         rel="stylesheet" />
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
-    <script src="/src/services/tacliimi_db.js"></script>
     <script>
         tailwind.config = {
             darkMode: "class",
@@ -47,6 +46,18 @@
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
+        /* Hide Number Input Spinners */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            appearance: none;
+            margin: 0;
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+            appearance: textfield;
+        }
+
         .wizard-step.block {
             animation: fadeIn 0.4s ease-out forwards;
         }
@@ -56,20 +67,40 @@
 <body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen relative">
     <nav class="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 sticky top-0 z-50">
         <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-16">
+            <div class="flex items-center justify-between h-16">
+                <!-- Left: Logo only -->
                 <div class="flex items-center gap-2">
                     <div class="bg-primary p-1.5 rounded-lg text-white">
                         <span class="material-icons text-2xl">school</span>
                     </div>
-                    <span class="text-xl font-bold tracking-tight text-primary">Tacliimi Learn</span>
+                    <span class="text-xl font-bold tracking-tight text-primary hidden sm:block">Tacliimi Learn</span>
                 </div>
-                <div class="flex items-center gap-4">
-                    <button
-                        class="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 font-medium text-sm">Save
-                        Draft</button>
-                    <button
-                        class="bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-4 py-2 rounded-md font-semibold text-sm hover:bg-slate-200 dark:hover:bg-slate-700 transition"
-                        onclick="window.location.href='/src/pages/instructor/instructor-dashboard/index.html'">Exit</button>
+
+                <!-- Right: All actions + profile -->
+                <div class="flex items-center gap-3">
+                    <!-- Auto-save indicator -->
+                    <div id="save-status" class="hidden items-center gap-2 px-3 py-1 bg-slate-50 dark:bg-slate-800 rounded-full border border-slate-100 dark:border-slate-700">
+                        <span class="flex h-2 w-2 relative">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+                        </span>
+                        <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Saving...</span>
+                    </div>
+
+                    <!-- Save Draft Button -->
+                    <button id="btn-save-draft-nav" onclick="saveDraftManual()"
+                        class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-4 py-2 rounded-lg font-bold text-xs hover:bg-indigo-50 hover:text-primary dark:hover:bg-indigo-900/30 dark:hover:text-indigo-400 transition flex items-center gap-2" title="Save Draft">
+                        <span class="material-symbols-outlined text-sm">save</span>
+                        <span class="hidden sm:inline">Save Draft</span>
+                    </button>
+
+                    <!-- Exit Button -->
+                    <button onclick="exitWizard()"
+                        class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-4 py-2 rounded-lg font-bold text-xs hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:text-red-400 transition flex items-center gap-2" title="Exit Wizard">
+                        <span class="material-symbols-outlined text-sm">logout</span>
+                        <span class="hidden sm:inline">Exit</span>
+                    </button>
+
                 </div>
             </div>
         </div>
@@ -204,16 +235,18 @@
                     Thumbnail</label>
                 <div class="flex items-center gap-8">
                     <div id="thumbnail-preview-container"
-                        class="w-48 h-32 bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-300 dark:border-slate-700 overflow-hidden bg-cover bg-center">
+                        class="w-48 h-32 bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-300 dark:border-slate-700 overflow-hidden bg-cover bg-center relative">
                         <span id="thumbnail-placeholder-icon"
                             class="material-icons text-4xl text-slate-400 dark:text-slate-500">add_photo_alternate</span>
+                        <div id="thumbnail-tick" class="hidden absolute top-2 right-2 bg-emerald-500 text-white rounded-full p-0.5 shadow-sm">
+                            <span class="material-symbols-outlined text-[16px] font-bold">check</span>
+                        </div>
                     </div>
                     <div class="flex-1">
                         <p class="text-sm text-slate-600 dark:text-slate-400 mb-4 leading-relaxed">Upload your course
-                            image here. Important guidelines: 750x422 pixels; .jpg, .jpeg, .gif, or .png. no text on the
-                            image.</p>
+                            image here. Important: Use <span class="font-bold text-primary">1280x720 pixels (16:9 ratio)</span> for best results across all devices. Format: .jpg, .jpeg, or .png.</p>
                         <input type="file" id="thumbnail-upload" class="hidden" accept="image/*" />
-                        <button onclick="document.getElementById('thumbnail-upload').click()"
+                        <button id="btn-upload-thumbnail" onclick="document.getElementById('thumbnail-upload').click()"
                             class="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-6 py-2 rounded-lg font-semibold text-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition">Upload
                             File</button>
                     </div>
@@ -229,7 +262,7 @@
                         class="w-48 h-32 bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-300 dark:border-slate-700 relative overflow-hidden">
                         <span id="video-placeholder-icon"
                             class="material-symbols-outlined text-4xl text-slate-400 dark:text-slate-500">video_library</span>
-                        <div id="video-upload-success"
+                        <div id="video-tick"
                             class="absolute inset-0 bg-slate-800/80 hidden flex-col items-center justify-center text-white">
                             <span class="material-icons text-2xl text-green-400 mb-1">check_circle</span>
                             <span class="text-xs font-medium">Video Attached</span>
@@ -240,10 +273,10 @@
                             clip (1-2 minutes) to introduce your course to potential students. Supported formats: .mp4,
                             .mov</p>
                         <input type="file" id="video-upload" class="hidden" accept="video/mp4,video/quicktime" />
-                        <button onclick="document.getElementById('video-upload').click()"
+                        <button id="btn-upload-video" onclick="document.getElementById('video-upload').click()"
                             class="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-6 py-2 rounded-lg font-semibold text-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition">Upload
                             Video</button>
-                        <span id="video-filename" class="ml-4 text-xs text-slate-500"></span>
+                        <span id="video-filename-display" class="ml-4 text-xs text-slate-500 font-medium"></span>
                     </div>
                 </div>
             </div>
@@ -307,18 +340,31 @@
                                 </div>
                                 <input id="course-price"
                                     class="w-full pl-7 rounded-lg border-slate-200 dark:border-slate-700 dark:bg-slate-800 focus:ring-accent focus:border-accent course-input"
-                                    data-field="price" placeholder="0.00" type="number" />
+                                    data-field="price" placeholder="0.00" type="number" step="0.01" min="0" />
                             </div>
                         </div>
-                        <div class="space-y-2 md:col-span-2">
-                            <label class="block text-sm font-bold text-slate-700 dark:text-slate-300">Coupon
-                                Code</label>
-                            <div class="flex gap-2">
-                                <input id="course-coupon"
-                                    class="w-full uppercase rounded-lg border-slate-200 dark:border-slate-700 dark:bg-slate-800 focus:ring-accent focus:border-accent"
-                                    placeholder="e.g. EARLYBIRD" type="text" />
-                                <button
-                                    class="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold rounded-lg hover:bg-slate-200 transition text-sm">Create</button>
+                        <div class="space-y-2 md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Coupon
+                                    Code</label>
+                                <div class="flex gap-2">
+                                    <input id="course-coupon"
+                                        class="w-full uppercase rounded-lg border-slate-200 dark:border-slate-700 dark:bg-slate-800 focus:ring-accent focus:border-accent"
+                                        placeholder="e.g. EARLYBIRD" type="text" />
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Discount
+                                    (%)</label>
+                                <input id="course-coupon-percent" type="number" min="1" max="100"
+                                    class="w-full rounded-lg border-slate-200 dark:border-slate-700 dark:bg-slate-800 focus:ring-accent focus:border-accent text-sm text-slate-700 dark:text-slate-300"
+                                    placeholder="10" />
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Expiry
+                                    Date</label>
+                                <input id="course-coupon-expiry" type="datetime-local"
+                                    class="w-full rounded-lg border-slate-200 dark:border-slate-700 dark:bg-slate-800 focus:ring-accent focus:border-accent text-sm text-slate-700 dark:text-slate-300" />
                             </div>
                         </div>
                     </div>
@@ -370,7 +416,11 @@
                                 <h4 id="final-title-preview"
                                     class="text-xl font-bold mb-2 text-slate-400 dark:text-slate-500 italic">Title of
                                     your course will appear here</h4>
-                                <p id="final-subtitle-preview" class="text-sm text-slate-500 mb-4"></p>
+                                <p id="final-subtitle-preview"
+                                    class="text-sm font-semibold text-slate-600 dark:text-slate-400 mb-2"></p>
+                                <p id="summary-description-preview-main"
+                                    class="text-sm text-slate-500 dark:text-slate-500 mb-4 line-clamp-3 leading-relaxed">
+                                </p>
                             </div>
                             <div
                                 class="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400 mb-6 relative">
@@ -387,12 +437,12 @@
                             </div>
                             <div
                                 class="flex items-center gap-3 pt-6 border-t border-slate-100 dark:border-slate-800 relative">
-                                <div
-                                    class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                                <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary overflow-hidden"
+                                    id="final-instructor-avatar">
                                     <span class="material-symbols-outlined">person</span>
                                 </div>
                                 <div>
-                                    <p class="text-sm font-bold leading-none">Instructor</p>
+                                    <p class="text-sm font-bold leading-none" id="final-instructor-name">Instructor</p>
                                 </div>
                                 <div class="ml-auto text-xl font-black text-primary" id="final-price-preview">Free</div>
                             </div>
@@ -421,14 +471,14 @@
                                 </div>
                                 <button onclick="goToStep(1)" class="text-xs text-primary hover:underline">Edit</button>
                             </div>
-                            <div
-                                class="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-100 dark:border-slate-800 ml-9 mb-2">
-                                <p class="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Description:
-                                </p>
-                                <p class="text-xs text-slate-500 line-clamp-2" id="summary-description-preview">No
-                                    description provided.</p>
-
-                                <div class="mt-2 flex items-center gap-2">
+                             <div class="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-100 dark:border-slate-800 ml-9 mb-2 space-y-2">
+                                <div class="flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-[14px] text-slate-400">image</span>
+                                    <p class="text-xs text-slate-500">Thumbnail: <span id="summary-thumbnail-status"
+                                            class="font-medium text-slate-700 dark:text-slate-300">Not Uploaded</span>
+                                    </p>
+                                </div>
+                                <div class="flex items-center gap-2">
                                     <span class="material-symbols-outlined text-[14px] text-slate-400">videocam</span>
                                     <p class="text-xs text-slate-500">Intro Video: <span id="summary-video-preview"
                                             class="font-medium text-slate-700 dark:text-slate-300">Not Uploaded</span>
@@ -462,6 +512,18 @@
                             </div>
                         </div>
                     </section>
+                    
+                    <!-- Curriculum Overview (Step 4 Detailed Preview) -->
+                    <section class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-6">
+                        <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary">list_alt</span>
+                            Full Curriculum Summary
+                        </h3>
+                        <div id="final-curriculum-summary" class="space-y-4">
+                            <p class="text-sm text-slate-400 italic">Loading curriculum details...</p>
+                        </div>
+                    </section>
+
                     <section
                         class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-6">
                         <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
@@ -517,15 +579,16 @@
             </button>
         </div>
 
-        <!-- STEP 5 CONTAINER: CONGRATULATIONS -->
+        <!-- STEP 5 CONTAINER: SUBMITTED FOR REVIEW -->
         <div id="step-5-container" class="wizard-step hidden flex-col items-center justify-center py-12 text-center">
             <div
-                class="w-24 h-24 bg-green-100 dark:bg-green-900/30 text-green-500 rounded-full flex items-center justify-center mb-6 shadow-xl shadow-green-500/20">
-                <span class="material-icons text-5xl">verified</span>
+                class="w-24 h-24 bg-amber-100 dark:bg-amber-900/30 text-amber-500 rounded-full flex items-center justify-center mb-6 shadow-xl shadow-amber-500/20">
+                <span class="material-symbols-outlined text-5xl">pending_actions</span>
             </div>
-            <h2 class="text-3xl font-bold text-slate-900 dark:text-white mb-2">Congratulations!</h2>
-            <p class="text-slate-500 text-lg mb-8 max-w-md">Your course has been successfully published and is now
-                available to students worldwide.</p>
+            <h2 class="text-3xl font-bold text-slate-900 dark:text-white mb-2">Submitted for Review!</h2>
+            <p class="text-slate-500 text-lg mb-8 max-w-lg">Your course has been submitted successfully. It will be
+                reviewed by our moderation team shortly. Once approved, it will be published and you will be notified.
+            </p>
             <div class="flex gap-4">
                 <button onclick="window.location.href='/src/pages/instructor/instructor-dashboard/index.html'"
                     class="px-8 py-3 bg-primary hover:bg-blue-700 text-white font-bold rounded-xl transition shadow-lg">Go
@@ -576,35 +639,25 @@
                         Link</button>
                 </div>
 
-                <div class="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl p-10 flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-800/30 hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors cursor-pointer mb-6 relative overflow-hidden"
-                    id="video-upload-area-modal">
-                    <input type="file" id="modal-video-upload"
-                        class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" accept="video/*" />
-                    <div
-                        class="w-16 h-16 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                        <span class="material-symbols-outlined text-4xl text-primary">cloud_upload</span>
-                    </div>
-                    <p class="text-slate-900 dark:text-white font-semibold mb-1" id="modal-video-name-display">Click or
-                        drag video to upload</p>
-                    <p class="text-slate-500 dark:text-slate-400 text-sm">MP4, MOV, or AVI (Max 2GB)</p>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="space-y-1.5 md:col-span-2">
-                        <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Video Title</label>
-                        <input id="modal-video-title"
-                            class="w-full rounded-lg border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:ring-accent focus:border-accent text-sm"
-                            placeholder="e.g. Introduction to Figma" type="text" />
-                    </div>
-                    <div class="space-y-1.5">
-                        <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Duration (MM:SS)</label>
-                        <div class="relative">
-                            <span
-                                class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">schedule</span>
-                            <input
-                                class="w-full pl-10 rounded-lg border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:ring-accent focus:border-accent text-sm"
-                                placeholder="00:00" type="text" />
+                <div class="space-y-4">
+                    <div id="video-upload-area-modal" class="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl p-10 flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-800/30 hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors cursor-pointer relative overflow-hidden">
+                        <input type="file" id="modal-video-upload" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" accept="video/*" />
+                        <div class="w-16 h-16 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                            <span class="material-symbols-outlined text-4xl text-primary">cloud_upload</span>
                         </div>
+                        <p class="text-slate-900 dark:text-white font-semibold mb-1" id="modal-video-name-display">Click or drag video to upload</p>
+                        <p class="text-slate-500 dark:text-slate-400 text-sm">MP4, MOV, or AVI (Max 2GB)</p>
+                    </div>
+
+                    <div class="relative flex items-center py-2">
+                        <div class="flex-grow border-t border-slate-200 dark:border-slate-800"></div>
+                        <span class="flex-shrink mx-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Or</span>
+                        <div class="flex-grow border-t border-slate-200 dark:border-slate-800"></div>
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Embed URL (Vimeo, YouTube, etc.)</label>
+                        <input id="modal-video-embed-url" class="w-full rounded-lg border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:ring-accent focus:border-accent text-sm" placeholder="Paste link here..." type="text" />
                     </div>
                 </div>
             </div>
@@ -623,67 +676,74 @@
     <div id="modal-add-resource"
         class="fixed inset-0 z-[60] hidden items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
         <div id="modal-add-resource-content"
-            class="bg-white dark:bg-slate-900 w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden transform scale-95 opacity-0 transition-all duration-300">
+            class="bg-white dark:bg-slate-900 w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[90vh] transform scale-95 opacity-0 transition-all duration-300">
             <div
-                class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
+                class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50 flex-shrink-0">
                 <h2 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    <span class="material-symbols-outlined text-accent">attachment</span> Add Resource
+                    <span class="material-symbols-outlined text-accent">attachment</span> Manage Resources
                 </h2>
                 <button onclick="closeModal('modal-add-resource')"
                     class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition text-slate-500">
                     <span class="material-symbols-outlined">close</span>
                 </button>
             </div>
-            <div class="p-6 space-y-6">
+            
+            <div class="p-6 overflow-y-auto space-y-6 flex-grow">
+                <!-- Attached List -->
                 <div>
-                    <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Resource
-                        Title</label>
-                    <input id="modal-resource-title-input"
-                        class="w-full rounded-lg border-slate-300 dark:border-slate-700 dark:bg-slate-800 focus:ring-accent focus:border-accent"
-                        type="text" placeholder="Resource Title..." />
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Upload
-                        File</label>
-                    <div
-                        class="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-8 flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-800/50 hover:border-accent transition group cursor-pointer relative overflow-hidden">
-                        <input type="file" id="modal-resource-upload"
-                            class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
-                        <div
-                            class="w-12 h-12 bg-white dark:bg-slate-700 rounded-full flex items-center justify-center shadow-sm mb-3 group-hover:scale-110 transition-transform">
-                            <span class="material-symbols-outlined text-accent text-3xl">cloud_upload</span>
-                        </div>
-                        <p class="text-sm font-medium text-slate-900 dark:text-white" id="modal-resource-name-display">
-                            Click to upload or drag and drop
-                        </p>
-                        <p class="text-xs text-slate-500 mt-1">PDF, DOCX, or ZIP (Max. 50MB)</p>
+                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Attached Resources</h4>
+                    <div id="resource-list-container" class="space-y-2 mb-4">
+                        <!-- Resources will be listed here -->
                     </div>
+                    <button id="add-resource-toggle-btn" onclick="toggleResourceForm(true)" class="hidden w-full py-2 border border-dashed border-slate-200 dark:border-slate-800 rounded-lg flex items-center justify-center gap-2 text-slate-400 hover:text-accent hover:border-accent transition group mb-4">
+                        <span class="material-symbols-outlined text-sm">add_circle</span>
+                        <span class="text-xs font-semibold">Add Another Resource</span>
+                    </button>
                 </div>
-                <div class="relative flex items-center py-2">
-                    <div class="flex-grow border-t border-slate-200 dark:border-slate-800"></div>
-                    <span class="flex-shrink mx-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Or</span>
-                    <div class="flex-grow border-t border-slate-200 dark:border-slate-800"></div>
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2"
-                        for="external-link">Add External Link</label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <span class="material-symbols-outlined text-slate-400 text-lg">link</span>
+
+                <!-- Add Form Container -->
+                <div id="resource-add-form" class="space-y-6 pt-4 border-t border-slate-100 dark:border-slate-800">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Resource Title</label>
+                        <input id="modal-resource-title-input"
+                            class="w-full rounded-lg border-slate-300 dark:border-slate-700 dark:bg-slate-800 focus:ring-accent focus:border-accent"
+                            type="text" placeholder="e.g., Course Syllabus" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Upload File</label>
+                        <div class="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-8 flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-800/50 hover:border-accent transition group cursor-pointer relative overflow-hidden">
+                            <input type="file" id="modal-resource-upload" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                            <div class="w-12 h-12 bg-white dark:bg-slate-700 rounded-full flex items-center justify-center shadow-sm mb-3 group-hover:scale-110 transition-transform">
+                                <span class="material-symbols-outlined text-accent text-3xl">cloud_upload</span>
+                            </div>
+                            <p class="text-sm font-medium text-slate-900 dark:text-white" id="modal-resource-name-display">Click to upload or drag & drop</p>
+                            <p class="text-xs text-slate-500 mt-1">PDF, DOCX, or ZIP (Max. 50MB)</p>
                         </div>
-                        <input
-                            class="block w-full pl-10 pr-3 py-3 border border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-sm focus:ring-accent focus:border-accent outline-none transition"
-                            id="external-link" placeholder="https://example.com/resource" type="text" />
+                    </div>
+                    <div class="relative flex items-center py-2">
+                        <div class="flex-grow border-t border-slate-200 dark:border-slate-800"></div>
+                        <span class="flex-shrink mx-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Or</span>
+                        <div class="flex-grow border-t border-slate-200 dark:border-slate-800"></div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">External Link</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <span class="material-symbols-outlined text-slate-400 text-lg">link</span>
+                            </div>
+                            <input id="external-link" class="block w-full pl-10 pr-3 py-3 border border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-sm focus:ring-accent focus:border-accent outline-none transition" placeholder="https://example.com/resource" type="text" />
+                        </div>
+                    </div>
+                    <div class="flex justify-end gap-2 pt-2">
+                        <button onclick="toggleResourceForm(false)" id="cancel-resource-add-btn" class="hidden px-4 py-2 text-xs font-semibold text-slate-500 hover:text-slate-700 transition">Cancel</button>
+                        <button onclick="saveModalResource()" class="bg-accent hover:bg-purple-700 text-white px-6 py-2.5 rounded-xl font-bold text-sm transition transform active:scale-95 shadow-md shadow-purple-500/20">Upload & Add</button>
                     </div>
                 </div>
             </div>
-            <div
-                class="px-6 py-4 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3">
+
+            <div class="px-6 py-4 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex justify-end flex-shrink-0">
                 <button onclick="closeModal('modal-add-resource')"
-                    class="px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition">Cancel</button>
-                <button onclick="saveModalResource()"
-                    class="bg-accent hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-bold text-sm transition transform active:scale-95 shadow-md shadow-purple-500/20">Attach
-                    Resource</button>
+                    class="px-8 py-2.5 bg-slate-900 dark:bg-slate-700 hover:bg-slate-800 text-white rounded-xl font-bold text-sm transition transform active:scale-95 shadow-lg">Done</button>
             </div>
         </div>
     </div>
@@ -697,10 +757,9 @@
                 class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
                 <div>
                     <h2 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                        <span class="material-symbols-outlined text-amber-500">quiz</span> Add New Quiz
+                        <span class="material-symbols-outlined text-amber-500">quiz</span> Manage Lesson Quizzes
                     </h2>
-                    <p class="text-xs font-semibold text-accent uppercase tracking-wider mt-0.5">Step 1 of 2: Quiz
-                        Details</p>
+                    <p class="text-[10px] font-bold text-accent uppercase tracking-widest mt-0.5" id="quiz-modal-subtitle">0 Quizzes Combined</p>
                 </div>
                 <button onclick="closeModal('modal-add-quiz')"
                     class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition">
@@ -708,49 +767,28 @@
                 </button>
             </div>
 
-            <div class="p-6 overflow-y-auto space-y-6">
-                <!-- Static Headers -->
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Quiz
-                            Title</label>
-                        <input id="quiz-modal-title"
-                            class="w-full rounded-lg border-slate-300 dark:border-slate-700 dark:bg-slate-800 focus:ring-accent focus:border-accent"
-                            placeholder="Enter quiz title (e.g., Final Assessment)" type="text" />
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Description
-                            (Optional)</label>
-                        <textarea
-                            class="w-full rounded-lg border-slate-300 dark:border-slate-700 dark:bg-slate-800 focus:ring-accent focus:border-accent"
-                            placeholder="Describe the purpose of this quiz..." rows="2"></textarea>
-                    </div>
-                </div>
-
-                <div class="pt-4 border-t border-slate-100 dark:border-slate-800">
-                    <div id="quiz-questions-dynamic-container" class="space-y-6 mb-4">
-                        <!-- Dynamic Questions injected by JS -->
-                    </div>
-                    <button onclick="addQuizQuestion()"
-                        class="w-full py-3 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl flex items-center justify-center gap-2 text-slate-400 hover:text-accent hover:border-accent/50 hover:bg-accent/5 transition font-medium">
-                        <span class="material-symbols-outlined">add_circle</span> Add Another Question
-                    </button>
-                </div>
+            <div class="p-6 overflow-y-auto space-y-8" id="quiz-packages-container">
+                <!-- Dynamic Quiz Packages injected here -->
             </div>
 
-            <div
-                class="p-6 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-3 bg-slate-50 dark:bg-slate-800/30">
-                <button onclick="closeModal('modal-add-quiz')"
-                    class="px-6 py-2.5 rounded-xl font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition">Cancel</button>
-                <button onclick="saveModalQuiz()"
-                    class="bg-accent hover:bg-purple-700 text-white flex items-center gap-2 px-8 py-2.5 rounded-xl font-bold transition transform active:scale-95 shadow-lg shadow-purple-500/20">
-                    Save Quiz <span class="material-symbols-outlined text-sm">arrow_forward</span>
+            <div class="p-6 border-t border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/30">
+                <button onclick="addAnotherQuizPackage()"
+                    class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl font-bold text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition shadow-sm">
+                    <span class="material-symbols-outlined text-lg">library_add</span> Add Another Quiz
                 </button>
+                <div class="flex gap-3">
+                    <button onclick="closeModal('modal-add-quiz')"
+                        class="px-6 py-2.5 rounded-xl font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition text-sm">Cancel</button>
+                    <button onclick="saveModalQuiz()"
+                        class="bg-accent hover:bg-purple-700 text-white flex items-center gap-2 px-8 py-2.5 rounded-xl font-bold transition transform active:scale-95 shadow-lg shadow-purple-500/20 text-sm">
+                        Save All Quizzes <span class="material-symbols-outlined text-sm">check_circle</span>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 
-    <script src="/src/utils/js/course-wizard.js"></script>
+    <script type="module" src="/src/utils/js/course-wizard.js"></script>
 </body>
 
 </html>

@@ -6,7 +6,7 @@
   <meta content="width=device-width, initial-scale=1.0" name="viewport" />
   <title>Mentor Profile Details | Tacliimi Learn</title>
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-  <script src="/src/services/tacliimi_db.js"></script>
+  <script type="module" src="/src/services/globalProfile.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800;900&amp;display=swap"
     rel="stylesheet" />
   <link
@@ -41,6 +41,15 @@
             background: linear-gradient(0deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 50%);
         }
     </style>
+  <style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      font-display: block;
+    }
+    .fill-1 {
+      font-variation-settings: 'FILL' 1 !important;
+    }
+  </style>
 </head>
 
 <body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen">
@@ -106,9 +115,9 @@
           </div>
         </div>
         <div class="space-y-4 pt-6 border-t border-slate-100 dark:border-slate-800">
-          <div class="flex justify-between items-center">
-            <span class="text-slate-500 text-sm font-medium">Session Price</span>
-            <span class="text-2xl font-bold text-slate-900 dark:text-white">$0.00</span>
+          <div class="flex justify-between items-center bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
+            <span class="text-slate-500 text-sm font-bold uppercase tracking-tight">Session Price</span>
+            <span id="mentor-price" class="text-2xl font-black text-primary">$0.00</span>
           </div>
           <div class="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
             <span class="material-symbols-outlined text-primary">schedule</span>
@@ -117,7 +126,7 @@
               <p class="text-slate-500">1-on-1 personalized guidance</p>
             </div>
           </div>
-          <a href="/src/pages/mentorship/mentor-booking/index.html"
+          <a id="book-session-btn" href="/src/pages/mentorship/mentor-booking/index.html"
             class="w-full block text-center bg-primary text-white py-4 rounded-xl font-bold text-lg hover:bg-primary/90 transition-all active:scale-[0.98] shadow-lg shadow-primary/20">
             Book a Session
           </a>
@@ -137,9 +146,21 @@
             <h2 class="text-xl font-bold">About Me</h2>
           </div>
           <div class="prose dark:prose-invert max-w-none text-slate-600 dark:text-slate-400 leading-relaxed">
-            <p>Detailed bio will appear here. This space provides mentors with the opportunity to share their
+            <p id="mentor-bio">Detailed bio will appear here. This space provides mentors with the opportunity to share their
               professional journey, academic background, and personal motivation for teaching. It’s a place to establish
               trust and build a connection with prospective students.</p>
+          </div>
+        </section>
+        <section id="education-section"
+          class="bg-white dark:bg-slate-900 rounded-2xl p-8 border border-slate-100 dark:border-slate-800 shadow-sm hidden">
+          <div class="flex items-center gap-3 mb-6">
+            <div class="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+              <span class="material-symbols-outlined">school</span>
+            </div>
+            <h2 class="text-xl font-bold">Education</h2>
+          </div>
+          <div id="education-list" class="space-y-4">
+            <!-- Education items will be injected here -->
           </div>
         </section>
         <section
@@ -196,52 +217,18 @@
             vs. conversational).
           </p>
         </section>
-        <section>
+        <section id="reviews-section" class="hidden">
           <div class="flex justify-between items-center mb-6">
             <h2 class="text-xl font-bold">What students say</h2>
-            <a class="text-primary text-sm font-bold hover:underline" href="#">View all reviews</a>
+            <div class="flex gap-4 items-center">
+                <button id="add-review-btn" class="bg-primary/5 text-primary text-xs font-bold px-4 py-2 rounded-lg hover:bg-primary/10 transition-all">
+                    Write a Review
+                </button>
+                <a class="text-primary text-sm font-bold hover:underline" href="#">View all reviews</a>
+            </div>
           </div>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div
-              class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm">
-              <div class="flex items-center gap-3 mb-4">
-                <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
-                  <span class="material-symbols-outlined">person</span>
-                </div>
-                <div>
-                  <h4 class="text-sm font-bold">Alex Johnson</h4>
-                  <div class="flex text-orange-400">
-                    <span class="material-symbols-outlined text-xs fill-1">star</span>
-                    <span class="material-symbols-outlined text-xs fill-1">star</span>
-                    <span class="material-symbols-outlined text-xs fill-1">star</span>
-                    <span class="material-symbols-outlined text-xs fill-1">star</span>
-                    <span class="material-symbols-outlined text-xs fill-1">star</span>
-                  </div>
-                </div>
-              </div>
-              <p class="text-sm text-slate-500 italic">"The session was incredibly helpful. Mentor explained complex
-                concepts in a way that was very easy to grasp."</p>
-            </div>
-            <div
-              class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm">
-              <div class="flex items-center gap-3 mb-4">
-                <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
-                  <span class="material-symbols-outlined">person</span>
-                </div>
-                <div>
-                  <h4 class="text-sm font-bold">Sam River</h4>
-                  <div class="flex text-orange-400">
-                    <span class="material-symbols-outlined text-xs fill-1">star</span>
-                    <span class="material-symbols-outlined text-xs fill-1">star</span>
-                    <span class="material-symbols-outlined text-xs fill-1">star</span>
-                    <span class="material-symbols-outlined text-xs fill-1">star</span>
-                    <span class="material-symbols-outlined text-xs fill-1">star</span>
-                  </div>
-                </div>
-              </div>
-              <p class="text-sm text-slate-500 italic">"Exceeded my expectations. I left the call with a clear roadmap
-                for my career transition."</p>
-            </div>
+          <div id="reviews-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Reviews will be injected here -->
           </div>
         </section>
       </div>
@@ -339,6 +326,60 @@
     </div>
   </footer>
 
+  <!-- Review Modal -->
+  <div id="review-modal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4">
+    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"></div>
+    <div class="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-3xl shadow-2xl p-8 border border-slate-100 dark:border-slate-800 transform transition-all scale-95 opacity-0 duration-300" id="review-modal-content">
+      <div class="flex justify-between items-start mb-6">
+        <div>
+          <h2 class="text-2xl font-bold text-slate-900 dark:text-white">Write a Review</h2>
+          <p class="text-slate-500 text-sm mt-1">Share your experience with <span id="review-mentor-name">this mentor</span></p>
+        </div>
+        <button id="close-review-modal" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <div class="space-y-6">
+        <div class="flex flex-col items-center py-4 bg-slate-50 dark:bg-slate-800/30 rounded-2xl">
+          <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Overall Rating</p>
+          <div class="flex gap-2" id="star-rating-container">
+            <button data-value="1" class="star-btn p-1 text-slate-300 hover:text-orange-400 transition-colors">
+              <span class="material-symbols-outlined text-4xl">star</span>
+            </button>
+            <button data-value="2" class="star-btn p-1 text-slate-300 hover:text-orange-400 transition-colors">
+              <span class="material-symbols-outlined text-4xl">star</span>
+            </button>
+            <button data-value="3" class="star-btn p-1 text-slate-300 hover:text-orange-400 transition-colors">
+              <span class="material-symbols-outlined text-4xl">star</span>
+            </button>
+            <button data-value="4" class="star-btn p-1 text-slate-300 hover:text-orange-400 transition-colors">
+              <span class="material-symbols-outlined text-4xl">star</span>
+            </button>
+            <button data-value="5" class="star-btn p-1 text-slate-300 hover:text-orange-400 transition-colors">
+              <span class="material-symbols-outlined text-4xl">star</span>
+            </button>
+          </div>
+          <p id="star-rating-text" class="text-sm font-bold text-orange-500 mt-2">Select a rating</p>
+        </div>
+
+        <div class="space-y-2">
+          <label class="text-sm font-bold text-slate-700 dark:text-slate-300">Your Review</label>
+          <textarea id="review-comment" rows="4" 
+            class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 text-sm focus:ring-primary focus:border-primary placeholder:text-slate-400"
+            placeholder="How was your session? What did you learn?"></textarea>
+        </div>
+
+        <button id="submit-review-btn" 
+          class="w-full bg-primary text-white py-4 rounded-xl font-bold text-lg hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2">
+          <span>Submit Review</span>
+          <span class="material-symbols-outlined">send</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./mentorProfile.js"></script>
 </body>
 
 </html>

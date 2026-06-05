@@ -12,7 +12,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
         rel="stylesheet" />
-    <script src="/src/services/tacliimi_db.js"></script>
+    <script type="module" src="/src/services/globalProfile.js"></script>
     <script>
         tailwind.config = {
             darkMode: "class",
@@ -130,14 +130,14 @@
                 <form id="login-form" class="space-y-6">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5"
-                            for="email">Email address</label>
+                            for="identifier">Email or Username</label>
                         <div class="relative">
                             <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
                                 <span class="material-icons-outlined text-xl">mail</span>
                             </span>
-                            <input
+                             <input
                                 class="block w-full pl-10 pr-4 py-3 rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-primary focus:border-primary transition-all sm:text-sm"
-                                id="email" name="email" placeholder="you@institution.edu" required="" type="email" />
+                                id="identifier" name="identifier" placeholder="Email or admin username" required="" />
                         </div>
                     </div>
                     <div>
@@ -198,7 +198,10 @@
             </div>
         </section>
     </main>
-    <script>
+    <script type="module">
+        import { AuthService } from '/src/services/authService.js';
+        import { supabase } from '/src/services/supabaseClient.js';
+
         document.addEventListener('DOMContentLoaded', () => {
             // Check url for role context
             const urlParams = new URLSearchParams(window.location.search);
@@ -210,46 +213,71 @@
                 const submitBtn = document.querySelector('button[type="submit"]');
                 if (submitBtn) submitBtn.textContent = 'Sign in to Instructor Dashboard';
 
+                const identifierLabel = document.querySelector('label[for="identifier"]');
+                if (identifierLabel) identifierLabel.textContent = 'Email or Instructor Username';
+                const identifierInput = document.getElementById('identifier');
+                if (identifierInput) identifierInput.placeholder = 'Email or instructor username';
+
                 const registerLink = document.querySelector('a[href="/src/pages/auth/user-register/index.html"]');
                 if (registerLink) {
                     registerLink.href = "/src/pages/auth/instructor-register/index.html";
                 }
             }
 
-            // Session guard
-            const session = TacliimiDB.getCurrentSession();
-            if (session) {
-                window.location.href = session.role === 'instructor' ? '/src/pages/instructor/instructor-dashboard/' : '/src/pages/student/student-dashboard/';
-                return;
-            }
+            AuthService.getSession().then(async session => {
+                if (session) {
+                    const profile = await AuthService.getCurrentProfile();
+                    if (profile && profile.role === 'admin') {
+                        window.location.href = '/src/pages/admin/dashboard/index.html';
+                    } else if (profile && profile.role === 'instructor') {
+                        window.location.href = '/src/pages/instructor/instructor-dashboard/';
+                    } else {
+                        window.location.href = '/src/pages/student/student-dashboard/';
+                    }
+                }
+            });
 
             const loginForm = document.getElementById('login-form');
             const errorDiv = document.getElementById('login-error');
 
             if (loginForm) {
-                loginForm.addEventListener('submit', (e) => {
+                loginForm.addEventListener('submit', async (e) => {
                     e.preventDefault();
                     errorDiv.classList.add('hidden');
 
-                    const email = document.getElementById('email').value;
+                    const identifier = document.getElementById('identifier').value.trim();
                     const password = document.getElementById('password').value;
+                    const btn = e.target.querySelector('button[type="submit"]');
 
                     try {
-                        let user = TacliimiDB.loginUser(email, password);
+                        btn.innerText = 'Verifying...';
+                        btn.disabled = true;
+
+                        const data = await AuthService.login(identifier, password);
+                        const profile = await AuthService.getCurrentProfile();
+
+                        if (profile && profile.role === 'admin') {
+                            btn.innerText = 'Admin Access Granted';
+                            setTimeout(() => window.location.href = '/src/pages/admin/dashboard/index.html', 500);
+                            return;
+                        }
 
                         // Check if we are in instructor mode using both url and DOM context
                         const isInstructorContext = (new URLSearchParams(window.location.search)).get('role') === 'instructor' ||
                             document.body.innerText.includes('Instructor Login') ||
                             document.body.innerText.includes('Instructor Dashboard');
 
-                        if (isInstructorContext && user.role !== 'instructor') {
-                            // Update them in the database
-                            TacliimiDB.updateProfileInfo({ role: 'instructor' });
-                            user.role = 'instructor';
+                        if (isInstructorContext && profile.role !== 'instructor') {
+                            await supabase
+                                .from('profiles')
+                                .update({ role: 'instructor' })
+                                .eq('id', profile.id);
                         }
 
-                        window.location.href = user.role === 'instructor' ? '/src/pages/instructor/instructor-dashboard/' : '/src/pages/student/student-dashboard/';
+                        window.location.href = (profile.role === 'instructor' || isInstructorContext) ? '/src/pages/instructor/instructor-dashboard/' : '/src/pages/student/student-dashboard/';
                     } catch (err) {
+                        btn.innerText = 'Sign in to Workspace';
+                        btn.disabled = false;
                         errorDiv.textContent = err.message;
                         errorDiv.classList.remove('hidden');
                     }

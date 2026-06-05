@@ -6,7 +6,7 @@
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title>Updated Mentors Marketplace Library | Tacliimi Learn</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <script src="/src/services/tacliimi_db.js"></script>
+    <script type="module" src="/src/services/globalProfile.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800;900&amp;display=swap"
         rel="stylesheet" />
     <link
@@ -321,6 +321,7 @@
     </footer>
 
 
+    <script type="module" src="./marketplace.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             const filterItems = document.querySelectorAll('.filter-item');

@@ -267,7 +267,7 @@
             <label
                 class="relative flex p-4 border border-slate-200 dark:border-slate-700 rounded-xl cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
                 <div class="flex items-center h-5">
-                    <input type="checkbox" checked
+                    <input type="checkbox" checked id="online-meeting-checkbox"
                         class="w-5 h-5 text-brand-purple border-slate-300 rounded focus:ring-brand-purple dark:focus:ring-brand-purple dark:ring-offset-slate-800 focus:ring-2 dark:bg-slate-700 dark:border-slate-600">
                 </div>
                 <div class="ms-3">
@@ -284,7 +284,7 @@
             <label
                 class="relative flex p-4 border border-slate-200 dark:border-slate-700 rounded-xl cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
                 <div class="flex items-center h-5">
-                    <input type="checkbox" checked
+                    <input type="checkbox" checked id="in-person-meeting-checkbox"
                         class="w-5 h-5 text-brand-purple border-slate-300 rounded focus:ring-brand-purple dark:focus:ring-brand-purple dark:ring-offset-slate-800 focus:ring-2 dark:bg-slate-700 dark:border-slate-600">
                 </div>
                 <div class="ms-3">
@@ -314,13 +314,9 @@
 
     <!-- Action Buttons -->
     <div class="flex flex-col sm:flex-row justify-end gap-4 mt-8 pt-6 border-t border-slate-200 dark:border-slate-800">
-        <button
-            class="px-8 py-3 rounded-xl font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
-            Update
-        </button>
-        <button
+        <button id="save-availability-btn"
             class="px-8 py-3 rounded-xl font-bold text-white bg-brand-purple hover:bg-brand-purple/90 shadow-lg shadow-brand-purple/20 transition-all">
-            Save
+            Save Changes
         </button>
     </div>
 </div>

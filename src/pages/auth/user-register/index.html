@@ -12,7 +12,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
         rel="stylesheet" />
-    <script src="/src/services/tacliimi_db.js"></script>
+    <script type="module" src="/src/services/globalProfile.js"></script>
     <script>
         tailwind.config = {
             darkMode: "class",
@@ -94,7 +94,7 @@
                     <p class="text-gray-500 dark:text-gray-400">Create your student profile today.</p>
                 </div>
                 <div class="mb-8">
-                    <button
+                    <button id="google-signup-btn" type="button"
                         class="w-full flex items-center justify-center px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors group shadow-sm">
                         <svg class="w-5 h-5 mr-3" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
                             <path
@@ -207,7 +207,9 @@
     </main>
     <div class="fixed top-0 left-0 -z-10 w-1/2 h-full bg-indigo-50 dark:bg-gray-950/50 hidden lg:block"></div>
 
-    <script>
+    <script type="module">
+        import { AuthService } from '/src/services/authService.js';
+
         document.addEventListener('DOMContentLoaded', () => {
             // Check url for role context
             const urlParams = new URLSearchParams(window.location.search);
@@ -221,29 +223,72 @@
             }
 
             // Session guard
-            const session = TacliimiDB.getCurrentSession();
-            if (session) {
-                window.location.href = session.role === 'instructor' ? '/src/pages/instructor/instructor-dashboard/' : '/src/pages/student/student-dashboard/';
-                return;
+            AuthService.getSession().then(async session => {
+                if (session) {
+                    const profile = await AuthService.getCurrentProfile();
+                    if (profile && profile.role === 'admin') {
+                        window.location.href = '/src/pages/admin/dashboard/index.html';
+                    } else if (profile && profile.role === 'instructor') {
+                        window.location.href = '/src/pages/instructor/instructor-dashboard/index.html';
+                    } else {
+                        window.location.href = '/src/pages/student/student-dashboard/index.html';
+                    }
+                }
+            });
+
+            // Google OAuth Flow
+            const googleBtn = document.getElementById('google-signup-btn');
+            if (googleBtn) {
+                googleBtn.addEventListener('click', async () => {
+                    const originalText = googleBtn.innerHTML;
+                    googleBtn.innerHTML = '<span class="material-symbols-outlined animate-spin mr-2">refresh</span> Connecting...';
+                    try {
+                        await AuthService.signInWithGoogle('student');
+                    } catch (err) {
+                        googleBtn.innerHTML = originalText;
+                        alert("Google Sign-In failed: " + err.message);
+                    }
+                });
             }
 
             const registerForm = document.getElementById('register-form');
             const errorDiv = document.getElementById('register-error');
 
             if (registerForm) {
-                registerForm.addEventListener('submit', (e) => {
+                registerForm.addEventListener('submit', async (e) => {
                     e.preventDefault();
                     errorDiv.classList.add('hidden');
 
-                    const fullName = document.getElementById('fullname').value;
-                    const email = document.getElementById('email').value;
+                    const fullName = document.getElementById('fullname').value.trim();
+                    const email = document.getElementById('email').value.trim();
                     const password = document.getElementById('password').value;
                     const role = document.getElementById('role').value;
+                    const btn = e.target.querySelector('button[type="submit"]');
+                    const originalText = btn.innerHTML;
 
                     try {
-                        const user = TacliimiDB.registerUser({ fullName: fullName, email, password, role });
-                        window.location.href = user.role === 'instructor' ? '/src/pages/instructor/instructor-dashboard/' : '/src/pages/student/student-dashboard/';
+                        btn.innerText = 'Creating Account...';
+                        btn.disabled = true;
+
+                        localStorage.setItem('tacliimi_pending_role', role);
+
+                        if (role === 'instructor') {
+                            await AuthService.signUpInstructor(email, password, fullName);
+                        } else {
+                            await AuthService.signUpStudent(email, password, fullName);
+                        }
+
+                        // Replace form with success message asking them to check email
+                        e.target.innerHTML = `
+                            <div class="text-center p-6 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-200 dark:border-green-800">
+                                <span class="material-icons-outlined text-green-500 text-4xl mb-3">mark_email_read</span>
+                                <h3 class="text-lg font-bold text-slate-800 dark:text-slate-100 mb-2">Check your email</h3>
+                                <p class="text-slate-600 dark:text-slate-400 text-sm">We've sent a confirmation link to <strong>${email}</strong>. Please click the link to verify your account before logging in.</p>
+                            </div>
+                        `;
                     } catch (err) {
+                        btn.innerHTML = originalText;
+                        btn.disabled = false;
                         errorDiv.textContent = err.message;
                         errorDiv.classList.remove('hidden');
                     }

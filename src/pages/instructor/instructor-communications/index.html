@@ -45,10 +45,24 @@
             pointer-events: none;
         }
     </style>
-    <script src="/src/services/tacliimi_db.js"></script>
+    <script type="module" src="/src/services/globalProfile.js"></script>
     <script>
-        if (!TacliimiDB.getCurrentSession()) window.location.href = '/src/pages/auth/login/index.html';
+        // Removed synchronous Auth check
     </script>
+
+    <script type="module">
+        import { AuthService } from '/src/services/authService.js';
+        
+        // If the URL contains an access token from an email link or OAuth, do not prematurely redirect
+        const isOAuthRedirect = window.location.hash.includes('access_token=');
+        
+        if (!isOAuthRedirect) {
+            AuthService.getSession().then(session => {
+                if (!session) window.location.href = '/src/pages/auth/login-select/index.html';
+            });
+        }
+    </script>
+
 </head>
 
 <body

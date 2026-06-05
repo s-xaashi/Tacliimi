@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Category Management | Tacliimi Admin</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <script type="module" src="/src/services/globalProfile.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: { primary: "#4F46E5", "background-light": "#F9FAFB", "background-dark": "#111827" },
+                    fontFamily: { display: ["Inter", "sans-serif"] }
+                }
+            }
+        };
+    </script>
+    <style type="text/tailwindcss">
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .category-card { @apply bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 transition-all hover:shadow-lg hover:shadow-indigo-100 dark:hover:shadow-none hover:-translate-y-1; }
+    </style>
+
+    <script type="module">
+        import { AuthService } from '/src/services/authService.js';
+        const session = await AuthService.getSession();
+        if (!session || !session.is_admin) {
+            window.location.replace('/src/pages/auth/login-select/index.html');
+        }
+    </script>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 transition-colors duration-200">
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed left-0 top-0 h-full w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col z-30 transition-transform -translate-x-full lg:translate-x-0">
+        <div class="p-8 pb-4">
+            <div class="flex items-center gap-3 cursor-pointer" onclick="window.location.href='/index.html'">
+                <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200 dark:shadow-none">
+                    <span class="material-symbols-outlined text-white text-2xl">admin_panel_settings</span>
+                </div>
+                <span class="text-2xl font-black tracking-tighter text-slate-900 dark:text-white">TACLIIMI<span class="text-indigo-600">.</span></span>
+            </div>
+        </div>
+
+        <nav class="flex-1 p-6 space-y-2 overflow-y-auto mt-4">
+            <a href="/src/pages/admin/dashboard/index.html" class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl transition-all group font-medium">
+                <span class="material-symbols-outlined shrink-0" style="font-variation-settings:'FILL' 0;">dashboard</span>
+                Dashboard
+            </a>
+            <a href="/src/pages/admin/courses-review/index.html" class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl transition-all group font-medium">
+                <span class="material-symbols-outlined shrink-0 group-hover:scale-110 transition-transform">rule</span>
+                Courses Review
+            </a>
+            <a href="/src/pages/admin/users/index.html" class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl transition-all group font-medium">
+                <span class="material-symbols-outlined shrink-0" style="font-variation-settings:'FILL' 0;">group</span>
+                Users
+            </a>
+            <a href="/src/pages/admin/instructors/index.html" class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl transition-all group font-medium">
+                <span class="material-symbols-outlined shrink-0 group-hover:scale-110 transition-transform">school</span>
+                Instructors
+            </a>
+            <a href="/src/pages/admin/categories/index.html" class="flex items-center gap-3 px-4 py-3 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-bold rounded-xl ring-1 ring-indigo-500/10">
+                <span class="material-symbols-outlined shrink-0" style="font-variation-settings:'FILL' 1;">category</span>
+                Categories
+            </a>
+            <div class="h-px bg-slate-100 dark:bg-slate-800 my-4 mx-4"></div>
+            <a href="/src/pages/admin/admin-management/index.html" class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl transition-all group font-medium">
+                <span class="material-symbols-outlined shrink-0 group-hover:scale-110 transition-transform">manage_accounts</span>
+                Admin Management
+            </a>
+            <a href="/src/pages/admin/settings/index.html" class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl transition-all group font-medium">
+                <span class="material-symbols-outlined shrink-0 group-hover:scale-110 transition-transform">settings</span>
+                Settings
+            </a>
+        </nav>
+
+        <div class="p-6 border-t border-slate-100 dark:border-slate-800">
+            <button id="logout-btn" class="flex items-center justify-center gap-2 w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-600 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 font-bold rounded-xl transition-all border border-transparent hover:border-red-100 dark:hover:border-red-900/50">
+                <span class="material-symbols-outlined">logout</span>
+                Logout
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="lg:ml-72 min-h-screen flex flex-col transition-all duration-300">
+        <!-- Header -->
+        <header class="h-20 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-8 sticky top-0 z-10 w-full">
+            <div class="flex items-center gap-4">
+                <button id="toggle-sidebar" class="lg:hidden p-2.5 text-slate-500 bg-slate-100 dark:bg-slate-800 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                    <span class="material-symbols-outlined">menu_open</span>
+                </button>
+                <div>
+                    <h2 class="text-xl font-black tracking-tight text-slate-900 dark:text-white">Category Taxonomy</h2>
+                    <p class="text-xs text-slate-400 font-medium tracking-wide">Protocol: Content Organization</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-4">
+                <button id="btn-add-category" class="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-200 dark:shadow-none transition-all">
+                    <span class="material-symbols-outlined">add</span>
+                    New Category
+                </button>
+                <div class="h-8 w-px bg-slate-200 dark:bg-slate-800 mx-2"></div>
+                <button id="theme-toggle" class="w-10 h-10 flex items-center justify-center text-slate-500 bg-slate-100 dark:bg-slate-800 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-all">
+                    <span class="material-symbols-outlined">dark_mode</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Content -->
+        <div class="p-8 lg:p-12 max-w-[1400px] mx-auto w-full">
+            <div id="categories-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+                <!-- Skeleton -->
+                <div class="h-40 bg-slate-100 dark:bg-slate-800/50 rounded-2xl animate-pulse"></div>
+                <div class="h-40 bg-slate-100 dark:bg-slate-800/50 rounded-2xl animate-pulse opacity-50"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal Tool (Add/Edit) -->
+    <div id="category-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] hidden items-center justify-center p-6">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800">
+            <div class="p-8 border-b border-slate-100 dark:border-slate-800">
+                <h3 id="modal-title" class="text-xl font-black text-slate-900 dark:text-white tracking-tight">Create New Entry</h3>
+                <p class="text-xs text-slate-400 mt-1 uppercase tracking-widest font-black">Meta Taxonomy Control</p>
+            </div>
+            <div class="p-8 space-y-6">
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Title Manifest</label>
+                    <input type="text" id="cat-name" placeholder="e.g. Computer Science" class="w-full px-4 py-3.5 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-indigo-500 transition-all">
+                </div>
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Icon Identifier</label>
+                    <input type="text" id="cat-icon" placeholder="e.g. computer" class="w-full px-4 py-3.5 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-indigo-500 transition-all">
+                </div>
+            </div>
+            <div class="p-8 bg-slate-50/50 dark:bg-slate-800/30 flex items-center justify-end gap-3">
+                <button id="btn-cancel-modal" class="px-6 py-3 text-xs font-black uppercase tracking-widest text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors">Abort</button>
+                <button id="btn-save-modal" class="px-8 py-3 bg-indigo-600 text-white rounded-xl font-black text-xs uppercase tracking-widest hover:bg-indigo-700 shadow-xl shadow-indigo-100 dark:shadow-none transition-all">Synchronize</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { supabase } from '/src/services/supabaseClient.js';
+        import { AuthService } from '/src/services/authService.js';
+
+        let categories = [];
+        let editingId = null;
+
+        const grid = document.getElementById('categories-grid');
+        const modal = document.getElementById('category-modal');
+        const inputName = document.getElementById('cat-name');
+        const inputIcon = document.getElementById('cat-icon');
+
+        async function fetchCategories() {
+            const { data, error } = await supabase.from('categories').select('*').order('name');
+            if(error) { console.error(error); return; }
+            categories = data;
+            renderCategories();
+        }
+
+        function renderCategories() {
+            grid.innerHTML = '';
+            categories.forEach(cat => {
+                const card = document.createElement('div');
+                card.className = 'category-card group';
+                card.innerHTML = `
+                    <div class="flex items-start justify-between mb-6">
+                        <div class="w-14 h-14 bg-indigo-50 dark:bg-indigo-900/30 rounded-2xl flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                            <span class="material-symbols-outlined text-2xl">${cat.icon || 'category'}</span>
+                        </div>
+                        <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onclick="editCategory('${cat.id}')" class="p-2 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/40 rounded-lg">
+                                <span class="material-symbols-outlined text-[18px]">edit</span>
+                            </button>
+                            <button onclick="deleteCategory('${cat.id}')" class="p-2 text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/40 rounded-lg">
+                                <span class="material-symbols-outlined text-[18px]">delete</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="text-xl font-black text-slate-900 dark:text-white tracking-tight">${cat.name}</h4>
+                        <p class="text-[10px] font-black uppercase text-indigo-600 dark:text-indigo-400 mt-1 tracking-widest">Active Class</p>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        window.editCategory = (id) => {
+            const cat = categories.find(c => c.id === id);
+            editingId = id;
+            inputName.value = cat.name;
+            inputIcon.value = cat.icon || '';
+            document.getElementById('modal-title').innerText = 'Edit Repository Item';
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        };
+
+        window.deleteCategory = async (id) => {
+            if(!confirm("Are you sure? This may affect courses assigned to this category.")) return;
+            const { error } = await supabase.from('categories').delete().eq('id', id);
+            if(error) alert(error.message);
+            else fetchCategories();
+        };
+
+        document.getElementById('btn-add-category').onclick = () => {
+            editingId = null;
+            inputName.value = '';
+            inputIcon.value = '';
+            document.getElementById('modal-title').innerText = 'Create New Entry';
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        };
+
+        document.getElementById('btn-cancel-modal').onclick = () => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        };
+
+        document.getElementById('btn-save-modal').onclick = async () => {
+            const name = inputName.value.trim();
+            const icon = inputIcon.value.trim();
+            if(!name) return;
+
+            const payload = { name, icon };
+            let result;
+            if(editingId) {
+                result = await supabase.from('categories').update(payload).eq('id', editingId);
+            } else {
+                result = await supabase.from('categories').insert([payload]);
+            }
+
+            if(result.error) alert(result.error.message);
+            else {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                fetchCategories();
+            }
+        };
+
+        // Standard Admin Behaviors
+        document.getElementById('logout-btn')?.addEventListener('click', async () => {
+            await AuthService.logout();
+            window.location.href = '/src/pages/auth/login-select/index.html';
+        });
+
+        // Toggle Sidebar
+        const toggleBtn = document.getElementById('toggle-sidebar');
+        const sidebar = document.getElementById('sidebar');
+        toggleBtn?.addEventListener('click', () => { sidebar.classList.toggle('-translate-x-full'); });
+
+        // Theme Toggle
+        const themeToggle = document.getElementById('theme-toggle');
+        themeToggle?.addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+            const isDark = document.documentElement.classList.contains('dark');
+            themeToggle.innerHTML = `<span class="material-symbols-outlined">${isDark ? 'light_mode' : 'dark_mode'}</span>`;
+        });
+
+        fetchCategories();
+    </script>
+</body>
+</html>

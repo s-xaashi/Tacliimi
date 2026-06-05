@@ -45,10 +45,24 @@
             pointer-events: none;
         }
     </style>
-    <script src="/src/services/tacliimi_db.js"></script>
+    <script type="module" src="/src/services/globalProfile.js"></script>
     <script>
-        if (!TacliimiDB.getCurrentSession()) window.location.href = '/src/pages/auth/login/index.html';
+        // Removed synchronous Auth check
     </script>
+
+    <script type="module">
+        import { AuthService } from '/src/services/authService.js';
+
+        // If the URL contains an access token from an email link or OAuth, do not prematurely redirect
+        const isOAuthRedirect = window.location.hash.includes('access_token=');
+
+        if (!isOAuthRedirect) {
+            AuthService.getSession().then(session => {
+                if (!session) window.location.href = '/src/pages/auth/login-select/index.html';
+            });
+        }
+    </script>
+
 </head>
 
 <body
@@ -128,64 +142,74 @@
         <main id="instructor-content-area" class="flex-1 bg-background-light dark:bg-background-dark pb-20">
 
 
-<div class="px-8 pb-8 pt-2 max-w-7xl mx-auto">
-<div class="mb-8">
-<h2 class="text-3xl font-bold dark:text-white">Earnings</h2>
-<p class="text-slate-500 mt-2">Monitor your revenue and transaction history.</p>
-</div>
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-<div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
-<div class="flex items-center justify-between mb-4">
-<h3 class="font-medium text-slate-600 dark:text-slate-400">Total Earnings</h3>
-<span class="material-symbols-outlined text-slate-400">account_balance_wallet</span>
-</div>
-<div class="text-3xl font-bold dark:text-white mb-2">$0.00</div>
-<p class="text-slate-400 text-xs leading-relaxed">Earnings will appear after course sales</p>
-</div>
-<div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
-<div>
-<div class="flex items-center justify-between mb-4">
-<h3 class="font-medium text-slate-600 dark:text-slate-400">Available for Withdrawal</h3>
-<span class="material-symbols-outlined text-slate-400">payments</span>
-</div>
-<div class="text-3xl font-bold dark:text-white mb-4">$0.00</div>
-</div>
-<button class="w-full bg-slate-100 dark:bg-slate-800 text-slate-400 py-2.5 rounded-lg font-medium cursor-not-allowed" disabled="">
-                        Request Withdrawal
-                    </button>
-</div>
-<div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
-<div class="flex items-center justify-between mb-4">
-<h3 class="font-medium text-slate-600 dark:text-slate-400">Earnings This Month</h3>
-<span class="material-symbols-outlined text-slate-400">calendar_month</span>
-</div>
-<div class="text-3xl font-bold dark:text-white mb-2">$0.00</div>
-<p class="text-slate-400 text-xs leading-relaxed">Updated from current period</p>
-</div>
-</div>
-<div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-<div class="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-<h3 class="font-semibold text-slate-900 dark:text-white">Recent Transactions</h3>
-</div>
-<div class="min-h-[400px] flex flex-col items-center justify-center text-center p-8">
-<div class="w-20 h-20 bg-slate-50 dark:bg-slate-800/50 rounded-full flex items-center justify-center mb-6">
-<span class="material-symbols-outlined text-slate-300 dark:text-slate-600 text-4xl">receipt_long</span>
-</div>
-<h4 class="text-lg font-medium dark:text-white mb-2">No transactions found</h4>
-<p class="text-slate-500 max-w-xs">Start selling courses to see your earnings history here.</p>
-</div>
-</div>
-<footer class="mt-16 py-8 border-t border-slate-200 dark:border-slate-800 text-center">
-<div class="flex items-center justify-center gap-4 text-xs text-slate-500">
-<span>Platform Status: <span class="text-emerald-500 font-medium uppercase">Active</span></span>
-<span class="text-slate-300 dark:text-slate-700">|</span>
-<a class="text-primary hover:underline" href="#">Help Center</a>
-<span class="text-slate-300 dark:text-slate-700">|</span>
-<a class="text-primary hover:underline" href="#">Privacy Policy</a>
-</div>
-<p class="mt-4 text-[10px] text-slate-400 font-mono uppercase tracking-widest">Tacliimi Learn Â© 2024</p>
-</footer>
-</div>
+            <div class="px-8 pb-8 pt-2 max-w-7xl mx-auto">
+                <div class="mb-8">
+                    <h2 class="text-3xl font-bold dark:text-white">Earnings</h2>
+                    <p class="text-slate-500 mt-2">Monitor your revenue and transaction history.</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+                    <div
+                        class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-medium text-slate-600 dark:text-slate-400">Total Earnings</h3>
+                            <span class="material-symbols-outlined text-slate-400">account_balance_wallet</span>
+                        </div>
+                        <div class="text-3xl font-bold dark:text-white mb-2">$0.00</div>
+                        <p class="text-slate-400 text-xs leading-relaxed">Earnings will appear after course sales</p>
+                    </div>
+                    <div
+                        class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="font-medium text-slate-600 dark:text-slate-400">Available for Withdrawal</h3>
+                                <span class="material-symbols-outlined text-slate-400">payments</span>
+                            </div>
+                            <div class="text-3xl font-bold dark:text-white mb-4">$0.00</div>
+                        </div>
+                        <button
+                            class="w-full bg-slate-100 dark:bg-slate-800 text-slate-400 py-2.5 rounded-lg font-medium cursor-not-allowed"
+                            disabled="">
+                            Request Withdrawal
+                        </button>
+                    </div>
+                    <div
+                        class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-medium text-slate-600 dark:text-slate-400">Earnings This Month</h3>
+                            <span class="material-symbols-outlined text-slate-400">calendar_month</span>
+                        </div>
+                        <div class="text-3xl font-bold dark:text-white mb-2">$0.00</div>
+                        <p class="text-slate-400 text-xs leading-relaxed">Updated from current period</p>
+                    </div>
+                </div>
+                <div
+                    class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                    <div
+                        class="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                        <h3 class="font-semibold text-slate-900 dark:text-white">Recent Transactions</h3>
+                    </div>
+                    <div class="min-h-[400px] flex flex-col items-center justify-center text-center p-8">
+                        <div
+                            class="w-20 h-20 bg-slate-50 dark:bg-slate-800/50 rounded-full flex items-center justify-center mb-6">
+                            <span
+                                class="material-symbols-outlined text-slate-300 dark:text-slate-600 text-4xl">receipt_long</span>
+                        </div>
+                        <h4 class="text-lg font-medium dark:text-white mb-2">No transactions found</h4>
+                        <p class="text-slate-500 max-w-xs">Start selling courses to see your earnings history here.</p>
+                    </div>
+                </div>
+                <footer class="mt-16 py-8 border-t border-slate-200 dark:border-slate-800 text-center">
+                    <div class="flex items-center justify-center gap-4 text-xs text-slate-500">
+                        <span>Platform Status: <span class="text-emerald-500 font-medium uppercase">Active</span></span>
+                        <span class="text-slate-300 dark:text-slate-700">|</span>
+                        <a class="text-primary hover:underline" href="#">Help Center</a>
+                        <span class="text-slate-300 dark:text-slate-700">|</span>
+                        <a class="text-primary hover:underline" href="#">Privacy Policy</a>
+                    </div>
+                    <p class="mt-4 text-[10px] text-slate-400 font-mono uppercase tracking-widest">Tacliimi Learn Â©
+                        2024</p>
+                </footer>
+            </div>
 
         </main>
     </div>
@@ -193,6 +217,139 @@
     <!-- Router Logic -->
     <script src="/src/utils/js/instructor-app.js"></script>
     <script src="/src/pages/instructor/instructor-mentorship/mentorship.js"></script>
+
+    <!-- Earnings Logic -->
+    <script type="module">
+        import { AuthService } from '/src/services/authService.js';
+        import { PayoutService } from '/src/services/payoutService.js';
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const session = await AuthService.getSession();
+                if (!session) return;
+
+                const userId = session.user.id;
+
+                // Fetch transactions and payouts
+                const transactions = await PayoutService.getTransactions(userId);
+                const payouts = await PayoutService.getPayoutHistory(userId);
+
+                let totalEarnings = 0;
+                let monthEarnings = 0;
+                let totalWithdrawn = 0;
+
+                const now = new Date();
+                const thisMonth = now.getMonth();
+                const thisYear = now.getFullYear();
+
+                // Calculate Transactions (Earnings)
+                if (transactions && transactions.length > 0) {
+                    transactions.forEach(tx => {
+                        if (tx.status === 'completed') {
+                            const amt = parseFloat(tx.amount);
+                            totalEarnings += amt;
+
+                            const txDate = new Date(tx.created_at || tx.transaction_date);
+                            if (txDate.getMonth() === thisMonth && txDate.getFullYear() === thisYear) {
+                                monthEarnings += amt;
+                            }
+                        }
+                    });
+                }
+
+                // Calculate Withdrawn (Payouts)
+                if (payouts && payouts.length > 0) {
+                    payouts.forEach(po => {
+                        // Pending/processing/completed payouts shouldn't be available anymore
+                        if (po.status !== 'failed') {
+                            totalWithdrawn += parseFloat(po.amount);
+                        }
+                    });
+                }
+
+                const availableForWithdrawal = Math.max(0, totalEarnings - totalWithdrawn);
+
+                // Update Metric UI
+                const metrics = document.querySelectorAll('.text-3xl.font-bold');
+                if (metrics.length >= 3) {
+                    metrics[0].innerText = `$${totalEarnings.toFixed(2)}`;
+                    metrics[1].innerText = `$${availableForWithdrawal.toFixed(2)}`;
+                    metrics[2].innerText = `$${monthEarnings.toFixed(2)}`;
+                }
+
+                const withdrawBtn = document.querySelector('button:contains("Request Withdrawal")') || Array.from(document.querySelectorAll('button')).find(el => el.textContent.includes('Request Withdrawal'));
+
+                if (withdrawBtn && availableForWithdrawal > 50) {
+                    withdrawBtn.classList.remove('cursor-not-allowed', 'text-slate-400', 'bg-slate-100', 'dark:bg-slate-800');
+                    withdrawBtn.classList.add('bg-primary', 'text-white', 'hover:bg-primary/90');
+                    withdrawBtn.disabled = false;
+                    withdrawBtn.addEventListener('click', () => {
+                        alert('Withdrawal request initiated via Supabase (Coming Soon UI mapping)');
+                    });
+                }
+
+                // Render Transactions Table if any
+                if (transactions.length > 0 || payouts.length > 0) {
+                    const container = document.querySelector('.min-h-\\[400px\\]');
+                    if (container) {
+                        container.className = "w-full overflow-x-auto";
+
+                        let rowsHtml = '';
+
+                        // Combine and sort arrays by date descending
+                        const allLedger = [];
+                        transactions.forEach(t => allLedger.push({ ...t, is_payout: false, dateLine: new Date(t.created_at || t.transaction_date) }));
+                        payouts.forEach(p => allLedger.push({ ...p, is_payout: true, dateLine: new Date(p.date) }));
+
+                        allLedger.sort((a, b) => b.dateLine - a.dateLine);
+
+                        allLedger.forEach(item => {
+                            const dateStr = item.dateLine.toLocaleDateString();
+                            if (item.is_payout) {
+                                rowsHtml += `
+                                 <tr class="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900 dark:text-white">${dateStr}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">Withdrawal - ${item.method_type}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-red-500 font-medium">-$${parseFloat(item.amount).toFixed(2)}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2.5 py-1 text-xs font-medium rounded-full bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 capitalize">${item.status}</span>
+                                    </td>
+                                 </tr>`;
+                            } else {
+                                rowsHtml += `
+                                 <tr class="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900 dark:text-white">${dateStr}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">Course Sale</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-emerald-500 font-medium">+$${parseFloat(item.amount).toFixed(2)}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2.5 py-1 text-xs font-medium rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 capitalize">${item.status}</span>
+                                    </td>
+                                 </tr>`;
+                            }
+                        });
+
+                        container.innerHTML = `
+                             <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 dark:bg-slate-800/50 border-y border-slate-200 dark:border-slate-800">
+                                        <th class="px-6 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Date</th>
+                                        <th class="px-6 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Description</th>
+                                        <th class="px-6 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Amount</th>
+                                        <th class="px-6 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${rowsHtml}
+                                </tbody>
+                             </table>
+                         `;
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to load earnings data:", err);
+            }
+        });
+    </script>
 </body>
 
 </html>

@@ -11,7 +11,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
         rel="stylesheet" />
-    <script src="/src/services/tacliimi_db.js"></script>
+    <script type="module" src="/src/services/globalProfile.js"></script>
     <script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
     <script>
         tailwind.config = {
@@ -123,134 +123,64 @@
                     class="mt-12 p-8 border border-slate-200 dark:border-slate-800 rounded-2xl bg-slate-50 dark:bg-slate-900/30">
                     <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-6">About the Instructor</h2>
                     <div class="flex flex-col md:flex-row gap-6">
-                        <img alt="Instructor Profile" class="w-24 h-24 rounded-full bg-slate-200"
-                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuBF6HFrVI2kcn-BPUybMerUlA-H92AbBtqqd2-k0uXwm-WxI0CmK0F-p2DMzhklxge5LL9DjZgCbHWBai0UvPKqNWIdOS2KcV5sIWIE-MyV1f0Fyy93RfuXpqieQc-3jfbjk_gmfN4qX3XhKdDVoZ0h_h1XOo9dbp3lHdnmIcncaVgRLj9ybxirSUv24PIylpEGVZRjeICwhUVgh4SPEcdD3QlaamoCOdpJ4Q2yLFgTyiEWrlS18i-ZUUYoebR-zsrtu4AjAgI3jLeQ" />
-                        <div>
-                            <h3 id="cd-instructor" class="text-lg font-bold text-slate-900 dark:text-white">Instructor
-                                Name Here</h3>
-                            <p id="cd-instructor-role" class="text-primary text-sm font-medium mb-3">Instructor Role</p>
-                            <div class="flex gap-4 text-xs font-semibold text-slate-500 mb-4">
+                        <img id="cd-instructor-avatar" alt="Instructor Profile" class="w-24 h-24 rounded-full bg-slate-200 object-cover flex-shrink-0"
+                            src="https://ui-avatars.com/api/?name=Instructor&background=6366f1&color=fff" />
+                        <div class="flex-1">
+                            <h3 id="cd-instructor" class="text-lg font-bold text-slate-900 dark:text-white">Loading...</h3>
+                            <p id="cd-instructor-role" class="text-primary text-sm font-medium mb-3"></p>
+                            <div class="flex flex-wrap gap-4 text-xs font-semibold text-slate-500 mb-4">
                                 <span class="flex items-center gap-1"><span
-                                        class="material-icons-round text-sm text-yellow-500">star</span> 0.0
-                                    RATING</span>
+                                        class="material-icons-round text-sm text-yellow-500">star</span> <span id="cd-instructor-rating">—</span> Rating</span>
                                 <span class="flex items-center gap-1"><span
-                                        class="material-icons-round text-sm">people</span> 0 STUDENTS</span>
+                                        class="material-icons-round text-sm">people</span> <span id="cd-instructor-students">—</span> Students</span>
                                 <span class="flex items-center gap-1"><span
-                                        class="material-icons-round text-sm">play_circle_filled</span> 0 COURSES</span>
+                                        class="material-icons-round text-sm">play_circle_filled</span> <span id="cd-instructor-courses">—</span> Courses</span>
                             </div>
-                            <p class="text-sm leading-relaxed text-slate-600 dark:text-slate-400">
-                                This is a template placeholder for the instructor bio. Here you will find professional
-                                background, areas of expertise, and teaching philosophy. All instructors are vetted
-                                industry veterans who are passionate about sharing their knowledge and helping students
-                                succeed in their professional journey.
+                            <p id="cd-instructor-bio" class="text-sm leading-relaxed text-slate-600 dark:text-slate-400 mb-4">
+                                Loading instructor bio...
                             </p>
+                            <div id="cd-instructor-expertise" class="flex flex-wrap gap-2"></div>
                         </div>
                     </div>
                 </div>
-                <div class="mt-12 mb-20">
+                <div class="mt-12 mb-12">
                     <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-6">Student Reviews</h2>
+                    <!-- Rating Summary -->
                     <div class="flex flex-col md:flex-row gap-8 items-center mb-10">
                         <div class="text-center">
-                            <div class="text-5xl font-black text-slate-900 dark:text-white">0.0</div>
-                            <div class="flex justify-center mt-2">
+                            <div id="cd-avg-rating" class="text-5xl font-black text-slate-900 dark:text-white">0.0</div>
+                            <div id="cd-rating-stars" class="flex justify-center mt-2">
                                 <span class="material-icons-round text-slate-300">star</span>
                                 <span class="material-icons-round text-slate-300">star</span>
                                 <span class="material-icons-round text-slate-300">star</span>
                                 <span class="material-icons-round text-slate-300">star</span>
                                 <span class="material-icons-round text-slate-300">star</span>
                             </div>
-                            <div class="text-xs font-semibold text-primary mt-2 uppercase tracking-wide">Course Rating
-                            </div>
+                            <div class="text-xs font-semibold text-primary mt-2 uppercase tracking-wide">Course Rating</div>
+                            <div id="cd-review-count" class="text-xs text-slate-500 mt-1">0 reviews</div>
                         </div>
-                        <div class="flex-1 space-y-2 max-w-md w-full">
-                            <div class="flex items-center gap-4 text-xs font-medium text-slate-500">
-                                <div class="flex-1 h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-                                    <div class="h-full bg-slate-300 w-0"></div>
-                                </div>
-                                <span class="w-12">5 stars</span>
-                                <span class="w-6">0%</span>
-                            </div>
-                            <div class="flex items-center gap-4 text-xs font-medium text-slate-500">
-                                <div class="flex-1 h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-                                    <div class="h-full bg-slate-300 w-0"></div>
-                                </div>
-                                <span class="w-12">4 stars</span>
-                                <span class="w-6">0%</span>
-                            </div>
-                            <div class="flex items-center gap-4 text-xs font-medium text-slate-500">
-                                <div class="flex-1 h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-                                    <div class="h-full bg-slate-300 w-0"></div>
-                                </div>
-                                <span class="w-12">3 stars</span>
-                                <span class="w-6">0%</span>
-                            </div>
-                            <div class="flex items-center gap-4 text-xs font-medium text-slate-500">
-                                <div class="flex-1 h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-                                    <div class="h-full bg-slate-300 w-0"></div>
-                                </div>
-                                <span class="w-12">2 stars</span>
-                                <span class="w-6">0%</span>
-                            </div>
-                            <div class="flex items-center gap-4 text-xs font-medium text-slate-500">
-                                <div class="flex-1 h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-                                    <div class="h-full bg-slate-300 w-0"></div>
-                                </div>
-                                <span class="w-12">1 star</span>
-                                <span class="w-6">0%</span>
-                            </div>
+                        <div class="flex-1 space-y-2 max-w-md w-full" id="cd-rating-bars">
+                            <!-- Bars rendered dynamically -->
                         </div>
                     </div>
-                    <div class="grid md:grid-cols-2 gap-6">
-                        <div
-                            class="p-6 border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900/40">
-                            <div class="flex items-center gap-3 mb-4">
-                                <div
-                                    class="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center">
-                                    <span class="material-icons-round text-slate-400">person</span>
-                                </div>
-                                <div>
-                                    <div class="text-sm font-bold text-slate-900 dark:text-white">Student Name Here
-                                    </div>
-                                    <div class="text-[10px] text-slate-500 font-medium">Review date here</div>
-                                </div>
-                            </div>
-                            <div class="flex text-yellow-500 mb-3 scale-90 origin-left">
-                                <span class="material-icons-round text-sm">star</span>
-                                <span class="material-icons-round text-sm">star</span>
-                                <span class="material-icons-round text-sm">star</span>
-                                <span class="material-icons-round text-sm">star</span>
-                                <span class="material-icons-round text-sm">star</span>
-                            </div>
-                            <p class="text-sm text-slate-500 italic">
-                                "Student feedback will appear here once reviews are submitted. This course provides
-                                comprehensive training in user experience design principles."
-                            </p>
+                    <!-- Leave a Review (only shown when enrolled) -->
+                    <div id="cd-review-form" class="hidden mb-8 p-6 border border-primary/30 bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl">
+                        <h3 class="text-base font-bold text-slate-900 dark:text-white mb-4">Leave a Review</h3>
+                        <div class="flex gap-2 mb-4" id="cd-star-picker">
+                            <span class="material-icons-round text-2xl cursor-pointer text-slate-300 hover:text-yellow-400 transition-colors" data-star="1">star</span>
+                            <span class="material-icons-round text-2xl cursor-pointer text-slate-300 hover:text-yellow-400 transition-colors" data-star="2">star</span>
+                            <span class="material-icons-round text-2xl cursor-pointer text-slate-300 hover:text-yellow-400 transition-colors" data-star="3">star</span>
+                            <span class="material-icons-round text-2xl cursor-pointer text-slate-300 hover:text-yellow-400 transition-colors" data-star="4">star</span>
+                            <span class="material-icons-round text-2xl cursor-pointer text-slate-300 hover:text-yellow-400 transition-colors" data-star="5">star</span>
                         </div>
-                        <div
-                            class="p-6 border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900/40 opacity-70">
-                            <div class="flex items-center gap-3 mb-4">
-                                <div
-                                    class="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center">
-                                    <span class="material-icons-round text-slate-400">person</span>
-                                </div>
-                                <div>
-                                    <div class="text-sm font-bold text-slate-900 dark:text-white">Student Name Here
-                                    </div>
-                                    <div class="text-[10px] text-slate-500 font-medium">Review date here</div>
-                                </div>
-                            </div>
-                            <div class="flex text-yellow-500 mb-3 scale-90 origin-left">
-                                <span class="material-icons-round text-sm">star</span>
-                                <span class="material-icons-round text-sm">star</span>
-                                <span class="material-icons-round text-sm">star</span>
-                                <span class="material-icons-round text-sm">star</span>
-                                <span class="material-icons-round text-sm">star</span>
-                            </div>
-                            <p class="text-sm text-slate-500 italic">
-                                "Placeholder feedback. The instructor was very knowledgeable and the course material was
-                                easy to follow."
-                            </p>
-                        </div>
+                        <textarea id="cd-review-text" rows="3" placeholder="Share your experience with this course..."
+                            class="w-full p-3 text-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-xl outline-none focus:ring-2 focus:ring-primary text-slate-700 dark:text-slate-200"></textarea>
+                        <button id="cd-submit-review" class="mt-3 px-6 py-2 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-indigo-600 transition-all">Submit Review</button>
+                        <p id="cd-review-msg" class="mt-2 text-sm text-emerald-600 hidden">Review submitted! Thank you.</p>
+                    </div>
+                    <!-- Reviews List -->
+                    <div id="cd-reviews-list" class="grid md:grid-cols-2 gap-6">
+                        <p class="text-slate-500 text-sm col-span-2 text-center py-8">No reviews yet. Be the first!</p>
                     </div>
                 </div>
             </div>
@@ -265,6 +195,11 @@
                                 class="hidden text-xs font-bold text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded">DISCOUNT</span>
                         </div>
                         <div class="space-y-3">
+                            <div id="private-course-banner" class="hidden mb-3 p-4 bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800 rounded-xl text-center">
+                            <span class="material-symbols-outlined text-violet-600 text-2xl mb-1">lock</span>
+                            <p class="text-sm font-bold text-violet-700 dark:text-violet-400 mb-1">Private Course</p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">You must be signed in to enroll in this course.</p>
+                        </div>
                             <button id="enroll-btn"
                                 class="w-full py-4 bg-primary hover:bg-indigo-600 text-white font-bold rounded-xl transition-all shadow-lg shadow-indigo-200 dark:shadow-none">
                                 Enroll Now
@@ -277,11 +212,11 @@
                                 <div class="relative flex-grow">
                                     <span
                                         class="material-icons-round absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg transition-colors group-focus-within:text-primary">sell</span>
-                                    <input
+                                    <input id="coupon-input"
                                         class="w-full pl-10 pr-4 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-l-lg focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all placeholder:text-slate-400 text-slate-700 dark:text-slate-200"
                                         placeholder="Enter Coupon Code" type="text" />
                                 </div>
-                                <button
+                                <button id="apply-coupon-btn" onclick="applyCoupon()"
                                     class="px-5 py-2 bg-primary hover:bg-indigo-600 text-white text-sm font-bold rounded-r-lg transition-all border border-primary">
                                     Apply
                                 </button>
@@ -335,203 +270,487 @@
     </footer>
     </footer>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
+    <script type="module">
+        import { CourseService } from '/src/services/courseService.js?v=6';
+        import { AuthService } from '/src/services/authService.js?v=6';
+
+        let currentCourse = null;
+        let currentUser = null;
+        let selectedRating = 0;
+        let isEnrolled = false;
+
+        document.addEventListener('DOMContentLoaded', async () => {
             const enrollBtn = document.getElementById('enroll-btn');
             const wishlistBtn = document.getElementById('wishlist-btn');
 
-            // Get URL parameter
             const urlParams = new URLSearchParams(window.location.search);
             const courseId = urlParams.get('id');
-            const courseData = TacliimiDB.getCourseById(courseId);
 
-            if (courseData) {
-                // Populate DOM
+            if (!courseId) {
+                document.getElementById('cd-title').textContent = 'No course selected.';
+                return;
+            }
+
+            try {
+                const [courseData, session] = await Promise.all([
+                    CourseService.getCourseFull(courseId),
+                    AuthService.getSession()
+                ]);
+
+                if (!courseData) {
+                    document.getElementById('cd-title').textContent = 'Course not found.';
+                    return;
+                }
+
+                currentCourse = courseData;
+                currentUser = session ? session.user : null;
+
+                // ── Check enrollment early so curriculum renderer can use it ──
+                if (currentUser) {
+                    isEnrolled = await CourseService.checkEnrollment(courseId, currentUser.id);
+                } else {
+                    isEnrolled = false;
+                }
+
+                // ── Private Course Banner (for unauthenticated visitors) ──
+                if (courseData.is_public === false && !currentUser) {
+                    const banner = document.getElementById('private-course-banner');
+                    if (banner) banner.classList.remove('hidden');
+                    enrollBtn.textContent = 'Sign In to Enroll';
+                    enrollBtn.classList.replace('bg-primary', 'bg-violet-600');
+                    enrollBtn.classList.replace('hover:bg-indigo-600', 'hover:bg-violet-700');
+                }
+
+                // ── Basic Info ──
                 document.getElementById('cd-title').textContent = courseData.title;
                 document.title = 'Tacliimi Learn - ' + courseData.title;
-                document.getElementById('cd-instructor').textContent = courseData.instructor;
-                document.getElementById('cd-instructor-role').textContent = courseData.instructorRole || 'Instructor';
 
-                // Update Thumbnail / Video Preview
                 const thumbnailImg = document.querySelector('.aspect-video img');
-                if (thumbnailImg) thumbnailImg.src = courseData.thumbnailUrl;
+                if (thumbnailImg) thumbnailImg.src = courseData.thumbnail_url || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80';
 
-                const priceEl = document.getElementById('cd-price');
-                const origPriceEl = document.getElementById('cd-original-price');
-                const discountBadge = document.getElementById('cd-discount-badge');
+                const price = parseFloat(courseData.price) || 0;
+                document.getElementById('cd-price').textContent = price === 0 ? 'Free' : '$' + price.toFixed(2);
+                document.getElementById('cd-original-price').classList.add('hidden');
+                document.getElementById('cd-discount-badge').classList.add('hidden');
 
-                priceEl.textContent = typeof courseData.price === 'number' ? '$' + courseData.price.toFixed(2) : courseData.price;
-
-                if (courseData.originalPrice) {
-                    origPriceEl.textContent = '$' + courseData.originalPrice.toFixed(2);
-                    origPriceEl.classList.remove('hidden');
-                    // Calculate discount
-                    if (typeof courseData.price === 'number') {
-                        const discount = Math.round((1 - (courseData.price / courseData.originalPrice)) * 100);
-                        discountBadge.textContent = discount + '% OFF';
-                        discountBadge.classList.remove('hidden');
-                    }
-                } else {
-                    origPriceEl.classList.add('hidden');
-                    discountBadge.classList.add('hidden');
-                }
-                // Populate Description into what you'll learn area
                 const descEl = document.getElementById('cd-description');
-                if (descEl) {
-                    descEl.textContent = courseData.description || 'No description provided for this course.';
-                }
+                if (descEl) descEl.textContent = courseData.description || 'No description provided.';
 
-                // Calculate Course Stats
-                let totalSections = 0, totalLessons = 0, totalVideos = 0, totalQuizzes = 0, totalResources = 0;
-                let sourceCurriculum = courseData.sections || courseData.curriculum || [];
-                totalSections = sourceCurriculum.length;
+                // ── Curriculum ──
+                const curriculum = courseData.course_sections || [];
+                let totalLessons = 0;
+                curriculum.forEach(s => { totalLessons += (s.course_lessons || []).length; });
 
-                sourceCurriculum.forEach(sec => {
-                    const items = sec.lessons || sec.items || [];
-                    totalLessons += items.length;
-                    items.forEach(item => {
-                        if (item.video || item.type === 'video') totalVideos++;
-                        if (item.quizzes && item.quizzes.length > 0) totalQuizzes += item.quizzes.length;
-                        if (item.resources && item.resources.length > 0) totalResources += item.resources.length;
-                    });
-                });
-
-                // Populate "This Course Includes"
                 const includesList = document.getElementById('cd-includes-list');
                 if (includesList) {
-                    let includesHtml = '';
-                    if (totalLessons > 0) {
-                        includesHtml += `<li class="flex items-center gap-3"><span class="material-icons-round text-primary text-lg">menu_book</span> ${totalLessons} Lessons</li>`;
+                    let html = '';
+                    if (totalLessons > 0) html += `<li class="flex items-center gap-3"><span class="material-icons-round text-primary text-lg">menu_book</span> ${totalLessons} Lessons</li>`;
+                    if (courseData.total_duration_minutes) {
+                        const h = Math.floor(courseData.total_duration_minutes / 60), m = courseData.total_duration_minutes % 60;
+                        html += `<li class="flex items-center gap-3"><span class="material-icons-round text-primary text-lg">schedule</span> ${h > 0 ? h+'h ' : ''}${m}m total</li>`;
                     }
-                    if (totalVideos > 0) {
-                        includesHtml += `<li class="flex items-center gap-3"><span class="material-icons-round text-primary text-lg">play_circle</span> ${totalVideos} Videos</li>`;
-                    }
-                    if (totalQuizzes > 0) {
-                        includesHtml += `<li class="flex items-center gap-3"><span class="material-icons-round text-primary text-lg">quiz</span> ${totalQuizzes} Quizzes</li>`;
-                    }
-                    if (totalResources > 0) {
-                        includesHtml += `<li class="flex items-center gap-3"><span class="material-icons-round text-primary text-lg">description</span> ${totalResources} Downloadable Resources</li>`;
-                    }
-                    if (totalSections > 0) {
-                        includesHtml += `<li class="flex items-center gap-3"><span class="material-icons-round text-primary text-lg">folder</span> ${totalSections} Sections</li>`;
-                    }
-                    includesHtml += `<li class="flex items-center gap-3"><span class="material-icons-round text-primary text-lg">all_inclusive</span> Full lifetime access</li>`;
-                    includesHtml += `<li class="flex items-center gap-3"><span class="material-icons-round text-primary text-lg">devices</span> Access on mobile and TV</li>`;
-                    includesList.innerHTML = includesHtml;
+                    html += `<li class="flex items-center gap-3"><span class="material-icons-round text-primary text-lg">all_inclusive</span> Full lifetime access</li>`;
+                    html += `<li class="flex items-center gap-3"><span class="material-icons-round text-primary text-lg">devices</span> Access on mobile and TV</li>`;
+                    includesList.innerHTML = html;
                 }
 
-                // Render Curriculum
                 const currContainer = document.getElementById('cd-curriculum');
                 const currMetaEl = document.getElementById('cd-content-meta');
 
+                // Sort sections by order_index
+                const sortedCurriculum = [...curriculum].sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
+
                 if (currContainer) {
-                    if (totalSections === 0) {
-                        currContainer.innerHTML = '<p class="text-sm text-slate-500">No content uploaded yet.</p>';
-                        if (currMetaEl) currMetaEl.textContent = '0 sections • 0 lectures';
+                    if (sortedCurriculum.length === 0) {
+                        currContainer.innerHTML = '<p class="text-slate-400 text-sm text-center py-6">No curriculum content has been uploaded for this course yet.</p>';
+                        if (currMetaEl) currMetaEl.textContent = '';
                     } else {
                         let html = '';
-                        sourceCurriculum.forEach((section, index) => {
-                            const items = section.lessons || section.items || [];
+                        let totalQuizzes = 0;
+                        let totalResources = 0;
+
+                        sortedCurriculum.forEach((section, idx) => {
+                            const lessons = [...(section.course_lessons || [])].sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
+                            const sectionQuizCount = lessons.reduce((n, l) => {
+                                const q = l.quizzes;
+                                return n + (Array.isArray(q) ? q.length : (q ? 1 : 0));
+                            }, 0);
+                            const sectionResCount = lessons.reduce((n, l) => {
+                                const r = l.lesson_resources;
+                                return n + (Array.isArray(r) ? r.length : (r ? 1 : 0));
+                            }, 0);
+                            totalQuizzes += sectionQuizCount;
+                            totalResources += sectionResCount;
+
+                            // Section header badges
+                            let sectionBadges = '';
+                            if (sectionQuizCount > 0) sectionBadges += `<span class="hidden sm:inline-flex items-center gap-1 text-[10px] font-semibold bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 px-2 py-0.5 rounded-full"><span class="material-icons-round text-xs">quiz</span>${sectionQuizCount} quiz</span>`;
+                            if (sectionResCount > 0) sectionBadges += `<span class="hidden sm:inline-flex items-center gap-1 text-[10px] font-semibold bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded-full"><span class="material-icons-round text-xs">attach_file</span>${sectionResCount} resource${sectionResCount > 1 ? 's' : ''}</span>`;
 
                             html += `
-                            <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden mb-4">
-                                <button class="w-full flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 text-left">
+                            <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden mb-3 bg-white dark:bg-slate-900/40">
+                                <button class="w-full flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left group"
+                                    onclick="const body=this.nextElementSibling;body.classList.toggle('hidden');const icon=this.querySelector('.toggle-icon');icon.textContent=body.classList.contains('hidden')?'keyboard_arrow_down':'keyboard_arrow_up';">
                                     <div class="flex items-center gap-3">
-                                        <span class="material-icons-round text-slate-400 text-sm">keyboard_arrow_down</span>
-                                        <span class="font-semibold text-slate-900 dark:text-white">${section.title || `Section ${index + 1}`}</span>
+                                        <span class="material-symbols-outlined toggle-icon text-slate-400 text-lg">keyboard_arrow_down</span>
+                                        <span class="font-semibold text-slate-900 dark:text-white text-sm">${section.title || 'Section ' + (idx + 1)}</span>
                                     </div>
-                                    <span class="text-xs text-slate-500">${items.length} items</span>
+                                    <div class="flex items-center gap-2">
+                                        ${sectionBadges}
+                                        <span class="text-xs text-slate-500">${lessons.length} lesson${lessons.length !== 1 ? 's' : ''}</span>
+                                    </div>
                                 </button>
-                                <div class="divide-y divide-slate-100 dark:divide-slate-800 pb-2">
+                                <div class="divide-y divide-slate-100 dark:divide-slate-800/60">
                             `;
 
-                            if (items.length > 0) {
-                                items.forEach(item => {
-                                    html += `
-                                    <div class="p-4 flex items-center justify-between text-sm group cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/30">
-                                        <div class="flex items-center gap-3 text-slate-600 dark:text-slate-400">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-700 ml-1"></span>
-                                            <span>${item.title || 'Untitled Lesson'}</span>
-                                        </div>
-                                    </div>
-                                    `;
-                                });
-                            } else {
-                                html += `<div class="p-4 text-sm text-slate-500 italic">Empty section</div>`;
-                            }
+                            lessons.forEach(lesson => {
+                                const hasVideo = !!lesson.video_url;
+                                const isAccessible = lesson.is_preview || isEnrolled;
+                                const quizzes = Array.isArray(lesson.quizzes) ? lesson.quizzes : (lesson.quizzes ? [lesson.quizzes] : []);
+                                const resources = Array.isArray(lesson.lesson_resources) ? lesson.lesson_resources : (lesson.lesson_resources ? [lesson.lesson_resources] : []);
 
-                            html += `</div></div>`;
+                                // Icon
+                                let iconHtml = '';
+                                if (hasVideo) {
+                                    iconHtml = `<span class="material-icons-round text-indigo-500 text-lg flex-shrink-0">play_circle</span>`;
+                                } else if (quizzes.length > 0) {
+                                    iconHtml = `<span class="material-icons-round text-purple-500 text-lg flex-shrink-0">quiz</span>`;
+                                } else {
+                                    iconHtml = `<span class="material-icons-round text-slate-400 text-lg flex-shrink-0">description</span>`;
+                                }
+
+                                // Right-side badges + lock
+                                let rightHtml = '<div class="flex items-center gap-2 flex-shrink-0">';
+                                if (quizzes.length > 0) rightHtml += `<span class="hidden sm:flex items-center gap-0.5 text-[10px] font-semibold text-purple-500 bg-purple-50 dark:bg-purple-900/30 px-1.5 py-0.5 rounded"><span class="material-icons-round text-xs">quiz</span>${quizzes.length}</span>`;
+                                if (resources.length > 0) rightHtml += `<span class="hidden sm:flex items-center gap-0.5 text-[10px] font-semibold text-amber-500 bg-amber-50 dark:bg-amber-900/30 px-1.5 py-0.5 rounded"><span class="material-icons-round text-xs">attach_file</span>${resources.length}</span>`;
+                                if (lesson.is_preview) {
+                                    rightHtml += `<span class="text-[10px] font-bold text-primary uppercase tracking-wide bg-indigo-50 dark:bg-indigo-900/30 px-2 py-0.5 rounded">Free Preview</span>`;
+                                } else if (!isEnrolled) {
+                                    rightHtml += `<span class="material-icons-round text-slate-400 text-base">lock</span>`;
+                                } else {
+                                    rightHtml += `<span class="material-icons-round text-emerald-500 text-base">lock_open</span>`;
+                                }
+                                rightHtml += '</div>';
+
+                                // Video thumbnail row (only shown if accessible and has video)
+                                let thumbHtml = '';
+                                if (hasVideo && isAccessible) {
+                                    thumbHtml = `
+                                    <div class="px-4 pb-3 flex items-center gap-3">
+                                        <div class="relative w-28 h-16 rounded-lg overflow-hidden bg-slate-900 flex-shrink-0 cursor-pointer group/thumb"
+                                            onclick="playLessonPreview('${lesson.video_url}')">
+                                            <video src="${lesson.video_url}" class="w-full h-full object-cover opacity-70" preload="metadata" muted></video>
+                                            <div class="absolute inset-0 flex items-center justify-center">
+                                                <span class="material-icons-round text-white text-2xl drop-shadow group-hover/thumb:scale-110 transition-transform">play_circle_filled</span>
+                                            </div>
+                                        </div>
+                                        <p class="text-xs text-slate-400">Click to preview this lesson</p>
+                                    </div>`;
+                                } else if (hasVideo && !isAccessible) {
+                                    thumbHtml = `
+                                    <div class="px-4 pb-3 flex items-center gap-3">
+                                        <div class="relative w-28 h-16 rounded-lg overflow-hidden bg-slate-800 flex-shrink-0 flex items-center justify-center">
+                                            <span class="material-icons-round text-slate-500 text-3xl">lock</span>
+                                        </div>
+                                        <p class="text-xs text-slate-400">Enroll to watch this lesson</p>
+                                    </div>`;
+                                }
+
+                                html += `
+                                <div>
+                                    <div class="px-4 py-3 flex items-center justify-between text-sm ${isAccessible ? 'hover:bg-slate-50 dark:hover:bg-slate-800/30' : 'opacity-80'} transition-colors">
+                                        <div class="flex items-center gap-3 text-slate-700 dark:text-slate-300 min-w-0">
+                                            ${iconHtml}
+                                            <span class="truncate">${lesson.title}</span>
+                                        </div>
+                                        ${rightHtml}
+                                    </div>
+                                    ${thumbHtml}
+                                </div>`;
+                            });
+
+                            html += '</div></div>';
                         });
+
                         currContainer.innerHTML = html;
-                        if (currMetaEl) currMetaEl.textContent = `${totalSections} sections • ${totalLessons} lessons`;
+
+                        // Build meta string
+                        let metaParts = [];
+                        metaParts.push(`${sortedCurriculum.length} section${sortedCurriculum.length !== 1 ? 's' : ''}`);
+                        metaParts.push(`${totalLessons} lesson${totalLessons !== 1 ? 's' : ''}`);
+                        if (totalQuizzes > 0) metaParts.push(`${totalQuizzes} quiz${totalQuizzes !== 1 ? 'zes' : ''}`);
+                        if (totalResources > 0) metaParts.push(`${totalResources} resource${totalResources !== 1 ? 's' : ''}`);
+                        if (currMetaEl) currMetaEl.textContent = metaParts.join(' • ');
                     }
                 }
 
-                // Add Video Preview Handler
-                const playPreviewBtn = document.getElementById('play-preview-btn');
-                const videoModal = document.getElementById('video-modal');
-                const videoModalPlayer = document.getElementById('video-modal-player');
+                // ── Instructor Section ──
+                const instructorProfile = courseData.instructor || {};
+                const instructorId = courseData.instructor_id;
 
-                if (playPreviewBtn && videoModal && videoModalPlayer) {
-                    playPreviewBtn.addEventListener('click', () => {
-                        if (courseData.previewVideo) {
-                            videoModalPlayer.src = courseData.previewVideo;
-                            videoModal.classList.remove('hidden');
-                            videoModal.classList.add('flex');
-                            videoModalPlayer.play();
-                        } else {
-                            alert('No preview video available for this course.');
+                document.getElementById('cd-instructor').textContent = instructorProfile.full_name || 'Expert Instructor';
+                document.getElementById('cd-instructor-role').textContent = instructorProfile.professional_title || courseData.level || 'Instructor';
+                document.getElementById('cd-instructor-bio').textContent = instructorProfile.short_bio || 'No bio available for this instructor.';
+
+                const avatarEl = document.getElementById('cd-instructor-avatar');
+                if (instructorProfile.avatar_url) {
+                    avatarEl.src = instructorProfile.avatar_url;
+                } else {
+                    avatarEl.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(instructorProfile.full_name || 'Instructor')}&background=6366f1&color=fff&size=96`;
+                }
+
+                // Load instructor stats + expertise in parallel
+                if (instructorId) {
+                    const [stats, expertise] = await Promise.all([
+                        CourseService.getInstructorStats(instructorId),
+                        CourseService.getInstructorExpertise(instructorId)
+                    ]);
+
+                    document.getElementById('cd-instructor-students').textContent = stats.totalStudents;
+                    document.getElementById('cd-instructor-courses').textContent = stats.totalCourses;
+
+                    // Expertise tags
+                    const expertiseContainer = document.getElementById('cd-instructor-expertise');
+                    const expertiseList = [
+                        ...(expertise.length ? expertise : []),
+                        ...(Array.isArray(instructorProfile.expertise_list) ? instructorProfile.expertise_list : [])
+                    ];
+                    if (expertiseList.length > 0) {
+                        expertiseContainer.innerHTML = expertiseList.slice(0, 8).map(e =>
+                            `<span class="px-3 py-1 bg-indigo-50 dark:bg-indigo-900/30 text-primary text-xs font-semibold rounded-full">${e}</span>`
+                        ).join('');
+                    }
+                }
+
+                // ── Reviews & Rating ──
+                async function loadReviews() {
+                    const reviews = await CourseService.getCourseReviews(courseId);
+                    renderReviews(reviews);
+                }
+
+                function renderReviews(reviews) {
+                    const listEl = document.getElementById('cd-reviews-list');
+                    const avgEl = document.getElementById('cd-avg-rating');
+                    const starsEl = document.getElementById('cd-rating-stars');
+                    const countEl = document.getElementById('cd-review-count');
+                    const barsEl = document.getElementById('cd-rating-bars');
+
+                    if (reviews.length === 0) {
+                        avgEl.textContent = '0.0';
+                        countEl.textContent = '0 reviews';
+                        starsEl.innerHTML = [1,2,3,4,5].map(() => '<span class="material-icons-round text-slate-300">star</span>').join('');
+                        barsEl.innerHTML = renderRatingBars([0,0,0,0,0], 0);
+                        listEl.innerHTML = '<p class="text-slate-500 text-sm col-span-2 text-center py-8">No reviews yet. Be the first!</p>';
+                        document.getElementById('cd-instructor-rating').textContent = '—';
+                        return;
+                    }
+
+                    const total = reviews.length;
+                    const avg = reviews.reduce((s, r) => s + r.rating, 0) / total;
+                    const avgFixed = avg.toFixed(1);
+
+                    avgEl.textContent = avgFixed;
+                    countEl.textContent = `${total} review${total !== 1 ? 's' : ''}`;
+                    document.getElementById('cd-instructor-rating').textContent = avgFixed;
+
+                    // Star display for average
+                    starsEl.innerHTML = [1,2,3,4,5].map(n => {
+                        const cls = n <= Math.round(avg) ? 'text-yellow-500' : 'text-slate-300';
+                        return `<span class="material-icons-round ${cls}">star</span>`;
+                    }).join('');
+
+                    // Rating distribution
+                    const counts = [5,4,3,2,1].map(n => reviews.filter(r => r.rating === n).length);
+                    barsEl.innerHTML = renderRatingBars(counts, total);
+
+                    // Review cards
+                    listEl.innerHTML = reviews.map(r => {
+                        const reviewer = r.reviewer || {};
+                        const name = reviewer.full_name || 'Anonymous';
+                        const avatar = reviewer.avatar_url
+                            ? `<img src="${reviewer.avatar_url}" class="w-10 h-10 rounded-full object-cover" alt="${name}" />`
+                            : `<div class="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center text-primary font-bold text-sm">${name.charAt(0).toUpperCase()}</div>`;
+                        const date = new Date(r.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+                        const stars = [1,2,3,4,5].map(n => `<span class="material-icons-round text-sm ${n <= r.rating ? 'text-yellow-500' : 'text-slate-300'}" >star</span>`).join('');
+                        return `
+                        <div class="p-6 border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900/40">
+                            <div class="flex items-center gap-3 mb-3">
+                                ${avatar}
+                                <div>
+                                    <div class="text-sm font-bold text-slate-900 dark:text-white">${name}</div>
+                                    <div class="text-[10px] text-slate-500 font-medium">${date}</div>
+                                </div>
+                            </div>
+                            <div class="flex mb-3">${stars}</div>
+                            <p class="text-sm text-slate-600 dark:text-slate-400">${r.review_text || ''}</p>
+                        </div>`;
+                    }).join('');
+                }
+
+                function renderRatingBars(counts, total) {
+                    return [5,4,3,2,1].map((stars, idx) => {
+                        const pct = total > 0 ? Math.round((counts[idx] / total) * 100) : 0;
+                        const color = pct > 0 ? 'bg-yellow-400' : 'bg-slate-300';
+                        return `<div class="flex items-center gap-3 text-xs font-medium text-slate-500">
+                            <div class="flex-1 h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                                <div class="h-full ${color} transition-all" style="width:${pct}%"></div>
+                            </div>
+                            <span class="w-14">${stars} star${stars > 1 ? 's' : ''}</span>
+                            <span class="w-6 text-right">${pct}%</span>
+                        </div>`;
+                    }).join('');
+                }
+
+                await loadReviews();
+
+                // ── Enrollment & Wishlist Status ──
+                if (currentUser) {
+                    // isEnrolled already fetched above; just get wishlist state
+                    const isWishlisted = await CourseService.checkWishlist(courseId, currentUser.id);
+                    // isEnrolled already set above
+                    const _enrolledAlready = isEnrolled;
+
+                    if (_enrolledAlready) {
+                        enrollBtn.textContent = 'Continue Learning';
+                        enrollBtn.classList.replace('bg-primary', 'bg-emerald-600');
+                        enrollBtn.classList.replace('hover:bg-indigo-600', 'hover:bg-emerald-700');
+                        // Show review form
+                        document.getElementById('cd-review-form').classList.remove('hidden');
+                    }
+                    updateWishlistButtonUI(isWishlisted);
+                }
+
+                // ── Star Picker ──
+                document.querySelectorAll('#cd-star-picker span').forEach(star => {
+                    star.addEventListener('click', () => {
+                        selectedRating = parseInt(star.dataset.star);
+                        document.querySelectorAll('#cd-star-picker span').forEach((s, i) => {
+                            s.classList.toggle('text-yellow-400', i < selectedRating);
+                            s.classList.toggle('text-slate-300', i >= selectedRating);
+                        });
+                    });
+                });
+
+                // ── Submit Review ──
+                const submitReviewBtn = document.getElementById('cd-submit-review');
+                if (submitReviewBtn) {
+                    submitReviewBtn.addEventListener('click', async () => {
+                        if (!currentUser) return;
+                        if (selectedRating === 0) { alert('Please select a star rating.'); return; }
+                        const reviewText = document.getElementById('cd-review-text').value.trim();
+                        submitReviewBtn.disabled = true;
+                        submitReviewBtn.textContent = 'Submitting...';
+                        try {
+                            await CourseService.submitReview(courseId, currentUser.id, selectedRating, reviewText);
+                            document.getElementById('cd-review-msg').classList.remove('hidden');
+                            document.getElementById('cd-review-text').value = '';
+                            selectedRating = 0;
+                            document.querySelectorAll('#cd-star-picker span').forEach(s => { s.classList.add('text-slate-300'); s.classList.remove('text-yellow-400'); });
+                            await loadReviews();
+                        } catch (e) {
+                            alert('Failed to submit review: ' + e.message);
+                        } finally {
+                            submitReviewBtn.disabled = false;
+                            submitReviewBtn.textContent = 'Submit Review';
                         }
                     });
                 }
-            } else {
-                // Fallback or 404 handling if course not found
-                console.warn("Course not found for ID:", courseId);
-            }
 
-            // Enroll Action
-            enrollBtn.addEventListener('click', () => {
-                if (courseId) {
-                    TacliimiDB.enrollCourse(courseId);
-                    window.location.href = '/src/pages/learning/learning-interface/index.html?course=' + encodeURIComponent(courseId);
+                // ── Enroll Button ──
+                enrollBtn.addEventListener('click', async () => {
+                    if (!currentUser) {
+                        window.location.href = `/src/pages/auth/login/?return=${encodeURIComponent(window.location.pathname + window.location.search)}`;
+                        return;
+                    }
+                    const isEnrolled = await CourseService.checkEnrollment(courseId, currentUser.id);
+                    if (!isEnrolled) {
+                        const isFree = !courseData.price || courseData.price === 0 || courseData.price === 'Free' || parseFloat(courseData.price) === 0;
+                        if (!isFree) {
+                            openPaymentModal(courseData);
+                            return;
+                        }
+
+                        enrollBtn.disabled = true;
+                        enrollBtn.innerHTML = '<span class="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></span> Enrolling...';
+                        try {
+                            await CourseService.enrollCourse(courseId, currentUser.id);
+                            document.getElementById('cd-review-form').classList.remove('hidden');
+                        } catch (e) {
+                            alert('Failed to enroll: ' + e.message);
+                            enrollBtn.disabled = false;
+                            enrollBtn.textContent = 'Enroll Now';
+                            return;
+                        }
+                    }
+                    window.location.href = `/src/pages/learning/learning-interface/index.html?id=${courseId}`;
+                });
+
+                // ── Wishlist Button ──
+                wishlistBtn.addEventListener('click', async () => {
+                    if (!currentUser) {
+                        window.location.href = `/src/pages/auth/login/?return=${encodeURIComponent(window.location.pathname + window.location.search)}`;
+                        return;
+                    }
+                    try {
+                        const newState = await CourseService.toggleWishlist(courseId, currentUser.id);
+                        updateWishlistButtonUI(newState);
+                    } catch (e) { console.error('Wishlist error:', e); }
+                });
+
+                // ── Video Preview ──
+                const playPreviewBtn = document.getElementById('play-preview-btn');
+                if (playPreviewBtn) {
+                    playPreviewBtn.addEventListener('click', () => {
+                        const videoUrl = courseData.intro_video_url;
+                        if (videoUrl) {
+                            const modal = document.getElementById('video-modal');
+                            const player = document.getElementById('video-modal-player');
+                            player.src = videoUrl;
+                            modal.classList.remove('hidden');
+                            modal.classList.add('flex');
+                            player.play();
+                        } else {
+                            alert('No preview video available.');
+                        }
+                    });
                 }
-            });
 
-            // Wishlist Action
-            function updateWishlistButtonState() {
-                if (!courseId) return;
-
-                if (TacliimiDB.isWishlisted(courseId)) {
-                    wishlistBtn.innerHTML = '<span class="material-icons-round text-sm align-middle mr-1 text-red-500">favorite</span> Wishlisted';
-                    wishlistBtn.classList.add('border-primary', 'text-primary');
-                    wishlistBtn.classList.remove('border-slate-200', 'text-slate-700');
-                } else {
-                    wishlistBtn.innerHTML = 'Add to Wishlist';
-                    wishlistBtn.classList.remove('border-primary', 'text-primary');
-                    wishlistBtn.classList.add('border-slate-200', 'text-slate-700');
-                }
+            } catch (e) {
+                console.error('Error loading course details:', e);
             }
-
-            updateWishlistButtonState();
-
-            wishlistBtn.addEventListener('click', () => {
-                if (!courseId) return;
-                TacliimiDB.toggleWishlist(courseId);
-                updateWishlistButtonState();
-            });
         });
 
-        // Modal close logic
-        function closeVideoModal() {
-            const modal = document.getElementById('video-modal');
-            const player = document.getElementById('video-modal-player');
-            if (modal && player) {
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
-                player.pause();
-                player.src = '';
+        function updateWishlistButtonUI(isWishlisted) {
+            const btn = document.getElementById('wishlist-btn');
+            if (isWishlisted) {
+                btn.innerHTML = '<span class="material-icons-round text-sm align-middle mr-1 text-red-500">favorite</span> Wishlisted';
+                btn.classList.add('border-primary', 'text-primary');
+                btn.classList.remove('border-slate-200', 'text-slate-700', 'dark:border-slate-800', 'dark:text-slate-300');
+            } else {
+                btn.innerHTML = 'Add to Wishlist';
+                btn.classList.remove('border-primary', 'text-primary');
+                btn.classList.add('border-slate-200', 'text-slate-700', 'dark:border-slate-800', 'dark:text-slate-300');
             }
         }
+
+        window.playLessonPreview = function(videoUrl) {
+            if (!videoUrl) return;
+            const modal = document.getElementById('video-modal');
+            const player = document.getElementById('video-modal-player');
+            player.src = videoUrl;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            player.play().catch(() => {});
+        };
+
+        window.closeVideoModal = function() {
+            const modal = document.getElementById('video-modal');
+            const player = document.getElementById('video-modal-player');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            player.pause();
+            player.src = '';
+        };
     </script>
 
     <!-- Video Modal -->
@@ -547,6 +766,232 @@
             </video>
         </div>
     </div>
+    <!-- Somali Payment Modal -->
+    <div id="payment-modal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in duration-300">
+            <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white">Secure Checkout</h3>
+                <button onclick="closePaymentModal()" class="text-slate-400 hover:text-slate-600 transition">
+                    <span class="material-icons-round">close</span>
+                </button>
+            </div>
+            
+            <div class="p-6 space-y-6">
+                <!-- Course Summary -->
+                <div class="flex gap-4 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
+                    <img id="pay-thumb" src="" class="w-20 h-12 object-cover rounded-md shadow-sm" alt="Course" />
+                    <div>
+                        <h4 id="pay-title" class="text-sm font-bold text-slate-900 dark:text-white line-clamp-1">Course Title</h4>
+                        <p id="pay-price" class="text-primary font-black">$0.00</p>
+                    </div>
+                </div>
+
+                <!-- Payment Methods -->
+                <div class="space-y-3">
+                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Choose Payment Method</label>
+                    
+                    <div class="grid grid-cols-1 gap-3">
+                        <label class="relative flex items-center justify-between p-4 rounded-xl border-2 border-indigo-500 bg-indigo-50/50 dark:bg-indigo-900/10 cursor-pointer group transition-all" id="method-waafi">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center shadow-sm">
+                                    <span class="material-icons-round text-indigo-600">account_balance_wallet</span>
+                                </div>
+                                <div>
+                                    <span class="font-bold text-slate-900 dark:text-white">Waafi Payment</span>
+                                    <p class="text-[10px] text-slate-500">Popular in Somalia</p>
+                                </div>
+                            </div>
+                            <input type="radio" name="pay-method" value="waafi" checked class="text-primary focus:ring-primary h-4 w-4" />
+                        </label>
+
+                        <label class="relative flex items-center justify-between p-4 rounded-xl border-2 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 cursor-pointer group transition-all" id="method-sifaalo">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center shadow-sm">
+                                    <span class="material-icons-round text-emerald-600">payments</span>
+                                </div>
+                                <div>
+                                    <span class="font-bold text-slate-900 dark:text-white">Sifaalo</span>
+                                    <p class="text-[10px] text-slate-500">Fast & Secure</p>
+                                </div>
+                            </div>
+                            <input type="radio" name="pay-method" value="sifaalo" class="text-primary focus:ring-primary h-4 w-4" />
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Phone Input -->
+                <div id="phone-input-area" class="space-y-2">
+                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-300">Enter Phone Number</label>
+                    <div class="relative">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">+252</span>
+                        <input type="tel" id="pay-phone" placeholder="61XXXXXXX" 
+                            class="w-full pl-14 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-xl focus:ring-2 focus:ring-primary text-slate-900 dark:text-white font-medium" />
+                    </div>
+                    <p class="text-[10px] text-slate-500 italic">Example: 615000000</p>
+                </div>
+            </div>
+
+            <div class="px-6 py-4 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800">
+                <button onclick="processMockPayment()" id="pay-confirm-btn"
+                    class="w-full py-4 bg-primary hover:bg-indigo-700 text-white font-extrabold rounded-xl shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2">
+                    Pay & Enroll Now
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openPaymentModal(course) {
+            document.getElementById('pay-title').textContent = course.title;
+            document.getElementById('pay-price').textContent = typeof course.price === 'number' ? `$${course.price.toFixed(2)}` : course.price;
+            document.getElementById('pay-thumb').src = course.thumbnail_url || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?ixlib=rb-4.0.3&auto=format&fit=crop&w=1740&q=80';
+            
+            const modal = document.getElementById('payment-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            // Handle method highlighting
+            const radios = document.querySelectorAll('input[name="pay-method"]');
+            radios.forEach(r => {
+                r.addEventListener('change', () => {
+                    document.getElementById('method-waafi').className = r.value === 'waafi' 
+                        ? 'relative flex items-center justify-between p-4 rounded-xl border-2 border-indigo-500 bg-indigo-50/50 dark:bg-indigo-900/10 cursor-pointer group transition-all'
+                        : 'relative flex items-center justify-between p-4 rounded-xl border-2 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 cursor-pointer group transition-all';
+                    
+                    document.getElementById('method-sifaalo').className = r.value === 'sifaalo'
+                        ? 'relative flex items-center justify-between p-4 rounded-xl border-2 border-emerald-500 bg-emerald-50/50 dark:bg-emerald-900/10 cursor-pointer group transition-all'
+                        : 'relative flex items-center justify-between p-4 rounded-xl border-2 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 cursor-pointer group transition-all';
+                });
+            });
+        }
+
+        function closePaymentModal() {
+            const modal = document.getElementById('payment-modal');
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+        }
+
+        async function applyCoupon() {
+            const input = document.getElementById('coupon-input');
+            const btn = document.getElementById('apply-coupon-btn');
+            const code = input.value.trim().toUpperCase();
+            
+            if (!code) return;
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const courseId = urlParams.get('id');
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="animate-spin inline-block w-3 h-3 border-2 border-white border-t-transparent rounded-full"></span>';
+
+            try {
+                const { data: coupon, error } = await supabase
+                    .from('course_coupons')
+                    .select('*')
+                    .eq('course_id', courseId)
+                    .eq('code', code)
+                    .eq('is_active', true)
+                    .single();
+
+                if (error || !coupon) {
+                    throw new Error("Invalid coupon code");
+                }
+
+                // Date Validation
+                const now = new Date();
+                const startsAt = coupon.starts_at ? new Date(coupon.starts_at) : null;
+                const expiresAt = coupon.expires_at ? new Date(coupon.expires_at) : null;
+
+                if (startsAt && startsAt > now) {
+                    throw new Error(`This coupon will be active starting ${startsAt.toLocaleDateString()}`);
+                }
+
+                if (expiresAt && expiresAt < now) {
+                    throw new Error("This coupon has expired");
+                }
+
+                // Apply Discount
+                const priceEl = document.getElementById('cd-price');
+                const originalPriceEl = document.getElementById('cd-original-price');
+                const discountBadge = document.getElementById('cd-discount-badge');
+                
+                // We need the original price from the course object (stored globally in DOMContentLoaded context)
+                const currentPriceText = priceEl.textContent.replace('$', '');
+                const currentPrice = parseFloat(currentPriceText);
+                
+                if (window.basePrice === undefined) {
+                    window.basePrice = currentPrice;
+                }
+
+                const discountAmount = (window.basePrice * coupon.discount_percent) / 100;
+                const newPrice = window.basePrice - discountAmount;
+
+                priceEl.textContent = `$${newPrice.toFixed(2)}`;
+                originalPriceEl.textContent = `$${window.basePrice.toFixed(2)}`;
+                originalPriceEl.classList.remove('hidden');
+                discountBadge.textContent = `${coupon.discount_percent}% OFF`;
+                discountBadge.classList.remove('hidden');
+
+                // Update payment modal price too
+                document.getElementById('pay-price').textContent = `$${newPrice.toFixed(2)}`;
+
+                input.classList.add('border-emerald-500', 'bg-emerald-50');
+                btn.innerHTML = '<span class="material-icons-round text-xs">check</span>';
+                btn.classList.replace('bg-primary', 'bg-emerald-500');
+                btn.classList.replace('hover:bg-indigo-600', 'hover:bg-emerald-600');
+                
+                if (typeof showToast === 'function') {
+                    showToast(`Coupon applied! ${coupon.discount_percent}% discount.`);
+                }
+
+            } catch (err) {
+                alert(err.message);
+                btn.disabled = false;
+                btn.innerHTML = 'Apply';
+                input.classList.add('border-red-500');
+            }
+        }
+
+        async function processMockPayment() {
+            const btn = document.getElementById('pay-confirm-btn');
+            const phone = document.getElementById('pay-phone').value;
+            const method = document.querySelector('input[name="pay-method"]:checked').value;
+
+            if (phone.length < 9) {
+                alert("Please enter a valid Somali phone number (e.g., 61XXXXXXX)");
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = `<span class="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></span> Processing ${method}...`;
+
+            // Simulate API delay
+            setTimeout(async () => {
+                try {
+                    // Get course data again to be sure
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const courseId = urlParams.get('id');
+                    const profile = JSON.parse(localStorage.getItem('tacliimi_profile') || '{}');
+                    
+                    if (!profile.id) throw new Error("User session expired");
+
+                    await CourseService.enrollCourse(courseId, profile.id);
+                    
+                    btn.innerHTML = `<span class="material-icons-round text-white mr-2">check_circle</span> Payment Success!`;
+                    btn.className = "w-full py-4 bg-emerald-600 text-white font-extrabold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2";
+
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+
+                } catch (err) {
+                    alert("Payment failed: " + err.message);
+                    btn.disabled = false;
+                    btn.innerHTML = "Pay & Enroll Now";
+                }
+            }, 2000);
+        }
+    </script>
 </body>
 
 </html>

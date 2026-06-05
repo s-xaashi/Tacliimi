@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Platform Settings | Tacliimi Admin</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <script type="module" src="/src/services/globalProfile.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: { primary: "#4F46E5", "background-light": "#F9FAFB", "background-dark": "#111827" },
+                    fontFamily: { display: ["Inter", "sans-serif"] }
+                }
+            }
+        };
+    </script>
+    <style type="text/tailwindcss">
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .settings-card { @apply bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-8 shadow-sm; }
+    </style>
+
+    <script type="module">
+        import { AuthService } from '/src/services/authService.js';
+        const session = await AuthService.getSession();
+        if (!session || !session.is_admin) {
+            window.location.replace('/src/pages/auth/login-select/index.html');
+        }
+    </script>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 transition-colors duration-200">
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed left-0 top-0 h-full w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col z-30 transition-transform -translate-x-full lg:translate-x-0">
+        <div class="p-8 pb-4">
+            <div class="flex items-center gap-3 cursor-pointer" onclick="window.location.href='/index.html'">
+                <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center">
+                    <span class="material-symbols-outlined text-white text-2xl">admin_panel_settings</span>
+                </div>
+                <span class="text-2xl font-black tracking-tighter text-slate-900 dark:text-white">TACLIIMI<span class="text-indigo-600">.</span></span>
+            </div>
+        </div>
+
+        <nav class="flex-1 p-6 space-y-2 overflow-y-auto mt-4">
+            <a href="/src/pages/admin/dashboard/index.html" class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 rounded-xl transition-all font-medium">
+                <span class="material-symbols-outlined">dashboard</span>
+                Dashboard
+            </a>
+            <a href="/src/pages/admin/courses-review/index.html" class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 rounded-xl transition-all font-medium">
+                <span class="material-symbols-outlined">rule</span>
+                Courses Review
+            </a>
+            <a href="/src/pages/admin/users/index.html" class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 rounded-xl transition-all font-medium">
+                <span class="material-symbols-outlined">group</span>
+                Users
+            </a>
+            <a href="/src/pages/admin/instructors/index.html" class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 rounded-xl transition-all font-medium">
+                <span class="material-symbols-outlined">school</span>
+                Instructors
+            </a>
+            <a href="/src/pages/admin/categories/index.html" class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 rounded-xl transition-all font-medium">
+                <span class="material-symbols-outlined">category</span>
+                Categories
+            </a>
+            <div class="h-px bg-slate-200 dark:bg-slate-800 my-4 mx-4"></div>
+            <a href="/src/pages/admin/admin-management/index.html" class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 rounded-xl transition-all font-medium">
+                <span class="material-symbols-outlined">manage_accounts</span>
+                Admin Management
+            </a>
+            <a href="/src/pages/admin/settings/index.html" class="flex items-center gap-3 px-4 py-3 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-bold rounded-xl ring-1 ring-indigo-500/10">
+                <span class="material-symbols-outlined">settings</span>
+                Settings
+            </a>
+        </nav>
+
+        <div class="p-6 border-t border-slate-100 dark:border-slate-800">
+            <button id="logout-btn" class="flex items-center justify-center gap-2 w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 hover:bg-red-50 text-slate-600 dark:text-slate-400 hover:text-red-600 font-bold rounded-xl transition-all">
+                <span class="material-symbols-outlined">logout</span>
+                Logout
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="lg:ml-72 min-h-screen flex flex-col transition-all duration-300">
+        <!-- Header -->
+        <header class="h-20 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-8 sticky top-0 z-10 w-full">
+            <h2 class="text-xl font-black tracking-tight text-slate-900 dark:text-white">Platform Settings</h2>
+            <button id="theme-toggle" class="w-10 h-10 flex items-center justify-center text-slate-500 bg-slate-100 dark:bg-slate-800 rounded-xl hover:bg-indigo-50 transition-all">
+                <span class="material-symbols-outlined">dark_mode</span>
+            </button>
+        </header>
+
+        <!-- Content -->
+        <div class="p-8 lg:p-12 max-w-[1000px] mx-auto w-full space-y-8">
+            <div class="settings-card">
+                <h3 class="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2 mb-6">
+                    <span class="material-symbols-outlined text-indigo-600">security</span>
+                    Security Architecture
+                </h3>
+                <div class="space-y-6">
+                    <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
+                        <div>
+                            <p class="text-sm font-bold text-slate-900 dark:text-white">Requires Admin Verification</p>
+                            <p class="text-[10px] text-slate-400 uppercase tracking-widest font-black mt-1">Status: Active</p>
+                        </div>
+                        <div class="w-12 h-6 bg-indigo-600 rounded-full relative">
+                            <div class="absolute right-1 top-1 w-4 h-4 bg-white rounded-full"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-card">
+                <h3 class="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2 mb-6">
+                    <span class="material-symbols-outlined text-indigo-600">tune</span>
+                    Platform Configuration
+                </h3>
+                <div class="space-y-4">
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Marketplace Status</label>
+                        <select class="w-full px-4 py-3.5 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-indigo-500 transition-all">
+                            <option>Operational</option>
+                            <option>Maintenance Mode</option>
+                            <option>Restricted Access</option>
+                        </select>
+                    </div>
+                    <div class="space-y-2 pt-4">
+                        <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Platform Currency</label>
+                        <input type="text" value="USD" disabled class="w-full px-4 py-3.5 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-bold opacity-50">
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-3 pt-4">
+                <button class="px-8 py-4 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-indigo-700 shadow-xl shadow-indigo-100 dark:shadow-none transition-all">
+                    Commit Changes
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <script type="module">
+        import { AuthService } from '/src/services/authService.js';
+        document.getElementById('logout-btn')?.addEventListener('click', async () => { await AuthService.logout(); window.location.href = '/src/pages/auth/login-select/index.html'; });
+        const themeToggle = document.getElementById('theme-toggle');
+        themeToggle?.addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+            const isDark = document.documentElement.classList.contains('dark');
+            themeToggle.innerHTML = `<span class="material-symbols-outlined">${isDark ? 'light_mode' : 'dark_mode'}</span>`;
+        });
+    </script>
+</body>
+</html>

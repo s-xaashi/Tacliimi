@@ -106,6 +106,19 @@
                     <h1 class="text-3xl font-extrabold mb-2">Become an Instructor</h1>
                     <p class="text-slate-500">Create your account to start building your first course.</p>
                 </div>
+
+                <button type="button" id="google-signup-btn"
+                    class="w-full flex items-center justify-center gap-3 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold py-3.5 rounded-xl transition-all shadow-sm mb-6">
+                    <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" class="w-5 h-5">
+                    Sign up with Google
+                </button>
+
+                <div class="relative flex py-5 items-center">
+                    <div class="flex-grow border-t border-slate-200"></div>
+                    <span class="flex-shrink-0 mx-4 text-slate-400 text-sm">Or continue with email</span>
+                    <div class="flex-grow border-t border-slate-200"></div>
+                </div>
+
                 <form id="instructorRegisterForm" class="space-y-6">
                     <div>
                         <label class="block text-sm font-semibold mb-2" for="fullname">Full Name</label>
@@ -157,19 +170,34 @@
                     </button>
                 </form>
 
-                <script src="/src/services/tacliimi_db.js"></script>
-                <script>
-                    // Prevent access if already logged in as instructor
-                    const session = TacliimiDB.getCurrentSession();
-                    if (session && session.role === 'instructor') {
-                        window.location.href = '/src/pages/instructor/instructor-dashboard/index.html';
-                    }
+                <script type="module">
+                    import { AuthService } from '/src/services/authService.js';
 
-                    document.getElementById('instructorRegisterForm').addEventListener('submit', (e) => {
+                    // Supabase handles session persistence globally, but we can check if they are already logged in
+                    AuthService.getSession().then(session => {
+                        if (session) {
+                            // Already logged in? Redirect to dashboard.
+                            window.location.href = '/src/pages/instructor/instructor-dashboard/index.html';
+                        }
+                    });
+
+                    // Google OAuth Flow
+                    document.getElementById('google-signup-btn').addEventListener('click', async () => {
+                        const btn = document.getElementById('google-signup-btn');
+                        btn.innerHTML = '<span class="material-symbols-outlined animate-spin mr-2">refresh</span> Connecting...';
+                        try {
+                            await AuthService.signInWithGoogle('instructor');
+                        } catch (err) {
+                            btn.innerHTML = `<img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" class="w-5 h-5"> Sign up with Google`;
+                            alert("Google Sign-In failed: " + err.message);
+                        }
+                    });
+
+                    document.getElementById('instructorRegisterForm').addEventListener('submit', async (e) => {
                         e.preventDefault();
 
                         const fullname = document.getElementById('fullname').value.trim();
-                        const phone = document.getElementById('phone').value.trim();
+                        // const phone = document.getElementById('phone').value.trim(); // Phone isn't gathered by default Supabase Auth, can be added to profiles later
                         const email = document.getElementById('email').value.trim();
                         const password = document.getElementById('password').value;
                         const btn = e.target.querySelector('button[type="submit"]');
@@ -177,22 +205,30 @@
 
                         try {
                             btn.innerText = 'Creating Account...';
+                            btn.disabled = true;
 
-                            // Register the instructor
-                            const session = TacliimiDB.registerUser({ fullName: fullname, email, password, role: 'instructor' });
+                            // Store intended role for callback
+                            localStorage.setItem('tacliimi_pending_role', 'instructor');
 
-                            // Save extra fields like phone to their profile
-                            TacliimiDB.updateProfileInfo({ phone: phone });
+                            // Register the instructor via Supabase
+                            await AuthService.signUpInstructor(email, password, fullname);
 
-                            if (session) {
-                                btn.innerHTML = 'Account Created <span class="material-icons-round text-xl">check</span>';
-                                btn.classList.replace('bg-primary', 'bg-green-500');
-                                setTimeout(() => {
-                                    window.location.href = '/src/pages/instructor/instructor-dashboard/index.html';
-                                }, 500);
-                            }
+                            // Registration successful (usually requires email confirmation)
+                            btn.innerHTML = 'Account Created <span class="material-icons-round text-xl">check</span>';
+                            btn.classList.replace('bg-primary', 'bg-green-500');
+
+                            // Replace form with success message asking them to check email
+                            e.target.innerHTML = `
+                                <div class="text-center p-6 bg-green-50 rounded-xl border border-green-200">
+                                    <span class="material-icons-round text-green-500 text-4xl mb-3">mark_email_read</span>
+                                    <h3 class="text-lg font-bold text-slate-800 mb-2">Check your email</h3>
+                                    <p class="text-slate-600 text-sm">We've sent a confirmation link to <strong>${email}</strong>. Please click the link to verify your account before logging in.</p>
+                                </div>
+                            `;
+
                         } catch (err) {
                             btn.innerHTML = originalText;
+                            btn.disabled = false;
 
                             // Clear existing errors
                             const oldErr = document.getElementById('register-error');
@@ -210,7 +246,8 @@
                 <div class="mt-8 text-center border-t border-slate-100 pt-8">
                     <p class="text-slate-500 text-sm">
                         Already have an account?
-                        <a class="text-primary font-bold hover:underline ml-1" href="/src/pages/auth/instructor-login/index.html">Log
+                        <a class="text-primary font-bold hover:underline ml-1"
+                            href="/src/pages/auth/instructor-login/index.html">Log
                             in</a>
                     </p>
                 </div>
