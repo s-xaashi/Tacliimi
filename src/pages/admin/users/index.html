@@ -3,17 +3,16 @@
 <head>
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>User Management | Tacliimi Admin</title>
+    <title>Student Management | Tacliimi Admin</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
-    <script type="module" src="/src/services/globalProfile.js"></script>
     <script>
         tailwind.config = {
             darkMode: "class",
             theme: {
                 extend: {
-                    colors: { primary: "#4F46E5", "background-light": "#F9FAFB", "background-dark": "#111827" },
+                    colors: { primary: "#4F46E5" },
                     fontFamily: { display: ["Inter", "sans-serif"] }
                 }
             }
@@ -23,18 +22,14 @@
         body { font-family: 'Inter', sans-serif; }
         .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
         .table-row-hover { @apply hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors; }
+        .badge { @apply px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest inline-flex items-center gap-1; }
+        .stat-card { @apply bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 flex items-center gap-4; }
     </style>
 
-    <script type="module">
-        import { AuthService } from '/src/services/authService.js';
-        const session = await AuthService.getSession();
-        if (!session || !session.is_admin) {
-            window.location.replace('/src/pages/auth/login-select/index.html');
-        }
-    </script>
+    <script type="module" src="/src/services/adminSidebar.js"></script>
 </head>
 
-<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 transition-colors duration-200">
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-200">
     <!-- Sidebar Overlay -->
     <div id="sidebar-overlay" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-20 hidden lg:hidden"></div>
 
@@ -54,19 +49,23 @@
 
         <nav class="flex-1 p-6 space-y-2 overflow-y-auto mt-4">
             <a href="/src/pages/admin/dashboard/index.html" class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl transition-all group font-medium">
-                <span class="material-symbols-outlined shrink-0" style="font-variation-settings:'FILL' 0;">dashboard</span>
+                <span class="material-symbols-outlined shrink-0 group-hover:scale-110 transition-transform">dashboard</span>
                 Dashboard
             </a>
             <a href="/src/pages/admin/courses-review/index.html" class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl transition-all group font-medium">
                 <span class="material-symbols-outlined shrink-0 group-hover:scale-110 transition-transform">rule</span>
                 Courses Review
             </a>
+            <a href="/src/pages/admin/bookings-review/index.html" class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl transition-all group font-medium">
+                <span class="material-symbols-outlined shrink-0 group-hover:scale-110 transition-transform">event_note</span>
+                Bookings Review
+            </a>
             <a href="/src/pages/admin/users/index.html" class="flex items-center gap-3 px-4 py-3 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-bold rounded-xl ring-1 ring-indigo-500/10">
                 <span class="material-symbols-outlined shrink-0" style="font-variation-settings:'FILL' 1;">group</span>
-                Users
+                Students
             </a>
             <a href="/src/pages/admin/instructors/index.html" class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl transition-all group font-medium">
-                <span class="material-symbols-outlined shrink-0 group-hover:scale-110 transition-transform">school</span>
+                <span class="material-symbols-outlined shrink-0 group-hover:scale-110 transition-transform">person_pin</span>
                 Instructors
             </a>
             <a href="/src/pages/admin/categories/index.html" class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl transition-all group font-medium">
@@ -74,8 +73,12 @@
                 Categories
             </a>
             <div class="h-px bg-slate-100 dark:bg-slate-800 my-4 mx-4"></div>
+            <a href="/src/pages/admin/finance/index.html" class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl transition-all group font-medium">
+                <span class="material-symbols-outlined shrink-0" style="font-variation-settings:'FILL' 0;">payments</span>
+                Finance Dashboard
+            </a>
             <a href="/src/pages/admin/admin-management/index.html" class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl transition-all group font-medium">
-                <span class="material-symbols-outlined shrink-0 group-hover:scale-110 transition-transform">manage_accounts</span>
+                <span class="material-symbols-outlined shrink-0" style="font-variation-settings:'FILL' 0;">manage_accounts</span>
                 Admin Management
             </a>
             <a href="/src/pages/admin/settings/index.html" class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl transition-all group font-medium">
@@ -85,7 +88,7 @@
         </nav>
 
         <div class="p-6 border-t border-slate-100 dark:border-slate-800">
-            <button id="logout-btn" class="flex items-center justify-center gap-2 w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-600 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 font-bold rounded-xl transition-all border border-transparent hover:border-red-100 dark:hover:border-red-900/50">
+            <button id="logout-btn" class="flex items-center justify-center gap-2 w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-600 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 font-bold rounded-xl transition-all">
                 <span class="material-symbols-outlined">logout</span>
                 Logout
             </button>
@@ -93,7 +96,7 @@
     </aside>
 
     <!-- Main Content -->
-    <main class="lg:ml-72 min-h-screen flex flex-col transition-all duration-300">
+    <main class="lg:ml-72 min-h-screen flex flex-col">
         <!-- Header -->
         <header class="h-20 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-8 sticky top-0 z-10 w-full">
             <div class="flex items-center gap-4">
@@ -101,16 +104,22 @@
                     <span class="material-symbols-outlined">menu_open</span>
                 </button>
                 <div>
-                    <h2 class="text-xl font-black tracking-tight text-slate-900 dark:text-white">User Management</h2>
-                    <p class="text-xs text-slate-400 font-medium tracking-wide">Protocol: Registry Oversight</p>
+                    <h2 class="text-xl font-black tracking-tight text-slate-900 dark:text-white">Student Management</h2>
+                    <p class="text-xs text-slate-400 font-medium tracking-wide">View, moderate and manage all enrolled students</p>
                 </div>
             </div>
-            
-            <div class="flex items-center gap-6">
+
+            <div class="flex items-center gap-4">
                 <div class="relative hidden sm:block">
                     <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
-                    <input type="text" id="user-search" placeholder="Search users..." class="pl-10 pr-4 py-2 bg-slate-100 dark:bg-slate-800 border-none rounded-xl text-xs font-medium focus:ring-2 focus:ring-indigo-500 transition-all w-64">
+                    <input type="text" id="student-search" placeholder="Search by name or email…" class="pl-10 pr-4 py-2.5 bg-slate-100 dark:bg-slate-800 border-none rounded-xl text-xs font-medium focus:ring-2 focus:ring-indigo-500 transition-all w-72">
                 </div>
+                <select id="status-filter" class="py-2.5 px-3 bg-slate-100 dark:bg-slate-800 border-none rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-500 transition-all text-slate-600 dark:text-slate-300">
+                    <option value="">All Statuses</option>
+                    <option value="active">Active</option>
+                    <option value="suspended">Suspended</option>
+                    <option value="blocked">Blocked</option>
+                </select>
                 <button id="theme-toggle" class="w-10 h-10 flex items-center justify-center text-slate-500 bg-slate-100 dark:bg-slate-800 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-all">
                     <span class="material-symbols-outlined">dark_mode</span>
                 </button>
@@ -118,143 +127,383 @@
         </header>
 
         <!-- Content Area -->
-        <div class="flex-1 p-8 lg:p-12 max-w-[1600px] mx-auto w-full">
+        <div class="flex-1 p-8 lg:p-10">
+            <!-- Stats Bar -->
+            <div id="stats-bar" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                <div class="stat-card">
+                    <div class="w-10 h-10 shrink-0 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-indigo-500">school</span>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Students</p>
+                        <p class="text-2xl font-black text-slate-900 dark:text-white" id="stat-total">—</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="w-10 h-10 shrink-0 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-emerald-500">check_circle</span>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active</p>
+                        <p class="text-2xl font-black text-slate-900 dark:text-white" id="stat-active">—</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="w-10 h-10 shrink-0 rounded-xl bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-amber-500">pause_circle</span>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Suspended</p>
+                        <p class="text-2xl font-black text-slate-900 dark:text-white" id="stat-suspended">—</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="w-10 h-10 shrink-0 rounded-xl bg-red-50 dark:bg-red-900/30 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-red-500">block</span>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Blocked</p>
+                        <p class="text-2xl font-black text-slate-900 dark:text-white" id="stat-blocked">—</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Table -->
             <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
                         <thead>
                             <tr class="bg-slate-50 dark:bg-slate-800/50">
-                                <th class="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">User Profile</th>
-                                <th class="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Identity/Role</th>
-                                <th class="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Status</th>
-                                <th class="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Joined Date</th>
-                                <th class="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 text-right">Actions</th>
+                                <th class="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 whitespace-nowrap">Student</th>
+                                <th class="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 whitespace-nowrap">Contact & Location</th>
+                                <th class="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 whitespace-nowrap">Courses Enrolled</th>
+                                <th class="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 whitespace-nowrap">Last Active</th>
+                                <th class="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 whitespace-nowrap">Status</th>
+                                <th class="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 whitespace-nowrap">Joined</th>
+                                <th class="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 text-right whitespace-nowrap">Actions</th>
                             </tr>
                         </thead>
-                        <tbody id="user-table-body" class="divide-y divide-slate-100 dark:divide-slate-800">
-                            <!-- Skeleton Rows -->
-                            <tr class="animate-pulse"><td colspan="5" class="px-6 py-8 h-20 bg-slate-50/50 dark:bg-slate-800/20"></td></tr>
-                            <tr class="animate-pulse"><td colspan="5" class="px-6 py-8 h-20 bg-slate-50/50 dark:bg-slate-800/20 opacity-50"></td></tr>
+                        <tbody id="student-table-body" class="divide-y divide-slate-100 dark:divide-slate-800">
+                            <!-- Loading skeletons -->
+                            <tr class="animate-pulse"><td colspan="7" class="px-6 py-8 h-20 bg-slate-50/50 dark:bg-slate-800/20"></td></tr>
+                            <tr class="animate-pulse"><td colspan="7" class="px-6 py-8 h-20 bg-slate-50/50 dark:bg-slate-800/20 opacity-60"></td></tr>
+                            <tr class="animate-pulse"><td colspan="7" class="px-6 py-8 h-20 bg-slate-50/50 dark:bg-slate-800/20 opacity-30"></td></tr>
                         </tbody>
                     </table>
+                </div>
+                <div id="empty-state" class="hidden flex flex-col items-center justify-center py-24 text-center">
+                    <div class="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center mb-4">
+                        <span class="material-symbols-outlined text-3xl text-slate-400">person_search</span>
+                    </div>
+                    <h3 class="text-lg font-black text-slate-700 dark:text-slate-300">No Students Found</h3>
+                    <p class="text-sm text-slate-400 mt-1">Try adjusting your search or filter.</p>
                 </div>
             </div>
         </div>
     </main>
 
+    <!-- Action Confirmation Modal -->
+    <div id="action-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-2xl p-8 max-w-md w-full">
+            <div id="modal-icon-wrap" class="w-14 h-14 rounded-2xl flex items-center justify-center mb-5 mx-auto">
+                <span id="modal-icon" class="material-symbols-outlined text-3xl"></span>
+            </div>
+            <h3 id="modal-title" class="text-xl font-black text-center mb-2"></h3>
+            <p id="modal-desc" class="text-sm text-slate-500 dark:text-slate-400 text-center mb-8"></p>
+            <div class="flex gap-3">
+                <button id="modal-cancel" class="flex-1 py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all">Cancel</button>
+                <button id="modal-confirm" class="flex-1 py-3 font-bold rounded-xl transition-all text-white"></button>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         import { supabase } from '/src/services/supabaseClient.js';
         import { AuthService } from '/src/services/authService.js';
 
-        let allUsers = [];
+        let allStudents = [];
+        let adminId = null;
 
-        document.addEventListener('DOMContentLoaded', async () => {
-            const tableBody = document.getElementById('user-table-body');
-            const searchInput = document.getElementById('user-search');
+        const tableBody = document.getElementById('student-table-body');
+        const searchInput = document.getElementById('student-search');
+        const statusFilter = document.getElementById('status-filter');
+        const emptyState = document.getElementById('empty-state');
+        const modal = document.getElementById('action-modal');
 
-            // Load Profile Info (Consistency)
-            const profile = await AuthService.getCurrentProfile();
+        // ─── Status helpers ─────────────────────────────────────────────────────────
+        const statusConfig = {
+            active:    { label: 'Active',    dot: 'bg-emerald-500', badge: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400' },
+            suspended: { label: 'Suspended', dot: 'bg-amber-500',   badge: 'bg-amber-50   text-amber-700   dark:bg-amber-900/20   dark:text-amber-400' },
+            blocked:   { label: 'Blocked',   dot: 'bg-red-500',     badge: 'bg-red-50     text-red-700     dark:bg-red-900/20     dark:text-red-400' },
+        };
+        const getStatus = (s) => statusConfig[s] || { label: s || 'active', dot: 'bg-slate-400', badge: 'bg-slate-100 text-slate-500' };
 
-            async function fetchUsers() {
-                try {
-                    const { data, error } = await supabase.from('students').select('account_status, user_id, profiles:user_id (id, full_name, avatar_url, email, created_at)');
-        if(data) {
-            data.forEach(d => {
-                d.id = d.user_id;
-                d.full_name = d.profiles?.full_name;
-                d.avatar_url = d.profiles?.avatar_url;
-                d.email = d.profiles?.email;
-                d.created_at = d.profiles?.created_at;
-                d.role = 'student';
-                d.status = d.account_status;
+        function fmtDate(d) {
+            if (!d) return '—';
+            return new Date(d).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+        function fmtRelative(d) {
+            if (!d) return 'Never';
+            const diff = Date.now() - new Date(d).getTime();
+            const mins = Math.floor(diff / 60000);
+            if (mins < 60) return `${mins}m ago`;
+            const hrs = Math.floor(mins / 60);
+            if (hrs < 24) return `${hrs}h ago`;
+            return fmtDate(d);
+        }
+
+        // ─── Fetch ───────────────────────────────────────────────────────────────────
+        async function fetchStudents() {
+            try {
+                const { data, error } = await supabase.rpc('admin_get_all_students', { p_admin_id: adminId });
+                if (error) throw error;
+                allStudents = data || [];
+                updateStats();
+                applyFilters();
+
+                // Highlight a specific student if ?highlight=uuid is in the URL
+                const params = new URLSearchParams(window.location.search);
+                const highlightId = params.get('highlight');
+                if (highlightId) {
+                    setTimeout(() => {
+                        const row = document.querySelector(`tr[data-id="${highlightId}"]`);
+                        if (row) {
+                            row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            row.classList.add('ring-2', 'ring-inset', 'ring-indigo-400', 'bg-indigo-50/40', 'dark:bg-indigo-900/20');
+                            setTimeout(() => row.classList.remove('ring-2', 'ring-inset', 'ring-indigo-400', 'bg-indigo-50/40', 'dark:bg-indigo-900/20'), 3000);
+                        }
+                    }, 200);
+                }
+            } catch (e) {
+                console.error('Failed to fetch students:', e);
+                tableBody.innerHTML = `<tr><td colspan="7" class="px-6 py-10 text-center text-red-500 font-bold">Error: ${e.message}</td></tr>`;
+            }
+        }
+
+        // ─── Stats ───────────────────────────────────────────────────────────────────
+        function updateStats() {
+            document.getElementById('stat-total').textContent = allStudents.length;
+            document.getElementById('stat-active').textContent = allStudents.filter(s => !s.account_status || s.account_status === 'active').length;
+            document.getElementById('stat-suspended').textContent = allStudents.filter(s => s.account_status === 'suspended').length;
+            document.getElementById('stat-blocked').textContent = allStudents.filter(s => s.account_status === 'blocked').length;
+        }
+
+        // ─── Filter & Render ─────────────────────────────────────────────────────────
+        function applyFilters() {
+            const term = searchInput.value.toLowerCase();
+            const statusVal = statusFilter.value;
+            let filtered = allStudents.filter(s => {
+                const name = (s.full_name || '').toLowerCase();
+                const email = (s.email || '').toLowerCase();
+                
+                // Filter out Admin/SuperAdmin accounts from student list
+                const isAdmin = (s.role === 'admin' || s.role === 'superadmin' || 
+                                 name.includes('admin') || 
+                                 email.includes('admin') || 
+                                 email.includes('superadmin'));
+                if (isAdmin) return false;
+
+                const matchSearch = name.includes(term) || email.includes(term);
+                const normalStatus = s.account_status || 'active';
+                const matchStatus = !statusVal || normalStatus === statusVal;
+                return matchSearch && matchStatus;
+            });
+            renderStudents(filtered);
+        }
+
+        function renderStudents(students) {
+            tableBody.innerHTML = '';
+            if (students.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            emptyState.classList.add('hidden');
+
+            students.forEach(s => {
+                const st = getStatus(s.account_status || 'active');
+                const avatar = s.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(s.full_name || 'Student')}&background=6366f1&color=fff`;
+                const location = [s.city, s.country].filter(Boolean).join(', ') || '—';
+                const interests = Array.isArray(s.learning_interests) ? s.learning_interests.slice(0, 2).join(', ') : '—';
+                const isActive = !s.account_status || s.account_status === 'active';
+                const isSuspended = s.account_status === 'suspended';
+                const isBlocked = s.account_status === 'blocked';
+
+                const row = document.createElement('tr');
+                row.className = 'table-row-hover cursor-default';
+                row.dataset.id = s.user_id;
+                row.innerHTML = `
+                    <!-- Student -->
+                    <td class="px-6 py-5">
+                        <div class="flex items-center gap-4">
+                            <div class="w-11 h-11 shrink-0 rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800 ring-2 ring-slate-200 dark:ring-slate-700">
+                                <img src="${avatar}" class="w-full h-full object-cover">
+                            </div>
+                            <div class="min-w-0">
+                                <p class="text-sm font-bold text-slate-900 dark:text-white leading-tight truncate">${s.full_name || 'Anonymous'}</p>
+                                <p class="text-[11px] text-slate-400 truncate">${s.email || '—'}</p>
+                                ${s.gender ? `<p class="text-[10px] text-slate-400 capitalize">${s.gender}</p>` : ''}
+                            </div>
+                        </div>
+                    </td>
+                    <!-- Contact & Location -->
+                    <td class="px-6 py-5">
+                        <p class="text-xs font-medium text-slate-700 dark:text-slate-300">${s.phone_number || '—'}</p>
+                        <p class="text-[11px] text-slate-400 flex items-center gap-1 mt-0.5">
+                            <span class="material-symbols-outlined text-sm">location_on</span>${location}
+                        </p>
+                        ${interests !== '—' ? `<p class="text-[10px] text-indigo-400 mt-0.5 truncate max-w-[160px]">${interests}</p>` : ''}
+                    </td>
+                    <!-- Courses -->
+                    <td class="px-6 py-5">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center">
+                                <span class="material-symbols-outlined text-indigo-500 text-base">menu_book</span>
+                            </div>
+                            <span class="text-xl font-black text-slate-700 dark:text-slate-200">${s.total_enrolled_courses ?? 0}</span>
+                        </div>
+                    </td>
+                    <!-- Last Active -->
+                    <td class="px-6 py-5">
+                        <span class="text-xs font-medium text-slate-500">${fmtRelative(s.last_login_timestamp)}</span>
+                    </td>
+                    <!-- Status -->
+                    <td class="px-6 py-5">
+                        <span class="badge ${st.badge}">
+                            <span class="w-1.5 h-1.5 rounded-full ${st.dot} inline-block"></span>
+                            ${st.label}
+                        </span>
+                    </td>
+                    <!-- Joined -->
+                    <td class="px-6 py-5">
+                        <span class="text-xs font-medium text-slate-500">${fmtDate(s.created_at)}</span>
+                    </td>
+                    <!-- Actions -->
+                    <td class="px-6 py-5 whitespace-nowrap">
+                        <div class="flex items-center justify-end gap-1">
+                            ${isActive ? `
+                            <button data-action="suspend" data-id="${s.user_id}" data-name="${s.full_name}"
+                                class="action-btn p-2 text-slate-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-all" title="Suspend Student">
+                                <span class="material-symbols-outlined text-[20px]">pause_circle</span>
+                            </button>
+                            <button data-action="block" data-id="${s.user_id}" data-name="${s.full_name}"
+                                class="action-btn p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all" title="Block Student">
+                                <span class="material-symbols-outlined text-[20px]">block</span>
+                            </button>` : ''}
+                            ${isSuspended ? `
+                            <button data-action="active" data-id="${s.user_id}" data-name="${s.full_name}"
+                                class="action-btn p-2 text-amber-500 hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-all" title="Unsuspend Student">
+                                <span class="material-symbols-outlined text-[20px]">play_circle</span>
+                            </button>
+                            <button data-action="block" data-id="${s.user_id}" data-name="${s.full_name}"
+                                class="action-btn p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all" title="Block Student">
+                                <span class="material-symbols-outlined text-[20px]">block</span>
+                            </button>` : ''}
+                            ${isBlocked ? `
+                            <button data-action="active" data-id="${s.user_id}" data-name="${s.full_name}"
+                                class="action-btn p-2 text-red-500 hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-all" title="Unblock Student">
+                                <span class="material-symbols-outlined text-[20px]">lock_open</span>
+                            </button>` : ''}
+                            <button data-action="delete" data-id="${s.user_id}" data-name="${s.full_name}"
+                                class="action-btn p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all" title="Delete Student">
+                                <span class="material-symbols-outlined text-[20px]">delete</span>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+
+            // Bind action buttons
+            tableBody.querySelectorAll('.action-btn').forEach(btn => {
+                btn.addEventListener('click', () => handleAction(btn.dataset.action, btn.dataset.id, btn.dataset.name));
             });
         }
-                    
+
+        // ─── Modal & Actions ─────────────────────────────────────────────────────────
+        const actionMeta = {
+            suspend: { title: 'Suspend Student', icon: 'pause_circle', iconBg: 'bg-amber-50 dark:bg-amber-900/30', iconColor: 'text-amber-500', btnColor: 'bg-amber-500 hover:bg-amber-600', desc: name => `Suspend ${name}? Their marketplace access (joining courses, booking mentors) will be restricted until reinstated.` },
+            block:   { title: 'Block Student',   icon: 'block',        iconBg: 'bg-red-50 dark:bg-red-900/30',    iconColor: 'text-red-500',   btnColor: 'bg-red-600 hover:bg-red-700',   desc: name => `Block ${name}? They will be completely locked out of their account until unblocked.` },
+            active:  { title: 'Reinstate Student', icon: 'check_circle', iconBg: 'bg-emerald-50 dark:bg-emerald-900/30', iconColor: 'text-emerald-500', btnColor: 'bg-emerald-600 hover:bg-emerald-700', desc: name => `Reinstate ${name}? They will regain full access to the platform.` },
+            delete:  { title: 'Permanently Delete', icon: 'warning', iconBg: 'bg-red-100 dark:bg-red-900/40', iconColor: 'text-red-600', btnColor: 'bg-red-700 hover:bg-red-800', desc: name => `Are you SURE you want to permanently delete ${name}? This will remove all their courses, sessions, and profile data. This action is IRREVERSIBLE.` },
+        };
+
+        let pendingAction = null;
+
+        function handleAction(action, userId, name) {
+            const meta = actionMeta[action];
+            if (!meta) return;
+            pendingAction = { action, userId };
+            document.getElementById('modal-icon-wrap').className = `w-14 h-14 rounded-2xl flex items-center justify-center mb-5 mx-auto ${meta.iconBg}`;
+            document.getElementById('modal-icon').className = `material-symbols-outlined text-3xl ${meta.iconColor}`;
+            document.getElementById('modal-icon').textContent = meta.icon;
+            document.getElementById('modal-title').textContent = meta.title;
+            document.getElementById('modal-desc').textContent = meta.desc(name || 'this student');
+            const confirmBtn = document.getElementById('modal-confirm');
+            confirmBtn.className = `flex-1 py-3 font-bold rounded-xl transition-all text-white ${meta.btnColor}`;
+            confirmBtn.textContent = action === 'delete' ? 'Delete Permanently' : meta.title;
+            modal.classList.remove('hidden');
+        }
+
+        // --- Event Listeners ---
+        document.getElementById('modal-cancel').addEventListener('click', () => {
+            modal.classList.add('hidden');
+            pendingAction = null;
+        });
+
+        modal.addEventListener('click', e => { 
+            if (e.target === modal) { 
+                modal.classList.add('hidden'); 
+                pendingAction = null; 
+            } 
+        });
+
+        document.getElementById('modal-confirm').addEventListener('click', async () => {
+            if (!pendingAction) return;
+            const { action, userId } = pendingAction;
+            modal.classList.add('hidden');
+            pendingAction = null;
+
+            try {
+                if (action === 'delete') {
+                    const { error } = await supabase.rpc('admin_delete_student', {
+                        p_admin_id: adminId,
+                        p_user_id: userId
+                    });
                     if (error) throw error;
-                    allUsers = data;
-                    renderUsers(allUsers);
-                } catch (e) {
-                    console.error("Failed to fetch users:", e);
-                    tableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-10 text-center text-red-500 font-bold">Protocol Error: ${e.message}</td></tr>`;
-                }
-            }
-
-            function renderUsers(users) {
-                tableBody.innerHTML = '';
-                users.forEach(user => {
-                    const row = document.createElement('tr');
-                    row.className = 'table-row-hover';
-                    
-                    const roleColors = {
-                        student: 'text-blue-600 bg-blue-50 dark:bg-blue-900/20',
-                        instructor: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20',
-                        admin: 'text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20'
+                } else {
+                    // Map UI actions to database statuses
+                    const statusMap = {
+                        'suspend': 'suspended',
+                        'block': 'blocked',
+                        'active': 'active'
                     };
-
-                    const date = new Date(user.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-                    const avatar = user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name || 'User')}`;
-
-                    row.innerHTML = `
-                        <td class="px-6 py-5">
-                            <div class="flex items-center gap-4">
-                                <div class="w-10 h-10 rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800">
-                                    <img src="${avatar}" class="w-full h-full object-cover">
-                                </div>
-                                <div>
-                                    <p class="text-sm font-bold text-slate-900 dark:text-white leading-tight">${user.full_name || 'Anonymous'}</p>
-                                    <p class="text-[10px] font-medium text-slate-400">${user.email}</p>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="px-6 py-5">
-                            <span class="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg ${roleColors[user.role] || 'bg-slate-100 text-slate-500'}">
-                                ${user.role}
-                            </span>
-                        </td>
-                        <td class="px-6 py-5">
-                            <div class="flex items-center gap-2">
-                                <span class="w-1.5 h-1.5 rounded-full ${user.status === 'blocked' ? 'bg-orange-500' : 'bg-emerald-500'}"></span>
-                                <span class="text-xs font-bold text-slate-600 dark:text-slate-300">${(user.status || "active").toUpperCase()}</span>
-                            </div>
-                        </td>
-                        <td class="px-6 py-5">
-                            <span class="text-xs font-medium text-slate-500">${date}</span>
-                        </td>
-                        <td class="px-6 py-5 text-right">
-                            <div class="flex items-center justify-end gap-2">
-                                
-<button onclick="window.toggleUserBlock('${user.id}', '${user.status === 'blocked' ? 'active' : 'blocked'}')" class="p-2 ${user.status === 'blocked' ? 'text-orange-500 hover:text-orange-600' : 'text-slate-400 hover:text-orange-500'} hover:bg-orange-50 dark:hover:bg-orange-900/20 rounded-lg transition-all" title="${user.status === 'blocked' ? 'Unblock' : 'Block'}">
-    <span class="material-symbols-outlined text-[20px]">${user.status === 'blocked' ? 'lock_open' : 'block'}</span>
-</button>
-<button onclick="window.deleteUser('${user.id}')" class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all" title="Delete">
-    <span class="material-symbols-outlined text-[20px]">delete</span>
-</button>
-
-                            </div>
-                        </td>
-                    `;
-                    tableBody.appendChild(row);
-                });
+                    const { error } = await supabase.rpc('admin_update_student_status', {
+                        p_admin_id: adminId,
+                        p_user_id: userId,
+                        p_status: statusMap[action] || action
+                    });
+                    if (error) throw error;
+                }
+                await fetchStudents();
+            } catch (e) {
+                console.error('Action failed:', e);
+                alert('Action failed: ' + (e.message || 'Unknown error'));
             }
+        });
 
-            searchInput.addEventListener('input', (e) => {
-                const term = e.target.value.toLowerCase();
-                const filtered = allUsers.filter(u => 
-                    (u.full_name || '').toLowerCase().includes(term) || 
-                    u.email.toLowerCase().includes(term)
-                );
-                renderUsers(filtered);
-            });
+        // ─── Init ────────────────────────────────────────────────────────────────────
+        document.addEventListener('DOMContentLoaded', async () => {
+            const session = await AuthService.getSession();
+            adminId = session?.user?.id;
 
-            // Theme Toggle (Consistency)
-            const themeToggle = document.getElementById('theme-toggle');
-            themeToggle?.addEventListener('click', () => {
+            // Theme Toggle
+            document.getElementById('theme-toggle').addEventListener('click', () => {
                 document.documentElement.classList.toggle('dark');
                 const isDark = document.documentElement.classList.contains('dark');
-                themeToggle.innerHTML = `<span class="material-symbols-outlined">${isDark ? 'light_mode' : 'dark_mode'}</span>`;
+                document.getElementById('theme-toggle').innerHTML = `<span class="material-symbols-outlined">${isDark ? 'light_mode' : 'dark_mode'}</span>`;
             });
 
-            // Mobile Menu Toggle (Consistency)
+            // Mobile Sidebar
             const toggleBtn = document.getElementById('toggle-sidebar');
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('sidebar-overlay');
@@ -262,33 +511,16 @@
             overlay?.addEventListener('click', () => { sidebar.classList.add('-translate-x-full'); overlay.classList.add('hidden'); });
 
             // Logout
-            document.getElementById('logout-btn')?.addEventListener('click', async () => {
+            document.getElementById('logout-btn').addEventListener('click', async () => {
                 await AuthService.logout();
                 window.location.href = '/src/pages/auth/login-select/index.html';
             });
 
-            
-            window.toggleUserBlock = async (userId, targetStatus) => {
-                try {
-                    await supabase.from('students').update({ account_status: targetStatus }).eq('user_id', userId);
-                    fetchUsers();
-                } catch(e) { alert(e.message) }
-            };
-            window.deleteUser = async (userId) => {
-                if(!confirm('Delete this user completely across auth, profiles, and students?')) return;
-                try {
-                    const session = await AuthService.getSession();
-                    const res = await fetch('https://jboruccxbgdqntrggslz.supabase.co/functions/v1/delete-user', {
-                        method: 'POST',
-                        headers: { 'Authorization': 'Bearer ' + session.session.access_token, 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ user_id_to_delete: userId })
-                    });
-                    if(!res.ok) throw new Error(await res.text());
-                    fetchUsers();
-                } catch(e) { alert(e.message) }
-            };
-            fetchUsers()
+            // Filters
+            searchInput.addEventListener('input', applyFilters);
+            statusFilter.addEventListener('change', applyFilters);
 
+            await fetchStudents();
         });
     </script>
 </body>

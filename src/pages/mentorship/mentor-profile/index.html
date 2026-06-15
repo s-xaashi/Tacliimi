@@ -80,65 +80,32 @@
       </div>
     </div>
   </nav>
-  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-    <section class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
-      <div class="lg:col-span-2 relative aspect-video bg-slate-900 rounded-2xl overflow-hidden shadow-sm group">
-        <div class="absolute inset-0 flex items-center justify-center cursor-pointer">
-          <div
-            class="w-20 h-20 bg-primary/90 text-white rounded-full flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform">
-            <span class="material-symbols-outlined text-4xl fill-1">play_arrow</span>
-          </div>
-        </div>
-        <div class="absolute bottom-0 left-0 right-0 p-6 video-overlay text-white">
-          <p class="text-sm font-medium flex items-center gap-2">
-            <span class="material-symbols-outlined text-sm">visibility</span>
-            Introduction Video
-          </p>
-        </div>
-        <div class="absolute inset-0 -z-10 bg-slate-200 flex items-center justify-center">
-          <span class="material-symbols-outlined text-6xl text-slate-300">smart_display</span>
-        </div>
-      </div>
-      <div
-        class="bg-white dark:bg-slate-900 rounded-2xl p-8 border border-slate-100 dark:border-slate-800 shadow-xl self-start">
-        <div class="flex flex-col items-center text-center mb-6">
-          <div
-            class="w-24 h-24 rounded-full border-4 border-primary/5 bg-slate-100 flex items-center justify-center text-slate-400 mb-4">
-            <span class="material-symbols-outlined text-6xl">account_circle</span>
-          </div>
-          <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Mentor Name Here</h1>
-          <p class="text-primary font-semibold text-sm mt-1">Expertise / Subject Here</p>
-          <div class="flex items-center gap-1 mt-2">
-            <span class="material-symbols-outlined text-orange-400 text-lg fill-1">star</span>
-            <span class="font-bold text-slate-700 dark:text-slate-300">4.9</span>
-            <span class="text-slate-400 text-sm">(124 reviews)</span>
-          </div>
-        </div>
-        <div class="space-y-4 pt-6 border-t border-slate-100 dark:border-slate-800">
-          <div class="flex justify-between items-center bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
-            <span class="text-slate-500 text-sm font-bold uppercase tracking-tight">Session Price</span>
-            <span id="mentor-price" class="text-2xl font-black text-primary">$0.00</span>
-          </div>
-          <div class="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
-            <span class="material-symbols-outlined text-primary">schedule</span>
-            <div class="text-xs">
-              <p class="font-bold">60-minute session</p>
-              <p class="text-slate-500">1-on-1 personalized guidance</p>
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <!-- Left Column: Content -->
+      <div class="lg:col-span-2 space-y-4">
+        <!-- Introduction Video -->
+        <div class="relative aspect-video bg-slate-900 rounded-2xl overflow-hidden shadow-sm group !mb-0">
+          <div class="absolute inset-0 flex items-center justify-center cursor-pointer">
+            <div
+              class="w-20 h-20 bg-primary/90 text-white rounded-full flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform">
+              <span class="material-symbols-outlined text-4xl fill-1">play_arrow</span>
             </div>
           </div>
-          <a id="book-session-btn" href="/src/pages/mentorship/mentor-booking/index.html"
-            class="w-full block text-center bg-primary text-white py-4 rounded-xl font-bold text-lg hover:bg-primary/90 transition-all active:scale-[0.98] shadow-lg shadow-primary/20">
-            Book a Session
-          </a>
-          <p class="text-center text-[11px] text-slate-400 uppercase tracking-widest font-semibold">Instant Confirmation
-          </p>
+          <div class="absolute bottom-0 left-0 right-0 p-6 video-overlay text-white">
+            <p class="text-sm font-medium flex items-center gap-2">
+              <span class="material-symbols-outlined text-sm">visibility</span>
+              Introduction Video
+            </p>
+          </div>
+          <div class="absolute inset-0 -z-10 bg-slate-200 flex items-center justify-center">
+            <span class="material-symbols-outlined text-6xl text-slate-300">smart_display</span>
+          </div>
         </div>
-      </div>
-    </section>
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-      <div class="lg:col-span-2 space-y-8">
+
+        <!-- About Me -->
         <section
-          class="bg-white dark:bg-slate-900 rounded-2xl p-8 border border-slate-100 dark:border-slate-800 shadow-sm">
+          class="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-100 dark:border-slate-800 shadow-sm !mt-0">
           <div class="flex items-center gap-3 mb-6">
             <div class="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
               <span class="material-symbols-outlined">person</span>
@@ -152,8 +119,8 @@
           </div>
         </section>
         <section id="education-section"
-          class="bg-white dark:bg-slate-900 rounded-2xl p-8 border border-slate-100 dark:border-slate-800 shadow-sm hidden">
-          <div class="flex items-center gap-3 mb-6">
+          class="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-100 dark:border-slate-800 shadow-sm hidden">
+          <div class="flex items-center gap-3 mb-4">
             <div class="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
               <span class="material-symbols-outlined">school</span>
             </div>
@@ -164,7 +131,7 @@
           </div>
         </section>
         <section
-          class="bg-white dark:bg-slate-900 rounded-2xl p-8 border border-slate-100 dark:border-slate-800 shadow-sm">
+          class="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-100 dark:border-slate-800 shadow-sm">
           <div class="flex items-center gap-3 mb-6">
             <div class="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
               <span class="material-symbols-outlined">psychology</span>
@@ -184,7 +151,7 @@
           </div>
         </section>
         <section
-          class="bg-white dark:bg-slate-900 rounded-2xl p-8 border border-slate-100 dark:border-slate-800 shadow-sm">
+          class="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-100 dark:border-slate-800 shadow-sm">
           <div class="flex items-center gap-3 mb-6">
             <div class="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
               <span class="material-symbols-outlined">school</span>
@@ -232,9 +199,59 @@
           </div>
         </section>
       </div>
-      <aside class="space-y-6">
-        <div
-          class="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-100 dark:border-slate-800 shadow-sm sticky top-24">
+      <aside class="space-y-6 lg:sticky lg:top-24 self-start">
+        <!-- Main Booking Card -->
+        <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-100 dark:border-slate-800 shadow-xl">
+          <div class="flex flex-col items-center text-center mb-6">
+            <div class="w-24 h-24 rounded-full border-4 border-primary/5 bg-slate-100 flex items-center justify-center text-slate-400 mb-4">
+              <span class="material-symbols-outlined text-6xl shadow-inner">account_circle</span>
+            </div>
+            <h1 class="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Mentor Name Here</h1>
+            <p id="mentor-headline" class="text-primary font-bold text-sm tracking-wide mt-1">Expertise / Subject Here</p>
+            <div class="flex items-center gap-1.5 mt-3 px-3 py-1 bg-orange-50 dark:bg-orange-900/20 rounded-full">
+              <span class="material-symbols-outlined text-orange-400 text-base fill-1">star</span>
+              <span id="mentor-rating" class="font-bold text-orange-700 dark:text-orange-300 text-sm">0.0</span>
+              <span id="mentor-review-count" class="text-slate-400 text-xs font-medium">(0 reviews)</span>
+            </div>
+          </div>
+
+          <div class="space-y-4 pt-6 border-t border-slate-100 dark:border-slate-800">
+            <div class="flex justify-between items-center bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
+              <span class="text-slate-500 text-xs font-bold uppercase tracking-widest">Session Price</span>
+              <span id="mentor-price" class="text-2xl font-black text-primary">$0.00</span>
+            </div>
+            
+            <div id="availability-summary" class="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl space-y-4 border border-slate-100 dark:border-slate-800">
+              <div class="flex items-start gap-3">
+                <div class="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                  <span class="material-symbols-outlined text-xl">event_available</span>
+                </div>
+                <div>
+                  <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Available Days</p>
+                  <p id="available-days" class="text-sm font-bold text-slate-700 dark:text-slate-300">Loading...</p>
+                </div>
+              </div>
+              <div class="flex items-start gap-3 border-t border-slate-200/50 dark:border-slate-700/50 pt-4">
+                <div class="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                  <span class="material-symbols-outlined text-xl">query_builder</span>
+                </div>
+                <div>
+                  <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Available Time</p>
+                  <p id="available-time" class="text-sm font-bold text-slate-700 dark:text-slate-300">Loading...</p>
+                </div>
+              </div>
+            </div>
+
+            <a id="book-session-btn" href="/src/pages/mentorship/mentor-booking/index.html"
+              class="w-full block text-center bg-primary text-white py-4 rounded-xl font-bold text-lg hover:bg-primary/90 transition-all active:scale-[0.98] shadow-lg shadow-primary/20">
+              Book a Session
+            </a>
+            <p class="text-center text-[10px] text-slate-400 uppercase tracking-widest font-bold">Instant Confirmation</p>
+          </div>
+        </div>
+
+        <!-- Stats Card -->
+        <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-100 dark:border-slate-800 shadow-sm">
           <h3 class="font-bold mb-4 flex items-center gap-2">
             <span class="material-symbols-outlined text-primary">analytics</span>
             Profile Stats
@@ -242,26 +259,24 @@
           <div class="space-y-4">
             <div class="flex justify-between items-center text-sm">
               <span class="text-slate-500">Total sessions</span>
-              <span class="font-bold">450+</span>
+              <span id="stat-total-sessions" class="font-bold">0+</span>
             </div>
             <div class="flex justify-between items-center text-sm">
               <span class="text-slate-500">Avg. response time</span>
-              <span class="font-bold">2 hours</span>
+              <span id="stat-response-time" class="font-bold">0 hours</span>
             </div>
             <div class="flex justify-between items-center text-sm">
               <span class="text-slate-500">Experience</span>
-              <span class="font-bold">10+ Years</span>
+              <span id="stat-experience" class="font-bold">0+ Years</span>
             </div>
           </div>
           <div class="mt-6 pt-6 border-t border-slate-100 dark:border-slate-800">
             <p class="text-xs text-slate-400 mb-4">Share this profile</p>
             <div class="flex gap-3">
-              <button
-                class="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-primary transition-colors">
+              <button class="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-primary transition-colors">
                 <span class="material-symbols-outlined text-lg">share</span>
               </button>
-              <button
-                class="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-primary transition-colors">
+              <button class="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-primary transition-colors">
                 <span class="material-symbols-outlined text-lg">content_copy</span>
               </button>
             </div>

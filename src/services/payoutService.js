@@ -47,7 +47,7 @@ export const PayoutService = {
             .eq('instructor_id', userId)
             .order('created_at', { ascending: false })
             .limit(1)
-            .single();
+            .maybeSingle();
 
         if (error && error.code !== 'PGRST116') throw error;
         return data || null;

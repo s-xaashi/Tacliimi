@@ -101,6 +101,7 @@
                         <span class="hidden sm:inline">Exit</span>
                     </button>
 
+                    <!-- Global Profile Injected Below -->
                 </div>
             </div>
         </div>
@@ -519,7 +520,7 @@
                             <span class="material-symbols-outlined text-primary">list_alt</span>
                             Full Curriculum Summary
                         </h3>
-                        <div id="final-curriculum-summary" class="space-y-4">
+                        <div id="final-curriculum-summary" class="space-y-4 overflow-x-auto no-scrollbar">
                             <p class="text-sm text-slate-400 italic">Loading curriculum details...</p>
                         </div>
                     </section>
@@ -788,6 +789,7 @@
         </div>
     </div>
 
+    <script type="module" src="/src/services/globalProfile.js"></script>
     <script type="module" src="/src/utils/js/course-wizard.js"></script>
 </body>
 

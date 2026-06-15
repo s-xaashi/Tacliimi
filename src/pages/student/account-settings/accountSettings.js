@@ -111,6 +111,14 @@ function applyProfileToDOM() {
         avatar.innerHTML = `<img alt="Profile" src="${currentProfile.avatar_url}" class="w-full h-full object-cover" />`;
     }
 
+    // Social Links
+    const socialLinks = currentProfile.social_links || {};
+    if (document.getElementById('github-url')) document.getElementById('github-url').value = socialLinks.github || '';
+    if (document.getElementById('linkedin-url')) document.getElementById('linkedin-url').value = socialLinks.linkedin || '';
+    if (document.getElementById('twitter-url')) document.getElementById('twitter-url').value = socialLinks.twitter || '';
+    if (document.getElementById('facebook-url')) document.getElementById('facebook-url').value = socialLinks.facebook || '';
+    if (document.getElementById('website-url')) document.getElementById('website-url').value = socialLinks.website || '';
+
     updateLearningInterestsUI(currentProfile.learning_interests || []);
 }
 
@@ -199,14 +207,23 @@ window.removeProfileImage = async function() {
     }
 }
 
-window.TacliimiDB = {
-    logout: async function() {
-        await supabase.auth.signOut();
+async function handleLogout() {
+    try {
+        await AuthService.logout();
+        window.location.href = '/src/pages/auth/login-select/index.html';
+    } catch (err) {
+        console.error("Logout failed:", err);
+        alert("Logout failed. Please try again.");
     }
-};
+}
 
 document.addEventListener('DOMContentLoaded', () => {
     loadProfile();
+
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', handleLogout);
+    }
 
     const profileForm = document.getElementById('profile-form');
     if (profileForm) {
@@ -217,13 +234,20 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.innerHTML = `Saving...`;
 
             try {
-                await supabase.from('profiles').update({
+                await AuthService.updateProfile({
                     full_name: document.getElementById('full-name').value,
                     phone_number: document.getElementById('phone-number').value,
                     country: document.getElementById('country').value,
                     city: document.getElementById('city').value,
-                    short_bio: document.getElementById('bio').value
-                }).eq('id', currentUserSession.user.id);
+                    short_bio: document.getElementById('bio').value,
+                    social_links: {
+                        github: document.getElementById('github-url').value,
+                        linkedin: document.getElementById('linkedin-url').value,
+                        twitter: document.getElementById('twitter-url').value,
+                        facebook: document.getElementById('facebook-url').value,
+                        website: document.getElementById('website-url').value
+                    }
+                });
                 btn.innerHTML = `<span class="material-symbols-outlined">check</span> Saved`;
             } catch (err) {
                 console.error(err);
@@ -250,9 +274,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
+            const btn = securityForm.querySelector('button[type="submit"]');
+            const ogText = btn.innerHTML;
+            btn.innerHTML = 'Updating...';
+            btn.disabled = true;
+
             try {
-                const { error } = await supabase.auth.updateUser({ password: newPassword });
-                if (error) throw error;
+                await AuthService.updatePassword(newPassword);
                 msgDiv.textContent = 'Password updated successfully.';
                 msgDiv.classList.add('bg-green-50', 'text-green-600', 'dark:bg-green-500/10', 'dark:text-green-400');
                 msgDiv.classList.remove('hidden');
@@ -261,6 +289,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 msgDiv.textContent = err.message;
                 msgDiv.classList.add('bg-red-50', 'text-red-600', 'dark:bg-red-500/10', 'dark:text-red-400');
                 msgDiv.classList.remove('hidden');
+            } finally {
+                btn.innerHTML = ogText;
+                btn.disabled = false;
             }
         });
     }

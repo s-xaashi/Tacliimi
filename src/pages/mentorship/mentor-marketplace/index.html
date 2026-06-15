@@ -88,8 +88,8 @@
                     class="w-full max-w-2xl flex items-center bg-white dark:bg-slate-900 rounded-xl shadow-lg border border-slate-200 dark:border-slate-800 p-2">
                     <div class="flex-1 flex items-center px-4 gap-3">
                         <span class="material-symbols-outlined text-slate-400">search</span>
-                        <input class="w-full border-none focus:ring-0 bg-transparent py-3 text-sm md:text-base"
-                            placeholder="Search by skill, name, or expertise" type="text" />
+                        <input id="marketplace-search" class="w-full border-none focus:ring-0 bg-transparent py-3 text-sm md:text-base"
+                            placeholder="Search by skill, name, expertise, or country" type="text" />
                     </div>
                     <button
                         class="bg-primary text-white px-6 py-3 rounded-lg font-bold hover:bg-primary/90 transition-all">
@@ -139,33 +139,32 @@
                             <span class="material-symbols-outlined text-primary">filter_list</span>
                             Filters
                         </h3>
-                        <p class="text-xs uppercase tracking-widest text-slate-400 font-semibold mb-4">Categories</p>
-                        <div class="space-y-2" id="category-filters">
-                            <label
-                                class="flex items-center gap-3 p-2 rounded-lg bg-primary/10 text-primary cursor-pointer filter-item">
+                        <p class="text-[10px] uppercase tracking-[0.2em] text-slate-400 font-bold mb-4 opacity-70">Expertise Categories</p>
+                        <div class="space-y-1" id="category-filters">
+                            <button data-category="all"
+                                class="w-full flex items-center gap-3 p-3 rounded-xl bg-primary text-white shadow-lg shadow-primary/20 cursor-pointer filter-category-btn transition-all duration-200">
                                 <span class="material-symbols-outlined text-xl">grid_view</span>
-                                <span class="text-sm font-medium">All Categories</span>
-                            </label>
-                            <label
-                                class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition-colors filter-item">
-                                <span class="material-symbols-outlined text-xl">code</span>
-                                <span class="text-sm font-medium">Coding</span>
-                            </label>
-                            <label
-                                class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition-colors filter-item">
-                                <span class="material-symbols-outlined text-xl">business_center</span>
-                                <span class="text-sm font-medium">Business</span>
-                            </label>
-                            <label
-                                class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition-colors filter-item">
-                                <span class="material-symbols-outlined text-xl">palette</span>
-                                <span class="text-sm font-medium">Arts &amp; Design</span>
-                            </label>
-                            <label
-                                class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition-colors filter-item">
-                                <span class="material-symbols-outlined text-xl">data_exploration</span>
-                                <span class="text-sm font-medium">Data Science</span>
-                            </label>
+                                <span class="text-sm font-bold">All Categories</span>
+                            </button>
+                            <!-- Dynamic categories will be injected here -->
+                        </div>
+                    </div>
+
+                    <div class="pt-6 border-t border-slate-100 dark:border-slate-800">
+                        <p class="text-[10px] uppercase tracking-[0.2em] text-slate-400 font-bold mb-4 opacity-70">Location</p>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="text-[11px] font-bold text-slate-500 mb-1.5 block">Country</label>
+                                <select id="country-filter" class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-primary focus:border-primary">
+                                    <option value="all">All Countries</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-[11px] font-bold text-slate-500 mb-1.5 block">City</label>
+                                <select id="city-filter" class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-primary focus:border-primary">
+                                    <option value="all">All Cities</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
                 </div>

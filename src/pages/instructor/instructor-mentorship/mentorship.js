@@ -1,5 +1,69 @@
 import { MentorService } from '../../../services/mentorService.js';
 import { supabase } from '../../../services/supabaseClient.js';
+import { AuthService } from '../../../services/authService.js';
+
+// ── Topic Modal ───────────────────────────────────────────────
+window.openTopicModal = function(studentName, topic) {
+    const modal = document.getElementById('topic-modal');
+    const nameEl = document.getElementById('topic-modal-name');
+    const contentEl = document.getElementById('topic-modal-content');
+    if (!modal) return;
+    if (nameEl) nameEl.textContent = studentName || 'Student';
+    if (contentEl) contentEl.textContent = topic || 'No topic provided';
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+};
+
+window.closeTopicModal = function() {
+    const modal = document.getElementById('topic-modal');
+    if (modal) modal.classList.add('hidden');
+    document.body.style.overflow = '';
+};
+
+// ── Student Profile Modal ───────────────────────────────────────
+window.openStudentProfile = function(studentJson) {
+    const student = typeof studentJson === 'string' ? JSON.parse(studentJson) : studentJson;
+    const modal = document.getElementById('student-profile-modal');
+    if (!modal) return;
+
+    document.getElementById('student-modal-avatar').src = student.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.full_name || 'S')}&background=random&color=fff`;
+    document.getElementById('student-modal-name').textContent = student.full_name || 'Unknown Student';
+    document.getElementById('student-modal-title').textContent = student.professional_title || 'Student';
+    document.getElementById('student-modal-email').textContent = student.email || 'No email shared';
+    document.getElementById('student-modal-phone').textContent = student.phone_number || 'Not provided';
+    document.getElementById('student-modal-location').textContent = (student.city && student.country) ? `${student.city}, ${student.country}` : (student.country || student.city || 'Not provided');
+    document.getElementById('student-modal-gender').textContent = student.gender ? (student.gender.charAt(0).toUpperCase() + student.gender.slice(1)) : 'Not provided';
+    document.getElementById('student-modal-bio').textContent = student.short_bio ? `"${student.short_bio}"` : '"No bio shared yet."';
+
+    const interestsContainer = document.getElementById('student-interests-list');
+    if (interestsContainer) {
+        const interests = student.learning_interests || [];
+        if (Array.isArray(interests) && interests.length > 0) {
+            interestsContainer.innerHTML = interests.map(interest => 
+                `<span class="px-3 py-1 bg-primary/5 text-primary rounded-lg text-xs font-bold">${interest}</span>`
+            ).join('');
+        } else {
+            interestsContainer.innerHTML = '<span class="text-slate-400 text-xs italic">No interests listed</span>';
+        }
+    }
+
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+};
+
+window.closeStudentModal = function() {
+    const modal = document.getElementById('student-profile-modal');
+    if (modal) modal.classList.add('hidden');
+    document.body.style.overflow = '';
+};
+
+// Close on Escape key
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        window.closeTopicModal();
+        window.closeStudentModal();
+    }
+});
 
 async function initMentorship() {
     // 1) Grab all the tabs and the dynamic container
@@ -54,6 +118,11 @@ async function initMentorship() {
                 } else if (tabName === 'upcoming') {
                     // Refresh stats in cards if on upcoming
                     refreshDashboardStats(user.id);
+                    bindUpcomingInteractions(container, user.id);
+                } else if (tabName === 'requests') {
+                    bindRequestsInteractions(container, user.id);
+                } else if (tabName === 'completed') {
+                    bindCompletedInteractions(container, user.id);
                 }
             }
 
@@ -567,3 +636,713 @@ async function bindPrivacyInteractions(container, userId) {
         });
     }
 }
+async function bindRequestsInteractions(container, userId) {
+    const listContainer = container.querySelector('#mentorship-requests-list');
+    const emptyState = container.querySelector('#mentorship-requests-empty');
+    if (!listContainer) return;
+
+    const renderRequests = async () => {
+        try {
+            listContainer.innerHTML = `
+                <div class="flex flex-col items-center justify-center py-20 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                    <div class="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-4"></div>
+                    <p class="text-slate-500 font-medium">Fetching requests...</p>
+                </div>
+            `;
+            
+            const [pending, awaiting, negotiating] = await Promise.all([
+                MentorService.getMentorSessions(userId, 'pending_review'),
+                MentorService.getMentorSessions(userId, 'awaiting_meeting_link'),
+                MentorService.getMentorSessions(userId, 'location_negotiation')
+            ]);
+            
+            const allRequests = [...pending, ...awaiting, ...negotiating].sort((a,b) => new Date(a.scheduled_at) - new Date(b.scheduled_at));
+
+            // Helper to determine filter
+            const filterBtns = container.querySelectorAll('.request-filter-btn');
+            const activeFilter = Array.from(filterBtns).find(b => b.classList.contains('bg-white'))?.dataset.status || 'pending_review';
+
+            let filtered = allRequests;
+            if (activeFilter === 'pending_review') filtered = pending;
+            if (activeFilter === 'action_required') filtered = [...awaiting, ...negotiating];
+
+            if (filtered.length === 0) {
+                listContainer.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            listContainer.innerHTML = filtered.map(session => {
+                const date = new Date(session.scheduled_at);
+                const dateStr = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+                const timeStr = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+                const student = session.student || {};
+                const studentName = student.full_name || (student.email ? student.email.split('@')[0] : 'Unknown Student');
+                const studentAvatar = student.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(studentName)}&background=random&color=fff`;
+                const status = session.booking_status || 'pending_review';
+
+                let statusBadge = '';
+                let actionsHtml = '';
+
+                if (status === 'pending_review') {
+                    statusBadge = `<span class="px-2 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-600 rounded text-[10px] font-bold uppercase tracking-wider">Pending Review</span>`;
+                    actionsHtml = `
+                        <div class="flex gap-2">
+                            <button class="accept-btn px-6 py-2.5 bg-primary text-white font-bold rounded-xl hover:bg-primary/90 transition-all text-sm whitespace-nowrap flex items-center gap-2 shadow-lg shadow-primary/20" data-id="${session.id}" data-type="${session.meeting_type}">
+                                <span class="material-symbols-outlined text-[18px]">check_circle</span> Accept
+                            </button>
+                            <button class="reject-btn px-6 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 text-red-500 font-bold rounded-xl hover:bg-red-50 dark:hover:bg-red-900/10 transition-all text-sm whitespace-nowrap flex items-center gap-2" data-id="${session.id}">
+                                <span class="material-symbols-outlined text-[18px]">cancel</span> Reject
+                            </button>
+                            <button class="message-btn px-4 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all text-sm flex items-center gap-2" data-id="${session.id}" data-name="${studentName}">
+                                <span class="material-symbols-outlined text-[18px]">forum</span>
+                            </button>
+                        </div>
+                    `;
+                } else if (status === 'awaiting_meeting_link') {
+                    statusBadge = `<span class="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-600 rounded text-[10px] font-bold uppercase tracking-wider">Add Link</span>`;
+                    actionsHtml = `
+                        <div class="flex flex-col gap-2">
+                            <div class="relative">
+                                <input type="text" placeholder="Paste meeting link..." class="meeting-link-input w-full md:w-64 pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all">
+                                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">link</span>
+                            </div>
+                            <div class="flex gap-2">
+                                <button class="confirm-link-btn flex-1 px-4 py-2 bg-primary text-white font-bold rounded-xl hover:bg-primary/90 transition-all text-sm shadow-md shadow-primary/20" data-id="${session.id}">Send Link</button>
+                                <button class="message-btn px-3 py-2 bg-slate-100 dark:bg-slate-800 rounded-xl" data-id="${session.id}" data-name="${studentName}">
+                                    <span class="material-symbols-outlined text-[18px]">forum</span>
+                                </button>
+                                <button class="reject-btn px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-red-500" data-id="${session.id}">
+                                    <span class="material-symbols-outlined text-[18px]">cancel</span>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                } else if (status === 'location_negotiation') {
+                    statusBadge = `<span class="px-2 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-600 rounded text-[10px] font-bold uppercase tracking-wider">Negotiating Location</span>`;
+                    actionsHtml = `
+                        <div class="flex gap-2">
+                            <button class="confirm-location-btn px-6 py-2.5 bg-emerald-500 text-white font-bold rounded-xl hover:bg-emerald-600 transition-all text-sm flex items-center gap-2 shadow-lg shadow-emerald-500/20" data-id="${session.id}">
+                                <span class="material-symbols-outlined text-[18px]">check_circle</span> Confirm
+                            </button>
+                            <button class="message-btn px-4 py-2.5 bg-primary/10 text-primary font-bold rounded-xl hover:bg-primary/20 transition-all text-sm flex items-center gap-2" data-id="${session.id}" data-name="${studentName}">
+                                <span class="material-symbols-outlined text-[18px]">forum</span> Open Chat
+                            </button>
+                            <button class="reject-btn px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-red-500" data-id="${session.id}">
+                                <span class="material-symbols-outlined text-[18px]">cancel</span>
+                            </button>
+                        </div>
+                    `;
+                }
+
+                // Location row for in-person sessions
+                const locationHtml = session.meeting_type === 'in-person' && session.meeting_location ? `
+                    <div class="flex items-center gap-3 w-48 shrink-0">
+                        <div class="w-10 h-10 bg-slate-50 dark:bg-slate-800 rounded-xl flex items-center justify-center text-primary shrink-0">
+                            <span class="material-symbols-outlined text-xl">location_on</span>
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Location</p>
+                            <div class="flex items-center gap-2">
+                                <p class="font-bold text-slate-900 dark:text-white text-sm truncate" title="${session.meeting_location.replace(/"/g, '&quot;')}">${session.meeting_location}</p>
+                                <button onclick="window.openTopicModal('Meeting Location', '${session.meeting_location.replace(/'/g, "\\'").replace(/"/g, '&quot;')}')" class="text-primary hover:text-primary/70 transition-colors">
+                                    <span class="material-symbols-outlined text-sm">open_in_full</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>` : '';
+
+                // Phone row for in-person sessions
+                const phoneHtml = session.meeting_type === 'in-person' && session.student_phone ? `
+                    <div class="flex items-center gap-3 w-40 shrink-0">
+                        <div class="w-10 h-10 bg-slate-50 dark:bg-slate-800 rounded-xl flex items-center justify-center text-primary shrink-0">
+                            <span class="material-symbols-outlined text-xl">phone</span>
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Student Phone</p>
+                            <p class="font-bold text-slate-900 dark:text-white text-sm truncate">${session.student_phone}</p>
+                        </div>
+                    </div>` : '';
+
+                return `
+                    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden hover:shadow-lg transition-all group p-6" data-session-id="${session.id}">
+                        <div class="flex flex-col md:flex-row gap-8 items-center">
+                            <!-- Student Info: Fixed width -->
+                            <div class="flex items-center gap-4 w-full md:w-64 shrink-0">
+                                <div class="w-16 h-16 rounded-2xl overflow-hidden border-2 border-primary/20 shrink-0 shadow-sm cursor-pointer" onclick='window.openStudentProfile(${JSON.stringify(student).replace(/'/g, "&#39;")})'>
+                                    <img src="${studentAvatar}" class="w-full h-full object-cover" />
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <h4 class="font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors truncate cursor-pointer" onclick='window.openStudentProfile(${JSON.stringify(student).replace(/'/g, "&#39;")})'>${studentName}</h4>
+                                    <div class="flex flex-wrap items-center gap-2 mt-1">
+                                        <span class="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded text-[10px] font-bold text-slate-500 uppercase tracking-wider">${session.meeting_type}</span>
+                                        ${statusBadge}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Session Details: Optimized layout -->
+                            <div class="flex-1 flex flex-wrap items-center gap-x-10 gap-y-4 md:px-8 border-t md:border-t-0 md:border-l border-slate-100 dark:border-slate-800 pt-4 md:pt-0 min-w-0">
+                                <div class="flex items-center gap-3 w-44 shrink-0">
+                                    <div class="w-10 h-10 bg-slate-50 dark:bg-slate-800 rounded-xl flex items-center justify-center text-primary shrink-0">
+                                        <span class="material-symbols-outlined text-xl">calendar_today</span>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Schedule</p>
+                                        <p class="font-bold text-slate-900 dark:text-white text-sm whitespace-nowrap">${dateStr} @ ${timeStr}</p>
+                                    </div>
+                                </div>
+                                ${locationHtml}
+                                ${phoneHtml}
+                                <div class="flex-1 min-w-[180px]">
+                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Topic</p>
+                                    <div class="flex items-center justify-between gap-3 mt-1">
+                                        <p class="font-medium text-slate-700 dark:text-slate-300 text-sm line-clamp-1 flex-1" title="${(session.topic || 'No topic provided').replace(/"/g, '&quot;')}">${session.topic || 'No topic provided'}</p>
+                                        ${session.topic ? `<button onclick="window.openTopicModal('${studentName.replace(/'/g, "\\'")}', this.dataset.topic)" data-topic="${(session.topic || '').replace(/"/g, '&quot;')}" class="shrink-0 px-3 py-1 bg-primary/10 text-primary hover:bg-primary hover:text-white rounded-lg text-[11px] font-bold transition-all whitespace-nowrap flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">open_in_full</span> View</button>` : ''}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Actions: Fixed width -->
+                            <div class="w-full md:w-fit flex flex-col gap-2 justify-center border-t md:border-t-0 border-slate-100 dark:border-slate-800 pt-4 md:pt-0">
+                                ${actionsHtml}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Bind Actions
+            listContainer.querySelectorAll('.accept-btn').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const sessionId = btn.dataset.id;
+                    const type = btn.dataset.type;
+                    const nextStatus = type === 'online' ? 'awaiting_meeting_link' : 'location_negotiation';
+                    try {
+                        btn.disabled = true;
+                        btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-[16px]">sync</span>';
+                        await MentorService.updateSessionStatus(sessionId, nextStatus);
+                        renderRequests();
+                    } catch (err) {
+                        console.error(err);
+                        btn.disabled = false;
+                        btn.innerHTML = '<span class="material-symbols-outlined text-[18px]">check_circle</span> Accept';
+                    }
+                });
+            });
+
+            listContainer.querySelectorAll('.reject-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const sessionId = btn.dataset.id;
+                    showRejectModal(sessionId, () => {
+                        renderRequests();
+                    });
+                });
+            });
+
+            listContainer.querySelectorAll('.confirm-link-btn').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const sessionId = btn.dataset.id;
+                    const card = listContainer.querySelector(`[data-session-id="${sessionId}"]`);
+                    const link = card.querySelector('.meeting-link-input').value.trim();
+                    if (!link) return alert('Link required.');
+                    try {
+                        btn.disabled = true;
+                        btn.innerText = 'Sending...';
+                        await MentorService.updateMeetingLink(sessionId, link);
+                        renderRequests();
+                    } catch (err) {
+                        console.error(err);
+                        btn.disabled = false;
+                        btn.innerText = 'Send Link';
+                    }
+                });
+            });
+
+            listContainer.querySelectorAll('.confirm-location-btn').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const sessionId = btn.dataset.id;
+                    try {
+                        btn.disabled = true;
+                        await MentorService.updateSessionStatus(sessionId, 'confirmed');
+                        renderRequests();
+                    } catch (err) {
+                        console.error(err);
+                        btn.disabled = false;
+                    }
+                });
+            });
+
+            listContainer.querySelectorAll('.message-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    openMessagingModal(btn.dataset.id, btn.dataset.name);
+                });
+            });
+
+        } catch (err) {
+            console.error("Error rendering requests:", err);
+            listContainer.innerHTML = `<p class="text-red-500 p-8 text-center">Failed to load requests.</p>`;
+        }
+    };
+
+    // --- REJECT MODAL LOGIC ---
+    function showRejectModal(sessionId, onComplete) {
+        // Create modal if it doesn't exist
+        let modal = document.getElementById('reject-warning-modal');
+        if (!modal) {
+            const modalHtml = `
+                <div id="reject-warning-modal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm hidden text-left">
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all">
+                        <div class="p-6">
+                            <div class="flex items-center gap-4 mb-4 text-amber-500">
+                                <div class="w-12 h-12 bg-amber-50 dark:bg-amber-900/20 rounded-full flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-3xl">warning</span>
+                                </div>
+                                <h3 class="text-xl font-bold text-slate-900 dark:text-white">Send for Review?</h3>
+                            </div>
+                            <div class="text-slate-600 dark:text-slate-400 mb-6 leading-relaxed">
+                                <p>Provide a reason for rejecting this session. The administrator will review your request before finalizing the rejection. <span class="text-red-500">*</span></p>
+                                <textarea id="rejection-reason" class="w-full mt-3 p-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all min-h-[100px]" placeholder="Explain why you cannot take this session..."></textarea>
+                                <div class="mt-4 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-100 dark:border-slate-700">
+                                    <strong class="text-slate-900 dark:text-white block mb-1 text-sm">Review Process:</strong> 
+                                    <span class="text-xs">Your request will be reviewed by admin. If approved, the student will be refunded and the session will be cancelled.</span>
+                                </div>
+                            </div>
+                            <div class="flex gap-3">
+                                <button id="cancel-reject" class="flex-1 px-4 py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-xl transition-colors">
+                                    Go Back
+                                </button>
+                                <button id="confirm-reject" class="flex-1 px-4 py-2.5 text-sm font-semibold text-white bg-red-500 hover:bg-red-600 rounded-xl shadow-lg shadow-red-500/20 transition-all flex items-center justify-center gap-2">
+                                    <span class="loader hidden w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                                    <span class="btn-text">Submit Request</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            modal = document.getElementById('reject-warning-modal');
+        }
+
+        const confirmBtn = modal.querySelector('#confirm-reject');
+        const cancelBtn = modal.querySelector('#cancel-reject');
+        const reasonInput = modal.querySelector('#rejection-reason');
+        const loader = confirmBtn.querySelector('.loader');
+        const btnText = confirmBtn.querySelector('.btn-text');
+
+        // Reset input
+        if (reasonInput) reasonInput.value = '';
+
+        const hide = () => {
+            modal.classList.add('hidden');
+            confirmBtn.disabled = false;
+            loader.classList.add('hidden');
+            btnText.classList.remove('hidden');
+        };
+
+        const handleConfirm = async () => {
+            const reason = reasonInput.value.trim();
+            if (!reason) {
+                reasonInput.classList.add('border-red-500');
+                return alert('Please provide a reason for the rejection review.');
+            }
+            reasonInput.classList.remove('border-red-500');
+
+            try {
+                confirmBtn.disabled = true;
+                loader.classList.remove('hidden');
+                btnText.classList.add('hidden');
+                
+                await MentorService.updateSessionStatus(sessionId, 'pending_rejection_review', reason);
+                hide();
+                if (onComplete) onComplete();
+            } catch (err) {
+                console.error(err);
+                alert('Failed to send rejection for review. Please try again.');
+                hide();
+            }
+        };
+
+        confirmBtn.onclick = handleConfirm;
+        cancelBtn.onclick = hide;
+        modal.classList.remove('hidden');
+    }
+
+    // Filter Tabs Interaction
+    const filterBtns = container.querySelectorAll('.request-filter-btn');
+    filterBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            filterBtns.forEach(b => {
+                b.classList.remove('bg-white', 'dark:bg-slate-900', 'shadow-sm', 'text-primary');
+                b.classList.add('text-slate-500', 'dark:text-slate-400');
+            });
+            btn.classList.add('bg-white', 'dark:bg-slate-900', 'shadow-sm', 'text-primary');
+            btn.classList.remove('text-slate-500', 'dark:text-slate-400');
+            renderRequests();
+        });
+    });
+
+    renderRequests();
+}
+
+async function bindUpcomingInteractions(container, userId) {
+    const listContainer = container.querySelector('#mentorship-upcoming-list');
+    const emptyState = container.querySelector('#mentorship-upcoming-empty');
+    if (!listContainer) return;
+
+    const renderUpcoming = async () => {
+        try {
+            listContainer.innerHTML = `<div class="py-20 text-center"><div class="animate-spin inline-block w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full"></div></div>`;
+            
+            const sessions = await MentorService.getMentorSessions(userId);
+            
+            // AUTOMATIC COMPLETION: Filter out past sessions
+            const now = new Date();
+            const activeSessions = sessions.filter(s => {
+                const status = s.booking_status || s.status;
+                const start = new Date(s.scheduled_at);
+                const duration = s.duration_minutes || 60;
+                const end = new Date(start.getTime() + duration * 60000);
+                
+                const isActive = ['confirmed', 'awaiting_meeting_link', 'cancelled', 'pending_rejection_review'].includes(status);
+                // Upcoming includes sessions that haven't ended yet
+                return isActive && now < end;
+            });
+            
+            if (activeSessions.length === 0) {
+                listContainer.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            listContainer.innerHTML = activeSessions.map(session => {
+                const date = new Date(session.scheduled_at);
+                const duration = session.duration_minutes || 60;
+                const endDate = new Date(date.getTime() + duration * 60000);
+                
+                const dateStr = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+                const timeStr = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+                const endTimeStr = endDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+                
+                const isStarted = now >= date && now < endDate;
+                const student = session.student || { full_name: 'Unknown Student', avatar_url: '', email: '' };
+                const studentAvatar = student.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.full_name || 'S')}&background=random&color=fff`;
+
+                const isCancelled = session.booking_status === 'cancelled';
+                const isPendingRejection = session.booking_status === 'pending_rejection_review';
+                const cardClass = isCancelled 
+                    ? "bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-900/30 rounded-2xl overflow-hidden shadow-sm group p-6 border-2" 
+                    : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden hover:shadow-lg transition-all group p-6";
+
+                let actionHtml = '';
+                if (isCancelled) {
+                    actionHtml = `
+                        <button class="delete-session-btn px-4 py-2.5 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 transition-all text-sm flex items-center gap-2 shadow-lg shadow-red-500/20" data-id="${session.id}">
+                            <span class="material-symbols-outlined text-[18px]">delete</span> Remove
+                        </button>
+                    `;
+                } else if (isPendingRejection) {
+                    actionHtml = `<span class="px-3 py-1.5 bg-amber-100 dark:bg-amber-900/30 text-amber-600 rounded-lg text-[11px] font-bold uppercase tracking-wider">Admin Reviewing Rejection</span>`;
+                } else if (session.meeting_type === 'online' && session.meeting_link) {
+                    actionHtml = `<a href="${session.meeting_link}" target="_blank" class="px-6 py-2.5 bg-emerald-500 text-white font-bold rounded-xl hover:bg-emerald-600 transition-all text-sm flex items-center gap-2 shadow-lg shadow-emerald-500/20"><span class="material-symbols-outlined text-[18px]">videocam</span> Join</a>`;
+                }
+
+                return `
+                    <div class="${cardClass}" data-session-id="${session.id}">
+                        <div class="flex flex-col md:flex-row gap-8 items-center">
+                            <!-- Student Info: Fixed width -->
+                            <div class="flex items-center gap-4 w-full md:w-64 shrink-0">
+                                <div class="w-16 h-16 rounded-2xl overflow-hidden border-2 ${isCancelled ? 'border-red-200' : 'border-primary/20'} shrink-0 shadow-sm cursor-pointer" onclick='window.openStudentProfile(${JSON.stringify(student).replace(/'/g, "&#39;")})'>
+                                    <img src="${studentAvatar}" class="w-full h-full object-cover ${isCancelled ? 'grayscale' : ''}" />
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <h4 class="font-bold ${isCancelled ? 'text-red-700 dark:text-red-400' : 'text-slate-900 dark:text-white group-hover:text-primary'} transition-colors truncate cursor-pointer" onclick='window.openStudentProfile(${JSON.stringify(student).replace(/'/g, "&#39;")})'>${student.full_name || 'Unknown Student'}</h4>
+                                    <div class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${isStarted ? 'bg-emerald-500 text-white animate-pulse' : (session.booking_status === 'cancelled' ? 'bg-red-500 text-white' : 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600')}">
+                                        ${isStarted ? 'Session Started' : (session.booking_status === 'cancelled' ? 'Cancelled' : 'Confirmed')}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Session Details: Optimized layout -->
+                            <div class="flex-1 flex flex-wrap items-center gap-x-10 gap-y-4 md:px-8 border-t md:border-t-0 md:border-l ${isCancelled ? 'border-red-100 dark:border-red-900/20' : 'border-slate-100 dark:border-slate-800'} pt-4 md:pt-0 min-w-0">
+                                <div class="flex items-center gap-3 w-44 shrink-0">
+                                    <div class="w-10 h-10 ${isCancelled ? 'bg-red-100 dark:bg-red-900/30 text-red-500' : 'bg-slate-50 dark:bg-slate-800 text-primary'} rounded-xl flex items-center justify-center shrink-0">
+                                        <span class="material-symbols-outlined text-xl">calendar_today</span>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <p class="${isCancelled ? 'text-red-400' : 'text-slate-400'} text-[10px] font-bold uppercase tracking-widest">Schedule</p>
+                                        <div class="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+                                            <span class="material-symbols-outlined text-lg">schedule</span>
+                                            <span class="text-sm font-medium">${timeStr} — ${endTimeStr}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                ${session.meeting_type === 'in-person' && session.meeting_location ? `
+                                    <div class="flex items-center gap-3 w-44 shrink-0">
+                                        <div class="w-10 h-10 ${isCancelled ? 'bg-red-100 dark:bg-red-900/30 text-red-500' : 'bg-slate-50 dark:bg-slate-800 text-primary'} rounded-xl flex items-center justify-center shrink-0">
+                                            <span class="material-symbols-outlined text-xl">location_on</span>
+                                        </div>
+                                        <div class="min-w-0">
+                                            <p class="${isCancelled ? 'text-red-400' : 'text-slate-400'} text-[10px] font-bold uppercase tracking-widest">Location</p>
+                                            <p class="font-bold ${isCancelled ? 'text-red-800 dark:text-red-300' : 'text-slate-900 dark:text-white'} text-sm truncate" title="${session.meeting_location}">${session.meeting_location}</p>
+                                        </div>
+                                    </div>` : ''}
+                                <div class="flex-1 min-w-[180px]">
+                                    <p class="${isCancelled ? 'text-red-400' : 'text-slate-400'} text-[10px] font-bold uppercase tracking-widest">Topic</p>
+                                    <div class="flex items-center justify-between gap-3 mt-1">
+                                        <p class="font-medium ${isCancelled ? 'text-red-700 dark:text-red-400' : 'text-slate-700 dark:text-slate-300'} text-sm line-clamp-1 flex-1" title="${(session.topic || 'No topic provided').replace(/"/g, '&quot;')}">${session.topic || 'No topic provided'}</p>
+                                        ${session.topic ? `<button onclick="window.openTopicModal('${(student.full_name || 'Student').replace(/'/g, "\\'")}', this.dataset.topic)" data-topic="${(session.topic || '').replace(/"/g, '&quot;')}" class="shrink-0 px-3 py-1 ${isCancelled ? 'bg-red-200 text-red-700' : 'bg-primary/10 text-primary hover:bg-primary hover:text-white'} rounded-lg text-[11px] font-bold transition-all whitespace-nowrap flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">open_in_full</span> View</button>` : ''}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Actions: Fixed width -->
+                            <div class="w-full md:w-fit flex flex-row md:flex-col gap-2 justify-center border-t md:border-t-0 ${isCancelled ? 'border-red-100 dark:border-red-900/20' : 'border-slate-100 dark:border-slate-800'} pt-4 md:pt-0">
+                                ${actionHtml}
+                                ${!isCancelled ? `
+                                <button class="message-btn px-4 py-2.5 bg-slate-100 dark:bg-slate-800 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex items-center justify-center" data-id="${session.id}" data-name="${student.full_name || 'Student'}">
+                                    <span class="material-symbols-outlined text-[18px]">forum</span>
+                                </button>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            listContainer.querySelectorAll('.message-btn').forEach(btn => {
+                btn.addEventListener('click', () => openMessagingModal(btn.dataset.id, btn.dataset.name));
+            });
+
+            listContainer.querySelectorAll('.delete-session-btn').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    if (!confirm('Are you sure you want to permanently delete this cancelled session record?')) return;
+                    const sessionId = btn.dataset.id;
+                    try {
+                        btn.disabled = true;
+                        btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-[16px]">sync</span>';
+                        await MentorService.deleteSession(sessionId);
+                        renderUpcoming();
+                    } catch (err) {
+                        console.error(err);
+                        btn.disabled = false;
+                        btn.innerHTML = '<span class="material-symbols-outlined text-[18px]">delete</span> Remove';
+                        alert('Failed to delete session.');
+                    }
+                });
+            });
+
+        } catch (err) {
+            console.error(err);
+            listContainer.innerHTML = '<p class="text-red-500">Error loading sessions.</p>';
+        }
+    };
+
+    renderUpcoming();
+}
+
+async function bindCompletedInteractions(container, userId) {
+    const listContainer = container.querySelector('#mentorship-completed-list');
+    const emptyState = container.querySelector('#mentorship-completed-empty');
+    if (!listContainer) return;
+
+    const renderCompleted = async () => {
+        try {
+            listContainer.innerHTML = `<div class="py-20 text-center"><div class="animate-spin inline-block w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full"></div></div>`;
+            
+            // Fetch both confirmed and completed sessions
+            const [confirmed, completed] = await Promise.all([
+                MentorService.getMentorSessions(userId, 'confirmed'),
+                MentorService.getMentorSessions(userId, 'completed')
+            ]);
+            
+            const all = [...confirmed, ...completed];
+            
+            // Historical sessions: date is in the past or status is completed
+            const now = new Date();
+            const historical = all.filter(s => {
+                const start = new Date(s.scheduled_at);
+                const duration = s.duration_minutes || 60;
+                const end = new Date(start.getTime() + duration * 60000);
+                return (s.booking_status || s.status) === 'completed' || now >= end;
+            }).sort((a,b) => new Date(b.scheduled_at) - new Date(a.scheduled_at)); // Latest first
+            
+            if (historical.length === 0) {
+                listContainer.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            listContainer.innerHTML = historical.map(session => {
+                const date = new Date(session.scheduled_at);
+                const dateStr = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+                const student = session.student || { full_name: 'Unknown Student', avatar_url: '', email: '' };
+                const studentAvatar = student.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.full_name || 'S')}&background=random&color=fff`;
+
+                return `
+                    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden hover:shadow-lg transition-all group p-6 opacity-80 hover:opacity-100" data-session-id="${session.id}">
+                        <div class="flex flex-col md:flex-row gap-8 items-center">
+                            <!-- Student Info: Fixed width -->
+                            <div class="flex items-center gap-4 w-full md:w-64 shrink-0">
+                                <div class="w-16 h-16 rounded-2xl overflow-hidden border-2 border-slate-200 dark:border-slate-700 shrink-0 shadow-sm grayscale cursor-pointer" onclick='window.openStudentProfile(${JSON.stringify(student).replace(/'/g, "&#39;")})'>
+                                    <img src="${studentAvatar}" class="w-full h-full object-cover" />
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <h4 class="font-bold text-slate-900 dark:text-white truncate cursor-pointer" onclick='window.openStudentProfile(${JSON.stringify(student).replace(/'/g, "&#39;")})'>${student.full_name || 'Unknown Student'}</h4>
+                                    <span class="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded text-[10px] font-bold text-slate-500 uppercase tracking-wider">${session.meeting_type}</span>
+                                </div>
+                            </div>
+
+                            <!-- Session Details: Optimized layout -->
+                            <div class="flex-1 flex flex-wrap items-center gap-x-10 gap-y-4 md:px-8 border-t md:border-t-0 md:border-l border-slate-100 dark:border-slate-800 pt-4 md:pt-0 min-w-0">
+                                <div class="flex items-center gap-3 w-44 shrink-0">
+                                    <div class="w-10 h-10 bg-slate-50 dark:bg-slate-800 rounded-xl flex items-center justify-center text-slate-400 shrink-0">
+                                        <span class="material-symbols-outlined text-xl">event_available</span>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Completed On</p>
+                                        <p class="font-bold text-slate-600 dark:text-slate-400 text-sm whitespace-nowrap">${dateStr}</p>
+                                    </div>
+                                </div>
+                                <div class="flex-1 min-w-[180px]">
+                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Topic</p>
+                                    <p class="font-medium text-slate-500 dark:text-slate-500 text-sm line-clamp-1" title="${(session.topic || 'Mentorship Session').replace(/"/g, '&quot;')}">${session.topic || 'Mentorship Session'}</p>
+                                </div>
+                            </div>
+
+                            <!-- Actions: Fixed width -->
+                            <div class="w-full md:w-fit flex flex-col gap-2 justify-center border-t md:border-t-0 border-slate-100 dark:border-slate-800 pt-4 md:pt-0">
+                                <button class="message-btn px-4 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all text-sm flex items-center gap-2" data-id="${session.id}" data-name="${(student.full_name || 'Student').replace(/'/g, "\\'")}">
+                                    <span class="material-symbols-outlined text-[18px]">forum</span> Review Chat
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            listContainer.querySelectorAll('.message-btn').forEach(btn => {
+                btn.addEventListener('click', () => openMessagingModal(btn.dataset.id, btn.dataset.name));
+            });
+
+        } catch (err) {
+            console.error(err);
+            listContainer.innerHTML = '<p class="text-red-500">Error loading history.</p>';
+        }
+    };
+
+    renderCompleted();
+}
+
+/** MESSAGING MODAL LOGIC **/
+let currentMessageBookingId = null;
+
+async function openMessagingModal(bookingId, studentName) {
+    currentMessageBookingId = bookingId;
+    const modal = document.getElementById('booking-message-modal');
+    const historyContainer = document.getElementById('chat-history-container');
+    const nameLabel = document.getElementById('modal-student-name');
+    
+    nameLabel.innerText = studentName;
+    modal.classList.remove('hidden');
+    
+    historyContainer.innerHTML = '<div class="py-10 text-center"><div class="animate-spin inline-block w-6 h-6 border-2 border-primary/20 border-t-primary rounded-full"></div></div>';
+    
+    try {
+        const messages = await MentorService.getMessages(bookingId);
+        if (messages.length === 0) {
+            historyContainer.innerHTML = `
+                <div class="flex flex-col items-center justify-center h-full text-center py-10">
+                    <span class="material-symbols-outlined text-slate-200 dark:text-slate-700 text-6xl mb-4">chat_bubble</span>
+                    <p class="text-slate-400 text-sm">No messages yet. Start the conversation!</p>
+                </div>
+            `;
+        } else {
+            historyContainer.innerHTML = messages.map(msg => {
+                const isMentor = msg.sender_role === 'mentor';
+                return `
+                    <div class="flex ${isMentor ? 'justify-end' : 'justify-start'}">
+                        <div class="max-w-[80%] p-4 rounded-2xl ${isMentor ? 'bg-primary text-white rounded-tr-none' : 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-tl-none shadow-sm'}">
+                            <p class="text-sm">${msg.message_text}</p>
+                            <p class="text-[10px] mt-2 opacity-60">${new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            historyContainer.scrollTop = historyContainer.scrollHeight;
+        }
+    } catch (err) {
+        historyContainer.innerHTML = '<p class="text-red-500 text-center py-10">Failed to load messages.</p>';
+    }
+}
+
+// Global modal initialization
+function initMessagingModal() {
+    const modal = document.getElementById('booking-message-modal');
+    if (!modal) return;
+    
+    // Remove old listeners to avoid duplicates
+    const oldCloseBtn = modal.querySelector('.close-modal-btn');
+    const newCloseBtn = oldCloseBtn.cloneNode(true);
+    oldCloseBtn.parentNode.replaceChild(newCloseBtn, oldCloseBtn);
+    newCloseBtn.addEventListener('click', () => modal.classList.add('hidden'));
+    
+    const oldSendBtn = document.getElementById('send-message-btn');
+    const newSendBtn = oldSendBtn.cloneNode(true);
+    oldSendBtn.parentNode.replaceChild(newSendBtn, oldSendBtn);
+    
+    const input = document.getElementById('chat-input');
+    
+    newSendBtn.addEventListener('click', async () => {
+        const text = input.value.trim();
+        if (!text || !currentMessageBookingId) return;
+        
+        try {
+            const session = await AuthService.getSession();
+            const userId = session?.user?.id;
+            
+            if (!userId) {
+                alert("Session expired. Please log in again.");
+                return;
+            }
+
+            newSendBtn.disabled = true;
+            await MentorService.sendMessage(currentMessageBookingId, userId, text, 'mentor');
+            input.value = '';
+            // Refresh history
+            openMessagingModal(currentMessageBookingId, document.getElementById('modal-student-name').innerText);
+        } catch (err) {
+            alert('Failed to send message.');
+        } finally {
+            newSendBtn.disabled = false;
+        }
+    });
+
+    // Close on backdrop click
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.classList.add('hidden');
+    });
+}
+
+// Call init on load and when the modal might be re-rendered (though it's static in index.html)
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initMessagingModal);
+} else {
+    initMessagingModal();
+}
+
+window.deleteSession = async function(sessionId) {
+    if (!confirm("Are you sure you want to permanently remove this cancelled session?")) return;
+    
+    try {
+        await MentorService.deleteSession(sessionId);
+        // Refresh the page
+        window.location.reload();
+    } catch (err) {
+        console.error("Error deleting session:", err);
+        alert("Failed to remove session: " + err.message);
+    }
+};

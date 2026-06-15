@@ -424,7 +424,7 @@ function goToStep(stepNumber) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-function nextStep() {
+async function wizardNextStep() {
     if (validateStep(window.currentStep)) {
         goToStep(window.currentStep + 1);
     }
@@ -541,7 +541,10 @@ async function saveCurrentStepData(shouldSaveToDb = false) {
         window.courseDraft.pricing.coupon_expiry = document.getElementById('course-coupon-expiry')?.value || null;
     } else if (window.currentStep === 4) {
         const privacyEl = document.querySelector('input[name="privacy"]:checked');
-        if (privacyEl) window.courseDraft.privacy = privacyEl.value;
+        if (privacyEl) {
+            window.courseDraft.is_public = (privacyEl.value === 'public');
+            window.courseDraft.privacy = privacyEl.value; // Keep for UI sync
+        }
     }
 
     // Only save to DB if explicitly requested (e.g., Save Draft, Next on Step 4, or Publish)
@@ -810,12 +813,15 @@ function renderCurriculum() {
         if (sec.items && sec.items.length > 0) {
             sec.items.forEach((item, iIdx) => {
 
+                const hasContent = item.video || (item.quiz && item.quiz.length > 0) || (item.resources && item.resources.length > 0);
+                const borderClass = hasContent ? 'border-slate-200 dark:border-slate-700' : 'border-red-400 ring-1 ring-red-400 bg-red-50/30 dark:bg-red-900/10';
+
                 let icon = 'play_circle';
                 if (item.content_type === 'quiz') icon = 'quiz';
                 if (item.content_type === 'resource') icon = 'description';
 
                 itemsHtml += `
-                    <div class="group border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 hover:border-primary/30 transition-colors mb-3"
+                    <div class="group border ${borderClass} rounded-lg bg-white dark:bg-slate-900 hover:border-primary/30 transition-colors mb-3"
                          draggable="true" ondragstart="dragStartItem(event, ${sIdx}, ${iIdx})" ondragover="dragOverItem(event)" ondrop="dropItem(event, ${sIdx}, ${iIdx})">
                         <div class="p-4 flex items-center justify-between">
                             <div class="flex items-center gap-4 w-full">
@@ -825,22 +831,26 @@ function renderCurriculum() {
                                     <div class="flex flex-col w-full text-left">
                                         <input class="text-sm font-medium text-slate-900 dark:text-white leading-none bg-transparent border-none focus:ring-0 p-0 transition w-full mb-1" 
                                            value="${item.title}" onblur="updateItemTitle(${sIdx}, ${iIdx}, this.value)" />
-                                        <div class="flex flex-wrap items-center gap-3 mt-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                                            <span>${item.content_type.toUpperCase()}</span>
-                                            ${item.video ? `
-                                                <span class="flex items-center gap-1 text-blue-500 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded">
-                                                    <span class="material-symbols-outlined text-[12px]">videocam</span> 
-                                                    ${item.video.title || 'Video'}
-                                                </span>
-                                            ` : ''}
-                                            ${(item.quiz && item.quiz.length > 0) ? `
-                                                <button onclick="openModal('modal-add-quiz', ${sIdx}, ${iIdx})" class="flex items-center gap-1 text-amber-500 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded hover:bg-amber-100 dark:hover:bg-amber-900/40 transition">
-                                                    <span class="material-symbols-outlined text-[12px]">quiz</span> 
-                                                    ${item.quiz.length} Quiz${item.quiz.length !== 1 ? 'zes' : ''}
-                                                </button>
-                                            ` : ''}
+                                        
+                                        <!-- Scrollable container for Lesson Details -->
+                                        <div class="overflow-x-auto scrollbar-hide py-1">
+                                            <div class="flex items-center gap-3 mt-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap">
+                                                <span>${item.content_type.toUpperCase()}</span>
+                                                ${item.video ? `
+                                                    <span class="flex items-center gap-1 text-blue-500 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded">
+                                                        <span class="material-symbols-outlined text-[12px]">videocam</span> 
+                                                        ${item.video.title || 'Video'}
+                                                    </span>
+                                                ` : ''}
+                                                ${(item.quiz && item.quiz.length > 0) ? `
+                                                    <button onclick="wizardOpenModal('modal-add-quiz', ${sIdx}, ${iIdx})" class="flex items-center gap-1 text-amber-500 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded hover:bg-amber-100 dark:hover:bg-amber-900/40 transition">
+                                                        <span class="material-symbols-outlined text-[12px]">quiz</span> 
+                                                        ${item.quiz.length} Quiz${item.quiz.length !== 1 ? 'zes' : ''}
+                                                    </button>
+                                                ` : ''}
 
-                                            ${(item.resources || []).map(r => `<span class="flex items-center gap-1 text-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded"><span class="material-symbols-outlined text-[12px]">attachment</span> ${r.title}</span>`).join('')}
+                                                ${(item.resources || []).map(r => `<span class="flex items-center gap-1 text-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded"><span class="material-symbols-outlined text-[12px]">attachment</span> ${r.title}</span>`).join('')}
+                                            </div>
                                         </div>
                                         
                                         <!-- Video Preview for Lesson -->
@@ -877,9 +887,9 @@ function renderCurriculum() {
                                     <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Preview</span>
                                 </div>
                                 <div class="flex items-center gap-2">
-                                    <button onclick="openModal('modal-add-video', ${sIdx}, ${iIdx})" class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-accent transition flex items-center justify-center" title="Add Video"><span class="material-symbols-outlined text-lg">videocam</span></button>
-                                    <button onclick="openModal('modal-add-resource', ${sIdx}, ${iIdx})" class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-accent transition flex items-center justify-center" title="Add Resource"><span class="material-symbols-outlined text-lg">attachment</span></button>
-                                    <button onclick="openModal('modal-add-quiz', ${sIdx}, ${iIdx})" class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-accent transition flex items-center justify-center" title="Add Quiz"><span class="material-symbols-outlined text-lg">quiz</span></button>
+                                    <button onclick="wizardOpenModal('modal-add-video', ${sIdx}, ${iIdx})" class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-accent transition flex items-center justify-center" title="Add Video"><span class="material-symbols-outlined text-lg">videocam</span></button>
+                                    <button onclick="wizardOpenModal('modal-add-resource', ${sIdx}, ${iIdx})" class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-accent transition flex items-center justify-center" title="Add Resource"><span class="material-symbols-outlined text-lg">attachment</span></button>
+                                    <button onclick="wizardOpenModal('modal-add-quiz', ${sIdx}, ${iIdx})" class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-accent transition flex items-center justify-center" title="Add Quiz"><span class="material-symbols-outlined text-lg">quiz</span></button>
                                 </div>
                             </div>
                         </div>
@@ -1011,7 +1021,7 @@ let activeModalSectionIdx = -1;
 let activeModalItemIdx = -1;
 let currentQuizzes = []; // Now managing an array of quizzes in the modal
 
-function openModal(modalId, sIdx, iIdx) {
+function wizardOpenModal(modalId, sIdx, iIdx) {
     activeModalSectionIdx = sIdx;
     activeModalItemIdx = iIdx;
 
@@ -1128,7 +1138,7 @@ function closeModal(modalId) {
     }
 }
 
-async function saveModalVideo() {
+async function wizardSaveModalVideo() {
     const fileEl = document.getElementById('modal-video-upload');
     const embedUrl = document.getElementById('modal-video-embed-url')?.value;
     const title = document.getElementById('modal-video-title')?.value || 'Video Lecture';
@@ -1343,6 +1353,24 @@ function validateStep(step) {
         if (!isValid) {
             console.log("Step 1 Validation Summary: Failed required fields.");
         }
+    } else if (step === 2) {
+        // Step 2: Curriculum Validation
+        // Every lesson must have at least one piece of content (video, quiz, or resource)
+        let emptyLessons = [];
+        window.courseDraft.curriculum.forEach((sec, sIdx) => {
+            (sec.items || []).forEach((item, iIdx) => {
+                const hasContent = item.video || (item.quiz && item.quiz.length > 0) || (item.resources && item.resources.length > 0);
+                if (!hasContent) {
+                    emptyLessons.push(`"${item.title}" in ${sec.title}`);
+                    isValid = false;
+                }
+            });
+        });
+
+        if (!isValid) {
+            console.warn("Validation failed: Empty lessons found.", emptyLessons);
+            showToast(`The following lessons are missing content: ${emptyLessons.join(', ')}. Please add a video, quiz, or resource.`, true);
+        }
     } else if (step === 3) {
         const type = window.courseDraft.pricing.type;
         const price = document.getElementById('course-price');
@@ -1524,16 +1552,18 @@ async function renderFinalPreview() {
     calculatePayout(); 
 
     // Use already loaded profile if possible, else fetch
-    const finalInstructorName = window.courseDraft.instructor_name || 'Instructor';
+    const finalInstructorName = window.courseDraft.instructor_name || (window.userProfile ? window.userProfile.full_name : 'Instructor');
     const nameEl = document.getElementById('final-instructor-name');
     if (nameEl) nameEl.innerText = finalInstructorName;
-    if (window.courseDraft.instructor_avatar) {
+    
+    if (window.courseDraft.instructor_avatar || (window.userProfile && window.userProfile.avatar_url)) {
         const avatarEl = document.getElementById('final-instructor-avatar');
-        if (avatarEl) avatarEl.innerHTML = `<img src="${window.courseDraft.instructor_avatar}" class="w-full h-full object-cover rounded-full" />`;
+        const avatarUrl = window.courseDraft.instructor_avatar || window.userProfile.avatar_url;
+        if (avatarEl) avatarEl.innerHTML = `<img src="${avatarUrl}" class="w-full h-full object-cover rounded-full" />`;
     }
 }
 
-function calculatePayout() {
+function wizardCalculatePayout() {
     const priceInput = document.getElementById('course-price');
     const priceDisplay = document.getElementById('final-price-preview');
     const payoutEl = document.querySelector('.bg-purple-50 p');
@@ -1848,11 +1878,12 @@ function registerGlobals() {
         exitWizard,
         saveDraftManual,
         addQuizQuestion,
-        closeModal,
-        openModal,
+        openModal: wizardOpenModal,
+        wizardOpenModal, // 🔥 Also register by original name for curriculum buttons
+        closeModal,      // 🔥 Missing registration used in wizard.html
         goToStep,
         setPricingTier,
-        nextStep,
+        nextStep: wizardNextStep,
         prevStep,
         publishCourse,
         deleteSection,           // Replaces removeCurriculumSection
@@ -1861,9 +1892,14 @@ function registerGlobals() {
         addSection,              // Replaces addCurriculumSection
         dropSection,             // Replaces moveCurriculumSection
         dropItem,                // Replaces moveCurriculumItem
+        toggleLessonPreview,
+        updateSectionTitle,
+        updateItemTitle,
+        saveModalVideo: wizardSaveModalVideo,
         toggleResourceForm,
         saveModalResource,
-        deleteResource
+        deleteResource,
+        calculatePayout: wizardCalculatePayout
     };
 
     for (const [key, val] of Object.entries(globals)) {

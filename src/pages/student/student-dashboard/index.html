@@ -8,13 +8,20 @@
     <script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap"
         rel="stylesheet" />
-    <link href="https://fonts.icons.com/icon?family=Material+Icons+Round" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Icons+Round" rel="stylesheet" />
     <link
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
         rel="stylesheet" />
-    <script src="/src/services/tacliimi_db.js"></script>
-    <script>
-        if (!TacliimiDB.getCurrentSession()) window.location.href = '/src/pages/auth/login/index.html';
+    <script type="module">
+        import { AuthService } from '/src/services/authService.js';
+        
+        async function checkAuth() {
+            const session = await AuthService.getSession();
+            if (!session) {
+                window.location.href = '/src/pages/auth/login/index.html';
+            }
+        }
+        checkAuth();
     </script>
     <script>
         tailwind.config = {
@@ -81,18 +88,7 @@
                     <button class="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full">
                         <span class="material-symbols-outlined">notifications</span>
                     </button>
-                    <div class="flex items-center gap-3">
-                        <div onclick="window.location.href='/src/pages/student/account-settings/index.html'"
-                            class="text-right hidden sm:block cursor-pointer hover:opacity-80 transition-opacity">
-                            <p class="user-display-name text-sm font-semibold text-slate-900 dark:text-white">Student
-                                Name</p>
-                            <p class="text-[10px] text-slate-500 uppercase tracking-wider">ID: 32342</p>
-                        </div>
-                        <div onclick="window.location.href='/src/pages/student/account-settings/index.html'"
-                            class="h-10 w-10 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center border-2 border-primary text-slate-400 cursor-pointer">
-                            <span class="material-symbols-outlined text-2xl">account_circle</span>
-                        </div>
-                    </div>
+                    <!-- Global Profile Injected Below -->
                 </div>
             </div>
         </div>
@@ -148,6 +144,11 @@
                     <span class="material-symbols-outlined text-xl">school</span>
                     My Courses
                 </button>
+                <button id="tab-completed" onclick="switchDashboardTab('completed')"
+                    class="pb-4 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium flex items-center gap-2 border-b-2 border-transparent transition-colors">
+                    <span class="material-symbols-outlined text-xl">verified</span>
+                    Completed
+                </button>
                 <button id="tab-my-mentors" onclick="switchDashboardTab('my-mentors')"
                     class="pb-4 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium flex items-center gap-2 border-b-2 border-transparent transition-colors">
                     <span class="material-symbols-outlined text-xl">supervisor_account</span>
@@ -172,6 +173,17 @@
         <div id="content-my-courses">
             <div id="enrolled-courses-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <!-- Cards will be populated here by JS -->
+            </div>
+        </div>
+
+        <div id="content-completed" class="hidden">
+            <div id="completed-courses-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-6"></div>
+            <div id="completed-courses-empty-state" class="hidden py-12 text-center">
+                <div class="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <span class="material-symbols-outlined text-3xl text-slate-400">workspace_premium</span>
+                </div>
+                <h3 class="text-xl font-bold dark:text-white">No completed courses yet</h3>
+                <p class="text-slate-500 mt-2">Finish your enrolled courses to see them here.</p>
             </div>
         </div>
 
@@ -242,7 +254,7 @@
                 <div>
                     <h5 class="font-bold text-slate-900 dark:text-white mb-4">Support</h5>
                     <ul class="space-y-2 text-slate-500 dark:text-slate-400 text-sm">
-                        <li><a class="hover:text-primary transition-colors" href="#">Help Center</a></li>
+                        <li><a class="hover:text-primary transition-colors" href="/src/pages/student/help-center/">Help Center</a></li>
                         <li><a class="hover:text-primary transition-colors" href="#">Terms of Service</a></li>
                         <li><a class="hover:text-primary transition-colors" href="#">Privacy Policy</a></li>
                         <li><a class="hover:text-primary transition-colors" href="#">Contact Us</a></li>
@@ -254,11 +266,135 @@
             </div>
         </div>
     </footer>
-    
+    <!-- Topic Modal -->
+    <div id="topic-modal" class="fixed inset-0 z-[9999] hidden flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeTopicModal()"></div>
+        <div class="relative bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-lg p-8">
+            <div class="flex items-start justify-between mb-6">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-primary/10 rounded-2xl flex items-center justify-center">
+                        <span class="material-symbols-outlined text-primary text-xl">chat_bubble</span>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Session Topic</p>
+                        <h3 class="font-bold text-slate-900 dark:text-white text-lg" id="topic-modal-name">Mentor</h3>
+                    </div>
+                </div>
+                <button onclick="closeTopicModal()" class="w-9 h-9 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl flex items-center justify-center transition-colors">
+                    <span class="material-symbols-outlined text-slate-500 text-xl">close</span>
+                </button>
+            </div>
+            <div class="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-5 overflow-hidden">
+                <p id="topic-modal-content" class="text-slate-700 dark:text-slate-300 text-sm leading-relaxed whitespace-pre-wrap break-words overflow-wrap-anywhere"></p>
+            </div>
+            <button onclick="closeTopicModal()" class="mt-6 w-full py-3 bg-primary text-white font-bold rounded-2xl hover:bg-primary/90 transition-all">
+                Close
+            </button>
+        </div>
+    </div>
 
-    
+    <!-- Booking Messaging Modal (Same as Instructor) -->
+    <div id="booking-message-modal" class="fixed inset-0 z-[10000] hidden flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+        <div class="relative bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[85vh] overflow-hidden">
+            <!-- Header -->
+            <div class="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center">
+                        <span class="material-symbols-outlined text-primary text-2xl">forum</span>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-slate-900 dark:text-white" id="modal-mentor-name">Mentor Name</h3>
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                            <p class="text-xs text-slate-500 font-medium tracking-wide uppercase">Active Conversation</p>
+                        </div>
+                    </div>
+                </div>
+                <button onclick="document.getElementById('booking-message-modal').classList.add('hidden')" class="w-10 h-10 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl flex items-center justify-center transition-colors">
+                    <span class="material-symbols-outlined text-slate-500 text-xl">close</span>
+                </button>
+            </div>
+
+            <!-- Messages Area -->
+            <div id="chat-history-container" class="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50/50 dark:bg-slate-800/30">
+                <!-- Messages injected here -->
+            </div>
+
+            <!-- Input Area -->
+            <div class="p-6 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 shrink-0">
+                <div class="flex gap-3">
+                    <textarea id="chat-input" rows="1" class="flex-1 bg-slate-100 dark:bg-slate-800 border-none rounded-2xl px-5 py-3 text-sm focus:ring-2 focus:ring-primary/20 transition-all resize-none dark:text-white" placeholder="Type your message..."></textarea>
+                    <button id="send-chat-btn" class="w-12 h-12 bg-primary text-white rounded-2xl flex items-center justify-center hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 shrink-0">
+                        <span class="material-symbols-outlined font-bold">send</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mentorship Review Modal -->
+    <div id="mentorship-review-modal" class="fixed inset-0 z-[10001] hidden flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+        <div class="relative bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-md p-8 flex flex-col">
+            <!-- Header with X Close -->
+            <div class="flex justify-end mb-2">
+                <button onclick="document.getElementById('mentorship-review-modal').classList.add('hidden')" class="w-10 h-10 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl flex items-center justify-center transition-colors">
+                    <span class="material-symbols-outlined text-slate-500 text-xl">close</span>
+                </button>
+            </div>
+            
+            <div class="flex flex-col items-center text-center">
+                <div class="w-20 h-20 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center mb-6">
+                    <span class="material-symbols-outlined text-amber-500 text-4xl">star_half</span>
+                </div>
+                <h3 class="text-2xl font-bold dark:text-white mb-2">Review Your Session</h3>
+                <p class="text-slate-500 text-sm mb-8">How was your session with <span id="review-mentor-name" class="font-bold text-slate-800 dark:text-slate-200">the mentor</span>?</p>
+                
+                <!-- Rating Stars -->
+                <div class="flex gap-3 mb-8" id="rating-stars">
+                    <!-- Star buttons remain same -->
+                    <button data-rating="1" class="star-btn w-12 h-12 bg-slate-50 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-slate-300 hover:text-amber-400 transition-all group">
+                        <span class="material-symbols-outlined text-3xl group-hover:scale-110 transition-transform">star</span>
+                    </button>
+                    <button data-rating="2" class="star-btn w-12 h-12 bg-slate-50 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-slate-300 hover:text-amber-400 transition-all group">
+                        <span class="material-symbols-outlined text-3xl group-hover:scale-110 transition-transform">star</span>
+                    </button>
+                    <button data-rating="3" class="star-btn w-12 h-12 bg-slate-50 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-slate-300 hover:text-amber-400 transition-all group">
+                        <span class="material-symbols-outlined text-3xl group-hover:scale-110 transition-transform">star</span>
+                    </button>
+                    <button data-rating="4" class="star-btn w-12 h-12 bg-slate-50 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-slate-300 hover:text-amber-400 transition-all group">
+                        <span class="material-symbols-outlined text-3xl group-hover:scale-110 transition-transform">star</span>
+                    </button>
+                    <button data-rating="5" class="star-btn w-12 h-12 bg-slate-50 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-slate-300 hover:text-amber-400 transition-all group">
+                        <span class="material-symbols-outlined text-3xl group-hover:scale-110 transition-transform">star</span>
+                    </button>
+                </div>
+
+                <!-- Review Text -->
+                <textarea id="review-comment" class="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl p-5 text-sm mb-8 focus:ring-2 focus:ring-primary/20 dark:text-white" rows="4" placeholder="Share your experience... (optional)"></textarea>
+
+                <button id="submit-review-btn" class="w-full py-4 bg-primary text-white font-bold rounded-2xl hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined font-bold">check_circle</span> Submit Review
+                </button>
+            </div>
+        </div>
+    </div>
+    <script>
+        function openTopicModal(mentorName, topic) {
+            document.getElementById('topic-modal-name').textContent = mentorName || 'Mentor';
+            document.getElementById('topic-modal-content').textContent = topic || 'No topic provided';
+            document.getElementById('topic-modal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeTopicModal() {
+            document.getElementById('topic-modal').classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') closeTopicModal(); });
+    </script>
     <script type="module" src="./dashboard.js"></script>
+    <script type="module" src="/src/services/globalProfile.js"></script>
 </body>
 
 </html>
-```

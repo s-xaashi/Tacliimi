@@ -48,29 +48,15 @@
         class="sticky top-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16 items-center">
-                <div class="flex items-center gap-8">
-                    <div class="flex items-center gap-2">
-                        <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                            <span class="material-icons-round text-white text-xl">school</span>
-                        </div>
-                        <span class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Tacliimi<span
-                                class="text-primary">Learn</span></span>
+                <a href="/" class="flex items-center gap-2">
+                    <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                        <span class="material-icons-round text-white text-xl">school</span>
                     </div>
-                    <div
-                        class="hidden md:flex items-center gap-6 text-sm font-medium text-slate-600 dark:text-slate-400">
-                        <a class="hover:text-primary transition-colors" href="#">Courses</a>
-                        <a class="hover:text-primary transition-colors" href="#">Institutions</a>
-                        <a class="hover:text-primary transition-colors" href="#">My Learning</a>
-                    </div>
-                </div>
-                <div class="flex items-center gap-4">
-                    <button class="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full">
-                        <span class="material-icons-round">search</span>
-                    </button>
-                    <div class="w-8 h-8 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                        <img alt="User Profile"
-                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuCehWLOlzE8I-zRrm4zq5Pyz_N-DwPy5Bf3RqtDFDxJpfgHTY-axvUW6O-y8hOJukIFUD_gfdJUZuAss04VYHvTMazNkMNMdMhchcfVwKe4gFawTmrf5eF_ZJTRlZDB8NqgKhkwq8CQG4ZhSAFiiWcBasUQ-vHD20nfimPsoYTWOPVzLVZAHF6b-XJgsQWX7q11YtHJE5AQ1g8pV--vt951iRy8OMXwFaDxUPGp1QnM4PFHBfaueE0AyizaBdYAmnbTV__chCOobwVa" />
-                    </div>
+                    <span class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Tacliimi<span
+                            class="text-primary">Learn</span></span>
+                </a>
+                <div class="flex items-center gap-4" id="cd-header-profile-placeholder">
+                    <!-- Global Profile Injected Below -->
                 </div>
             </div>
         </div>
@@ -98,6 +84,7 @@
                 <div class="mt-8">
                     <h1 id="cd-title" class="text-3xl font-bold text-slate-900 dark:text-white leading-tight">Course
                         Title Here</h1>
+                    <p id="cd-subtitle" class="mt-2 text-lg text-slate-500 dark:text-slate-400 font-medium hidden"></p>
                     <p id="cd-desc" class="mt-4 text-lg text-slate-600 dark:text-slate-400">Course description will load
                         here.</p>
                 </div>
@@ -123,10 +110,14 @@
                     class="mt-12 p-8 border border-slate-200 dark:border-slate-800 rounded-2xl bg-slate-50 dark:bg-slate-900/30">
                     <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-6">About the Instructor</h2>
                     <div class="flex flex-col md:flex-row gap-6">
-                        <img id="cd-instructor-avatar" alt="Instructor Profile" class="w-24 h-24 rounded-full bg-slate-200 object-cover flex-shrink-0"
+                        <img id="cd-instructor-avatar" alt="Instructor Profile" class="w-24 h-24 rounded-full bg-slate-200 object-cover flex-shrink-0 cursor-pointer"
+                            onclick="window.location.href='/src/pages/instructor/public-profile/index.html?id=' + currentCourse.instructor_id"
                             src="https://ui-avatars.com/api/?name=Instructor&background=6366f1&color=fff" />
                         <div class="flex-1">
-                            <h3 id="cd-instructor" class="text-lg font-bold text-slate-900 dark:text-white">Loading...</h3>
+                            <h3 id="cd-instructor" class="text-lg font-bold text-slate-900 dark:text-white hover:text-primary transition-colors cursor-pointer" 
+                                onclick="window.location.href='/src/pages/instructor/public-profile/index.html?id=' + currentCourse.instructor_id">
+                                Loading...
+                            </h3>
                             <p id="cd-instructor-role" class="text-primary text-sm font-medium mb-3"></p>
                             <div class="flex flex-wrap gap-4 text-xs font-semibold text-slate-500 mb-4">
                                 <span class="flex items-center gap-1"><span
@@ -268,11 +259,14 @@
             </div>
         </div>
     </footer>
-    </footer>
 
     <script type="module">
         import { CourseService } from '/src/services/courseService.js?v=6';
         import { AuthService } from '/src/services/authService.js?v=6';
+
+        // Expose to window for payment modal access
+        window.CourseService = CourseService;
+        window.AuthService = AuthService;
 
         let currentCourse = null;
         let currentUser = null;
@@ -303,6 +297,7 @@
                 }
 
                 currentCourse = courseData;
+                window.currentCourseSerial = courseData.serial_id;
                 currentUser = session ? session.user : null;
 
                 // ── Check enrollment early so curriculum renderer can use it ──
@@ -324,6 +319,13 @@
                 // ── Basic Info ──
                 document.getElementById('cd-title').textContent = courseData.title;
                 document.title = 'Tacliimi Learn - ' + courseData.title;
+
+                // Subtitle
+                const subtitleEl = document.getElementById('cd-subtitle');
+                if (subtitleEl && courseData.subtitle) {
+                    subtitleEl.textContent = courseData.subtitle;
+                    subtitleEl.classList.remove('hidden');
+                }
 
                 const thumbnailImg = document.querySelector('.aspect-video img');
                 if (thumbnailImg) thumbnailImg.src = courseData.thumbnail_url || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80';
@@ -673,16 +675,17 @@
                         enrollBtn.disabled = true;
                         enrollBtn.innerHTML = '<span class="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></span> Enrolling...';
                         try {
-                            await CourseService.enrollCourse(courseId, currentUser.id);
-                            document.getElementById('cd-review-form').classList.remove('hidden');
+                            const result = await CourseService.enrollCourse(courseId, currentUser.id);
+                            showSuccessModal(courseData.serial_id, result.paymentSerialId);
                         } catch (e) {
                             alert('Failed to enroll: ' + e.message);
                             enrollBtn.disabled = false;
                             enrollBtn.textContent = 'Enroll Now';
                             return;
                         }
+                    } else {
+                        window.location.href = `/src/pages/learning/learning-interface/index.html?id=${courseId}`;
                     }
-                    window.location.href = `/src/pages/learning/learning-interface/index.html?id=${courseId}`;
                 });
 
                 // ── Wishlist Button ──
@@ -836,7 +839,32 @@
                     class="w-full py-4 bg-primary hover:bg-indigo-700 text-white font-extrabold rounded-xl shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2">
                     Pay & Enroll Now
                 </button>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div id="success-modal" class="fixed inset-0 z-[110] hidden items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800 p-8 text-center animate-in fade-in zoom-in duration-300">
+            <div class="w-20 h-20 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
+                <span class="material-icons-round text-emerald-600 text-4xl">check_circle</span>
             </div>
+            <h3 class="text-2xl font-black text-slate-900 dark:text-white mb-2">Enrollment Success!</h3>
+            <p class="text-slate-500 dark:text-slate-400 mb-8">You are now enrolled in the course. Happy learning!</p>
+            
+            <div class="space-y-3 mb-8">
+                <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
+                    <span class="text-xs font-bold text-slate-400 uppercase">Course ID</span>
+                    <span id="success-crs-id" class="text-sm font-black text-primary">CRS-0000</span>
+                </div>
+                <div id="success-pay-row" class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
+                    <span class="text-xs font-bold text-slate-400 uppercase">Receipt ID</span>
+                    <span id="success-pay-id" class="text-sm font-black text-primary">PAY-0000</span>
+                </div>
+            </div>
+
+            <button id="success-continue-btn" class="w-full py-4 bg-primary hover:bg-indigo-600 text-white font-bold rounded-2xl transition-all shadow-lg shadow-primary/20">
+                Start Learning
+            </button>
         </div>
     </div>
 
@@ -968,21 +996,26 @@
             // Simulate API delay
             setTimeout(async () => {
                 try {
-                    // Get course data again to be sure
                     const urlParams = new URLSearchParams(window.location.search);
                     const courseId = urlParams.get('id');
                     const profile = JSON.parse(localStorage.getItem('tacliimi_profile') || '{}');
                     
                     if (!profile.id) throw new Error("User session expired");
 
-                    await CourseService.enrollCourse(courseId, profile.id);
-                    
-                    btn.innerHTML = `<span class="material-icons-round text-white mr-2">check_circle</span> Payment Success!`;
-                    btn.className = "w-full py-4 bg-emerald-600 text-white font-extrabold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2";
+                    // Build payment data
+                    const paymentData = {
+                        amount: parseFloat(document.getElementById('pay-price').textContent.replace('$', '')),
+                        provider: method,
+                        currency: 'USD'
+                    };
 
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1500);
+                    const result = await CourseService.enrollCourse(courseId, profile.id, paymentData);
+                    
+                    closePaymentModal();
+                    
+                    // Show success modal with IDs
+                    const courseSerial = window.currentCourseSerial || 0;
+                    showSuccessModal(courseSerial, result.paymentSerialId);
 
                 } catch (err) {
                     alert("Payment failed: " + err.message);
@@ -991,6 +1024,32 @@
                 }
             }, 2000);
         }
+
+        window.showSuccessModal = function(courseSerialId, paymentSerialId) {
+            const modal = document.getElementById('success-modal');
+            const crsIdEl = document.getElementById('success-crs-id');
+            const payIdEl = document.getElementById('success-pay-id');
+            const payRow = document.getElementById('success-pay-row');
+            const continueBtn = document.getElementById('success-continue-btn');
+
+            crsIdEl.textContent = `CRS-${String(courseSerialId).padStart(4, '0')}`;
+            
+            if (paymentSerialId) {
+                payIdEl.textContent = `PAY-${String(paymentSerialId).padStart(4, '0')}`;
+                payRow.classList.remove('hidden');
+            } else {
+                payRow.classList.add('hidden');
+            }
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            continueBtn.onclick = () => {
+                const urlParams = new URLSearchParams(window.location.search);
+                const courseId = urlParams.get('id');
+                window.location.href = `/src/pages/learning/learning-interface/index.html?id=${courseId}`;
+            };
+        };
     </script>
 </body>
 

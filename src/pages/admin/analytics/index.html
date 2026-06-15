@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Analytics & Broadcasts | Tacliimi Admin</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <script type="module" src="/src/services/adminSidebar.js"></script>
+    <script>
+        tailwind.config = { darkMode:"class", theme:{ extend:{ colors:{ primary:"#4F46E5" } } } };
+    </script>
+    <style type="text/tailwindcss">
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .tab-btn { @apply pb-4 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium flex items-center gap-2 border-b-2 border-transparent transition-colors; }
+        .tab-btn.active { @apply text-indigo-600 dark:text-indigo-400 font-bold border-indigo-600 dark:border-indigo-400; }
+        .stat-card { @apply bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm; }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen">
+<div id="sidebar-overlay" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-20 hidden lg:hidden"></div>
+
+<aside id="sidebar" class="fixed left-0 top-0 h-full w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col z-30 transition-transform -translate-x-full lg:translate-x-0">
+    <div class="p-8 pb-4">
+        <div class="flex items-center gap-3 cursor-pointer" onclick="window.location.href='/index.html'">
+            <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg"><span class="material-symbols-outlined text-white text-2xl">admin_panel_settings</span></div>
+            <span class="text-2xl font-black tracking-tighter text-slate-900 dark:text-white">TACLIIMI<span class="text-indigo-600">.</span></span>
+        </div>
+    </div>
+    <nav class="flex-1 p-6 space-y-2 overflow-y-auto mt-4">
+        <a href="/src/pages/admin/dashboard/index.html" class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 rounded-xl transition-all font-medium"><span class="material-symbols-outlined shrink-0">dashboard</span> Dashboard</a>
+        <a href="/src/pages/admin/courses-review/index.html" class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 rounded-xl transition-all font-medium"><span class="material-symbols-outlined shrink-0">rule</span> Courses Review</a>
+        <a href="/src/pages/admin/bookings-review/index.html" class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 rounded-xl transition-all font-medium"><span class="material-symbols-outlined shrink-0">event_note</span> Bookings Review</a>
+        <a href="/src/pages/admin/finance/index.html" class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 rounded-xl transition-all font-medium"><span class="material-symbols-outlined shrink-0">payments</span> Finance Dashboard</a>
+        <div class="h-px bg-slate-100 dark:bg-slate-800 my-4 mx-4"></div>
+        <a href="/src/pages/admin/analytics/index.html" class="flex items-center gap-3 px-4 py-3 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-bold rounded-xl ring-1 ring-indigo-500/10">
+            <span class="material-symbols-outlined shrink-0 font-bold" style="font-variation-settings:'FILL' 1;">analytics</span> Analytics & Broadcasts
+        </a>
+        <a href="/src/pages/admin/admin-management/index.html" class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 rounded-xl transition-all font-medium"><span class="material-symbols-outlined shrink-0">manage_accounts</span> Admin Management</a>
+        <a href="/src/pages/admin/profile/index.html" class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 rounded-xl transition-all font-medium"><span class="material-symbols-outlined shrink-0">person</span> My Profile</a>
+    </nav>
+    <div class="p-6 border-t border-slate-100 dark:border-slate-800">
+        <button id="logout-btn" class="flex items-center justify-center gap-2 w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 hover:bg-red-50 text-slate-600 hover:text-red-600 font-bold rounded-xl transition-all">
+            <span class="material-symbols-outlined">logout</span> Logout
+        </button>
+    </div>
+</aside>
+
+<main class="lg:ml-72 min-h-screen flex flex-col">
+    <header class="h-20 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-8 sticky top-0 z-10">
+        <div class="flex items-center gap-4">
+            <button id="toggle-sidebar" class="lg:hidden p-2.5 text-slate-500 bg-slate-100 dark:bg-slate-800 rounded-xl"><span class="material-symbols-outlined">menu_open</span></button>
+            <div>
+                <h2 class="text-xl font-black tracking-tight">Analytics & Broadcasts</h2>
+                <p class="text-xs text-slate-400 font-medium uppercase tracking-wide">SuperAdmin Only</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-4">
+            <button id="theme-toggle" class="w-10 h-10 flex items-center justify-center text-slate-500 bg-slate-100 dark:bg-slate-800 rounded-xl hover:bg-indigo-50 transition-all"><span class="material-symbols-outlined">dark_mode</span></button>
+            <div class="flex items-center gap-3 pl-4 border-l border-slate-200 dark:border-slate-800 cursor-pointer" id="header-profile-area">
+                <div class="text-right hidden sm:block">
+                    <p class="text-sm font-bold" id="header-admin-name">Loading...</p>
+                    <p class="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">Super Admin</p>
+                </div>
+                <img id="header-avatar" src="" alt="Avatar" class="w-10 h-10 rounded-xl object-cover border-2 border-white dark:border-slate-800 shadow-sm bg-indigo-100">
+            </div>
+        </div>
+    </header>
+
+    <div class="p-8 space-y-8">
+
+        <!-- Tabs -->
+        <div class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div class="px-8 border-b border-slate-100 dark:border-slate-800 flex gap-8">
+                <button class="tab-btn active" id="tab-analytics" onclick="switchTab('analytics')"><span class="material-symbols-outlined text-base">bar_chart</span> Analytics</button>
+                <button class="tab-btn" id="tab-broadcasts" onclick="switchTab('broadcasts')"><span class="material-symbols-outlined text-base">campaign</span> Broadcasts</button>
+                <button class="tab-btn" id="tab-audit" onclick="switchTab('audit')"><span class="material-symbols-outlined text-base">history</span> Audit Logs</button>
+            </div>
+
+            <!-- Analytics Tab -->
+            <div id="content-analytics" class="p-8 space-y-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5" id="analytics-stats">
+                    <div class="stat-card animate-pulse h-28"></div>
+                    <div class="stat-card animate-pulse h-28"></div>
+                    <div class="stat-card animate-pulse h-28"></div>
+                    <div class="stat-card animate-pulse h-28"></div>
+                </div>
+
+                <!-- Refunds Chart -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="stat-card space-y-4">
+                        <h4 class="font-black flex items-center gap-2"><span class="material-symbols-outlined text-purple-600 text-xl">reply</span> Refund Overview</h4>
+                        <div id="refunds-chart" class="space-y-3">
+                            <div class="animate-pulse h-8 bg-slate-100 dark:bg-slate-800 rounded-xl"></div>
+                            <div class="animate-pulse h-8 bg-slate-100 dark:bg-slate-800 rounded-xl"></div>
+                            <div class="animate-pulse h-8 bg-slate-100 dark:bg-slate-800 rounded-xl"></div>
+                        </div>
+                    </div>
+                    <div class="stat-card space-y-4">
+                        <h4 class="font-black flex items-center gap-2"><span class="material-symbols-outlined text-amber-600 text-xl">account_balance_wallet</span> Withdrawal Overview</h4>
+                        <div id="withdrawals-chart" class="space-y-3">
+                            <div class="animate-pulse h-8 bg-slate-100 dark:bg-slate-800 rounded-xl"></div>
+                            <div class="animate-pulse h-8 bg-slate-100 dark:bg-slate-800 rounded-xl"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tickets Chart -->
+                <div class="stat-card space-y-4">
+                    <h4 class="font-black flex items-center gap-2"><span class="material-symbols-outlined text-blue-600 text-xl">confirmation_number</span> Support Ticket Volume by Category</h4>
+                    <div id="tickets-chart" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="animate-pulse h-20 bg-slate-100 dark:bg-slate-800 rounded-xl"></div>
+                        <div class="animate-pulse h-20 bg-slate-100 dark:bg-slate-800 rounded-xl"></div>
+                        <div class="animate-pulse h-20 bg-slate-100 dark:bg-slate-800 rounded-xl"></div>
+                        <div class="animate-pulse h-20 bg-slate-100 dark:bg-slate-800 rounded-xl"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Broadcasts Tab -->
+            <div id="content-broadcasts" class="hidden p-8 space-y-6">
+                <!-- Compose -->
+                <div class="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-700/30 rounded-3xl p-6 space-y-4">
+                    <h4 class="font-black text-indigo-900 dark:text-indigo-200 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-indigo-600">campaign</span> Compose Broadcast
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Title</label>
+                            <input id="broadcast-title" type="text" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-300 outline-none dark:text-white" placeholder="System announcement title..." />
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Target Audience</label>
+                            <select id="broadcast-audience" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-300 outline-none dark:text-white">
+                                <option value="all">Everyone</option>
+                                <option value="students">Students Only</option>
+                                <option value="mentors">Mentors Only</option>
+                                <option value="admins">Admins Only</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Message</label>
+                        <textarea id="broadcast-message" rows="3" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-300 outline-none dark:text-white resize-none" placeholder="Write your announcement..."></textarea>
+                    </div>
+                    <button id="send-broadcast-btn" onclick="sendBroadcast()" class="px-8 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-base">send</span> <span id="send-btn-label">Send Broadcast</span>
+                    </button>
+                </div>
+
+                <!-- Broadcast History -->
+                <div>
+                    <h4 class="font-black mb-4 flex items-center justify-between">
+                        Broadcast History
+                        <button onclick="loadBroadcasts()" class="w-9 h-9 flex items-center justify-center bg-slate-50 dark:bg-slate-800 rounded-xl hover:bg-indigo-50 transition-all"><span class="material-symbols-outlined text-sm">refresh</span></button>
+                    </h4>
+                    <div id="broadcasts-list" class="space-y-3">
+                        <div class="animate-pulse h-16 bg-slate-100 dark:bg-slate-800 rounded-2xl"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Audit Logs Tab -->
+            <div id="content-audit" class="hidden">
+                <div class="p-6 flex items-center justify-between border-b border-slate-100 dark:border-slate-800">
+                    <p class="text-sm text-slate-500">Recent admin actions across the platform</p>
+                    <button onclick="loadAuditLogs()" class="w-9 h-9 flex items-center justify-center bg-slate-50 dark:bg-slate-800 rounded-xl hover:bg-indigo-50 transition-all"><span class="material-symbols-outlined text-sm">refresh</span></button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="bg-slate-50 dark:bg-slate-800/50 text-[10px] uppercase tracking-widest text-slate-400">
+                                <th class="px-6 py-4 font-black">Admin</th>
+                                <th class="px-6 py-4 font-black">Action</th>
+                                <th class="px-6 py-4 font-black">Entity</th>
+                                <th class="px-6 py-4 font-black">Details</th>
+                                <th class="px-6 py-4 font-black">Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="audit-body" class="divide-y divide-slate-100 dark:divide-slate-800">
+                            <tr><td colspan="5" class="px-6 py-8 text-center text-slate-400 italic">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script type="module">
+    import { supabase } from '/src/services/supabaseClient.js';
+    import { AuthService } from '/src/services/authService.js';
+    import { RefundService } from '/src/services/refundService.js';
+    import { WithdrawalService } from '/src/services/withdrawalService.js';
+    import { SupportService } from '/src/services/supportService.js';
+    import { BroadcastService } from '/src/services/broadcastService.js';
+
+    let adminId = null;
+    const fmtDate = d => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+    async function init() {
+        const session = await AuthService.getSession();
+        adminId = session?.user?.id;
+        loadAnalytics();
+    }
+
+    async function loadAnalytics() {
+        try {
+            const [refundSummary, withdrawalSummary, tickets, payments] = await Promise.all([
+                RefundService.getRefundSummary(),
+                WithdrawalService.getWithdrawalSummary(),
+                SupportService.getAllTickets(),
+                supabase.from('payments').select('amount, payment_status')
+            ]);
+
+            const totalRevenue = (payments.data || []).filter(p => p.payment_status === 'paid').reduce((s,p) => s + Number(p.amount||0), 0);
+
+            // Stats cards
+            document.getElementById('analytics-stats').innerHTML = `
+                <div class="stat-card">
+                    <p class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-2">Total Revenue</p>
+                    <h3 class="text-2xl font-black text-emerald-600">$${totalRevenue.toLocaleString(undefined,{minimumFractionDigits:2})}</h3>
+                    <p class="text-xs text-slate-400 mt-1">${(payments.data||[]).length} payments</p>
+                </div>
+                <div class="stat-card">
+                    <p class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-2">Refund Success Rate</p>
+                    <h3 class="text-2xl font-black text-indigo-600">${refundSummary.successRate}%</h3>
+                    <p class="text-xs text-slate-400 mt-1">${refundSummary.approvedCount} approved / ${refundSummary.rejectedCount} rejected</p>
+                </div>
+                <div class="stat-card">
+                    <p class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-2">Pending Withdrawals</p>
+                    <h3 class="text-2xl font-black text-amber-600">$${withdrawalSummary.pendingTotal.toFixed(2)}</h3>
+                    <p class="text-xs text-slate-400 mt-1">${withdrawalSummary.pendingCount} requests</p>
+                </div>
+                <div class="stat-card">
+                    <p class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-2">Total Tickets</p>
+                    <h3 class="text-2xl font-black text-blue-600">${tickets.length}</h3>
+                    <p class="text-xs text-slate-400 mt-1">${tickets.filter(t=>t.status==='open').length} open</p>
+                </div>
+            `;
+
+            // Refunds chart CSS bars
+            const rTotal = refundSummary.approvedCount + refundSummary.rejectedCount + refundSummary.pendingCount || 1;
+            const barRow = (label, count, color, total) => {
+                const pct = Math.round((count / total) * 100);
+                return `
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs font-bold text-slate-500 w-20 shrink-0">${label}</span>
+                        <div class="flex-1 bg-slate-100 dark:bg-slate-800 rounded-full h-4 overflow-hidden">
+                            <div class="${color} h-4 rounded-full transition-all" style="width:${pct}%"></div>
+                        </div>
+                        <span class="text-xs font-black w-8 text-right">${count}</span>
+                    </div>`;
+            };
+            document.getElementById('refunds-chart').innerHTML =
+                barRow('Approved', refundSummary.approvedCount, 'bg-emerald-500', rTotal) +
+                barRow('Pending', refundSummary.pendingCount, 'bg-amber-500', rTotal) +
+                barRow('Rejected', refundSummary.rejectedCount, 'bg-red-500', rTotal);
+
+            const wTotal = withdrawalSummary.approvedCount + withdrawalSummary.pendingCount || 1;
+            document.getElementById('withdrawals-chart').innerHTML =
+                barRow('Approved', withdrawalSummary.approvedCount, 'bg-emerald-500', wTotal) +
+                barRow('Pending', withdrawalSummary.pendingCount, 'bg-amber-500', wTotal);
+
+            // Tickets by category
+            const cats = ['course','mentor','finance','technical'];
+            const catColors = { course:'bg-blue-500', mentor:'bg-emerald-500', finance:'bg-amber-500', technical:'bg-red-500' };
+            document.getElementById('tickets-chart').innerHTML = cats.map(cat => {
+                const count = tickets.filter(t => t.category === cat).length;
+                return `
+                    <div class="stat-card text-center py-5">
+                        <div class="w-10 h-10 mx-auto ${catColors[cat]}/20 rounded-2xl flex items-center justify-center mb-2">
+                            <span class="text-lg font-black text-${catColors[cat].replace('bg-','')}">${count}</span>
+                        </div>
+                        <p class="text-xs font-black text-slate-400 uppercase tracking-widest">${cat}</p>
+                    </div>`;
+            }).join('');
+
+        } catch(err) { console.error('Analytics error:', err); }
+    }
+
+    window.loadBroadcasts = async function() {
+        try {
+            const broadcasts = await BroadcastService.getAllBroadcasts();
+            const el = document.getElementById('broadcasts-list');
+            if (!broadcasts.length) { el.innerHTML = '<p class="text-slate-400 text-sm italic text-center py-4">No broadcasts yet</p>'; return; }
+            el.innerHTML = broadcasts.map(b => {
+                const audienceColors = { all:'bg-indigo-100 text-indigo-700', students:'bg-blue-100 text-blue-700', mentors:'bg-emerald-100 text-emerald-700', admins:'bg-purple-100 text-purple-700' };
+                return `
+                    <div class="flex items-start gap-4 p-5 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700">
+                        <div class="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/30 rounded-2xl flex items-center justify-center shrink-0">
+                            <span class="material-symbols-outlined text-indigo-600 text-xl">campaign</span>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 flex-wrap mb-1">
+                                <p class="font-bold text-sm">${b.title}</p>
+                                <span class="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider ${audienceColors[b.target_audience] || 'bg-slate-100 text-slate-500'}">${b.target_audience}</span>
+                                ${!b.is_active ? '<span class="px-2 py-0.5 rounded-md text-[10px] font-black uppercase bg-slate-100 text-slate-400">Inactive</span>' : ''}
+                            </div>
+                            <p class="text-sm text-slate-500 truncate">${b.message}</p>
+                            <p class="text-xs text-slate-400 mt-1">${fmtDate(b.created_at)} · by ${b.admin_auth?.full_name || 'Admin'}</p>
+                        </div>
+                        ${b.is_active ? `<button onclick="deactivateBroadcast('${b.id}')" class="shrink-0 px-3 py-1.5 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-bold rounded-lg hover:bg-red-50 hover:text-red-600 transition-all">Stop</button>` : ''}
+                    </div>`;
+            }).join('');
+        } catch(err) { console.error('Broadcasts error:', err); }
+    };
+
+    window.sendBroadcast = async function() {
+        const title = document.getElementById('broadcast-title').value.trim();
+        const message = document.getElementById('broadcast-message').value.trim();
+        const audience = document.getElementById('broadcast-audience').value;
+        if (!title || !message) { alert('Please fill in the title and message.'); return; }
+        const btn = document.getElementById('send-broadcast-btn');
+        const lbl = document.getElementById('send-btn-label');
+        btn.disabled = true; lbl.textContent = 'Sending...';
+        try {
+            await BroadcastService.sendBroadcast({ title, message, targetAudience: audience, adminId });
+            document.getElementById('broadcast-title').value = '';
+            document.getElementById('broadcast-message').value = '';
+            lbl.textContent = '✓ Sent!';
+            setTimeout(() => { lbl.textContent = 'Send Broadcast'; btn.disabled = false; }, 2000);
+            await loadBroadcasts();
+        } catch(err) { alert('Error: ' + err.message); btn.disabled = false; lbl.textContent = 'Send Broadcast'; }
+    };
+
+    window.deactivateBroadcast = async function(id) {
+        if (!confirm('Stop this broadcast?')) return;
+        try {
+            await BroadcastService.deactivateBroadcast(id);
+            await loadBroadcasts();
+        } catch(err) { alert('Error: ' + err.message); }
+    };
+
+    window.loadAuditLogs = async function() {
+        try {
+            const { data, error } = await supabase
+                .from('admin_audit_logs')
+                .select('*, admin_auth!admin_audit_logs_admin_id_fkey(full_name, role)')
+                .order('created_at', { ascending: false })
+                .limit(100);
+            if (error) throw error;
+            const tbody = document.getElementById('audit-body');
+            if (!data.length) { tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-10 text-center text-slate-400 italic">No audit logs yet</td></tr>`; return; }
+            const actionColors = { approve_refund:'text-emerald-600', reject_refund:'text-red-600', approve_withdrawal:'text-emerald-600', reject_withdrawal:'text-red-600', send_broadcast:'text-indigo-600' };
+            tbody.innerHTML = data.map(l => `
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                    <td class="px-6 py-4">
+                        <p class="font-bold text-sm">${l.admin_auth?.full_name || 'Admin'}</p>
+                        <p class="text-xs text-slate-400 uppercase">${l.admin_auth?.role || ''}</p>
+                    </td>
+                    <td class="px-6 py-4 font-mono text-xs font-bold ${actionColors[l.action] || 'text-slate-700 dark:text-slate-300'}">${l.action?.replace(/_/g, ' ').toUpperCase()}</td>
+                    <td class="px-6 py-4 text-xs text-slate-500 uppercase font-semibold">${l.entity_type || '—'}</td>
+                    <td class="px-6 py-4 text-xs text-slate-500 max-w-xs truncate">${JSON.stringify(l.details || {})}</td>
+                    <td class="px-6 py-4 text-slate-400 text-sm">${fmtDate(l.created_at)}</td>
+                </tr>
+            `).join('');
+        } catch(err) { console.error('Audit logs error:', err); }
+    };
+
+    window.switchTab = function(tab) {
+        ['analytics','broadcasts','audit'].forEach(t => {
+            document.getElementById('content-' + t).classList.add('hidden');
+            document.getElementById('tab-' + t).classList.remove('active');
+        });
+        document.getElementById('content-' + tab).classList.remove('hidden');
+        document.getElementById('tab-' + tab).classList.add('active');
+        if (tab === 'broadcasts') loadBroadcasts();
+        if (tab === 'audit') loadAuditLogs();
+    };
+
+    init();
+</script>
+</body>
+</html>

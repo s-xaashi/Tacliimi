@@ -165,40 +165,37 @@
             </div>
         </section>
     </main>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // Session guard
-            // session handled globally
-            if (session) {
-                window.location.href = session.role === 'instructor' ? '/src/pages/instructor/instructor-dashboard/' : '/src/pages/student/student-dashboard/';
-                return;
-            }
+    <script type="module">
+        import { AuthService } from '/src/services/authService.js';
 
+        document.addEventListener('DOMContentLoaded', async () => {
             const resetForm = document.getElementById('reset-form');
             const errorDiv = document.getElementById('reset-error');
             const successDiv = document.getElementById('reset-success');
 
-            const urlParams = new URLSearchParams(window.location.search);
-            const token = urlParams.get('token');
-
-            if (!token) {
+            // In Supabase, if they click the recovery link, they are automatically signed in 
+            // with a temporary session that allows password updates.
+            const session = await AuthService.getSession();
+            
+            if (!session) {
+                // If no session, it might be an invalid or expired link
+                // We check the hash for error_description which Supabase sometimes provides
+                const hashParams = new URLSearchParams(window.location.hash.substring(1));
+                const errorDesc = hashParams.get('error_description');
+                
                 if (errorDiv) {
-                    errorDiv.textContent = "Invalid or missing reset token.";
+                    errorDiv.textContent = errorDesc || "No active reset session found. Please request a new reset link.";
                     errorDiv.classList.remove('hidden');
                 }
+                if (resetForm) resetForm.querySelector('button').disabled = true;
+                return;
             }
 
             if (resetForm) {
-                resetForm.addEventListener('submit', (e) => {
+                resetForm.addEventListener('submit', async (e) => {
                     e.preventDefault();
                     errorDiv.classList.add('hidden');
                     successDiv.classList.add('hidden');
-
-                    if (!token) {
-                        errorDiv.textContent = "Cannot reset: missing token.";
-                        errorDiv.classList.remove('hidden');
-                        return;
-                    }
 
                     const password = document.getElementById('password').value;
                     const confirmPassword = document.getElementById('confirm-password').value;
@@ -209,18 +206,30 @@
                         return;
                     }
 
+                    const btn = resetForm.querySelector('button[type="submit"]');
+                    const ogText = btn.innerHTML;
+                    btn.disabled = true;
+                    btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-sm">sync</span> Resetting...';
+
                     try {
-                        const user = TacliimiDB.applyPasswordReset(token, password);
-                        successDiv.textContent = "Password reset successful! Logging you in...";
+                        const { error } = await AuthService.updatePassword(password);
+                        if (error) throw error;
+
+                        successDiv.textContent = "Password reset successful! Redirecting you...";
                         successDiv.classList.remove('hidden');
 
+                        const profile = await AuthService.getCurrentProfile();
                         setTimeout(() => {
-                            window.location.href = user.role === 'instructor' ? '/src/pages/instructor/instructor-dashboard/' : '/src/pages/student/student-dashboard/';
-                        }, 1000);
+                            window.location.href = profile && profile.role === 'instructor' 
+                                ? '/src/pages/instructor/instructor-dashboard/' 
+                                : '/src/pages/student/student-dashboard/';
+                        }, 2000);
 
                     } catch (err) {
-                        errorDiv.textContent = err.message;
+                        errorDiv.textContent = err.message || "Failed to reset password. Please try again.";
                         errorDiv.classList.remove('hidden');
+                        btn.disabled = false;
+                        btn.innerHTML = ogText;
                     }
                 });
             }

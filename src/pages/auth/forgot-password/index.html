@@ -142,12 +142,17 @@
             </div>
         </section>
     </main>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
+    <script type="module">
+        import { AuthService } from '/src/services/authService.js';
+
+        document.addEventListener('DOMContentLoaded', async () => {
             // Session guard
-            // session handled globally
+            const session = await AuthService.getSession();
             if (session) {
-                window.location.href = session.role === 'instructor' ? '/src/pages/instructor/instructor-dashboard/' : '/src/pages/student/student-dashboard/';
+                const profile = await AuthService.getCurrentProfile();
+                window.location.href = (profile && profile.role === 'instructor') 
+                    ? '/src/pages/instructor/instructor-dashboard/' 
+                    : '/src/pages/student/student-dashboard/';
                 return;
             }
 
@@ -156,26 +161,32 @@
             const successDiv = document.getElementById('forgot-success');
 
             if (forgotForm) {
-                forgotForm.addEventListener('submit', (e) => {
+                forgotForm.addEventListener('submit', async (e) => {
                     e.preventDefault();
                     errorDiv.classList.add('hidden');
                     successDiv.classList.add('hidden');
 
-                    const email = document.getElementById('email').value;
+                    const emailInput = document.getElementById('email');
+                    const email = emailInput.value;
+                    const btn = forgotForm.querySelector('button[type="submit"]');
+                    const ogText = btn.innerHTML;
+
+                    btn.disabled = true;
+                    btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-sm">sync</span> Sending...';
 
                     try {
-                        const token = TacliimiDB.createResetToken(email);
-                        successDiv.textContent = "Reset link generated! Redirecting...";
+                        const { error } = await AuthService.sendPasswordResetEmail(email);
+                        if (error) throw error;
+
+                        successDiv.textContent = "Check your email for the password reset link! You can close this tab.";
                         successDiv.classList.remove('hidden');
-
-                        // Simulate sending an email by auto-redirecting to the reset page with the token
-                        setTimeout(() => {
-                            window.location.href = `/src/pages/auth/reset-password/index.html?token=${token}`;
-                        }, 1500);
-
+                        forgotForm.reset();
                     } catch (err) {
-                        errorDiv.textContent = err.message;
+                        errorDiv.textContent = err.message || "Failed to send reset email. Please try again.";
                         errorDiv.classList.remove('hidden');
+                    } finally {
+                        btn.disabled = false;
+                        btn.innerHTML = ogText;
                     }
                 });
             }

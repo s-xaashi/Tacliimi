@@ -1,4 +1,5 @@
 import { MentorService } from '../../../services/mentorService.js';
+import { AuthService } from '../../../services/authService.js';
 import { supabase } from '../../../services/supabaseClient.js';
 
 let selectedSlot = null;
@@ -28,8 +29,8 @@ async function initBooking() {
         renderMentorInfo(currentMentor);
         setupMeetingTypes(currentMentor);
         
-        // 2. Fetch Availability
-        mentorAvailability = await MentorService.getAvailability(mentorId);
+        // 2. Use Availability from mentor object (fetched in getMentorById)
+        mentorAvailability = { slots: currentMentor.availability || [] };
         renderAvailability();
 
         // 3. Setup Pricing
@@ -62,10 +63,13 @@ async function initBooking() {
 function renderMentorInfo(mentor) {
     document.querySelector('h2').textContent = mentor.full_name;
     const expertiseEl = document.querySelector('.bg-primary\\/10.text-primary.text-xs.font-bold');
-    if (expertiseEl) expertiseEl.textContent = mentor.headline || 'Professional Mentor';
+    if (expertiseEl) expertiseEl.textContent = mentor.headline || '';
     
     const avatarImg = document.querySelector('aside img');
-    if (avatarImg) avatarImg.src = mentor.avatar_url || '../../../assets/images/default-avatar.png';
+    if (avatarImg) {
+        const fallbackAvatar = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(mentor.full_name) + '&background=random&color=fff';
+        avatarImg.src = mentor.avatar_url || fallbackAvatar;
+    }
 
     const bioEl = document.querySelector('aside p.text-slate-500');
     if (bioEl) bioEl.textContent = mentor.short_bio || 'Expert mentor ready to guide you.';
@@ -91,12 +95,6 @@ function setupMeetingTypes(mentor) {
 
     if (!types.online) {
         onlineOption.style.display = 'none';
-        if (types.in_person) {
-            document.querySelector('input[value="in-person"]').checked = true;
-            // trigger UI update for radio
-            const event = new Event('change');
-            document.querySelector('input[value="in-person"]').dispatchEvent(event);
-        }
     }
 
     if (!types.in_person) {
@@ -196,7 +194,15 @@ function updatePricing(hourlyRate, monthlyRate) {
     
     // Switch total based on selected duration
     const updateTotal = () => {
-        const isMonthly = document.querySelector('input[name="mentorship_duration"]:checked').value === 'monthly';
+        if (!totalEl) return;
+        
+        const checkedDuration = document.querySelector('input[name="mentorship_duration"]:checked');
+        if (!checkedDuration) {
+            totalEl.textContent = '--';
+            return;
+        }
+        
+        const isMonthly = checkedDuration.value === 'monthly';
         let basePrice = isMonthly ? monthlyPrice : singlePrice;
         let finalPrice = basePrice * (1 - (appliedDiscount / 100));
         
@@ -315,5 +321,90 @@ document.getElementById('next-month-btn')?.addEventListener('click', () => {
     renderCalendar();
     renderAvailability();
 });
+
+async function confirmBooking() {
+    const topic = document.querySelector('textarea')?.value.trim();
+    const meetingType = document.querySelector('input[name="meeting_type"]:checked')?.value;
+    const duration = document.querySelector('input[name="mentorship_duration"]:checked')?.value;
+
+    if (!selectedSlot) {
+        alert("Please select a time slot.");
+        return;
+    }
+    if (!meetingType) {
+        alert("Please select a meeting type.");
+        return;
+    }
+    if (!topic) {
+        alert("Please enter a topic of discussion.");
+        return;
+    }
+
+    let meetingLocation = '';
+    let studentPhone = '';
+
+    if (meetingType === 'in-person') {
+        meetingLocation = document.querySelector('#in-person-modal input[placeholder*="Location"]')?.value.trim();
+        studentPhone = document.querySelector('#in-person-modal input[type="tel"]')?.value.trim();
+        
+        if (!meetingLocation || !studentPhone) {
+            alert("Please provide meeting location and phone number for in-person meetings.");
+            document.getElementById('in-person-modal').style.display = 'flex';
+            return;
+        }
+    }
+
+    try {
+        const session = await AuthService.getSession();
+        if (!session) {
+            alert("Please log in to book a session.");
+            window.location.href = '/src/pages/auth/login/index.html';
+            return;
+        }
+
+        const confirmBtn = document.querySelector('button[onclick*="confirmation.html"]');
+        if (confirmBtn) {
+            confirmBtn.disabled = true;
+            confirmBtn.textContent = 'Booking...';
+        }
+
+        // Calculate the actual date/time
+        // selectedSlot.start_time is "HH:MM:SS"
+        const [hours, minutes] = selectedSlot.start_time.split(':');
+        const scheduledAt = new Date(selectedDate);
+        scheduledAt.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+
+        // Calculate duration in minutes
+        const [startH, startM] = selectedSlot.start_time.split(':').map(Number);
+        const [endH, endM] = selectedSlot.end_time.split(':').map(Number);
+        const durationMinutes = (endH * 60 + endM) - (startH * 60 + startM);
+
+        const sessionData = {
+            studentId: session.user.id,
+            mentorId: currentMentor.instructor_id,
+            scheduledAt: scheduledAt.toISOString(),
+            topic: topic,
+            meetingType: meetingType,
+            meetingLocation: meetingLocation,
+            studentPhone: studentPhone,
+            durationMinutes: durationMinutes,
+            notes: `Type: ${duration}`
+        };
+
+        const newSession = await MentorService.createSession(sessionData);
+        window.location.href = `confirmation.html?sessionId=${newSession.id}`;
+
+    } catch (err) {
+        console.error("Booking error:", err);
+        alert("Failed to book session: " + err.message);
+        const confirmBtn = document.querySelector('button[onclick*="confirmation.html"]');
+        if (confirmBtn) {
+            confirmBtn.disabled = false;
+            confirmBtn.textContent = 'Confirm and Book Session';
+        }
+    }
+}
+
+window.confirmBooking = confirmBooking;
 
 document.addEventListener('DOMContentLoaded', initBooking);

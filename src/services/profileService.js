@@ -11,7 +11,7 @@ export const ProfileService = {
             .from('profiles')
             .select('*')
             .eq('id', userId)
-            .single();
+            .maybeSingle();
 
         if (pErr && pErr.code !== 'PGRST116') throw pErr;
         if (!profile) return null;
@@ -21,7 +21,7 @@ export const ProfileService = {
             .from('teaching_profiles')
             .select('*')
             .eq('instructor_id', userId)
-            .single();
+            .maybeSingle();
 
         // 3. Expertise
         const { data: expertise } = await supabase
@@ -40,6 +40,7 @@ export const ProfileService = {
             teaching_experience: teachingProfile?.teaching_experience || "",
             experience: teachingProfile?.teaching_experience || "",
             introVideo: teachingProfile?.introduction_video_url || "",
+            mentorship_style: teachingProfile?.mentorship_style || "",
             education_list: teachingProfile?.educational_background ? JSON.parse(teachingProfile.educational_background) : [],
             language_list: teachingProfile?.languages_spoken ? JSON.parse(teachingProfile.languages_spoken) : [],
             expertise_list: expertiseList,
@@ -64,11 +65,14 @@ export const ProfileService = {
                 full_name: profileData.full_name,
                 professional_title: profileData.professional_title,
                 short_bio: profileData.short_bio,
+                social_links: profileData.social_links,
+                country: profileData.country,
+                city: profileData.city,
                 updated_at: new Date()
             })
             .eq('id', userId)
             .select()
-            .single();
+            .maybeSingle();
 
         if (error) throw error;
         return data;
@@ -85,17 +89,17 @@ export const ProfileService = {
                 instructor_id: userId,
                 introduction_video_url: teachingData.introVideo,
                 teaching_experience: teachingData.experience,
+                mentorship_style: teachingData.mentorship_style,
                 educational_background: teachingData.education,
                 languages_spoken: teachingData.languages
             }, { onConflict: 'instructor_id' });
 
         if (teachingErr) throw teachingErr;
 
-        // Sync to mentorship_profiles if it exists
-        // Always sync video and teaching_experience if provided
+        // Sync video and experience to mentorship_profiles if it exists
         const mentorUpdates = {};
         if (teachingData.introVideo) mentorUpdates.introduction_video_url = teachingData.introVideo;
-        if (teachingData.experience) mentorUpdates.teaching_experience = teachingData.experience;
+        if (teachingData.experience) mentorUpdates.experience_years = teachingData.experience;
 
         if (Object.keys(mentorUpdates).length > 0) {
             await supabase
@@ -130,7 +134,7 @@ export const ProfileService = {
             .update({ profile_completed: true, updated_at: new Date() })
             .eq('id', userId)
             .select()
-            .single();
+            .maybeSingle();
 
         if (error) throw error;
         return data;
@@ -159,7 +163,7 @@ export const ProfileService = {
             .update({ avatar_url: publicUrlData.publicUrl, updated_at: new Date() })
             .eq('id', userId)
             .select()
-            .single();
+            .maybeSingle();
 
         if (error) throw error;
         return data;

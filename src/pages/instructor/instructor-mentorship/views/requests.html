@@ -1,27 +1,49 @@
-<div class="flex-1 overflow-y-auto p-8 bg-background-light dark:bg-background-dark">
-    <div class="max-w-6xl mx-auto space-y-8">
-        <div
-            class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
-            <div class="p-12 flex flex-col items-center text-center">
-                <div
-                    class="w-24 h-24 bg-slate-50 dark:bg-slate-800/50 rounded-full flex items-center justify-center mb-6 border border-slate-100 dark:border-slate-800">
-                    <span class="material-symbols-outlined text-5xl text-slate-300 dark:text-slate-600">mail</span>
-                </div>
-                <h3 class="text-xl font-bold text-slate-900 dark:text-slate-100 mb-3">No new requests yet</h3>
-                <p class="text-slate-500 dark:text-slate-400 max-w-md mx-auto leading-relaxed">
-                    When students book a mentorship session with you, their requests will appear here for your
-                    confirmation.
-                </p>
+<div class="flex-1 overflow-y-auto bg-background-light dark:bg-background-dark pb-10">
+    <div class="max-w-6xl mx-auto space-y-6">
+        <div class="flex flex-col gap-1 mb-8">
+            <h2 class="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight flex items-center gap-3">
+                <span class="material-symbols-outlined text-primary">pending_actions</span>
+                Mentorship Requests
+            </h2>
+            <p class="text-slate-500 dark:text-slate-400">Review and manage session requests from your students.</p>
+        </div>
+
+        <!-- Filter Tabs for Requests -->
+        <div class="flex items-center gap-2 p-1 bg-slate-100 dark:bg-slate-800/50 rounded-xl w-fit mb-6">
+            <button class="request-filter-btn px-4 py-2 rounded-lg text-sm font-bold transition-all bg-white dark:bg-slate-900 shadow-sm text-primary" data-status="pending_review">Pending Review</button>
+            <button class="request-filter-btn px-4 py-2 rounded-lg text-sm font-bold transition-all text-slate-500 dark:text-slate-400 hover:text-slate-700" data-status="action_required">Action Required</button>
+        </div>
+
+        <!-- Requests List -->
+        <div id="mentorship-requests-list" class="space-y-6">
+            <!-- Dynamic Content -->
+            <div class="flex flex-col items-center justify-center py-20 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                <div class="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-4"></div>
+                <p class="text-slate-500 font-medium">Fetching requests...</p>
             </div>
         </div>
-        <div class="bg-primary/5 dark:bg-primary/10 rounded-xl p-6 border border-primary/20 flex gap-4 items-start">
-            <span
-                class="material-symbols-outlined text-primary bg-white dark:bg-slate-800 p-2 rounded-lg shadow-sm">lightbulb</span>
+
+        <!-- Empty State -->
+        <div id="mentorship-requests-empty" class="hidden">
+            <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+                <div class="p-16 flex flex-col items-center text-center">
+                    <div class="w-24 h-24 bg-slate-50 dark:bg-slate-800/50 rounded-full flex items-center justify-center mb-6 border border-slate-100 dark:border-slate-800">
+                        <span class="material-symbols-outlined text-5xl text-slate-300 dark:text-slate-600">mail</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900 dark:text-slate-100 mb-3">No active requests</h3>
+                    <p class="text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
+                        All caught up! New mentorship requests will appear here when students book a session.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tips Section -->
+        <div class="bg-primary/5 dark:bg-primary/10 rounded-2xl p-6 border border-primary/20 flex gap-4 items-start mt-8">
+            <span class="material-symbols-outlined text-primary bg-white dark:bg-slate-800 p-2 rounded-lg shadow-sm">lightbulb</span>
             <div class="flex-1">
-                <h4 class="text-sm font-bold text-slate-900 dark:text-slate-100">Pro Tip for Instructors</h4>
-                <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">Students are 60% more likely to book
-                    mentorship when you have at least 5 hours of availability per week. Try setting slots for both
-                    morning and evening to cover different time zones.</p>
+                <h4 class="text-sm font-bold text-slate-900 dark:text-white">Pro Tip: Communication is Key</h4>
+                <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">Use the built-in communication panel to coordinate meeting details or clarify goals before confirming a session.</p>
             </div>
         </div>
     </div>

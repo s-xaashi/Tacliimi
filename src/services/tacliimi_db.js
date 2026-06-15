@@ -1,5 +1,6 @@
 // Tacliimi Global DB Simulator using LocalStorage
 // This file should be included in any page that interacts with courses.
+import { NotificationService } from './notificationService.js';
 
 const TACLIIMI_DB_KEY = 'tacliimi_courses';
 const TACLIIMI_ENROLLED_KEY = 'tacliimi_enrolled';
@@ -437,10 +438,26 @@ class TacliimiDB {
             const headerControlsHtml = `
             <div class="flex items-center gap-1 tacliimi-injected-profile">
                 <!-- Notifications Block -->
-                <button class="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full hidden sm:flex items-center justify-center transition-colors !outline-none relative">
-                    <span class="material-symbols-outlined text-[22px]">notifications</span>
-                    <span class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
-                </button>
+                <div class="relative group" id="global-notifications-dropdown">
+                    <button class="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full flex items-center justify-center transition-colors !outline-none relative notification-bell-btn">
+                        <span class="material-symbols-outlined text-[22px] group-active:scale-95 transition-transform">notifications</span>
+                        <span class="unread-dot-indicator absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full hidden border border-white dark:border-slate-900"></span>
+                    </button>
+                    
+                    <!-- Notifications Dropdown -->
+                    <div class="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[110] overflow-hidden">
+                        <div class="p-4 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
+                            <h3 class="font-bold text-slate-900 dark:text-white">Notifications</h3>
+                            <button onclick="TacliimiDB.markAllNotificationsRead()" class="text-[11px] font-bold text-primary hover:underline">Mark all as read</button>
+                        </div>
+                        <div class="notifications-list-container max-h-[350px] overflow-y-auto scrollbar-hide py-2">
+                            <div class="p-8 text-center text-slate-400 text-sm">Loading notifications...</div>
+                        </div>
+                        <div class="p-3 bg-slate-50 dark:bg-slate-700/30 text-center">
+                            <a href="/src/pages/common/notifications.html" class="text-xs font-bold text-slate-500 hover:text-primary transition-colors">See all notifications</a>
+                        </div>
+                    </div>
+                </div>
                 
                 ${themeToggleHtml}
                 ${!isPublicPage ? logoutHtml : ''}
@@ -498,6 +515,166 @@ class TacliimiDB {
                     el.style.display = 'none';
                 }
             });
+        }
+
+        // Initialize Notification Logic
+        this.initNotifications(session.user.id);
+    }
+
+    static async initNotifications(userId) {
+        console.log('Notification subscription created', userId);
+        // 1. Initial Load
+        this.updateNotificationUI(userId);
+
+        // 2. Realtime Subscription
+        NotificationService.subscribeToNotifications(userId, (newNotif) => {
+            console.log('Realtime notification received', newNotif);
+            this.handleNewNotification(newNotif);
+        });
+    }
+
+    static async updateNotificationUI(userId) {
+        const unreadCount = await NotificationService.getUnreadCount(userId);
+        const dots = document.querySelectorAll('.unread-dot-indicator');
+        dots.forEach(dot => {
+            if (unreadCount > 0) {
+                dot.classList.remove('hidden');
+            } else {
+                dot.classList.add('hidden');
+            }
+        });
+
+        const notifications = await NotificationService.getUserNotifications(userId, 8);
+        const lists = document.querySelectorAll('.notifications-list-container');
+        
+        const notificationsHtml = notifications.length === 0 
+            ? '<div class="p-8 text-center text-slate-400 text-sm">No notifications yet.</div>'
+            : notifications.map(n => {
+                const icon = n.metadata?.icon || (n.notification_type === 'message' ? 'forum' : 'notifications');
+                const time = new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const isUnread = !n.is_read;
+                
+                return `
+                    <div class="px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors flex items-start gap-3 cursor-pointer group/item relative" onclick="TacliimiDB.handleNotificationClick('${n.id}', '${n.notification_type}')">
+                        ${isUnread ? '<div class="absolute left-1 top-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-primary rounded-full"></div>' : ''}
+                        <div class="w-10 h-10 rounded-xl ${isUnread ? 'bg-primary/10 text-primary' : 'bg-slate-100 dark:bg-slate-700 text-slate-400'} flex items-center justify-center shrink-0">
+                            <span class="material-symbols-outlined text-[20px]">${icon}</span>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-xs font-bold ${isUnread ? 'text-slate-900 dark:text-white' : 'text-slate-500'} truncate">${n.title}</p>
+                            <p class="text-[11px] ${isUnread ? 'text-slate-600 dark:text-slate-400' : 'text-slate-400'} line-clamp-2 mt-0.5">${n.message}</p>
+                            <p class="text-[9px] text-slate-400 mt-1 uppercase font-bold tracking-wider">${time}</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+        lists.forEach(list => {
+            list.innerHTML = notificationsHtml;
+        });
+    }
+
+    static handleNewNotification(notification) {
+        // 1. Shake all bells
+        const bells = document.querySelectorAll('.notification-bell-btn');
+        bells.forEach(bell => {
+            bell.classList.add('animate-shake');
+            setTimeout(() => bell.classList.remove('animate-shake'), 1000);
+        });
+            
+        // Add keyframes if not exists
+        if (!document.getElementById('tacliimi-notif-anim')) {
+            const style = document.createElement('style');
+            style.id = 'tacliimi-notif-anim';
+            style.innerHTML = `
+                @keyframes notif-shake {
+                    0%, 100% { transform: rotate(0); }
+                    20% { transform: rotate(15deg); }
+                    40% { transform: rotate(-15deg); }
+                    60% { transform: rotate(10deg); }
+                    80% { transform: rotate(-10deg); }
+                }
+                .animate-shake { animation: notif-shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+                
+                @keyframes slide-in-right {
+                    from { transform: translateX(100%); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+                .animate-toast { animation: slide-in-right 0.3s ease-out forwards; }
+            `;
+            document.head.appendChild(style);
+        }
+
+        // 2. Show Toast
+        this.showToast(notification);
+
+        // 3. Update UI
+        // Robust session retrieval
+        supabase.auth.getSession().then(({data: {session}}) => {
+            if (session) this.updateNotificationUI(session.user.id);
+        });
+    }
+
+    static showToast(notification) {
+        const toastId = `toast-${Date.now()}`;
+        const icon = notification.metadata?.icon || (notification.notification_type === 'message' ? 'forum' : 'notifications');
+        
+        const toastHtml = `
+            <div id="${toastId}" class="fixed bottom-6 right-6 z-[200] max-w-sm w-full bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-700 p-4 animate-toast flex items-start gap-4">
+                <div class="w-12 h-12 bg-primary/10 text-primary rounded-2xl flex items-center justify-center shrink-0 shadow-inner">
+                    <span class="material-symbols-outlined text-2xl">${icon}</span>
+                </div>
+                <div class="flex-1 min-w-0 pr-4">
+                    <h4 class="text-sm font-black text-slate-900 dark:text-white">${notification.title}</h4>
+                    <p class="text-xs text-slate-500 mt-1 line-clamp-2">${notification.message}</p>
+                </div>
+                <button onclick="this.parentElement.remove()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
+                    <span class="material-symbols-outlined text-lg">close</span>
+                </button>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', toastHtml);
+        setTimeout(() => {
+            const el = document.getElementById(toastId);
+            if (el) {
+                el.style.opacity = '0';
+                el.style.transform = 'translateX(20px)';
+                el.style.transition = 'all 0.3s ease-out';
+                setTimeout(() => el.remove(), 300);
+            }
+        }, 5000);
+    }
+
+    static async markAllNotificationsRead() {
+        console.trace('marking notifications read (All)');
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+        await NotificationService.markAllAsRead(session.user.id);
+        this.updateNotificationUI(session.user.id);
+    }
+
+    static async handleNotificationClick(id, type) {
+        console.trace('marking notification read (Single)', id);
+        await NotificationService.markAsRead(id);
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) this.updateNotificationUI(session.user.id);
+        
+        // Fetch current user profile to determine role for routing
+        try {
+            const { data: profile } = await supabase.from('profiles').select('role').eq('id', session.user.id).single();
+            const isInstructor = profile?.role === 'instructor';
+
+            // Navigate based on type and role
+            if (type === 'message' || type === 'status_update') {
+                if (isInstructor) {
+                    window.location.href = '/src/pages/instructor/instructor-mentorship/index.html';
+                } else {
+                    window.location.href = '/src/pages/student/student-dashboard/index.html';
+                }
+            }
+        } catch (err) {
+            console.error('Routing error:', err);
+            window.location.href = '/'; // Fallback
         }
     }
 }

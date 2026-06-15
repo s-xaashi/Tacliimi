@@ -24,6 +24,7 @@ async function initMentorProfile() {
         }
 
         console.log("Successfully fetched mentor:", mentor.full_name, "with instructor_id:", mentor.instructor_id);
+        console.log("Mentor introduction video URL:", mentor.introduction_video);
         renderProfile(mentor);
     } catch (err) {
         console.error("Error loading profile:", err);
@@ -47,19 +48,33 @@ function renderProfile(mentor) {
 
     // 2. Basic Info
     document.querySelector('h1').textContent = mentor.full_name;
-    const headlineEl = document.querySelector('.text-primary.font-semibold.text-sm.mt-1');
-    if (headlineEl) headlineEl.textContent = mentor.headline || 'Professional Mentor';
+    const headlineEl = document.getElementById('mentor-headline');
+    if (headlineEl) {
+        const country = mentor.country || '';
+        const city = mentor.city || '';
+        if (country && city) {
+            headlineEl.textContent = `${country} • ${city}`;
+        } else if (country) {
+            headlineEl.textContent = country;
+        } else {
+            headlineEl.textContent = 'Available Worldwide';
+        }
+    }
 
     const avatarContainer = document.querySelector('.w-24.h-24.rounded-full');
     if (avatarContainer) {
-        avatarContainer.innerHTML = `<img src="${mentor.avatar_url || '../../../assets/images/default-avatar.png'}" class="w-full h-full rounded-full object-cover" alt="${mentor.full_name}">`;
+        const fallbackAvatar = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(mentor.full_name) + '&background=random&color=fff';
+        avatarContainer.innerHTML = `<img src="${mentor.avatar_url || fallbackAvatar}" class="w-full h-full rounded-full object-cover" alt="${mentor.full_name}">`;
     }
 
-    const ratingEl = document.querySelector('.font-bold.text-slate-700.dark\\:text-slate-300');
+    const ratingEl = document.getElementById('mentor-rating');
     if (ratingEl) ratingEl.textContent = mentor.rating || '0.0';
 
-    const reviewsCountEl = document.querySelector('.text-slate-400.text-sm');
+    const reviewsCountEl = document.getElementById('mentor-review-count');
     if (reviewsCountEl) reviewsCountEl.textContent = `(${mentor.review_count || 0} reviews)`;
+
+    // Role-based review button restriction
+    checkReviewPermission();
 
     const priceEl = document.getElementById('mentor-price');
     if (priceEl) priceEl.textContent = `$${mentor.hourly_rate || 0}`;
@@ -98,9 +113,13 @@ function renderProfile(mentor) {
     // Video
     const videoWrapper = document.querySelector('.aspect-video');
     if (videoWrapper) {
-        if (mentor.introduction_video) {
-            const videoId = getYouTubeId(mentor.introduction_video);
+        const videoUrl = mentor.introduction_video;
+        console.log("Rendering video with URL:", videoUrl);
+
+        if (videoUrl && videoUrl.trim() !== "") {
+            const videoId = getYouTubeId(videoUrl);
             if (videoId) {
+                console.log("Detected YouTube video ID:", videoId);
                 videoWrapper.innerHTML = `
                     <iframe class="w-full h-full rounded-2xl" 
                         src="https://www.youtube.com/embed/${videoId}?autoplay=0&rel=0" 
@@ -110,15 +129,31 @@ function renderProfile(mentor) {
                     </iframe>
                 `;
             } else {
+                console.log("Detected direct video URL");
                 videoWrapper.innerHTML = `
-                    <video class="w-full h-full rounded-2xl" controls>
-                        <source src="${mentor.introduction_video}" type="video/mp4">
+                    <video class="w-full h-full rounded-2xl" controls preload="metadata">
+                        <source src="${videoUrl}" type="video/mp4">
                         Your browser does not support the video tag.
                     </video>
                 `;
-            }
-        } else {
-            videoWrapper.innerHTML = `
+                // Add error listener to video tag
+                const videoEl = videoWrapper.querySelector('video');
+                if (videoEl) {
+                    videoEl.onerror = () => {
+                        console.error("Video element failed to load resource:", videoUrl);
+                        videoWrapper.innerHTML = `
+                            <div class="w-full h-full flex flex-col items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-2xl p-6 text-center">
+                                <span class="material-symbols-outlined text-4xl text-red-400 mb-2">error</span>
+                                <p class="text-sm text-slate-500 font-medium">Video could not be loaded. Please check the URL or try again later.</p>
+                                <p class="text-[10px] text-slate-400 mt-1 break-all">${videoUrl}</p>
+                            </div>
+                        `;
+                    };
+                }
+        }
+    } else {
+        console.log("No introduction video URL found for mentor. Displaying placeholder.");
+        videoWrapper.innerHTML = `
                 <div class="w-full h-full flex flex-col items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-2xl">
                     <span class="material-symbols-outlined text-4xl text-slate-400 mb-2">videocam_off</span>
                     <p class="text-sm text-slate-500 font-medium">Introduction video not available</p>
@@ -146,12 +181,16 @@ function renderProfile(mentor) {
     }
 
     // Stats
-    const statsValues = document.querySelectorAll('aside .font-bold');
-    if (statsValues.length >= 3) {
-        statsValues[0].textContent = `${mentor.total_sessions || 0}+`;
-        statsValues[1].textContent = `${mentor.avg_response_time || 0} hours`;
-        statsValues[2].textContent = mentor.teaching_experience || mentor.experience || '0+ Years';
-    }
+    const totalSessionsEl = document.getElementById('stat-total-sessions');
+    const responseTimeEl = document.getElementById('stat-response-time');
+    const experienceEl = document.getElementById('stat-experience');
+
+    if (totalSessionsEl) totalSessionsEl.textContent = `${mentor.total_sessions || 0}+`;
+    if (responseTimeEl) responseTimeEl.textContent = `${mentor.avg_response_time || 0} hours`;
+    if (experienceEl) experienceEl.textContent = mentor.teaching_experience || mentor.experience || '0+ Years';
+
+    // Availability Summary
+    renderAvailabilitySummary(mentor);
 
     // Mentorship Style (Meeting Types)
     const allCards = document.querySelectorAll('div.p-4');
@@ -165,9 +204,23 @@ function renderProfile(mentor) {
     );
     
     if (onlineCard && inPersonCard) {
-        const types = mentor.meeting_types || { online: true, inPerson: false };
-        onlineCard.style.display = types.online ? 'block' : 'none';
-        inPersonCard.style.display = types.inPerson ? 'block' : 'none';
+        const types = mentor.meeting_types || { online: true, in_person: false };
+        const isOnline = types.online === true;
+        const isInPerson = types.in_person === true || types.inPerson === true;
+
+        onlineCard.style.display = isOnline ? 'block' : 'none';
+        inPersonCard.style.display = isInPerson ? 'block' : 'none';
+        
+        // Update mentorship style description
+        const styleSection = onlineCard.closest('section');
+        if (styleSection) {
+            const descEl = styleSection.querySelector('p.mt-6');
+            if (descEl) {
+                descEl.textContent = mentor.mentorship_style || "No specific mentorship style description provided.";
+            }
+            // Show/hide section
+            styleSection.style.display = (isOnline || isInPerson || mentor.mentorship_style) ? 'block' : 'none';
+        }
     }
 
     // Reviews Rendering
@@ -180,7 +233,7 @@ function renderProfile(mentor) {
             reviewsContainer.innerHTML = reviews.map(rev => `
                 <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm">
                     <div class="flex items-center gap-3 mb-4">
-                        <img src="${rev.student?.avatar_url || '../../../assets/images/default-avatar.png'}" class="w-10 h-10 rounded-full object-cover">
+                        <img src="${rev.student?.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(rev.student?.full_name || 'Anonymous') + '&background=random&color=fff'}" class="w-10 h-10 rounded-full object-cover">
                         <div>
                             <h4 class="text-sm font-bold text-slate-900 dark:text-white">${rev.student?.full_name || 'Anonymous Student'}</h4>
                             <div class="flex text-orange-400">
@@ -307,11 +360,73 @@ function renderProfile(mentor) {
     }
 }
 
+function renderAvailabilitySummary(mentor) {
+    const daysEl = document.getElementById('available-days');
+    const timeEl = document.getElementById('available-time');
+    const meetingTypesEl = document.getElementById('meeting-types-summary');
+
+    if (daysEl) {
+        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const availableDays = [...new Set(mentor.availability?.map(s => days[s.day_of_week]))];
+        daysEl.textContent = availableDays.length > 0 ? availableDays.join(', ') : 'No scheduled days';
+    }
+
+    if (timeEl) {
+        const slots = mentor.availability || [];
+        if (slots.length > 0) {
+            // Group by time if multiple slots exist
+            const timeRanges = slots.map(s => {
+                const start = s.start_time.substring(0, 5);
+                const end = s.end_time.substring(0, 5);
+                return `${start} - ${end}`;
+            });
+            timeEl.textContent = [...new Set(timeRanges)].join(', ');
+        } else {
+            timeEl.textContent = 'Contact for availability';
+        }
+    }
+
+    if (meetingTypesEl) {
+        const types = mentor.meeting_types || { online: true, in_person: false };
+        const parts = [];
+        if (types.online) parts.push('Online');
+        if (types.inPerson || types.in_person) parts.push('In-person');
+        meetingTypesEl.textContent = parts.join(' & ') || 'Online';
+    }
+}
+
 function getYouTubeId(url) {
     if (!url) return null;
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
     const match = url.match(regExp);
     return (match && match[2].length === 11) ? match[2] : null;
+}
+
+async function checkReviewPermission() {
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            // Hide review button if not logged in
+            const reviewBtn = document.getElementById('add-review-btn');
+            if (reviewBtn) reviewBtn.style.display = 'none';
+            return;
+        }
+
+        // Fetch user profile to check role
+        const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single();
+
+        if (error || !profile || profile.role !== 'student') {
+            console.log("User is not a student, hiding review button");
+            const reviewBtn = document.getElementById('add-review-btn');
+            if (reviewBtn) reviewBtn.style.display = 'none';
+        }
+    } catch (err) {
+        console.error("Error checking review permission:", err);
+    }
 }
 
 document.addEventListener('DOMContentLoaded', initMentorProfile);

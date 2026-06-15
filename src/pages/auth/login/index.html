@@ -203,9 +203,10 @@
         import { supabase } from '/src/services/supabaseClient.js';
 
         document.addEventListener('DOMContentLoaded', () => {
-            // Check url for role context
             const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('role') === 'instructor') {
+            const roleContext = urlParams.get('role');
+
+            if (roleContext === 'instructor') {
                 const titleHeading = document.querySelector('h2.text-3xl');
                 if (titleHeading) titleHeading.textContent = 'Instructor Login';
                 const subtitle = document.querySelector('p.text-gray-500');
@@ -222,6 +223,22 @@
                 if (registerLink) {
                     registerLink.href = "/src/pages/auth/instructor-register/index.html";
                 }
+            } else if (roleContext === 'admin') {
+                const titleHeading = document.querySelector('h2.text-3xl');
+                if (titleHeading) titleHeading.textContent = 'Administrative Node Login';
+                const subtitle = document.querySelector('p.text-gray-500');
+                if (subtitle) subtitle.textContent = 'Enter your system username to access operations.';
+                
+                const identifierLabel = document.querySelector('label[for="identifier"]');
+                if (identifierLabel) identifierLabel.textContent = 'System Username';
+                const identifierInput = document.getElementById('identifier');
+                if (identifierInput) identifierInput.placeholder = 'e.g. SalmaanAdmin';
+                
+                const googleBtn = document.querySelector('button.w-full.flex.items-center.justify-center.px-4.py-3').parentElement;
+                if (googleBtn) googleBtn.classList.add('hidden'); // Hide Google for admins
+                
+                const orDivider = document.querySelector('.relative.mb-8');
+                if (orDivider) orDivider.classList.add('hidden');
             }
 
             AuthService.getSession().then(async session => {

@@ -52,29 +52,14 @@
             <h1 id="li-course-title" class="text-sm font-semibold truncate max-w-[300px] lg:max-w-md">Course Title Here
             </h1>
         </div>
-        <div class="flex items-center gap-2 md:gap-4">
-            <button class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                onclick="document.documentElement.classList.toggle('dark')">
-                <span class="material-symbols-outlined text-xl block dark:hidden">dark_mode</span>
-                <span class="material-symbols-outlined text-xl hidden dark:block">light_mode</span>
-            </button>
-            <div class="h-6 w-px bg-slate-200 dark:bg-slate-800 mx-1"></div>
-            <div class="flex items-center gap-3 pl-1">
-                <div class="text-right hidden sm:block">
-                    <p class="text-sm font-semibold text-slate-900 dark:text-white leading-none">Alex Johnson</p>
-                    <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Student</p>
-                </div>
-                <img alt="Student Profile"
-                    class="w-9 h-9 rounded-full border border-slate-200 dark:border-slate-700 object-cover"
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuBYpr7V8GQKMRkrAQqL7_ENhHW84nTpeO5cxojXWZxc400_fAyza1pAhDnuGlUN4DOzG4F42m5btoNAMFZWuv0Y0L1MvgOMTNj65pXbzLR7LpnuUsjBpKellhsVG5njUKmWZMlu35zbp9aMRc90kmhJrUzV7qfPkgNMp3mnmi26JRZA_mkpzseboPBJXMqyvE8GeXPXopx6IAWvNhTgHXwdOGM4KUf0O7zEDUbBxYocno1AXo7-B0DxBNrieS8bI2IISTwBmjGu9uwF" />
-            </div>
+        <div class="flex items-center gap-2 md:gap-4" id="li-header-profile-placeholder">
+            <!-- Global Profile will inject its controls here -->
         </div>
     </header>
     <main class="flex-1 flex flex-col md:flex-row overflow-hidden">
         <section class="flex-1 overflow-y-auto no-scrollbar">
             <div class="w-full aspect-video bg-black relative group">
-                <video id="main-video-player" class="w-full h-full object-contain" controls
-                    poster="https://lh3.googleusercontent.com/aida-public/AB6AXuDWOb0Y4fp9fMnPRy6C0RzOYw_tIf3Pcj162qHPZx-Yx3zx9lHECotSUcEGeBDau5wutQosd7kFtrVNeiivVgM4o0DbVUq3bl9g9JsPeMpxe2wxX80qy56CPkJUol8Q68xTf3jWENJ6-9bWZor9vPVmSDDRCtBLE9sSN_9ztPWP898i7Z0LEtkut_hi1gTfea3dlXXpcT95RJHHMPHyj54wPUWPr7-KFBtrZ_9D57nxDvuUd8ZxOlKLemEAIXB_fM-7WitWnR2grAnz">
+                <video id="main-video-player" class="w-full h-full object-contain" controls controlsList="nodownload" oncontextmenu="return false;">
                     Your browser does not support the video tag.
                 </video>
             </div>
@@ -113,10 +98,10 @@
             <div class="p-6 border-b border-slate-200 dark:border-slate-800">
                 <div class="flex justify-between items-center mb-2">
                     <h3 class="font-bold text-slate-900 dark:text-white">Course Content</h3>
-                    <span class="text-xs font-semibold text-primary px-2 py-1 bg-primary/10 rounded">64% Complete</span>
+                    <span id="li-progress-text" class="text-xs font-semibold text-primary px-2 py-1 bg-primary/10 rounded">0% Complete</span>
                 </div>
                 <div class="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                    <div class="bg-primary h-full w-[64%] transition-all duration-1000"></div>
+                    <div id="li-progress-bar" class="bg-primary h-full w-[0%] transition-all duration-1000"></div>
                 </div>
             </div>
             <div id="li-sidebar-curriculum" class="flex-1 overflow-y-auto">
@@ -148,12 +133,15 @@
     </div>
 
     <script type="module">
-        import { CourseService } from '/src/services/courseService.js?v=7';
-        import { AuthService } from '/src/services/authService.js?v=7';
+        import { supabase } from '/src/services/supabaseClient.js';
+        import { CourseService } from '/src/services/courseService.js';
+        import { AuthService } from '/src/services/authService.js';
 
         let currentCourseData = null;
         let currentLessonData = null;
         let currentUser = null;
+        let completedLessonIds = new Set();
+        let totalLessonCount = 0;
 
         function loadReviews(lessonId) {
             const reviewsStr = localStorage.getItem('tacliimi_lesson_reviews');
@@ -307,7 +295,6 @@
                                     <p class="text-sm text-slate-500 mt-1">${quiz.description || 'Test your knowledge on this lesson.'}</p>
                                 </div>
                                 <div class="flex items-center gap-2 px-3 py-1 bg-primary/10 text-primary rounded-full">
-                                    <span class="material-symbols-outlined text-sm">questions</span>
                                     <span class="text-xs font-bold uppercase tracking-wider">${qCount} Questions</span>
                                 </div>
                             </div>
@@ -393,7 +380,143 @@
                 const dot = activeBtn.querySelector('.lesson-active-dot');
                 if (dot) dot.classList.replace('bg-transparent', 'bg-primary');
             }
+
+            // Record this as the active lesson in enrollments
+            updateLastAccessed();
         };
+
+        async function updateLastAccessed() {
+            if (!currentUser || !currentCourseData || !currentLessonData) return;
+            try {
+                await supabase
+                    .from('enrollments')
+                    .update({ 
+                        updated_at: new Date().toISOString() 
+                    })
+                    .eq('student_id', currentUser.id)
+                    .eq('course_id', currentCourseData.id);
+            } catch (e) {
+                console.error("Error updating last accessed:", e);
+            }
+        }
+
+        // Track session-level partial completion to ensure both video and quiz are done
+        const sessionProgress = new Map(); // lessonId -> { video: boolean, quiz: boolean }
+
+        async function markLessonComplete(lessonId, type = 'manual') {
+            if (!currentUser) return;
+            if (completedLessonIds.has(lessonId)) return;
+
+            // Get current lesson requirements
+            const lesson = currentCourseData?.course_sections?.flatMap(s => s.course_lessons).find(l => l.id === lessonId);
+            if (!lesson) return;
+
+            const hasVideo = !!lesson.video_url;
+            const hasQuiz = Array.isArray(lesson.quizzes) ? lesson.quizzes.length > 0 : !!lesson.quizzes;
+
+            // Initialize/Update session state
+            if (!sessionProgress.has(lessonId)) {
+                sessionProgress.set(lessonId, { video: !hasVideo, quiz: !hasQuiz });
+            }
+            const state = sessionProgress.get(lessonId);
+            if (type === 'video') state.video = true;
+            if (type === 'quiz') state.quiz = true;
+
+            // Only proceed to DB if both are satisfied
+            if (state.video && state.quiz) {
+                try {
+                    const { error } = await supabase
+                        .from('lesson_progress')
+                        .upsert({
+                            student_id: currentUser.id,
+                            lesson_id: lessonId,
+                            completed: true,
+                            completed_at: new Date().toISOString()
+                        }, { onConflict: 'student_id, lesson_id' });
+
+                    if (error) throw error;
+
+                    completedLessonIds.add(lessonId);
+                    updateProgressUI();
+                    await syncCourseProgress();
+                } catch (e) {
+                    console.error("Error marking lesson complete:", e);
+                }
+            } else {
+                console.log(`Lesson ${lessonId} requirements partially met:`, state);
+            }
+        }
+
+        async function syncCourseProgress() {
+            if (!currentUser || !currentCourseData || totalLessonCount === 0) return;
+            
+            // Filter completedLessonIds to only count those belonging to THIS course
+            // and ensure we don't exceed 100%
+            const courseLessonIds = new Set();
+            currentCourseData.course_sections.forEach(s => {
+                (s.course_lessons || []).forEach(l => courseLessonIds.add(l.id));
+            });
+            
+            let courseCompletedCount = 0;
+            completedLessonIds.forEach(id => {
+                if (courseLessonIds.has(id)) courseCompletedCount++;
+            });
+
+            const percentage = Math.min(100, Math.round((courseCompletedCount / totalLessonCount) * 100));
+            
+            try {
+                await supabase
+                    .from('enrollments')
+                    .update({ 
+                        progress_percentage: percentage,
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('student_id', currentUser.id)
+                    .eq('course_id', currentCourseData.id);
+            } catch (e) {
+                console.error("Error syncing course progress:", e);
+            }
+        }
+
+        function updateProgressUI() {
+            const progressText = document.getElementById('li-progress-text');
+            const progressBar = document.getElementById('li-progress-bar');
+            
+            if (totalLessonCount === 0) return;
+            
+            // Filter as well for UI
+            const courseLessonIds = new Set();
+            if (currentCourseData && currentCourseData.course_sections) {
+                currentCourseData.course_sections.forEach(s => {
+                    (s.course_lessons || []).forEach(l => courseLessonIds.add(l.id));
+                });
+            }
+            
+            let courseCompletedCount = 0;
+            completedLessonIds.forEach(id => {
+                if (courseLessonIds.has(id)) courseCompletedCount++;
+            });
+
+            const percentage = Math.min(100, Math.round((courseCompletedCount / totalLessonCount) * 100));
+            
+            if (progressText) progressText.textContent = `${percentage}% Complete`;
+            if (progressBar) progressBar.style.width = `${percentage}%`;
+            
+            // Success state if 100%
+            if (percentage === 100) {
+                if (progressText) {
+                    progressText.classList.remove('bg-primary/10', 'text-primary');
+                    progressText.classList.add('bg-emerald-100', 'text-emerald-700');
+                }
+            }
+        }
+
+        // Auto-mark complete when video ends
+        document.getElementById('main-video-player')?.addEventListener('ended', () => {
+            if (currentLessonData) {
+                markLessonComplete(currentLessonData.id, 'video');
+            }
+        });
 
         window.startQuiz = function (sIdx, lIdx, qidx) {
             const lesson = currentLessonData;
@@ -455,7 +578,28 @@
                 statusIcon.textContent = 'cancel';
                 statusIcon.classList.add('text-rose-500');
             }
+
+            // Check if all questions in THIS quiz are answered correctly
+            checkQuizCompletion(qidx);
         };
+
+        function checkQuizCompletion(qidx) {
+            const container = document.getElementById(`quiz-content-${qidx}`);
+            const questionBlocks = container.querySelectorAll('[id^="q-block-"]');
+            
+            let allCorrect = true;
+            questionBlocks.forEach(block => {
+                const statusIcon = block.querySelector('.status-icon');
+                if (statusIcon.classList.contains('hidden') || statusIcon.textContent !== 'check_circle') {
+                    allCorrect = false;
+                }
+            });
+
+            if (allCorrect && currentLessonData) {
+                // If the user got everything right, mark lesson as complete (quiz part)
+                markLessonComplete(currentLessonData.id, 'quiz');
+            }
+        }
 
         document.addEventListener('DOMContentLoaded', async () => {
             const urlParams = new URLSearchParams(window.location.search);
@@ -479,6 +623,26 @@
 
                 currentCourseData = courseData;
                 currentUser = session ? session.user : null;
+
+                // Load existing progress
+                if (currentUser) {
+                    // Optimized: Only fetch progress for THIS course's lessons
+                    const lessonIds = [];
+                    courseData.course_sections.forEach(s => {
+                        (s.course_lessons || []).forEach(l => lessonIds.push(l.id));
+                    });
+
+                    const { data: progressData } = await supabase
+                        .from('lesson_progress')
+                        .select('lesson_id')
+                        .eq('student_id', currentUser.id)
+                        .in('lesson_id', lessonIds)
+                        .eq('completed', true);
+                    
+                    if (progressData) {
+                        completedLessonIds = new Set(progressData.map(p => p.lesson_id));
+                    }
+                }
 
                 document.getElementById('li-course-title').textContent = courseData.title;
                 document.title = courseData.title + ' - Learning Interface';
@@ -545,6 +709,22 @@
                     });
                     html += '</div>';
                     sidebarContainer.innerHTML = html;
+                    
+                    // Filter for totalLessonCount: lessons with ONLY content (Video, Quiz, or Resource)
+                    let validContentCount = 0;
+                    sortedSections.forEach(s => {
+                        (s.course_lessons || []).forEach(l => {
+                            const hasVideo = !!l.video_url;
+                            const hasQuiz = l.quizzes && l.quizzes.length > 0;
+                            const hasResources = l.lesson_resources && l.lesson_resources.length > 0;
+                            if (hasVideo || hasQuiz || hasResources) {
+                                validContentCount++;
+                            }
+                        });
+                    });
+                    
+                    totalLessonCount = validContentCount;
+                    updateProgressUI();
 
                     // Store original order for playLesson access
                     currentCourseData.course_sections = sortedSections;
@@ -554,7 +734,11 @@
 
                     // Load first lesson
                     if (firstSIdx !== -1) {
-                        setTimeout(() => playLesson(firstSIdx, firstLIdx), 10);
+                        setTimeout(async () => {
+                            playLesson(firstSIdx, firstLIdx);
+                            // 🔥 Force sync on load to ensure enrollment table matches latest progress
+                            await syncCourseProgress();
+                        }, 10);
                     } else {
                         document.getElementById('li-lesson-title').textContent = "No content available.";
                     }

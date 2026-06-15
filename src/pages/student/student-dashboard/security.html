@@ -292,17 +292,19 @@
         </div>
     </main>
     
-    <script>
+    <script type="module">
+        import { AuthService } from '/src/services/authService.js';
+
         document.addEventListener('DOMContentLoaded', () => {
             // Bind Security Form Submission
             const securityForm = document.getElementById('security-form');
             if (securityForm) {
-                securityForm.addEventListener('submit', (e) => {
+                securityForm.addEventListener('submit', async (e) => {
                     e.preventDefault();
                     const msgDiv = document.getElementById('security-msg');
                     msgDiv.className = 'hidden mb-4 p-3 rounded-lg text-sm font-medium';
 
-                    const currentPassword = document.getElementById('current-password').value;
+                    // const currentPassword = document.getElementById('current-password').value; // Supabase doesn't require current pwd for update unless configured otherwise
                     const newPassword = document.getElementById('new-password').value;
                     const confirmPassword = document.getElementById('confirm-new-password').value;
 
@@ -313,16 +315,25 @@
                         return;
                     }
 
+                    const submitBtn = securityForm.querySelector('button[type="submit"]');
+                    const originalBtnText = submitBtn.innerHTML;
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<span class="material-symbols-outlined animate-spin">sync</span> Updating...';
+
                     try {
-                        TacliimiDB.changePassword(currentPassword, newPassword);
+                        await AuthService.updatePassword(newPassword);
                         msgDiv.textContent = 'Password updated successfully.';
                         msgDiv.classList.add('bg-green-50', 'text-green-600', 'dark:bg-green-500/10', 'dark:text-green-400');
                         msgDiv.classList.remove('hidden');
                         securityForm.reset();
                     } catch (err) {
-                        msgDiv.textContent = err.message;
+                        console.error("Password update error:", err);
+                        msgDiv.textContent = err.message || 'Error updating password';
                         msgDiv.classList.add('bg-red-50', 'text-red-600', 'dark:bg-red-500/10', 'dark:text-red-400');
                         msgDiv.classList.remove('hidden');
+                    } finally {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = originalBtnText;
                     }
                 });
             }

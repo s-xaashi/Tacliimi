@@ -21,6 +21,7 @@ export const CourseService = {
             .from('courses')
             .select(`
                 *,
+                serial_id,
                 instructor:profiles(full_name, avatar_url, professional_title, short_bio, expertise_list),
                 course_categories(name),
                 course_sections(
@@ -33,7 +34,7 @@ export const CourseService = {
                 )
             `)
             .eq('id', courseId)
-            .single();
+            .maybeSingle();
 
         if (error && error.code !== 'PGRST116') throw error;
         return data;
@@ -45,6 +46,7 @@ export const CourseService = {
             .from('courses')
             .select(`
                 *,
+                serial_id,
                 instructor:profiles(full_name, avatar_url, professional_title, short_bio, expertise_list),
                 course_sections(
                     id, title, order_index,
@@ -62,7 +64,7 @@ export const CourseService = {
                 )
             `)
             .eq('id', courseId)
-            .single();
+            .maybeSingle();
 
         if (error) throw error;
 
@@ -157,8 +159,10 @@ export const CourseService = {
 
         let courseId = courseData.id;
 
-        // Ensure slug exists
-        if (!courseData.slug && courseData.title) {
+        // Ensure slug exists and is URL-safe
+        // (Guard against old bug where subtitle text was written to slug column)
+        const slugIsInvalid = !courseData.slug || /\s/.test(courseData.slug);
+        if (slugIsInvalid && courseData.title) {
             courseData.slug = this.generateSlug(courseData.title);
         }
 
@@ -169,18 +173,18 @@ export const CourseService = {
         delete payload.category;
 
         if (courseId) {
-            const { data, error } = await supabase.from('courses').update(payload).eq('id', courseId).select().single();
+            const { data, error } = await supabase.from('courses').update(payload).eq('id', courseId).select().maybeSingle();
             if (error) throw error;
             return data;
         } else {
-            const { data, error } = await supabase.from('courses').insert([payload]).select().single();
+            const { data, error } = await supabase.from('courses').insert([payload]).select().maybeSingle();
             if (error) throw error;
             return data;
         }
     },
 
     async publishCourse(courseId) {
-        const { data, error } = await supabase.from('courses').update({ status: 'pending_review' }).eq('id', courseId).select().single();
+        const { data, error } = await supabase.from('courses').update({ status: 'pending_review' }).eq('id', courseId).select().maybeSingle();
         if (error) throw error;
         return data;
     },
@@ -246,7 +250,7 @@ export const CourseService = {
                 .from('course_sections')
                 .upsert(dbPayload, { onConflict: 'id' })
                 .select()
-                .single();
+                .maybeSingle();
             if (error) throw error;
             return data;
         } catch (error) {
@@ -304,7 +308,7 @@ export const CourseService = {
                 .from('course_lessons')
                 .upsert(dbPayload, { onConflict: 'id' })
                 .select()
-                .single();
+                .maybeSingle();
             if (error) throw error;
             let savedLesson = data;
 
@@ -342,7 +346,7 @@ export const CourseService = {
                         if (qErr) throw qErr;
                         activeQuizIds.push(quizId);
                     } else {
-                        const { data: newQuiz, error: qErr } = await supabase.from('quizzes').insert([quizPayload]).select().single();
+                        const { data: newQuiz, error: qErr } = await supabase.from('quizzes').insert([quizPayload]).select().maybeSingle();
                         if (qErr) throw qErr;
                         quizId = newQuiz.id;
                         qz.id = quizId;
@@ -361,7 +365,7 @@ export const CourseService = {
                                 quiz_id: quizId,
                                 question_text: qText,
                                 order_index: q.order_index ?? index
-                            }).select().single();
+                            }).select().maybeSingle();
 
                             if (qnErr) throw qnErr;
                             if (qnData) {
@@ -463,7 +467,7 @@ export const CourseService = {
             starts_at: startsAt || new Date().toISOString(),
             is_active: true
         };
-        const { data, error } = await supabase.from('course_coupons').insert([payload]).select().single();
+        const { data, error } = await supabase.from('course_coupons').insert([payload]).select().maybeSingle();
         if (error) throw error;
         return data;
     },
@@ -477,6 +481,7 @@ export const CourseService = {
             .from('courses')
             .select(`
                 *,
+                serial_id,
                 category:course_categories(name)
             `)
             .eq('instructor_id', session.user.id)
@@ -497,7 +502,7 @@ export const CourseService = {
             const { data, error } = await supabase
                 .from('courses')
                 .select(`
-                    id, title, subtitle, thumbnail_url, category_id, level, created_at,
+                    id, serial_id, title, subtitle, thumbnail_url, category_id, level, created_at,
                     instructor:profiles(id, full_name, email, avatar_url),
                     category:course_categories(name)
                 `)
@@ -531,7 +536,7 @@ export const CourseService = {
                     coupons:course_coupons(*)
                 `)
                 .eq('id', courseId)
-                .single();
+                .maybeSingle();
 
             if (error) throw error;
             return data;
@@ -580,18 +585,57 @@ export const CourseService = {
         return !!data;
     },
 
-    async enrollCourse(courseId, studentId) {
-        const { data, error } = await supabase
+    async enrollCourse(courseId, studentId, paymentData = null) {
+        // NEW: Check student account status
+        const { data: profile, error: pErr } = await supabase
+            .from('profiles')
+            .select('account_status')
+            .eq('id', studentId)
+            .single();
+
+        if (pErr) throw pErr;
+        if (profile.account_status === 'suspended') {
+            throw new Error("Your account is currently suspended. You cannot join new courses at this time.");
+        }
+        if (profile.account_status === 'blocked') {
+            throw new Error("Your account is blocked. Access denied.");
+        }
+
+        // 1. Create Enrollment
+        const { data: enrollment, error } = await supabase
             .from('enrollments')
             .insert([{ course_id: courseId, student_id: studentId }])
             .select()
             .single();
         if (error) throw error;
         
-        // Also remove from wishlist if it exists there
+        // 2. Create Payment Record if paymentData is provided
+        let paymentSerialId = null;
+        if (paymentData) {
+            const { data: payRecord, error: payError } = await supabase
+                .from('payments')
+                .insert([{
+                    student_id: studentId,
+                    course_id: courseId,
+                    amount: paymentData.amount || 0,
+                    currency: paymentData.currency || 'USD',
+                    payment_provider: paymentData.provider || 'unknown',
+                    payment_status: 'paid'
+                }])
+                .select('serial_id')
+                .single();
+            
+            if (!payError && payRecord) {
+                paymentSerialId = payRecord.serial_id;
+            } else if (payError) {
+                console.error("Optional payment record creation failed:", payError);
+            }
+        }
+
+        // 3. Remove from wishlist
         await supabase.from('wishlist').delete().eq('course_id', courseId).eq('student_id', studentId);
         
-        return data;
+        return { enrollment, paymentSerialId };
     },
 
     async checkWishlist(courseId, studentId) {
@@ -606,6 +650,18 @@ export const CourseService = {
     },
 
     async toggleWishlist(courseId, studentId) {
+        // NEW: Check student account status
+        const { data: profile, error: pErr } = await supabase
+            .from('profiles')
+            .select('account_status')
+            .eq('id', studentId)
+            .single();
+
+        if (pErr) throw pErr;
+        if (profile.account_status === 'suspended') {
+            throw new Error("Your account is currently suspended.");
+        }
+
         const isWishlisted = await this.checkWishlist(courseId, studentId);
         
         if (isWishlisted) {
@@ -651,7 +707,7 @@ export const CourseService = {
                 { onConflict: 'course_id,student_id' }
             )
             .select()
-            .single();
+            .maybeSingle();
         if (error) throw error;
         return data;
     },

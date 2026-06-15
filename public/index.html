@@ -347,7 +347,10 @@
             </div>
         </div>
     </footer>
-    <script>
+    <script type="module">
+        import { supabase } from '/src/services/supabaseClient.js';
+        import { AuthService } from '/src/services/authService.js';
+
         const themeToggle = document.getElementById('theme-toggle');
         const html = document.documentElement;
         if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
@@ -374,67 +377,86 @@
             });
         }
 
-        // Render Featured Courses Dynamically
-        function renderFeaturedCourses() {
-            const courses = TacliimiDB.getAllCourses().slice(0, 3); // Get top 3 courses
+        // Render Featured Courses Dynamically from Supabase
+        async function renderFeaturedCourses() {
             const grid = document.getElementById('featured-courses');
-
             if (!grid) return;
 
-            let html = '';
-            courses.forEach(course => {
-                const categoryColor = course.category === 'Development' ? 'text-primary' :
-                    course.category === 'Data Science' ? 'text-indigo-500' :
-                        course.category === 'Design' ? 'text-pink-500' :
-                            course.category === 'IT & Software' ? 'text-red-500' :
-                                course.category === 'Marketing' ? 'text-green-500' :
-                                    'text-amber-500';
+            try {
+                const { data: courses, error } = await supabase
+                    .from('courses')
+                    .select(`
+                        *,
+                        instructor:profiles(full_name, avatar_url, professional_title),
+                        course_categories(name)
+                    `)
+                    .eq('status', 'published')
+                    .eq('is_public', true)
+                    .order('created_at', { ascending: false })
+                    .limit(4);
 
-                html += `
-                <div onclick="window.location.href='/src/pages/marketplace/course-details/index.html?id=${encodeURIComponent(course.id)}'"
-                    class="group bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl border border-transparent hover:border-primary/20 transition-all duration-300 cursor-pointer flex flex-col">
-                    <div class="relative h-40 overflow-hidden">
-                        <img alt="${course.title}"
-                            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                            src="${course.thumbnailUrl}" />
-                        <div class="absolute top-4 right-4">
-                            <button onclick="event.stopPropagation(); TacliimiDB.toggleWishlist('${course.id}'); renderFeaturedCourses();"
-                                class="w-10 h-10 rounded-full bg-white/90 dark:bg-black/50 backdrop-blur-md flex items-center justify-center ${TacliimiDB.isWishlisted(course.id) ? 'text-red-500' : 'text-slate-400 hover:text-red-500'} transition-colors shadow-sm">
-                                <span class="material-symbols-outlined text-xl">${TacliimiDB.isWishlisted(course.id) ? 'favorite' : 'favorite_border'}</span>
-                            </button>
+                if (error) throw error;
+
+                if (!courses || courses.length === 0) {
+                    grid.innerHTML = `<div class="col-span-full py-10 text-center text-slate-500 italic">No courses available at the moment.</div>`;
+                    return;
+                }
+
+                let html = '';
+                courses.forEach(course => {
+                    const categoryName = course.course_categories?.name || 'Uncategorized';
+                    const instructorName = course.instructor?.full_name || 'Anonymous Instructor';
+                    const rating = 4.5 + (Math.random() * 0.5); // Mock rating for now
+                    const reviewCount = Math.floor(Math.random() * 50) + 10;
+
+                    html += `
+                    <div onclick="window.location.href='/src/pages/marketplace/course-details/index.html?id=${encodeURIComponent(course.id)}'"
+                        class="group bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl border border-transparent hover:border-primary/20 transition-all duration-300 cursor-pointer flex flex-col h-full">
+                        <div class="relative h-48 overflow-hidden">
+                            <img alt="${course.title}"
+                                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                src="${course.thumbnail_url || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80'}" />
+                            <div class="absolute top-4 right-4">
+                                <button onclick="event.stopPropagation(); alert('Wishlist feature coming soon!');"
+                                    class="w-10 h-10 rounded-full bg-white/90 dark:bg-black/50 backdrop-blur-md flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors shadow-sm">
+                                    <span class="material-symbols-outlined text-xl">favorite_border</span>
+                                </button>
+                            </div>
+                            <div class="absolute bottom-4 left-4">
+                                <span class="px-3 py-1 bg-black/60 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-wider rounded-lg">${categoryName}</span>
+                            </div>
                         </div>
-                        <div class="absolute bottom-4 left-4 flex gap-2">
-                            <span class="px-3 py-1 bg-white/90 dark:bg-black/70 backdrop-blur-md text-xs font-bold rounded-lg dark:text-white">${course.category}</span>
-                            ${course.isBestseller ? `<span class="px-3 py-1 bg-yellow-400 text-yellow-900 text-xs font-bold rounded-lg shadow-sm">Bestseller</span>` : ''}
+                        <div class="p-6 flex-1 flex flex-col">
+                            <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-2 line-clamp-2 leading-snug group-hover:text-primary transition-colors h-[3.5rem]">${course.title}</h3>
+                            <p class="text-slate-500 text-sm mb-4 line-clamp-1">${instructorName}</p>
+                            <div class="flex items-center gap-1 mb-4 mt-auto">
+                                <span class="font-bold text-yellow-500 text-sm">${rating.toFixed(1)}</span>
+                                <div class="flex text-yellow-400">
+                                    <span class="material-symbols-outlined text-sm font-light">star</span>
+                                </div>
+                                <span class="text-slate-400 text-xs ml-1">(${reviewCount})</span>
+                            </div>
+                            <div class="pt-4 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
+                                <div class="flex items-baseline gap-2">
+                                    <span class="text-xl font-bold text-slate-900 dark:text-white">${course.price_type === 'free' ? 'Free' : '$' + (course.price || 0.00).toFixed(2)}</span>
+                                </div>
+                                <div class="bg-primary/10 dark:bg-primary/20 text-primary p-2 rounded-xl group-hover:bg-primary group-hover:text-white transition-colors">
+                                    <span class="material-symbols-outlined">arrow_forward</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="p-6 flex-1 flex flex-col">
-                        <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2 line-clamp-2 leading-snug group-hover:text-primary transition-colors">${course.title}</h3>
-                        <p class="text-slate-500 text-sm mb-4">${course.instructor} • ${course.instructorRole}</p>
-                        <div class="flex items-center gap-1 mb-4">
-                            <span class="font-bold text-yellow-500">${course.rating.toFixed(1)}</span>
-                            <div class="flex text-yellow-400">
-                                <span class="material-symbols-outlined text-sm font-light">star</span>
-                            </div>
-                            <span class="text-slate-400 text-sm ml-1">(${course.reviews.toLocaleString()})</span>
-                        </div>
-                        <div class="mt-auto border-t border-slate-100 dark:border-slate-700 pt-4 flex items-center justify-between">
-                            <div class="flex items-baseline gap-2">
-                                <span class="text-2xl font-bold text-slate-900 dark:text-white">${typeof course.price === 'number' ? '$' + course.price.toFixed(2) : course.price}</span>
-                                ${course.originalPrice ? `<span class="text-sm text-slate-400 line-through">$${course.originalPrice.toFixed(2)}</span>` : ''}
-                            </div>
-                            <div class="bg-primary/10 dark:bg-primary/20 text-primary p-2 rounded-xl group-hover:bg-primary group-hover:text-white transition-colors">
-                                <span class="material-symbols-outlined">arrow_forward</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                `;
-            });
+                    `;
+                });
 
-            grid.innerHTML = html;
+                grid.innerHTML = html;
+            } catch (e) {
+                console.error("Error loading featured courses:", e);
+                grid.innerHTML = `<div class="col-span-full py-10 text-center text-red-500 italic">Error loading courses.</div>`;
+            }
         }
 
+        window.renderFeaturedCourses = renderFeaturedCourses;
         document.addEventListener('DOMContentLoaded', renderFeaturedCourses);
     </script>
 

@@ -7,13 +7,12 @@
     <script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
-    <script type="module" src="/src/services/globalProfile.js"></script>
     <script>
         tailwind.config = {
             darkMode: "class",
             theme: {
                 extend: {
-                    colors: { primary: "#4F46E5", "background-light": "#F9FAFB", "background-dark": "#111827" },
+                    colors: { primary: "#4F46E5" },
                     fontFamily: { display: ["Inter", "sans-serif"] }
                 }
             }
@@ -23,18 +22,17 @@
         body { font-family: 'Inter', sans-serif; }
         .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
         .table-row-hover { @apply hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors; }
+        .badge { @apply px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest inline-flex items-center gap-1; }
+        .stat-card { @apply bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 flex items-center gap-4; }
     </style>
 
-    <script type="module">
-        import { AuthService } from '/src/services/authService.js';
-        const session = await AuthService.getSession();
-        if (!session || !session.is_admin) {
-            window.location.replace('/src/pages/auth/login-select/index.html');
-        }
-    </script>
+    <script type="module" src="/src/services/adminSidebar.js"></script>
 </head>
 
-<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 transition-colors duration-200">
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-200">
+    <!-- Sidebar Overlay -->
+    <div id="sidebar-overlay" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-20 hidden lg:hidden"></div>
+
     <!-- Sidebar -->
     <aside id="sidebar" class="fixed left-0 top-0 h-full w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col z-30 transition-transform -translate-x-full lg:translate-x-0">
         <div class="p-8 pb-4">
@@ -44,20 +42,27 @@
                 </div>
                 <span class="text-2xl font-black tracking-tighter text-slate-900 dark:text-white">TACLIIMI<span class="text-indigo-600">.</span></span>
             </div>
+            <div class="mt-2 px-1">
+                <span class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Admin Control</span>
+            </div>
         </div>
 
         <nav class="flex-1 p-6 space-y-2 overflow-y-auto mt-4">
             <a href="/src/pages/admin/dashboard/index.html" class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl transition-all group font-medium">
-                <span class="material-symbols-outlined shrink-0" style="font-variation-settings:'FILL' 0;">dashboard</span>
+                <span class="material-symbols-outlined shrink-0 group-hover:scale-110 transition-transform">dashboard</span>
                 Dashboard
             </a>
             <a href="/src/pages/admin/courses-review/index.html" class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl transition-all group font-medium">
                 <span class="material-symbols-outlined shrink-0 group-hover:scale-110 transition-transform">rule</span>
                 Courses Review
             </a>
+            <a href="/src/pages/admin/bookings-review/index.html" class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl transition-all group font-medium">
+                <span class="material-symbols-outlined shrink-0 group-hover:scale-110 transition-transform">event_note</span>
+                Bookings Review
+            </a>
             <a href="/src/pages/admin/users/index.html" class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl transition-all group font-medium">
-                <span class="material-symbols-outlined shrink-0" style="font-variation-settings:'FILL' 0;">group</span>
-                Users
+                <span class="material-symbols-outlined shrink-0 group-hover:scale-110 transition-transform">group</span>
+                Students
             </a>
             <a href="/src/pages/admin/instructors/index.html" class="flex items-center gap-3 px-4 py-3 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-bold rounded-xl ring-1 ring-indigo-500/10">
                 <span class="material-symbols-outlined shrink-0" style="font-variation-settings:'FILL' 1;">school</span>
@@ -67,9 +72,13 @@
                 <span class="material-symbols-outlined shrink-0 group-hover:scale-110 transition-transform">category</span>
                 Categories
             </a>
-            <div class="h-px bg-slate-200 dark:bg-slate-800 my-4 mx-4"></div>
+            <div class="h-px bg-slate-100 dark:bg-slate-800 my-4 mx-4"></div>
+            <a href="/src/pages/admin/finance/index.html" class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl transition-all group font-medium">
+                <span class="material-symbols-outlined shrink-0" style="font-variation-settings:'FILL' 0;">payments</span>
+                Finance Dashboard
+            </a>
             <a href="/src/pages/admin/admin-management/index.html" class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl transition-all group font-medium">
-                <span class="material-symbols-outlined shrink-0 group-hover:scale-110 transition-transform">manage_accounts</span>
+                <span class="material-symbols-outlined shrink-0" style="font-variation-settings:'FILL' 0;">manage_accounts</span>
                 Admin Management
             </a>
             <a href="/src/pages/admin/settings/index.html" class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl transition-all group font-medium">
@@ -79,7 +88,7 @@
         </nav>
 
         <div class="p-6 border-t border-slate-100 dark:border-slate-800">
-            <button id="logout-btn" class="flex items-center justify-center gap-2 w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-600 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 font-bold rounded-xl transition-all border border-transparent hover:border-red-100 dark:hover:border-red-900/50">
+            <button id="logout-btn" class="flex items-center justify-center gap-2 w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-600 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 font-bold rounded-xl transition-all">
                 <span class="material-symbols-outlined">logout</span>
                 Logout
             </button>
@@ -87,162 +96,429 @@
     </aside>
 
     <!-- Main Content -->
-    <main class="lg:ml-72 min-h-screen flex flex-col transition-all duration-300">
+    <main class="lg:ml-72 min-h-screen flex flex-col">
         <!-- Header -->
         <header class="h-20 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-8 sticky top-0 z-10 w-full">
             <div class="flex items-center gap-4">
-                <button id="toggle-sidebar" class="lg:hidden p-2.5 text-slate-500 bg-slate-100 dark:bg-slate-800 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                <button id="toggle-sidebar" class="lg:hidden p-2.5 text-slate-500 bg-slate-100 dark:bg-slate-800 rounded-xl hover:bg-slate-200 transition-colors">
                     <span class="material-symbols-outlined">menu_open</span>
                 </button>
                 <div>
-                    <h2 class="text-xl font-black tracking-tight text-slate-900 dark:text-white">Instructor Network</h2>
-                    <p class="text-xs text-slate-400 font-medium tracking-wide">Protocol: Faculty Verification</p>
+                    <h2 class="text-xl font-black tracking-tight text-slate-900 dark:text-white">Instructor Management</h2>
+                    <p class="text-xs text-slate-400 font-medium tracking-wide">View, approve and manage all instructors & mentors</p>
                 </div>
             </div>
-            
+
             <div class="flex items-center gap-4">
+                <div class="relative hidden sm:block">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
+                    <input type="text" id="instructor-search" placeholder="Search by name or email…" class="pl-10 pr-4 py-2.5 bg-slate-100 dark:bg-slate-800 border-none rounded-xl text-xs font-medium focus:ring-2 focus:ring-indigo-500 transition-all w-72">
+                </div>
+                <select id="approval-filter" class="py-2.5 px-3 bg-slate-100 dark:bg-slate-800 border-none rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-500 transition-all text-slate-600 dark:text-slate-300">
+                    <option value="">All Statuses</option>
+                    <option value="approved">Approved</option>
+                    <option value="pending">Pending</option>
+                    <option value="suspended">Suspended</option>
+                    <option value="blocked">Blocked</option>
+                </select>
                 <button id="theme-toggle" class="w-10 h-10 flex items-center justify-center text-slate-500 bg-slate-100 dark:bg-slate-800 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-all">
                     <span class="material-symbols-outlined">dark_mode</span>
                 </button>
             </div>
         </header>
 
-        <!-- Content Area -->
-        <div class="flex-1 p-8 lg:p-12 max-w-[1600px] mx-auto w-full">
+        <!-- Content -->
+        <div class="flex-1 p-8 lg:p-10">
+            <!-- Stats -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                <div class="stat-card">
+                    <div class="w-10 h-10 shrink-0 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-indigo-500">school</span>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Instructors</p>
+                        <p class="text-2xl font-black text-slate-900 dark:text-white" id="stat-total">—</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="w-10 h-10 shrink-0 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-emerald-500">verified</span>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Approved</p>
+                        <p class="text-2xl font-black text-slate-900 dark:text-white" id="stat-approved">—</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="w-10 h-10 shrink-0 rounded-xl bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-amber-500">pending</span>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Pending Review</p>
+                        <p class="text-2xl font-black text-slate-900 dark:text-white" id="stat-pending">—</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="w-10 h-10 shrink-0 rounded-xl bg-red-50 dark:bg-red-900/30 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-red-500">block</span>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Blocked</p>
+                        <p class="text-2xl font-black text-slate-900 dark:text-white" id="stat-blocked">—</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Table -->
             <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-slate-50 dark:bg-slate-800/50">
-                            <th class="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Author</th>
-                            <th class="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Bio</th>
-                            <th class="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Courses & Metrics</th>
-                            <th class="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Status</th>
-                            <th class="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 text-right">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="instructor-table-body" class="divide-y divide-slate-100 dark:divide-slate-800">
-                        <tr><td colspan="5" class="py-20 text-center"><div class="w-8 h-8 border-4 border-slate-200 border-t-indigo-600 rounded-full animate-spin mx-auto"></div></td></tr>
-                    </tbody>
-                </table>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 dark:bg-slate-800/50">
+                                <th class="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 whitespace-nowrap">Instructor</th>
+                                <th class="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 whitespace-nowrap">Specialization & Bio</th>
+                                <th class="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 whitespace-nowrap">Courses</th>
+                                <th class="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 whitespace-nowrap">Sessions</th>
+                                <th class="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 whitespace-nowrap">Approval</th>
+                                <th class="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 whitespace-nowrap">Account</th>
+                                <th class="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 whitespace-nowrap">Joined</th>
+                                <th class="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 text-right whitespace-nowrap">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="instructor-table-body" class="divide-y divide-slate-100 dark:divide-slate-800">
+                            <tr class="animate-pulse"><td colspan="8" class="px-6 py-8 h-20 bg-slate-50/50 dark:bg-slate-800/20"></td></tr>
+                            <tr class="animate-pulse"><td colspan="8" class="px-6 py-8 h-20 bg-slate-50/50 dark:bg-slate-800/20 opacity-60"></td></tr>
+                            <tr class="animate-pulse"><td colspan="8" class="px-6 py-8 h-20 bg-slate-50/50 dark:bg-slate-800/20 opacity-30"></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div id="empty-state" class="hidden flex flex-col items-center justify-center py-24 text-center">
+                    <div class="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center mb-4">
+                        <span class="material-symbols-outlined text-3xl text-slate-400">person_search</span>
+                    </div>
+                    <h3 class="text-lg font-black text-slate-700 dark:text-slate-300">No Instructors Found</h3>
+                    <p class="text-sm text-slate-400 mt-1">Try adjusting your search or filter.</p>
+                </div>
             </div>
         </div>
     </main>
+
+    <!-- Action Modal -->
+    <div id="action-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-2xl p-8 max-w-md w-full">
+            <div id="modal-icon-wrap" class="w-14 h-14 rounded-2xl flex items-center justify-center mb-5 mx-auto">
+                <span id="modal-icon" class="material-symbols-outlined text-3xl"></span>
+            </div>
+            <h3 id="modal-title" class="text-xl font-black text-center mb-2"></h3>
+            <p id="modal-desc" class="text-sm text-slate-500 dark:text-slate-400 text-center mb-8"></p>
+            <div class="flex gap-3">
+                <button id="modal-cancel" class="flex-1 py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all">Cancel</button>
+                <button id="modal-confirm" class="flex-1 py-3 font-bold rounded-xl transition-all text-white"></button>
+            </div>
+        </div>
+    </div>
 
     <script type="module">
         import { supabase } from '/src/services/supabaseClient.js';
         import { AuthService } from '/src/services/authService.js';
 
-        document.addEventListener('DOMContentLoaded', async () => {
-            const tableBody = document.getElementById('instructor-table-body');
+        let allInstructors = [];
+        let adminId = null;
 
-            async function fetchInstructors() {
-                try {
-                    const { data, error } = await supabase.from('instructors').select('*, profiles:user_id (id, full_name, avatar_url, email, created_at, short_bio)');
-        if(data) {
-            data.forEach(d => {
-                d.id = d.user_id;
-                d.full_name = d.profiles?.full_name;
-                d.short_bio = d.profiles?.short_bio;
-                d.avatar_url = d.profiles?.avatar_url;
-                d.email = d.profiles?.email;
-                d.created_at = d.profiles?.created_at;
-                d.course_count = d.total_courses_created;
-                d.courses_list = [];
+        const tableBody = document.getElementById('instructor-table-body');
+        const searchInput = document.getElementById('instructor-search');
+        const approvalFilter = document.getElementById('approval-filter');
+        const emptyState = document.getElementById('empty-state');
+        const modal = document.getElementById('action-modal');
+
+        // ─── Helpers ────────────────────────────────────────────────────────────────
+        const approvalConfig = {
+            approved:  { label: 'Approved',  dot: 'bg-emerald-500', badge: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400' },
+            pending:   { label: 'Pending',   dot: 'bg-amber-500',   badge: 'bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400' },
+            suspended: { label: 'Suspended', dot: 'bg-orange-500',  badge: 'bg-orange-50 text-orange-700 dark:bg-orange-900/20 dark:text-orange-400' },
+            blocked:   { label: 'Blocked',   dot: 'bg-red-500',     badge: 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400' },
+        };
+        const accountConfig = {
+            active:  { label: 'Active',  dot: 'bg-emerald-500', badge: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400' },
+            blocked: { label: 'Blocked', dot: 'bg-red-500',     badge: 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400' },
+            deleted: { label: 'Deleted', dot: 'bg-slate-500',   badge: 'bg-slate-50 text-slate-700 dark:bg-slate-900/20 dark:text-slate-400' },
+        };
+        const verificationConfig = {
+            verified:   { label: 'Verified',   dot: 'bg-emerald-500', badge: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400' },
+            unverified: { label: 'Unverified', dot: 'bg-slate-400',   badge: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400' },
+            rejected:   { label: 'Rejected',   dot: 'bg-red-500',     badge: 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400' },
+        };
+        const getCfg = (map, key) => map[key] || { label: key || '—', dot: 'bg-slate-400', badge: 'bg-slate-100 text-slate-500' };
+
+        function fmtDate(d) { if (!d) return '—'; return new Date(d).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }); }
+
+        // ─── Fetch ───────────────────────────────────────────────────────────────────
+        async function fetchInstructors() {
+            try {
+                const { data, error } = await supabase.rpc('admin_get_all_instructors', { p_admin_id: adminId });
+                if (error) throw error;
+                allInstructors = data || [];
+                updateStats();
+                applyFilters();
+            } catch (e) {
+                console.error('Failed to fetch instructors:', e);
+                tableBody.innerHTML = `<tr><td colspan="8" class="px-6 py-10 text-center text-red-500 font-bold">Error: ${e.message}</td></tr>`;
+            }
+        }
+
+        // ─── Stats ───────────────────────────────────────────────────────────────────
+        function updateStats() {
+            document.getElementById('stat-total').textContent = allInstructors.length;
+            document.getElementById('stat-approved').textContent = allInstructors.filter(i => i.approval_status === 'approved').length;
+            document.getElementById('stat-pending').textContent = allInstructors.filter(i => !i.approval_status || i.approval_status === 'pending').length;
+            document.getElementById('stat-blocked').textContent = allInstructors.filter(i => i.account_status === 'blocked' || i.approval_status === 'blocked').length;
+        }
+
+        // ─── Filter & Render ─────────────────────────────────────────────────────────
+        function applyFilters() {
+            const term = searchInput.value.toLowerCase();
+            const filterVal = approvalFilter.value;
+            const filtered = allInstructors.filter(i => {
+                const matchSearch = (i.full_name || '').toLowerCase().includes(term) || (i.email || '').toLowerCase().includes(term);
+                const status = i.approval_status || 'pending';
+                const matchFilter = !filterVal || status === filterVal || (filterVal === 'blocked' && (i.account_status === 'blocked' || i.approval_status === 'blocked'));
+                return matchSearch && matchFilter;
+            });
+            renderInstructors(filtered);
+        }
+
+        function renderInstructors(list) {
+            tableBody.innerHTML = '';
+            if (list.length === 0) { emptyState.classList.remove('hidden'); return; }
+            emptyState.classList.add('hidden');
+
+            list.forEach(inst => {
+                const appr = getCfg(approvalConfig, inst.approval_status || 'pending');
+                const verif = getCfg(verificationConfig, inst.verification_status || 'unverified');
+                const avatar = inst.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(inst.full_name || 'Instructor')}&background=7c3aed&color=fff`;
+                const expertise = Array.isArray(inst.expertise_list) ? inst.expertise_list.slice(0, 2).join(', ') : '—';
+                const location = [inst.city, inst.country].filter(Boolean).join(', ') || '—';
+                const isBlocked = inst.approval_status === 'blocked';
+                const isApproved = inst.approval_status === 'approved';
+
+                const row = document.createElement('tr');
+                row.className = 'table-row-hover';
+                row.dataset.id = inst.user_id;
+                row.innerHTML = `
+                    <!-- Instructor -->
+                    <td class="px-6 py-5">
+                        <div class="flex items-center gap-4">
+                            <div class="w-11 h-11 shrink-0 rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800 ring-2 ring-slate-200 dark:ring-slate-700 relative">
+                                <img src="${avatar}" class="w-full h-full object-cover">
+                                ${inst.account_status === 'blocked' ? `
+                                    <div class="absolute inset-0 bg-red-500/20 backdrop-blur-[1px] flex items-center justify-center">
+                                        <span class="material-symbols-outlined text-white text-xs font-black">lock</span>
+                                    </div>
+                                ` : ''}
+                            </div>
+                            <div class="min-w-0">
+                                <p class="text-sm font-bold text-slate-900 dark:text-white leading-tight truncate">${inst.full_name || 'Unknown'}</p>
+                                <p class="text-[11px] text-slate-400 truncate">${inst.email || '—'}</p>
+                                <p class="text-[10px] text-slate-400">${inst.phone_number || ''}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <!-- Specialization -->
+                    <td class="px-6 py-5">
+                        <p class="text-xs font-bold text-slate-700 dark:text-slate-300 truncate max-w-[180px]">${inst.professional_title || '—'}</p>
+                        <p class="text-[11px] text-slate-400 line-clamp-2 max-w-[180px] mt-0.5">${inst.short_bio || 'No bio.'}</p>
+                        ${expertise !== '—' ? `<p class="text-[10px] text-purple-400 mt-0.5 truncate max-w-[180px]">${expertise}</p>` : ''}
+                    </td>
+                    <!-- Courses -->
+                    <td class="px-6 py-5">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center">
+                                <span class="material-symbols-outlined text-indigo-500 text-base">menu_book</span>
+                            </div>
+                            <span class="text-xl font-black text-slate-700 dark:text-slate-200">${inst.total_courses_created ?? 0}</span>
+                        </div>
+                    </td>
+                    <!-- Sessions -->
+                    <td class="px-6 py-5">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 rounded-lg bg-purple-50 dark:bg-purple-900/30 flex items-center justify-center">
+                                <span class="material-symbols-outlined text-purple-500 text-base">calendar_month</span>
+                            </div>
+                            <span class="text-xl font-black text-slate-700 dark:text-slate-200">${inst.total_sessions ?? 0}</span>
+                        </div>
+                        ${inst.hourly_rate > 0 ? `<p class="text-[10px] text-slate-400 mt-0.5">$${inst.hourly_rate}/hr</p>` : ''}
+                    </td>
+                    <!-- Approval Status -->
+                    <td class="px-6 py-5">
+                        <span class="badge ${appr.badge}">
+                            <span class="w-1.5 h-1.5 rounded-full ${appr.dot} inline-block"></span>
+                            ${appr.label}
+                        </span>
+                    </td>
+                    <!-- Account Status -->
+                    <td class="px-6 py-5">
+                        <span class="badge ${getCfg(accountConfig, inst.account_status || 'active').badge}">
+                            <span class="w-1.5 h-1.5 rounded-full ${getCfg(accountConfig, inst.account_status || 'active').dot} inline-block"></span>
+                            ${getCfg(accountConfig, inst.account_status || 'active').label}
+                        </span>
+                    </td>
+                    <!-- Joined -->
+                    <td class="px-6 py-5">
+                        <span class="text-xs font-medium text-slate-500">${fmtDate(inst.created_at)}</span>
+                    </td>
+                    <!-- Actions -->
+                    <td class="px-6 py-5">
+                        <div class="flex items-center justify-end gap-1 flex-wrap">
+                            ${inst.approval_status === 'pending' ? `<button data-action="approve" data-id="${inst.user_id}" data-name="${inst.full_name}"
+                                class="action-btn px-2.5 py-1.5 text-[10px] font-black text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 hover:bg-emerald-100 rounded-lg transition-all" title="Approve">
+                                Approve
+                            </button>` : ''}
+                            
+                            ${inst.approval_status === 'approved' ? `<button data-action="suspend" data-id="${inst.user_id}" data-name="${inst.full_name}"
+                                class="action-btn p-2 text-slate-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-all" title="Suspend">
+                                <span class="material-symbols-outlined text-[20px]">pause_circle</span>
+                            </button>` : ''}
+
+                            ${inst.approval_status === 'suspended' ? `<button data-action="unsuspend" data-id="${inst.user_id}" data-name="${inst.full_name}"
+                                class="action-btn p-2 text-amber-500 hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-all" title="Unsuspend">
+                                <span class="material-symbols-outlined text-[20px]">play_circle</span>
+                            </button>` : ''}
+
+                            ${inst.account_status !== 'blocked' ? `<button data-action="block" data-id="${inst.user_id}" data-name="${inst.full_name}"
+                                class="action-btn p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all" title="Block Account">
+                                <span class="material-symbols-outlined text-[20px]">block</span>
+                            </button>` : `
+                            <button data-action="unblock" data-id="${inst.user_id}" data-name="${inst.full_name}"
+                                class="action-btn p-2 text-red-500 hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-all" title="Unblock Account">
+                                <span class="material-symbols-outlined text-[20px]">lock_open</span>
+                            </button>`}
+
+                            <button data-action="delete" data-id="${inst.user_id}" data-name="${inst.full_name}"
+                                class="action-btn p-2 text-slate-300 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all" title="Delete Permanent">
+                                <span class="material-symbols-outlined text-[20px]">delete_forever</span>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+
+            tableBody.querySelectorAll('.action-btn').forEach(btn => {
+                btn.addEventListener('click', () => handleAction(btn.dataset.action, btn.dataset.id, btn.dataset.name));
             });
         }
-                    
+
+        // ─── Modal & Actions ─────────────────────────────────────────────────────────
+        const actionMeta = {
+            approve:   { title: 'Approve Instructor',  icon: 'verified',      iconBg: 'bg-emerald-50 dark:bg-emerald-900/30', iconColor: 'text-emerald-500', btnColor: 'bg-emerald-600 hover:bg-emerald-700', desc: n => `Approve ${n}? They will be able to publish courses and accept mentoring sessions.` },
+            suspend:   { title: 'Suspend Account',     icon: 'pause_circle',  iconBg: 'bg-amber-50 dark:bg-amber-900/30',   iconColor: 'text-amber-500',   btnColor: 'bg-amber-500 hover:bg-amber-600',   desc: n => `Suspend ${n}? Their profile and courses will be hidden from the marketplace until re-approved.` },
+            unsuspend: { title: 'Unsuspend Account',   icon: 'play_circle',   iconBg: 'bg-emerald-50 dark:bg-emerald-900/30', iconColor: 'text-emerald-500', btnColor: 'bg-emerald-600 hover:bg-emerald-700', desc: n => `Unsuspend ${n}? Their profile and courses will be visible in the marketplace again.` },
+            block:     { title: 'Block Account',       icon: 'lock',          iconBg: 'bg-red-50 dark:bg-red-900/30',       iconColor: 'text-red-500',     btnColor: 'bg-red-600 hover:bg-red-700',       desc: n => `Block ${n}? They will be immediately locked out of their account and cannot access any dashboard functions.` },
+            unblock:   { title: 'Unblock Account',     icon: 'lock_open',     iconBg: 'bg-emerald-50 dark:bg-emerald-900/30', iconColor: 'text-emerald-500', btnColor: 'bg-emerald-600 hover:bg-emerald-700', desc: n => `Unblock ${n}? They will regain full access to their account and dashboard.` },
+            delete:    { title: 'Permanent Deletion',  icon: 'warning',       iconBg: 'bg-red-100 dark:bg-red-900/50',      iconColor: 'text-red-600',     btnColor: 'bg-red-700 hover:bg-red-800',       desc: n => `WARNING: This will permanently delete ${n} and all associated data (courses, profiles, sessions). This action is IRREVERSIBLE.` },
+        };
+
+        let pendingAction = null;
+
+        function handleAction(action, userId, name) {
+            const meta = actionMeta[action];
+            if (!meta) return;
+            pendingAction = { action, userId };
+            document.getElementById('modal-icon-wrap').className = `w-14 h-14 rounded-2xl flex items-center justify-center mb-5 mx-auto ${meta.iconBg}`;
+            const iconEl = document.getElementById('modal-icon');
+            iconEl.className = `material-symbols-outlined text-3xl ${meta.iconColor}`;
+            iconEl.textContent = meta.icon;
+            document.getElementById('modal-title').textContent = meta.title;
+            document.getElementById('modal-desc').textContent = meta.desc(name || 'this instructor');
+            const confirmBtn = document.getElementById('modal-confirm');
+            confirmBtn.className = `flex-1 py-3 font-bold rounded-xl transition-all text-white ${meta.btnColor}`;
+            confirmBtn.textContent = action === 'delete' ? 'Delete Permanently' : meta.title;
+            modal.classList.remove('hidden');
+        }
+
+        document.getElementById('modal-cancel').addEventListener('click', () => { modal.classList.add('hidden'); pendingAction = null; });
+        modal.addEventListener('click', e => { if (e.target === modal) { modal.classList.add('hidden'); pendingAction = null; } });
+
+        document.getElementById('modal-confirm').addEventListener('click', async () => {
+            if (!pendingAction) return;
+            const { action, userId } = pendingAction;
+            modal.classList.add('hidden');
+            pendingAction = null;
+
+            try {
+                if (action === 'delete') {
+                    const { error } = await supabase.rpc('admin_delete_instructor', {
+                        p_user_id: userId,
+                        p_admin_id: adminId
+                    });
                     if (error) throw error;
-                    renderInstructors(data || []);
-                } catch (e) {
-                    tableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-10 text-center text-red-500 font-bold">${e.message}</td></tr>`;
+                } else if (action === 'approve' || action === 'unsuspend') {
+                    const { error } = await supabase.rpc('admin_update_instructor_status', {
+                        p_admin_id: adminId, p_user_id: userId, p_approval_status: 'approved'
+                    });
+                    if (error) throw error;
+
+                    // Ensure profile is unblocked and active
+                    await supabase.from('profiles').update({ account_status: 'active' }).eq('id', userId);
+                    // Also make sure mentorship profile is public if it was hidden
+                    await supabase.from('mentorship_profiles').update({ is_public: true }).eq('instructor_id', userId);
+                } else if (action === 'suspend') {
+                    const { error } = await supabase.rpc('admin_update_instructor_status', {
+                        p_admin_id: adminId, p_user_id: userId, p_approval_status: 'suspended'
+                    });
+                    if (error) throw error;
+                    // Optional: hide from marketplace via is_public explicitly too
+                    await supabase.from('mentorship_profiles').update({ is_public: false }).eq('instructor_id', userId);
+                } else if (action === 'block') {
+                    // 1. Update instructor status
+                    await supabase.rpc('admin_update_instructor_status', {
+                        p_admin_id: adminId, p_user_id: userId, p_approval_status: 'blocked'
+                    });
+                    // 2. Update global profile status
+                    const { error } = await supabase.from('profiles').update({ account_status: 'blocked' }).eq('id', userId);
+                    if (error) throw error;
+                } else if (action === 'unblock') {
+                    // 1. Update instructor status
+                    await supabase.rpc('admin_update_instructor_status', {
+                        p_admin_id: adminId, p_user_id: userId, p_approval_status: 'approved'
+                    });
+                    // 2. Update global profile status
+                    const { error } = await supabase.from('profiles').update({ account_status: 'active' }).eq('id', userId);
+                    if (error) throw error;
                 }
+                await fetchInstructors();
+            } catch (e) {
+                console.error('Action failed:', e);
+                alert('Action failed: ' + e.message);
             }
+        });
 
-            function renderInstructors(list) {
-                tableBody.innerHTML = '';
-                if(list.length === 0) {
-                    tableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-10 text-center text-slate-500 italic">No instructors found in database.</td></tr>`;
-                    return;
-                }
+        // ─── Init ────────────────────────────────────────────────────────────────────
+        document.addEventListener('DOMContentLoaded', async () => {
+            const session = await AuthService.getSession();
+            adminId = session?.user?.id;
 
-                list.forEach(inst => {
-                    const row = document.createElement('tr');
-                    row.className = 'table-row-hover';
-                    
-                    const avatar = inst.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(inst.full_name || 'I')}`;
-                    const bio = inst.short_bio || 'No bio provided.';
-                    const courseCount = inst.course_count || 0;
-                    
-                    // Format course list snippet
-                    let courseSnippet = 'No courses yet.';
-                    if (inst.courses_list && inst.courses_list.length > 0) {
-                        const titles = inst.courses_list.slice(0, 2).map(c => c.title).join(', ');
-                        courseSnippet = titles + (inst.courses_list.length > 2 ? '...' : '');
-                    }
-
-                    row.innerHTML = `
-                        <td class="px-6 py-5">
-                            <div class="flex items-center gap-4">
-                                <div class="w-12 h-12 rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800 ring-2 ring-transparent group-hover:ring-indigo-500 transition-all shadow-sm">
-                                    <img src="${avatar}" class="w-full h-full object-cover">
-                                </div>
-                                <div class="max-w-[150px]">
-                                    <p class="text-sm font-black text-slate-900 dark:text-white leading-tight truncate" title="${inst.full_name}">${inst.full_name || 'Expert'}</p>
-                                    <p class="text-[10px] font-bold text-slate-400 truncate">${inst.email}</p>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="px-6 py-5">
-                            <div class="max-w-xs">
-                                <p class="text-[11px] font-bold text-slate-600 dark:text-slate-300 line-clamp-2 leading-relaxed">${bio}</p>
-                            </div>
-                        </td>
-                        <td class="px-6 py-5">
-                            <div class="flex flex-col gap-1">
-                                <div class="flex items-center gap-2">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
-                                    <span class="text-xs font-black text-slate-900 dark:text-white">${courseCount} Course${courseCount !== 1 ? 's' : ''}</span>
-                                </div>
-                                <p class="text-[10px] text-slate-400 italic truncate max-w-[180px]">${courseSnippet}</p>
-                            </div>
-                        </td>
-                        <td class="px-6 py-5">
-                            <span class="text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg ${inst.approval_status === 'approved' ? 'bg-emerald-50 text-emerald-600' : 'bg-orange-50 text-orange-600'}">
-    ${inst.approval_status || 'Pending'}
-</span>
-                        </td>
-                        <td class="px-6 py-5 text-right">
-                            
-<div class="flex gap-2 justify-end">
-    <button onclick="window.updateStatus('${inst.id}', 'approved')" class="px-3 py-1 bg-emerald-50 text-emerald-600 text-[10px] font-black rounded-lg">Approve</button>
-    <button onclick="window.updateStatus('${inst.id}', 'blocked')" class="px-3 py-1 bg-red-50 text-red-600 text-[10px] font-black rounded-lg">Block</button>
-</div>
-
-                        </td>
-                    `;
-                    tableBody.appendChild(row);
-                });
-            }
-
-            // Standard behaviors
-            document.getElementById('logout-btn')?.addEventListener('click', async () => { await AuthService.logout(); window.location.href = '/src/pages/auth/login-select/index.html'; });
-            const toggleBtn = document.getElementById('toggle-sidebar');
-            const sidebar = document.getElementById('sidebar');
-            toggleBtn?.addEventListener('click', () => { sidebar.classList.toggle('-translate-x-full'); });
-            const themeToggle = document.getElementById('theme-toggle');
-            themeToggle?.addEventListener('click', () => {
+            document.getElementById('theme-toggle').addEventListener('click', () => {
                 document.documentElement.classList.toggle('dark');
                 const isDark = document.documentElement.classList.contains('dark');
-                themeToggle.innerHTML = `<span class="material-symbols-outlined">${isDark ? 'light_mode' : 'dark_mode'}</span>`;
+                document.getElementById('theme-toggle').innerHTML = `<span class="material-symbols-outlined">${isDark ? 'light_mode' : 'dark_mode'}</span>`;
             });
 
-            
-            window.updateStatus = async (userId, targetStatus) => {
-                await supabase.from('instructors').update({ approval_status: targetStatus }).eq('user_id', userId);
-                fetchInstructors();
-            };
-            fetchInstructors()
+            const toggleBtn = document.getElementById('toggle-sidebar');
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            toggleBtn?.addEventListener('click', () => { sidebar.classList.toggle('-translate-x-full'); overlay.classList.toggle('hidden'); });
+            overlay?.addEventListener('click', () => { sidebar.classList.add('-translate-x-full'); overlay.classList.add('hidden'); });
 
+            document.getElementById('logout-btn').addEventListener('click', async () => {
+                await AuthService.logout();
+                window.location.href = '/src/pages/auth/login-select/index.html';
+            });
+
+            searchInput.addEventListener('input', applyFilters);
+            approvalFilter.addEventListener('change', applyFilters);
+
+            await fetchInstructors();
         });
     </script>
 </body>

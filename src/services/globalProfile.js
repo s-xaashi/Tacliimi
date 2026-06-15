@@ -65,12 +65,36 @@ export const GlobalProfile = {
 
         if (!session) return;
 
+        // --- ACCOUNT STATUS CHECK ---
+        const accountStatus = profile?.account_status || 'active';
+        if (accountStatus === 'blocked' && !window.location.pathname.includes('/auth/')) {
+            // Force logout and redirect if blocked
+            await AuthService.logout();
+            window.location.href = '/src/pages/auth/login-select/index.html?error=blocked';
+            return;
+        }
+
+        // Marketplace Restriction Notice for Suspended Users
+        if (accountStatus === 'suspended') {
+            const path = window.location.pathname;
+            const isMarketplacePage = path.includes('/marketplace/') || 
+                                     path.includes('/course-details/') ||
+                                     path.includes('/instructor/public-profile/') ||
+                                     path.includes('/mentorship/mentor-marketplace/') ||
+                                     path.includes('/mentorship/mentor-booking/') ||
+                                     path.includes('/mentorship/mentor-profile/');
+            if (isMarketplacePage) {
+                this.showSuspensionNotice();
+            }
+        }
+
         // Process Names
         const nameElements = document.querySelectorAll('.text-right p.font-semibold, .user-display-name, h1.text-3xl.font-bold, .profile-name, .auto-welcome-name');
 
+        const isAdmin = profile ? (profile.role === 'admin' || profile.is_admin === true) : false;
         const isInstructor = profile ? (profile.role === 'instructor') : false;
-        let defaultName = isInstructor ? 'Instructor' : 'Student';
-        if (session.user.email) {
+        let defaultName = isAdmin ? 'Admin' : (isInstructor ? 'Instructor' : 'Student');
+        if (session.user.email && !isAdmin) {
             let prefix = session.user.email.split('@')[0];
             defaultName = prefix.charAt(0).toUpperCase() + prefix.slice(1);
         }
@@ -91,8 +115,9 @@ export const GlobalProfile = {
         const idElements = document.querySelectorAll('[data-role="profile-meta"]');
         idElements.forEach(el => {
             const txt = (el.innerText || '').toLowerCase();
-            if (txt.includes('id:') || txt.includes('account') || txt.includes('student') || txt.includes('instructor')) {
-                el.innerText = isInstructor ? "Instructor Account" : "Student Account";
+            if (txt.includes('id:') || txt.includes('account') || txt.includes('student') || txt.includes('instructor') || txt.includes('admin')) {
+                if (isAdmin) el.innerText = "Admin Account";
+                else el.innerText = isInstructor ? "Instructor Account" : "Student Account";
             }
         });
 
@@ -140,18 +165,18 @@ export const GlobalProfile = {
                 el.classList.add('overflow-hidden');
             }
         });
-        this.injectHeaderControls(session, profile, fullName, avatarUrl, isInstructor);
+        this.injectHeaderControls(session, profile, fullName, avatarUrl, isInstructor, isAdmin);
     },
 
-    injectHeaderControls(session, profile, fullName, avatarUrl, isInstructor) {
+    injectHeaderControls(session, profile, fullName, avatarUrl, isInstructor, isAdmin) {
         let authElements = Array.from(document.querySelectorAll('nav, header')).flatMap(parent => {
             return Array.from(parent.querySelectorAll('a, button, div')).filter(el => {
                 const href = el.getAttribute('href') || el.getAttribute('onclick') || '';
                 const html = el.innerHTML || '';
                 if (el.id === 'mobile-menu' || el.closest('#mobile-menu') || el.children.length > 3) return false;
                 const isLoginLink = (href.includes('/src/pages/auth/login/') && !href.includes('instructor-login') && !href.includes('login-select')) || href.includes('user-login');
-                const isPlaceholderProfile = (html.includes('account_circle') || html.includes('Student Name') || html.includes('Instructor account') || html.includes('ID: ') || html.includes('JD') || html.includes('User Profile') || html.includes('Student Profile')) &&
-                    (el.tagName === 'DIV' && (el.classList.contains('rounded-full') || html.includes('Student Name') || html.includes('Instructor account')));
+                const isPlaceholderProfile = (html.includes('account_circle') || html.includes('Student Name') || html.includes('Instructor account') || html.includes('Admin Account') || html.includes('ID: ') || html.includes('JD') || html.includes('User Profile') || html.includes('Student Profile') || html.includes('Admin Profile')) &&
+                    (el.tagName === 'DIV' || el.tagName === 'BUTTON' || el.tagName === 'A');
                 return isLoginLink || isPlaceholderProfile;
             });
         });
@@ -192,41 +217,39 @@ export const GlobalProfile = {
             parentMap.get(el.parentElement).push(el);
         });
 
-        const dashboardLink = isInstructor ? '/src/pages/instructor/instructor-dashboard/index.html' : '/src/pages/student/student-dashboard/index.html';
-        const roleName = isInstructor ? 'Instructor' : 'Student';
-        const settingsLink = isInstructor ? '/src/pages/instructor/instructor-profile/index.html' : '/src/pages/student/account-settings/index.html';
+        let dashboardLink = '/src/pages/student/student-dashboard/index.html';
+        let roleName = 'Student';
+        let settingsLink = '/src/pages/student/account-settings/index.html';
+
+        if (isAdmin) {
+            dashboardLink = '/src/pages/admin/dashboard/index.html';
+            roleName = 'Admin';
+            settingsLink = '/src/pages/admin/profile/index.html';
+        } else if (isInstructor) {
+            dashboardLink = '/src/pages/instructor/instructor-dashboard/index.html';
+            roleName = 'Instructor';
+            settingsLink = '/src/pages/instructor/instructor-profile/index.html';
+        }
+
         const isPublicPage = !window.location.pathname.includes('dashboard') && !window.location.pathname.includes('settings') && !window.location.pathname.includes('profile') && !window.location.pathname.includes('admin');
 
         const picHtml = avatarUrl
-            ? `< img src = "${avatarUrl}" class= "w-full h-full object-cover rounded-full pointer-events-none" /> `
-            : `< span class= "material-symbols-outlined text-2xl relative top-0.5 pointer-events-none" > account_circle</span > `;
+            ? `<img src="${avatarUrl}" class="w-full h-full object-cover rounded-full pointer-events-none" />`
+            : `<span class="material-symbols-outlined text-2xl relative top-0.5 pointer-events-none">account_circle</span>`;
 
-        parentMap.forEach((elementsToRemove, container) => {
-            document.querySelectorAll('nav button, header button').forEach(btn => {
-                const text = (btn.innerText + btn.innerHTML).toLowerCase();
-                const title = (btn.getAttribute('title') || '').toLowerCase();
-                const id = btn.id || '';
-                if (text.includes('notifications') || text.includes('dark_mode') || text.includes('light_mode') || title.includes('theme') || id.includes('theme')) {
-                    if (!btn.closest('.tacliimi-injected-profile')) {
-                        btn.remove();
-                    }
-                }
-            });
-
-            const themeToggleHtml = `
-            <button type="button" id="global-theme-toggle" class="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full flex items-center justify-center transition-colors !outline-none" title="Toggle Theme">
-                <span class="material-symbols-outlined dark:hidden text-[22px]">dark_mode</span>
-                <span class="material-symbols-outlined hidden dark:block text-[22px]">light_mode</span>
-            </button>
-        `;
-
-            const logoutHtml = `
-            <button id="global-logout" class="p-2 text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 dark:hover:text-red-400 rounded-full flex items-center justify-center transition-colors !outline-none" title="Log Out">
-                <span class="material-symbols-outlined text-[20px] pointer-events-none">logout</span>
-            </button>
-        `;
-
-            const avatarHtml = `
+        // Determine if we should show a dropdown or a simple profile block
+        // Admins want a simplified view (no dropdown, just info)
+        const profileDisplayHtml = isAdmin ? `
+            <div class="flex items-center gap-3" id="global-admin-profile-header">
+                <div class="hidden sm:block text-right">
+                    <p class="user-display-name text-sm font-bold text-slate-900 dark:text-white capitalize">${fullName}</p>
+                    <p class="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">${(profile?.admin_role || 'administrator').replace('_', ' ')}</p>
+                </div>
+                <div class="h-10 w-10 shrink-0 rounded-xl bg-slate-200 dark:bg-slate-700 flex items-center justify-center border-2 border-white dark:border-slate-800 shadow-sm overflow-hidden" data-role="profile-image">
+                    ${picHtml}
+                </div>
+            </div>
+        ` : `
             <div class="relative group flex items-center gap-3 cursor-pointer" id="global-profile-dropdown">
                 <div class="hidden sm:block text-right group-hover:opacity-80 transition-opacity">
                     <p class="user-display-name text-sm font-semibold text-slate-900 dark:text-white capitalize pointer-events-none">${fullName}</p>
@@ -253,6 +276,31 @@ export const GlobalProfile = {
             </div>
         `;
 
+        parentMap.forEach((elementsToRemove, container) => {
+            document.querySelectorAll('nav button, header button').forEach(btn => {
+                const text = (btn.innerText + btn.innerHTML).toLowerCase();
+                const title = (btn.getAttribute('title') || '').toLowerCase();
+                const id = btn.id || '';
+                if (text.includes('notifications') || text.includes('dark_mode') || text.includes('light_mode') || title.includes('theme') || id.includes('theme')) {
+                    if (!btn.closest('.tacliimi-injected-profile')) {
+                        btn.remove();
+                    }
+                }
+            });
+
+            const themeToggleHtml = `
+            <button type="button" id="global-theme-toggle" class="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full flex items-center justify-center transition-colors !outline-none" title="Toggle Theme">
+                <span class="material-symbols-outlined dark:hidden text-[22px]">dark_mode</span>
+                <span class="material-symbols-outlined hidden dark:block text-[22px]">light_mode</span>
+            </button>
+        `;
+
+            const logoutHtml = `
+            <button id="global-logout" class="p-2 text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 dark:hover:text-red-400 rounded-full flex items-center justify-center transition-colors !outline-none" title="Log Out">
+                <span class="material-symbols-outlined text-[20px] pointer-events-none">logout</span>
+            </button>
+        `;
+
             const headerControlsHtml = `
             <div class="flex items-center gap-1 tacliimi-injected-profile">
                 <!-- Notifications Block -->
@@ -262,10 +310,10 @@ export const GlobalProfile = {
                 </button>
                             
                 ${themeToggleHtml}
-                ${!isPublicPage ? logoutHtml : ''}
+                ${(!isPublicPage || isAdmin) ? logoutHtml : ''}
 
                 <div class="flex items-center justify-end pl-3 ml-2 border-l border-slate-200 dark:border-slate-700">
-                    ${avatarHtml}
+                    ${profileDisplayHtml}
                 </div>
             </div>
         `;
@@ -323,6 +371,35 @@ export const GlobalProfile = {
                 }
             });
         }
+    },
+
+    showSuspensionNotice() {
+        if (document.getElementById('suspension-overlay')) return;
+
+        const overlay = document.createElement('div');
+        overlay.id = 'suspension-overlay';
+        overlay.className = 'fixed inset-0 z-[9999] flex items-center justify-center p-6 bg-slate-900/80 backdrop-blur-xl animate-in fade-in duration-500';
+        overlay.innerHTML = `
+            <div class="bg-white dark:bg-slate-900 max-w-md w-full rounded-[2.5rem] p-10 border border-slate-200 dark:border-slate-800 shadow-2xl text-center scale-in-center animate-in zoom-in duration-300">
+                <div class="w-20 h-20 bg-amber-50 dark:bg-amber-900/20 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-inner">
+                    <span class="material-symbols-outlined text-amber-500 text-5xl">pause_circle</span>
+                </div>
+                <h2 class="text-3xl font-black text-slate-900 dark:text-white mb-4 tracking-tight">Account Suspended</h2>
+                <p class="text-slate-500 dark:text-slate-400 mb-10 leading-relaxed font-medium">
+                    Your marketplace access has been temporarily restricted by the administration. You can still access your currently enrolled courses from your dashboard, but you cannot browse or join new courses at this time.
+                </p>
+                <div class="space-y-4 pt-4">
+                    <a href="/src/pages/student/student-dashboard/index.html" class="block w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl transition-all shadow-lg shadow-indigo-200 dark:shadow-none hover:scale-[1.02] active:scale-[0.98]">
+                        Return to Dashboard
+                    </a>
+                    <p class="text-xs text-slate-400 mt-6 pt-6 border-t border-slate-100 dark:border-slate-800 font-medium">
+                        Please contact administration if you believe this is a mistake.
+                    </p>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        document.body.style.overflow = 'hidden';
     }
 };
 

@@ -63,68 +63,102 @@ export const AuthService = {
 
     /**
      * Login existing user (Student/Instructor) or Administrator
+     * Supports either email or username for Admins.
      */
-    async login(identifier, password) {
-        // 1. Detect if it's an Admin login (username instead of email)
-        const isAdminLogin = !identifier.includes('@');
+    async login(emailOrUsername, password) {
+        let email = emailOrUsername;
 
-        if (isAdminLogin) {
-            const { data, error } = await supabase.rpc('verify_admin_login', {
-                p_username: identifier,
-                p_password: password
-            });
+        // 1. Check if it's a username (no '@' sign)
+        if (!emailOrUsername.includes('@')) {
+            const { data: adminRecord, error: lookupError } = await supabase
+                .from('admin_auth')
+                .select('id, backup_email, is_suspended')
+                .eq('username', emailOrUsername)
+                .maybeSingle();
 
-            if (error) throw error;
-            
-            // Check if data is an array and has at least one result
-            if (!data || !Array.isArray(data) || data.length === 0) {
-                throw new Error('Invalid administrator credentials.');
+            if (adminRecord) {
+                if (adminRecord.is_suspended) {
+                    throw new Error("This administrative account has been suspended.");
+                }
+                if (adminRecord.backup_email) {
+                    email = adminRecord.backup_email;
+                } else {
+                    email = `${emailOrUsername.toLowerCase()}@tacliimi.com`;
+                }
             }
-
-            const adminInfo = data[0];
-
-            // Create a pseudo-session for the admin
-            const adminSession = {
-                user: { 
-                    id: adminInfo.out_id, 
-                    email: `${adminInfo.out_username}@admin.tacliimi.com`, 
-                    user_metadata: { 
-                        full_name: adminInfo.out_full_name,
-                        role: 'admin',
-                        is_admin: true
-                    } 
-                },
-                access_token: `admin-${adminInfo.out_id}-${Date.now()}`,
-                expires_at: Math.floor(Date.now() / 1000) + (3600 * 24), // 24 hours
-                is_admin: true
-            };
-
-            localStorage.setItem('tacliimi_admin_session', JSON.stringify(adminSession));
-            return { session: adminSession, user: adminSession.user };
+        } else {
+            // Also check suspension by email if its an admin
+            const { data: adminByEmail } = await supabase
+                .from('admin_auth')
+                .select('is_suspended')
+                .eq('backup_email', emailOrUsername)
+                .maybeSingle();
+            
+            if (adminByEmail && adminByEmail.is_suspended) {
+                throw new Error("This administrative account has been suspended.");
+            }
         }
 
-        // 2. Standard Supabase Auth for Students/Instructors
-        // Clear any stale admin session first so it doesn't override the standard session
-        localStorage.removeItem('tacliimi_admin_session');
-
         const { data, error } = await supabase.auth.signInWithPassword({
-            email: identifier,
+            email,
             password
         });
 
         if (error) throw error;
 
-        // Ensure user is verified
-        if (!data.session) throw new Error('Please verify your email address to proceed.');
+        // Check if admin is suspended
+        if (data.session) {
+            // Priority 1: Check admin suspension
+            const { data: adminAuth } = await supabase
+                .from('admin_auth')
+                .select('is_suspended')
+                .eq('id', data.user.id)
+                .maybeSingle();
+            
+            if (adminAuth?.is_suspended) {
+                await supabase.auth.signOut();
+                throw new Error('Your administrative access has been suspended. Please contact the system owner.');
+            }
+
+            // Priority 2: Check global account status (blocked)
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('account_status')
+                .eq('id', data.user.id)
+                .maybeSingle();
+
+            if (profile?.account_status === 'blocked') {
+                await supabase.auth.signOut();
+                throw new Error('Your account has been blocked by an administrator. Please contact support if you believe this is an error.');
+            }
+        }
 
         return data;
+    },
+
+    /**
+     * Verify a password without logging out the current user.
+     * Useful for sensitive actions like "Show Password".
+     */
+    async verifyPassword(password) {
+        const session = await this.getSession();
+        if (!session) throw new Error("No active session");
+
+        // Use a secondary supabase instance or a check
+        // Simpler: Try to sign in with current email and the provided password
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email: session.user.email,
+            password: password
+        });
+
+        if (error) return false;
+        return !!data.user;
     },
 
     /**
      * Logout active session
      */
     async logout() {
-        localStorage.removeItem('tacliimi_admin_session');
         const { error } = await supabase.auth.signOut();
         if (error) throw error;
     },
@@ -133,19 +167,35 @@ export const AuthService = {
      * Get active session
      */
     async getSession() {
-        // Check for Admin Session first
-        const adminSession = localStorage.getItem('tacliimi_admin_session');
-        if (adminSession) {
-            try {
-                return JSON.parse(adminSession);
-            } catch (e) {
-                localStorage.removeItem('tacliimi_admin_session');
-            }
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError || !session) return null;
+
+        // Extend session with admin role if it exists
+        const { data: adminRecord, error: adminError } = await supabase
+            .from('admin_auth')
+            .select('role, full_name')
+            .eq('id', session.user.id)
+            .maybeSingle();
+
+        if (adminRecord && !adminError) {
+            session.is_admin = true;
+            session.admin_role = adminRecord.role;
+            session.user.user_metadata.full_name = adminRecord.full_name;
         }
 
-        const { data, error } = await supabase.auth.getSession();
-        if (error) throw error;
-        return data.session;
+        // Check if user is blocked globally
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('account_status')
+            .eq('id', session.user.id)
+            .maybeSingle();
+
+        if (profile?.account_status === 'blocked') {
+            await supabase.auth.signOut();
+            return null;
+        }
+
+        return session;
     },
 
     /**
@@ -157,11 +207,40 @@ export const AuthService = {
 
         // Admin Profile Override
         if (session.is_admin) {
+            try {
+                const { data: adminRecord, error: adminError } = await supabase
+                    .from('admin_auth')
+                    .select('id, full_name, username, role, phone_number, city, address, avatar_url')
+                    .eq('id', session.user.id)
+                    .maybeSingle();
+
+                if (adminRecord && !adminError) {
+                    return {
+                        id: adminRecord.id,
+                        full_name: adminRecord.full_name || 'Administrator',
+                        username: adminRecord.username,
+                        email: session.user.email,
+                        role: 'admin',
+                        admin_role: adminRecord.role,
+                        is_admin: true,
+                        phone_number: adminRecord.phone_number,
+                        city: adminRecord.city,
+                        address: adminRecord.address,
+                        avatar_url: adminRecord.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(adminRecord.full_name || 'Admin')}&background=4F46E5&color=fff`
+                    };
+                }
+            } catch (err) {
+                console.error("Admin profile fetch error:", err);
+            }
+
+            // Fallback
             return {
                 id: session.user.id,
                 full_name: session.user.user_metadata.full_name || 'Administrator',
                 email: session.user.email,
                 role: 'admin',
+                admin_role: session.admin_role,
+                is_admin: true,
                 avatar_url: `https://ui-avatars.com/api/?name=${encodeURIComponent(session.user.user_metadata.full_name || 'Admin')}&background=4F46E5&color=fff`
             };
         }
@@ -171,7 +250,7 @@ export const AuthService = {
                 .from('profiles')
                 .select('*')
                 .eq('id', session.user.id)
-                .single();
+                .maybeSingle();
 
             if (error && error.code !== 'PGRST116') {
                 // Ignore "Row not found" (PGRST116) as it might legitimately not exist yet
@@ -185,7 +264,39 @@ export const AuthService = {
     },
 
     /**
-     * Update the current user's profile
+     * Update the current admin's profile record in 'admin_auth'
+     */
+    async updateAdminProfile(updates) {
+        const session = await this.getSession();
+        if (!session || !session.is_admin) throw new Error("Unauthorized: Admin session required");
+
+        const { data, error } = await supabase
+            .from('admin_auth')
+            .update(updates)
+            .eq('id', session.user.id)
+            .select()
+            .maybeSingle();
+
+        if (error) throw error;
+
+        // Update audit log
+        try {
+            await supabase.from('admin_audit_logs').insert({
+                admin_id: session.user.id,
+                action: 'profile_update',
+                entity_type: 'admin_auth',
+                entity_id: session.user.id,
+                details: { updated_fields: Object.keys(updates) }
+            });
+        } catch (logErr) {
+            console.warn("Failed to create audit log for profile update:", logErr);
+        }
+
+        return data;
+    },
+
+    /**
+     * Update the current user's profile metadata in the 'profiles' table
      */
     async updateProfile(updates) {
         const session = await this.getSession();
@@ -195,8 +306,32 @@ export const AuthService = {
             .from('profiles')
             .update(updates)
             .eq('id', session.user.id)
-            .select()
-            .single();
+                .select()
+                .maybeSingle();
+
+        if (error) throw error;
+        return data;
+    },
+
+    /**
+     * Update the authenticated user's credentials (e.g., password)
+     */
+    async updatePassword(newPassword) {
+        const { data, error } = await supabase.auth.updateUser({
+            password: newPassword
+        });
+
+        if (error) throw error;
+        return data;
+    },
+
+    /**
+     * Send a password reset email
+     */
+    async sendPasswordResetEmail(email) {
+        const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+            redirectTo: `${window.location.origin}/src/pages/auth/reset-password/index.html`
+        });
 
         if (error) throw error;
         return data;
