@@ -131,6 +131,7 @@ async function loadDraft(courseId) {
             },
             privacy: course.is_public ? 'public' : 'private',
             status: course.status || 'draft',
+            has_rejection_history: (course.course_moderation_logs || []).some(log => log.decision === 'rejected'),
             isLoaded: false // Safety flag to prevent accidental wiping of DB
         };
 
@@ -492,6 +493,26 @@ function updateUI() {
         if (window.currentStep === window.totalSteps) {
             btnNext.classList.add('hidden');
             btnPublish.classList.remove('hidden');
+            
+            // 🔥 Update button text if there is rejection history
+            if (window.courseDraft.has_rejection_history) {
+                btnPublish.innerHTML = `
+                    Republish Course
+                    <span class="material-icons">check_circle</span>
+                `;
+                btnPublish.classList.replace('bg-green-600', 'bg-amber-600');
+                btnPublish.classList.replace('hover:bg-green-700', 'hover:bg-amber-700');
+                btnPublish.classList.replace('shadow-green-500/20', 'shadow-amber-500/20');
+            } else {
+                btnPublish.innerHTML = `
+                    Publish Course
+                    <span class="material-icons">check_circle</span>
+                `;
+                btnPublish.classList.replace('bg-amber-600', 'bg-green-600');
+                btnPublish.classList.replace('hover:bg-amber-700', 'hover:bg-green-700');
+                btnPublish.classList.replace('shadow-amber-500/20', 'shadow-green-500/20');
+            }
+
             renderFinalPreview();
         } else {
             btnNext.classList.remove('hidden');

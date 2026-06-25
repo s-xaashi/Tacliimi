@@ -4,6 +4,16 @@ import { MentorService } from '/src/services/mentorService.js';
 
 let currentUserSession = null;
 let currentProfile = null;
+let allMentorshipSessions = null;
+let lastMentorshipFetch = 0;
+const MENTORSHIP_CACHE_TTL = 60000; // 1 minute
+
+async function ensureSession() {
+    if (!currentUserSession) {
+        currentUserSession = await AuthService.getSession();
+    }
+    return currentUserSession;
+}
 
 // Routing for tabs
 window.switchDashboardTab = function (tabId) {
@@ -60,6 +70,9 @@ async function initDashboard() {
 }
 
 async function loadMyCourses() {
+    await ensureSession();
+    if (!currentUserSession?.user) return;
+
     const { data: enrollments, error } = await supabase
         .from('enrollments')
         .select('*, courses(*, course_categories(*), instructor:profiles(*))')
@@ -215,6 +228,9 @@ function renderCourseCard(enr) {
 }
 
 async function loadWishlist() {
+    await ensureSession();
+    if (!currentUserSession?.user) return;
+
     const { data: wishlisted, error } = await supabase
         .from('wishlist')
         .select('*, courses(*, instructor:profiles!courses_instructor_id_fkey(*), categories:course_categories!courses_category_id_fkey(*))')
@@ -274,11 +290,30 @@ async function loadWishlist() {
     }
 }
 
-async function loadMentors() {
+let currentMentorshipSubTab = 'upcoming';
+
+window.switchMentorshipSubTab = function(tabId) {
+    currentMentorshipSubTab = tabId;
+    loadMentors();
+};
+
+async function loadMentors(forceRefresh = false) {
     const mentorsContent = document.getElementById('content-my-mentors');
     
     try {
-        const sessions = await MentorService.getStudentSessions(currentUserSession.user.id);
+        await ensureSession();
+        if (!currentUserSession?.user) return;
+        
+        const now = new Date();
+        const nowTime = now.getTime();
+
+        // Fix Lagging: Use cached sessions unless forceRefresh is true or cache is stale
+        if (forceRefresh || !allMentorshipSessions || (nowTime - lastMentorshipFetch > MENTORSHIP_CACHE_TTL)) {
+            allMentorshipSessions = await MentorService.getStudentSessions(currentUserSession.user.id);
+            lastMentorshipFetch = nowTime;
+        }
+
+        const sessions = allMentorshipSessions;
         
         if (!sessions || sessions.length === 0) {
             mentorsContent.innerHTML = `
@@ -298,24 +333,25 @@ async function loadMentors() {
             return;
         }
 
-        const now = new Date();
-        const pendingSessions = sessions.filter(s => 
-            ['pending_review', 'awaiting_meeting_link', 'location_negotiation', 'pending_rejection_review'].includes(s.booking_status || s.status)
-        );
         const upcomingSessions = sessions.filter(s => {
             const status = s.booking_status || s.status;
             const start = new Date(s.scheduled_at);
             const duration = s.duration_minutes || 60;
             const end = new Date(start.getTime() + duration * 60000);
-            return status === 'confirmed' && now < end;
+            return (status === 'confirmed' || status === 'upcoming') && now < end;
         });
-        const completedSessions = sessions.filter(s => {
+        const historySessions = sessions.filter(s => {
             const status = s.booking_status || s.status;
             const start = new Date(s.scheduled_at);
             const duration = s.duration_minutes || 60;
             const end = new Date(start.getTime() + duration * 60000);
-            return ['completed', 'cancelled'].includes(status) || (status === 'confirmed' && now >= end);
+            return ['completed', 'cancelled'].includes(status) || ((status === 'confirmed' || status === 'upcoming') && now >= end);
         });
+
+        // "Active Requests" captures all other states (pending, negotiating, link pending, etc.)
+        const pendingSessions = sessions.filter(s => !upcomingSessions.includes(s) && !historySessions.includes(s));
+
+        // Updated: Removed auto-switching of tabs to allow viewing empty states as requested.
 
         const renderSessionCard = (session, isHistory = false) => {
             const date = new Date(session.scheduled_at);
@@ -334,7 +370,18 @@ async function loadMentors() {
             let actionHtml = '';
             let cardBg = "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800";
 
-            if (bookingStatus === 'pending_review') {
+            if (bookingStatus === 'pending_payment') {
+                statusLabel = "Awaiting Payment";
+                statusColor = "bg-orange-100 dark:bg-orange-900/30 text-orange-600";
+                actionHtml = `
+                    <a href="/src/pages/marketplace/index.html" class="flex-1 px-4 py-2.5 bg-orange-500 text-white font-bold rounded-xl hover:bg-orange-600 transition-all text-sm flex items-center gap-2 justify-center">
+                        <span class="material-symbols-outlined text-[18px]">payment</span> Complete Payment
+                    </a>
+                `;
+            } else if (bookingStatus === 'paid_waiting_review') {
+                statusLabel = "Paid \u00b7 Pending Review";
+                statusColor = "bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600";
+            } else if (bookingStatus === 'pending_review' || bookingStatus === 'pending') {
                 statusLabel = "Awaiting Approval";
             } else if (bookingStatus === 'pending_rejection_review') {
                 statusColor = "bg-red-100 dark:bg-red-900/30 text-red-600";
@@ -342,12 +389,11 @@ async function loadMentors() {
             } else if (bookingStatus === 'awaiting_meeting_link') {
                 statusColor = "bg-blue-100 dark:bg-blue-900/30 text-blue-600";
                 statusLabel = "Accepted — Link Pending";
-            } else if (bookingStatus === 'location_negotiation') {
+            } else if (bookingStatus === 'location_negotiation' || bookingStatus === 'negotiating') {
                 statusColor = "bg-purple-100 dark:bg-purple-900/30 text-purple-600";
                 statusLabel = "Negotiating Location";
             } else if (bookingStatus === 'confirmed' || bookingStatus === 'upcoming') {
                 const isStarted = now >= date && now < endDate;
-
 
                 if (isStarted) {
                     statusColor = "bg-emerald-500 text-white animate-pulse shadow-lg shadow-emerald-500/20";
@@ -393,9 +439,8 @@ async function loadMentors() {
                 </div>` : '';
 
             return `
-                <div class="${cardBg} border rounded-2xl p-6 hover:shadow-lg transition-all group ${isHistory && bookingStatus !== 'cancelled' ? 'opacity-80 grayscale-[0.3] hover:grayscale-0' : ''}">
+                <div class="${cardBg} border rounded-2xl p-6 hover:shadow-lg transition-all group ${isHistory && bookingStatus !== 'cancelled' ? 'opacity-80 grayscale-[0.3] hover:grayscale-0' : ''} anim-fade-in">
                     <div class="flex flex-col md:flex-row gap-8 items-center">
-                        <!-- Mentor Info: Fixed width -->
                         <div class="flex items-center gap-4 w-full md:w-72 shrink-0">
                             <a href="/src/pages/instructor/public-profile/index.html?id=${session.mentor_id}" class="w-16 h-16 rounded-2xl overflow-hidden border-2 border-primary/20 shrink-0 shadow-sm transition-transform hover:scale-110 block" title="View Public Profile">
                                 <img src="${mentor.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(mentor.full_name || 'M')}&background=random&color=fff`}" class="w-full h-full object-cover" />
@@ -412,7 +457,6 @@ async function loadMentors() {
                             </div>
                         </div>
                         
-                        <!-- Session Details: Fixed width columns for stability -->
                         <div class="flex-1 flex flex-wrap items-center gap-x-10 gap-y-4 md:px-8 border-t md:border-t-0 md:border-l border-slate-100 dark:border-slate-800 pt-4 md:pt-0 min-w-0">
                             <div class="flex items-center gap-3 w-48 shrink-0">
                                 <div class="w-10 h-10 bg-slate-50 dark:bg-slate-800 rounded-xl flex items-center justify-center text-primary shrink-0">
@@ -434,7 +478,6 @@ async function loadMentors() {
                             </div>
                         </div>
 
-                        <!-- Actions: Fixed width -->
                         <div class="w-full md:w-fit flex flex-col sm:flex-row md:flex-col gap-2 pt-4 md:pt-0 border-t md:border-t-0 border-slate-100 dark:border-slate-800">
                             ${actionHtml}
                             <div class="flex gap-2">
@@ -459,61 +502,82 @@ async function loadMentors() {
             `;
         };
 
-        let html = '<div class="space-y-12 pt-6 anim-fade-in">';
+        // Surgical Update to prevent flickering
+        let navContainer = mentorsContent.querySelector('.mentorship-sub-nav');
+        let contentContainer = document.getElementById('mentorship-tab-content');
 
-        if (pendingSessions.length > 0) {
-            html += `
-                <div>
-                    <div class="flex items-center justify-between mb-4 px-2">
-                        <div class="flex items-center gap-2">
-                            <span class="material-symbols-outlined text-amber-500">pending_actions</span>
-                            <h3 class="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Active Requests</h3>
-                        </div>
-                        <span class="px-3 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-600 rounded-full text-xs font-bold">${pendingSessions.length}</span>
+        if (!navContainer || !contentContainer) {
+            mentorsContent.innerHTML = `
+                <div class="flex flex-col gap-8 pt-6">
+                    <div class="mentorship-sub-nav flex flex-wrap gap-3 p-1.5 bg-slate-100/50 dark:bg-slate-800/30 rounded-2xl w-fit">
+                        <button id="subtab-active" onclick="switchMentorshipSubTab('active')"></button>
+                        <button id="subtab-upcoming" onclick="switchMentorshipSubTab('upcoming')"></button>
+                        <button id="subtab-history" onclick="switchMentorshipSubTab('history')"></button>
                     </div>
-                    <div class="grid grid-cols-1 gap-4">
-                        ${pendingSessions.map(s => renderSessionCard(s)).join('')}
-                    </div>
+                    <div id="mentorship-tab-content" class="grid grid-cols-1 gap-6"></div>
                 </div>
             `;
+            navContainer = mentorsContent.querySelector('.mentorship-sub-nav');
+            contentContainer = document.getElementById('mentorship-tab-content');
         }
 
-        if (upcomingSessions.length > 0) {
-            html += `
-                <div>
-                    <div class="flex items-center justify-between mb-4 px-2">
-                        <div class="flex items-center gap-2">
-                            <span class="material-symbols-outlined text-primary font-bold">event_upcoming</span>
-                            <h3 class="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Upcoming Sessions</h3>
-                        </div>
-                        <span class="px-3 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold">${upcomingSessions.length}</span>
+        const activeSubBtnClass = "px-6 py-3 bg-primary text-white font-bold rounded-xl shadow-lg shadow-primary/20 transition-all flex items-center gap-2";
+        const inactiveSubBtnClass = "px-6 py-3 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all flex items-center gap-2";
+
+        // Update button states and counts without re-rendering the entire nav bar
+        const updateButton = (id, label, count, icon, tabKey) => {
+            const btn = document.getElementById(id);
+            if (!btn) return;
+            btn.className = currentMentorshipSubTab === tabKey ? activeSubBtnClass : inactiveSubBtnClass;
+            btn.innerHTML = `
+                <span class="material-symbols-outlined text-[20px]">${icon}</span>
+                ${label}
+                ${count > 0 ? `<span class="ml-1 px-2 py-0.5 ${currentMentorshipSubTab === tabKey ? 'bg-white/20' : 'bg-slate-100 dark:bg-slate-700 text-slate-500'} rounded-md text-[10px]">${count}</span>` : ''}
+            `;
+        };
+
+        updateButton('subtab-active', 'Active Requests', pendingSessions.length, 'pending_actions', 'active');
+        updateButton('subtab-upcoming', 'Upcoming', upcomingSessions.length, 'event_upcoming', 'upcoming');
+        updateButton('subtab-history', 'History', historySessions.length, 'history', 'history');
+
+        let activeSessions = [];
+        let emptyMessage = "No sessions found.";
+        let emptyIcon = "event_busy";
+
+        if (currentMentorshipSubTab === 'active') {
+            activeSessions = pendingSessions;
+            emptyMessage = "You don't have any active requests at the moment.";
+            emptyIcon = "browse_gallery";
+        } else if (currentMentorshipSubTab === 'upcoming') {
+            activeSessions = upcomingSessions;
+            emptyMessage = "No upcoming sessions. Time to book a mentor!";
+            emptyIcon = "calendar_today";
+        } else if (currentMentorshipSubTab === 'history') {
+            activeSessions = historySessions;
+            emptyMessage = "Your session history is currently empty.";
+            emptyIcon = "history_toggle_off";
+        }
+
+        // Apply smooth transition by toggling animation class
+        contentContainer.classList.remove('anim-fade-in');
+        void contentContainer.offsetWidth; // Trigger reflow to restart animation
+        contentContainer.classList.add('anim-fade-in');
+
+        if (activeSessions.length === 0) {
+            contentContainer.innerHTML = `
+                <div class="flex flex-col items-center justify-center py-20 px-4 text-center">
+                    <div class="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-3xl flex items-center justify-center mb-6 text-slate-300">
+                        <span class="material-symbols-outlined text-4xl">${emptyIcon}</span>
                     </div>
-                    <div class="grid grid-cols-1 gap-4">
-                        ${upcomingSessions.map(s => renderSessionCard(s)).join('')}
-                    </div>
+                    <h4 class="text-xl font-bold text-slate-400">${emptyMessage}</h4>
+                    <button onclick="window.location.href='/src/pages/marketplace/marketplace/'" class="mt-6 px-6 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold rounded-xl hover:text-primary transition-all flex items-center gap-2">
+                        Browse Mentors <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                    </button>
                 </div>
             `;
+        } else {
+            contentContainer.innerHTML = activeSessions.map(s => renderSessionCard(s, currentMentorshipSubTab === 'history')).join('');
         }
-
-        if (completedSessions.length > 0) {
-            html += `
-                <div>
-                    <div class="flex items-center justify-between mb-4 px-2 border-t border-slate-100 dark:border-slate-800 pt-8 mt-8">
-                        <div class="flex items-center gap-2">
-                            <span class="material-symbols-outlined text-slate-400">history</span>
-                            <h3 class="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Session History</h3>
-                        </div>
-                        <span class="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded-full text-xs font-bold">${completedSessions.length}</span>
-                    </div>
-                    <div class="grid grid-cols-1 gap-4">
-                        ${completedSessions.map(s => renderSessionCard(s, true)).join('')}
-                    </div>
-                </div>
-            `;
-        }
-
-        html += '</div>';
-        mentorsContent.innerHTML = html;
 
     } catch (err) {
         console.error("Error loading student mentors:", err);
@@ -525,7 +589,7 @@ window.deleteSession = async function(sessionId) {
     if (!confirm("Are you sure you want to remove this cancelled session from your dashboard? This action cannot be undone.")) return;
     try {
         await MentorService.deleteSession(sessionId);
-        loadMentors(); // Refresh the grid
+        await loadMentors(true); // Force refresh cache
     } catch (err) {
         alert("Failed to delete session: " + err.message);
     }
@@ -722,11 +786,15 @@ async function loadBeginnerCourses() {
 }
 
 window.removeFromWishlist = async function(courseId) {
+    await ensureSession();
+    if (!currentUserSession?.user) return;
     await supabase.from('wishlist').delete().eq('course_id', courseId).eq('student_id', currentUserSession.user.id);
     loadWishlist();
 };
 
 window.enrollCourse = async function(courseId) {
+    await ensureSession();
+    if (!currentUserSession?.user) return;
     await supabase.from('enrollments').insert({ student_id: currentUserSession.user.id, course_id: courseId, progress_percentage: 0 });
     window.removeFromWishlist(courseId); // Remove from wishlist internally
     await loadMyCourses();

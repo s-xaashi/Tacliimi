@@ -5,48 +5,16 @@ let currentUserSession = null;
 let currentProfile = null;
 
 // Routing for tabs
-window.switchMentorsTab = function (tabId) {
-    const tabs = ['upcoming', 'past'];
-    tabs.forEach(tab => {
-        const btn = document.getElementById('sub-tab-' + tab);
-        if (!btn) return;
-        if (tab === tabId) {
-            btn.className = "pb-4 text-sm font-bold text-primary border-b-2 border-primary transition-all";
-        } else {
-            btn.className = "pb-4 text-sm font-medium text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 border-b-2 border-transparent transition-all";
-        }
-    });
-
-    tabs.forEach(tab => {
-        const content = document.getElementById('content-mentors-' + tab);
-        if (!content) return;
-        if (tab === tabId) {
-            content.classList.remove('hidden');
-            if (tab === 'past') content.classList.add('flex');
-        } else {
-            content.classList.add('hidden');
-            if (tab === 'past') content.classList.remove('flex');
-        }
-    });
-};
 
 window.switchAccountTab = function (tabId) {
-    const tabs = ['my-mentors', 'personal-info', 'learning-interests', 'security'];
+    const tabs = ['personal-info', 'learning-interests', 'security'];
     tabs.forEach(tab => {
         const btn = document.getElementById('tab-' + tab);
         if (!btn) return;
-        if (tab === 'my-mentors') {
-            btn.className = "flex items-center gap-3 px-6 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer";
-        } else {
-            btn.className = "flex items-center gap-3 pl-14 pr-6 py-2.5 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-primary transition-all cursor-pointer";
-        }
+        btn.className = "flex items-center gap-3 pl-14 pr-6 py-2.5 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-primary transition-all cursor-pointer";
 
         if (tab === tabId) {
-            if (tab === 'my-mentors') {
-                btn.className = "flex items-center gap-3 px-6 py-3 text-primary bg-primary/5 border-r-4 border-primary transition-all cursor-pointer";
-            } else {
-                btn.className = "flex items-center gap-3 pl-14 pr-6 py-2.5 text-sm font-bold text-primary transition-all cursor-pointer";
-            }
+            btn.className = "flex items-center gap-3 pl-14 pr-6 py-2.5 text-sm font-bold text-primary transition-all cursor-pointer";
         }
     });
 
@@ -77,7 +45,6 @@ async function loadProfile() {
 
     currentProfile = data;
     applyProfileToDOM();
-    loadMentorSessions();
 }
 
 function applyProfileToDOM() {
@@ -152,29 +119,6 @@ function updateLearningInterestsUI(selectedInterests) {
     }
 }
 
-async function loadMentorSessions() {
-    const { data, error } = await supabase
-        .from('mentorship_sessions')
-        .select(`*, mentor:profiles!mentor_id(full_name, avatar_url)`)
-        .eq('student_id', currentUserSession.user.id);
-
-    if (error) {
-        console.error("Error fetching mentor sessions", error);
-        return;
-    }
-
-    const upcoming = data.filter(s => s.status === 'upcoming');
-    const past = data.filter(s => s.status !== 'upcoming');
-
-    // Currently these lists just show empty states, but ideally we'd render the lists dynamically here.
-    // For this migration phase, if there are actually sessions, hide empty states.
-    if (upcoming.length > 0) {
-        document.getElementById('content-mentors-upcoming').innerHTML = `<h3 class="text-xl font-bold dark:text-white">You have ${upcoming.length} upcoming sessions.</h3>`;
-    }
-    if (past.length > 0) {
-        document.getElementById('content-mentors-past').innerHTML = `<h3 class="text-xl font-bold dark:text-white">You have ${past.length} past sessions.</h3>`;
-    }
-}
 
 window.handleProfileUpload = async function(event) {
     const file = event.target.files[0];

@@ -548,20 +548,44 @@ export const MentorService = {
 
         if (error) throw error;
 
-        // Trigger notification for mentor
+        // Trigger notifications
         try {
-            const { data: student } = await supabase.from('profiles').select('full_name').eq('id', sessionData.studentId).single();
+            const { data: student } = await supabase.from('profiles').select('full_name, avatar_url').eq('id', sessionData.studentId).single();
+            const { data: mentor } = await supabase.from('profiles').select('full_name, avatar_url').eq('id', sessionData.mentorId).single();
+            
             const typeLabel = sessionData.meetingType === 'online' ? 'Online' : 'In-Person';
             
+            // 1. Notify Mentor (New Request)
             await NotificationService.createNotification(
                 sessionData.mentorId,
                 'New Booking Request',
                 `${student?.full_name || 'A student'} booked a new ${typeLabel} session with you.`,
-                'status_update',
-                { sessionId: data.id, studentName: student?.full_name, meetingType: sessionData.meetingType }
+                'booking_created',
+                { 
+                    session_id: data.id, 
+                    student_name: student?.full_name, 
+                    student_avatar: student?.avatar_url,
+                    session_type: typeLabel,
+                    scheduled_at: sessionData.scheduledAt
+                }
+            );
+
+            // 2. Notify Student (Request Sent)
+            await NotificationService.createNotification(
+                sessionData.studentId,
+                'Booking Request Sent',
+                `Your ${typeLabel} session request has been sent to ${mentor?.full_name || 'the mentor'}.`,
+                'booking_created',
+                {
+                    session_id: data.id,
+                    mentor_name: mentor?.full_name,
+                    mentor_avatar: mentor?.avatar_url,
+                    session_type: typeLabel,
+                    scheduled_at: sessionData.scheduledAt
+                }
             );
         } catch (nErr) {
-            console.error('Failed to send booking notification:', nErr);
+            console.error('Failed to send booking notifications:', nErr);
         }
 
         return data;
@@ -614,7 +638,7 @@ export const MentorService = {
         if (studentIds.length > 0) {
             const { data: profiles, error: pErr } = await supabase
                 .from('profiles')
-                .select('id, full_name, avatar_url, email, phone_number, country, city, professional_title, short_bio, gender, learning_interests')
+                .select('id, full_name, avatar_url, email, phone_number, country, city, professional_title, short_bio, gender, learning_interests, social_links')
                 .in('id', studentIds);
 
             if (pErr) throw pErr;
@@ -669,38 +693,57 @@ export const MentorService = {
 
         // Trigger notification for student
         try {
-            const { data: session } = await supabase
+            console.log('Fetching session for notification. SessionId:', sessionId);
+            const { data: session, error: sError } = await supabase
                 .from('mentorship_sessions')
-                .select('student_id, meeting_type, mentor:profiles!mentorship_sessions_mentor_id_fkey(full_name)')
+                .select('student_id, meeting_type, scheduled_at, mentor:profiles!mentorship_sessions_mentor_id_fkey(full_name, avatar_url)')
                 .eq('id', sessionId)
                 .single();
 
+            if (sError) {
+                console.error('Error fetching session for notification:', sError);
+            }
+
             if (session) {
+                console.log('Found session for notification. StudentId:', session.student_id);
                 const mentorName = session.mentor?.full_name || 'Your Mentor';
+                const mentorAvatar = session.mentor?.avatar_url;
                 const typeLabel = session.meeting_type === 'online' ? 'Online' : 'In-Person';
                 let title = 'Session Update';
                 let message = `Your ${typeLabel} session status has been updated to ${status.replace(/_/g, ' ')}.`;
+                let type = 'status_update';
 
                 if (status === 'cancelled') {
                     title = 'Session Rejected';
                     message = `Your ${typeLabel} session request was rejected by ${mentorName}. A refund has been processed.`;
+                    type = 'booking_cancelled';
                 } else if (status === 'awaiting_meeting_link') {
                     title = 'Request Accepted';
                     message = `${mentorName} accepted your ${typeLabel} session! Waiting for meeting link.`;
+                    type = 'booking_confirmed';
                 } else if (status === 'location_negotiation') {
                     title = 'Location Negotiation';
                     message = `${mentorName} wants to negotiate the location for your In-Person session.`;
+                    type = 'booking_negotiating';
                 } else if (status === 'pending_rejection_review') {
                     title = 'Rejection Pending Review';
                     message = `${mentorName} has requested to reject your session. It is currently under admin review.`;
+                    type = 'pending_rejection_review';
                 }
 
                 await NotificationService.createNotification(
                     session.student_id,
                     title,
                     message,
-                    'status_update',
-                    { sessionId, status, mentorName, meetingType: session.meeting_type }
+                    type,
+                    { 
+                        sessionId, 
+                        status, 
+                        mentor_name: mentorName, 
+                        mentor_avatar: mentorAvatar,
+                        session_type: typeLabel, 
+                        scheduled_at: session.scheduled_at 
+                    }
                 );
             }
         } catch (nErr) {
@@ -742,17 +785,26 @@ export const MentorService = {
         try {
             const { data: session } = await supabase
                 .from('mentorship_sessions')
-                .select('student_id, mentor:profiles!mentorship_sessions_mentor_id_fkey(full_name)')
+                .select('student_id, meeting_type, scheduled_at, mentor:profiles!mentorship_sessions_mentor_id_fkey(full_name, avatar_url)')
                 .eq('id', sessionId)
                 .single();
 
             if (session) {
+                const typeLabel = session.meeting_type === 'online' ? 'Online' : 'In-Person';
                 await NotificationService.createNotification(
                     session.student_id,
                     'Meeting Link Added',
-                    `${session.mentor?.full_name || 'Your mentor'} added a meeting link for your session.`,
-                    'status_update',
-                    { sessionId, status: 'confirmed', meetingLink: link }
+                    `${session.mentor?.full_name || 'Your mentor'} added a meeting link for your ${typeLabel} session.`,
+                    'link_provided',
+                    { 
+                        sessionId, 
+                        status: 'confirmed', 
+                        meetingLink: link,
+                        mentor_name: session.mentor?.full_name,
+                        mentor_avatar: session.mentor?.avatar_url,
+                        session_type: typeLabel,
+                        scheduled_at: session.scheduled_at
+                    }
                 );
             }
         } catch (nErr) {
@@ -786,23 +838,38 @@ export const MentorService = {
         try {
             const { data: booking } = await supabase
                 .from('mentorship_sessions')
-                .select('student_id, mentor_id, meeting_type')
+                .select('student_id, mentor_id, meeting_type, scheduled_at')
                 .eq('id', bookingId)
                 .single();
 
             if (booking) {
                 const recipientId = role === 'mentor' ? booking.student_id : booking.mentor_id;
-                const { data: sender } = await supabase.from('profiles').select('full_name').eq('id', senderId).single();
+                const { data: sender } = await supabase.from('profiles').select('full_name, avatar_url').eq('id', senderId).single();
                 
                 const typeLabel = booking.meeting_type === 'online' ? 'Online' : 'In-Person';
-                const typeIcon = booking.meeting_type === 'online' ? 'videocam' : 'location_on';
+                
+                const metadata = { 
+                    bookingId, 
+                    session_type: typeLabel, 
+                    scheduled_at: booking.scheduled_at 
+                };
+
+                if (role === 'mentor') {
+                    // Sender is mentor, notify student
+                    metadata.mentor_name = sender?.full_name;
+                    metadata.mentor_avatar = sender?.avatar_url;
+                } else {
+                    // Sender is student, notify mentor
+                    metadata.student_name = sender?.full_name;
+                    metadata.student_avatar = sender?.avatar_url;
+                }
                 
                 await NotificationService.createNotification(
                     recipientId,
                     'New Message',
                     `You got a message from ${sender?.full_name || 'someone'} related to your ${typeLabel} session.`,
                     'message',
-                    { bookingId, senderName: sender?.full_name, meetingType: booking.meeting_type, icon: typeIcon }
+                    metadata
                 );
             }
         } catch (nErr) {
@@ -847,17 +914,26 @@ export const MentorService = {
         try {
             const { data: session } = await supabase
                 .from('mentorship_sessions')
-                .select('student_id, mentor:profiles!mentorship_sessions_mentor_id_fkey(full_name)')
+                .select('student_id, meeting_type, scheduled_at, mentor:profiles!mentorship_sessions_mentor_id_fkey(full_name, avatar_url)')
                 .eq('id', sessionId)
                 .single();
 
             if (session) {
+                const typeLabel = session.meeting_type === 'online' ? 'Online' : 'In-Person';
                 await NotificationService.createNotification(
                     session.student_id,
                     'Location Proposed',
                     `${session.mentor?.full_name || 'Your mentor'} proposed a location for your In-Person session.`,
-                    'status_update',
-                    { sessionId, status: 'location_negotiation', location }
+                    'booking_negotiating',
+                    { 
+                        sessionId, 
+                        status: 'location_negotiation', 
+                        location,
+                        mentor_name: session.mentor?.full_name,
+                        mentor_avatar: session.mentor?.avatar_url,
+                        session_type: typeLabel,
+                        scheduled_at: session.scheduled_at
+                    }
                 );
             }
         } catch (nErr) {

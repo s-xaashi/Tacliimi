@@ -303,7 +303,9 @@ class TacliimiDB {
                 // Exclude mobile menus and large wrapper divs
                 if (el.id === 'mobile-menu' || el.closest('#mobile-menu') || el.children.length > 3) return false;
 
-                const isLoginLink = (href.includes('/src/pages/auth/login/') && !href.includes('instructor-login') && !href.includes('login-select')) || href.includes('user-login');
+                const isLoginLink = (href.includes('/src/pages/auth/login') && !href.includes('instructor-login') && !href.includes('login-select')) || 
+                                    href.includes('user-login') || 
+                                    (el.tagName === 'BUTTON' && (el.innerText.toLowerCase().includes('log in') || el.innerText.toLowerCase().includes('sign up')));
                 const isPlaceholderProfile = (html.includes('account_circle') || html.includes('Student Name') || html.includes('Instructor account') || html.includes('ID: ') || html.includes('JD') || html.includes('User Profile') || html.includes('Student Profile')) &&
                     (el.tagName === 'DIV' && (el.classList.contains('rounded-full') || html.includes('Student Name') || html.includes('Instructor account')));
 
@@ -334,14 +336,25 @@ class TacliimiDB {
 
             // If not found, intelligently target the far-right controls container inside the nav/header
             if (!fallbackContainer) {
-                const navOrHeader = document.querySelector('header') || document.querySelector('nav');
+                const navOrHeader = document.querySelector('nav') || document.querySelector('header');
                 if (navOrHeader) {
-                    // Get the last div child which usually represents the right side flex container
-                    const rootDivs = Array.from(navOrHeader.children).filter(c => c.tagName === 'DIV');
-                    if (rootDivs.length > 0) {
-                        fallbackContainer = rootDivs[rootDivs.length - 1]; // Far right group
-                    } else {
-                        fallbackContainer = navOrHeader;
+                    // Avoid injecting into hero-like headers with H1
+                    if (navOrHeader.tagName === 'HEADER' && navOrHeader.querySelector('h1')) {
+                        // If it's a hero header, try to find a nav instead
+                        const nav = document.querySelector('nav');
+                        if (nav) {
+                            const navDivs = Array.from(nav.children).filter(c => c.tagName === 'DIV');
+                            fallbackContainer = navDivs.length > 0 ? navDivs[navDivs.length - 1] : nav;
+                        }
+                    }
+
+                    if (!fallbackContainer) {
+                        const rootDivs = Array.from(navOrHeader.children).filter(c => c.tagName === 'DIV');
+                        if (rootDivs.length > 0) {
+                            fallbackContainer = rootDivs[rootDivs.length - 1]; // Far right group
+                        } else {
+                            fallbackContainer = navOrHeader;
+                        }
                     }
                 }
             }

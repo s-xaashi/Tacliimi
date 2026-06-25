@@ -217,6 +217,63 @@
         </div>
     </div>
 
+    <!-- Student Profile Modal -->
+    <div id="student-profile-modal" class="fixed inset-0 z-[60] bg-slate-950/60 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-xl rounded-[32px] overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800 max-h-[90vh] overflow-y-auto">
+            <!-- Header/Cover -->
+            <div class="h-32 bg-gradient-to-r from-primary to-purple-600"></div>
+            <div class="px-8 pb-8 transform -translate-y-12">
+                <div class="flex items-end justify-between mb-6">
+                    <div class="relative">
+                        <div class="w-28 h-28 rounded-3xl overflow-hidden border-4 border-white dark:border-slate-900 shadow-xl bg-white">
+                            <img id="student-modal-avatar" src="https://ui-avatars.com/api/?name=Student&background=random&color=fff" class="w-full h-full object-cover" />
+                        </div>
+                    </div>
+                    <button onclick="window.closeStudentModal()" class="w-10 h-10 bg-white dark:bg-slate-800 hover:bg-slate-50 rounded-full flex items-center justify-center transition-all shadow-md">
+                        <span class="material-symbols-outlined text-slate-500">close</span>
+                    </button>
+                </div>
+
+                <div class="space-y-6">
+                    <div>
+                        <h3 id="student-modal-name" class="text-2xl font-bold text-slate-900 dark:text-white">Student Name</h3>
+                        <p id="student-modal-title" class="text-slate-500 font-medium">Aspiring Learner</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Email</p>
+                            <p id="student-modal-email" class="text-sm font-bold text-slate-700 dark:text-slate-200 truncate">student@example.com</p>
+                        </div>
+                        <div class="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Phone</p>
+                            <p id="student-modal-phone" class="text-sm font-bold text-slate-700 dark:text-slate-200">Not provided</p>
+                        </div>
+                        <div class="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800 md:col-span-2">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Location</p>
+                            <p id="student-modal-location" class="text-sm font-bold text-slate-700 dark:text-slate-200">Not provided</p>
+                        </div>
+                    </div>
+
+                    <div id="student-social-section" class="hidden">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Social Profiles</p>
+                        <div id="student-social-links" class="flex flex-wrap items-center gap-3">
+                            <!-- Icons will be injected here -->
+                        </div>
+                    </div>
+
+                    <div>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Interests / Bio</p>
+                        <div class="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
+                            <div id="student-interests-list" class="flex flex-wrap gap-2 mb-3"></div>
+                            <p id="student-modal-bio" class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed italic">"No bio shared yet."</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         import { supabase } from '/src/services/supabaseClient.js';
         import { AuthService } from '/src/services/authService.js';
@@ -334,14 +391,13 @@
                 row.innerHTML = `
                     <!-- Student -->
                     <td class="px-6 py-5">
-                        <div class="flex items-center gap-4">
-                            <div class="w-11 h-11 shrink-0 rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800 ring-2 ring-slate-200 dark:ring-slate-700">
+                        <div class="flex items-center gap-4 cursor-pointer group/profile" onclick="window.openStudentProfile(${JSON.stringify(s).replace(/"/g, '&quot;')})">
+                            <div class="w-11 h-11 shrink-0 rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800 ring-2 ring-slate-200 dark:ring-slate-700 group-hover/profile:ring-indigo-500 transition-all">
                                 <img src="${avatar}" class="w-full h-full object-cover">
                             </div>
                             <div class="min-w-0">
-                                <p class="text-sm font-bold text-slate-900 dark:text-white leading-tight truncate">${s.full_name || 'Anonymous'}</p>
+                                <p class="text-sm font-bold text-slate-900 dark:text-white leading-tight truncate group-hover/profile:text-indigo-600 transition-colors">${s.full_name || 'Anonymous'}</p>
                                 <p class="text-[11px] text-slate-400 truncate">${s.email || '—'}</p>
-                                ${s.gender ? `<p class="text-[10px] text-slate-400 capitalize">${s.gender}</p>` : ''}
                             </div>
                         </div>
                     </td>
@@ -489,6 +545,97 @@
                 console.error('Action failed:', e);
                 alert('Action failed: ' + (e.message || 'Unknown error'));
             }
+        });
+
+        // ─── Profile Preview Modal Logic ─────────────────────────────────────────────
+        window.openStudentProfile = function(student) {
+            const modal = document.getElementById('student-profile-modal');
+            if (!modal) return;
+
+            document.getElementById('student-modal-avatar').src = student.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.full_name || 'S')}&background=random&color=fff`;
+            document.getElementById('student-modal-name').textContent = student.full_name || 'Unknown Student';
+            document.getElementById('student-modal-title').textContent = student.professional_title || 'Student';
+            document.getElementById('student-modal-email').textContent = student.email || 'No email shared';
+            document.getElementById('student-modal-phone').textContent = student.phone_number || 'Not provided';
+            document.getElementById('student-modal-location').textContent = (student.city && student.country) ? `${student.city}, ${student.country}` : (student.country || student.city || 'Not provided');
+            document.getElementById('student-modal-bio').textContent = student.short_bio ? `"${student.short_bio}"` : '"No bio shared yet."';
+
+            // Social Links
+            const socialSection = document.getElementById('student-social-section');
+            const socialLinksContainer = document.getElementById('student-social-links');
+            
+            if (socialSection && socialLinksContainer) {
+                const links = student.social_links;
+                socialLinksContainer.innerHTML = '';
+                
+                const platforms = [
+                    { key: 'github', icon: 'github' },
+                    { key: 'linkedin', icon: 'linkedin' },
+                    { key: 'twitter', icon: 'twitter' },
+                    { key: 'facebook', icon: 'facebook' },
+                    { key: 'website', icon: 'linktree' }
+                ];
+
+                let html = '';
+                const isDark = document.documentElement.classList.contains('dark');
+                const iconColor = isDark ? 'ffffff' : '475569'; // White in dark, slate-600 in light
+
+                if (links && typeof links === 'object') {
+                    platforms.forEach(p => {
+                        const url = links[p.key];
+                        if (url && url.trim() !== '') {
+                            const fullUrl = url.startsWith('http') ? url : `https://${url}`;
+                            const iconUrl = `https://cdn.simpleicons.org/${p.icon}?color=${iconColor}`;
+                            html += `
+                                <a href="${fullUrl}" target="_blank" class="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center hover:bg-slate-700 transition-all group" onclick="event.stopPropagation()">
+                                    <img src="${iconUrl}" class="w-5 h-5 opacity-80 group-hover:opacity-100" alt="${p.key}">
+                                </a>
+                            `;
+                        }
+                    });
+                }
+
+                if (html) {
+                    socialLinksContainer.innerHTML = html;
+                    socialSection.classList.remove('hidden');
+                } else {
+                    socialSection.classList.add('hidden');
+                }
+            }
+
+            // Interests
+            const interestsContainer = document.getElementById('student-interests-list');
+            if (interestsContainer) {
+                const interests = student.learning_interests || [];
+                if (Array.isArray(interests) && interests.length > 0) {
+                    interestsContainer.innerHTML = interests.map(interest => 
+                        `<span class="px-3 py-1 bg-primary/5 text-primary rounded-lg text-[10px] font-black uppercase tracking-widest">${interest}</span>`
+                    ).join('');
+                } else {
+                    interestsContainer.innerHTML = '<span class="text-slate-400 text-[10px] font-bold uppercase tracking-widest">No interests listed</span>';
+                }
+            }
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.body.style.overflow = 'hidden';
+        };
+
+        window.closeStudentModal = function() {
+            const modal = document.getElementById('student-profile-modal');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+            document.body.style.overflow = '';
+        };
+
+        // Close on Escape or Backdrop
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') window.closeStudentModal();
+        });
+        document.getElementById('student-profile-modal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('student-profile-modal')) window.closeStudentModal();
         });
 
         // ─── Init ────────────────────────────────────────────────────────────────────

@@ -1,6 +1,7 @@
 import { MentorService } from '../../../services/mentorService.js';
 import { AuthService } from '../../../services/authService.js';
 import { supabase } from '../../../services/supabaseClient.js';
+import { PaymentService } from '../../../services/paymentService.js';
 
 let selectedSlot = null;
 let currentMentor = null;
@@ -365,11 +366,10 @@ async function confirmBooking() {
         const confirmBtn = document.querySelector('button[onclick*="confirmation.html"]');
         if (confirmBtn) {
             confirmBtn.disabled = true;
-            confirmBtn.textContent = 'Booking...';
+            confirmBtn.innerHTML = '<span class="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></span>Redirecting to payment...';
         }
 
         // Calculate the actual date/time
-        // selectedSlot.start_time is "HH:MM:SS"
         const [hours, minutes] = selectedSlot.start_time.split(':');
         const scheduledAt = new Date(selectedDate);
         scheduledAt.setHours(parseInt(hours), parseInt(minutes), 0, 0);
@@ -388,15 +388,24 @@ async function confirmBooking() {
             meetingLocation: meetingLocation,
             studentPhone: studentPhone,
             durationMinutes: durationMinutes,
-            notes: `Type: ${duration}`
+            notes: `Type: ${duration}`,
         };
 
+        // Step 1: Create the session record — Edge Function will set booking_status to pending_payment
         const newSession = await MentorService.createSession(sessionData);
-        window.location.href = `confirmation.html?sessionId=${newSession.id}`;
+
+        // Step 2: Calculate the price to charge
+        const isMonthly = duration === 'monthly';
+        const baseAmount = isMonthly
+            ? (currentMentor.monthly_rate || currentMentor.hourly_rate * 20)
+            : (currentMentor.hourly_rate || 0);
+
+        // Step 3: Redirect to Sifalo Checkout — this navigates the page away
+        await PaymentService.createBookingCheckout(newSession.id, baseAmount, 'USD');
 
     } catch (err) {
         console.error("Booking error:", err);
-        alert("Failed to book session: " + err.message);
+        alert("Failed to initiate payment: " + err.message);
         const confirmBtn = document.querySelector('button[onclick*="confirmation.html"]');
         if (confirmBtn) {
             confirmBtn.disabled = false;

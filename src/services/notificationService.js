@@ -37,6 +37,7 @@ export const NotificationService = {
             });
             return null;
         }
+        console.log('Successfully created notification in DB:', data.id, 'for user:', userId);
         return data;
     },
 

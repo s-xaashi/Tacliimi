@@ -179,6 +179,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             } else {
                 if (session.booking_status === 'confirmed') statusColor = "bg-emerald-100 text-emerald-600";
                 if (session.booking_status === 'pending_review') statusColor = "bg-amber-100 text-amber-600";
+                if (session.booking_status === 'paid_waiting_review') statusColor = "bg-indigo-100 text-indigo-600";
                 if (session.booking_status === 'pending_rejection_review') statusColor = "bg-red-100 text-red-600";
                 if (session.booking_status === 'awaiting_meeting_link') statusColor = "bg-blue-100 text-blue-600";
             }
@@ -194,17 +195,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <div class="flex items-center justify-between gap-4 md:gap-8 flex-1 w-full max-w-4xl">
                             
                             <!-- Student -->
-                            <div class="flex items-center gap-3 md:gap-4 min-w-0 flex-1">
-                                <a href="${studentProfileBase}?highlight=${session.student_id}" 
-                                   class="profile-link shrink-0 ring-4 ring-slate-50 dark:ring-slate-800 group-hover:ring-indigo-100 dark:group-hover:ring-indigo-900/30 rounded-2xl overflow-hidden transition-all"
-                                   onclick="event.stopPropagation()">
+                            <div class="flex items-center gap-3 md:gap-4 min-w-0 flex-1 cursor-pointer group/profile" 
+                                 onclick="event.stopPropagation(); window.openStudentProfile(${JSON.stringify(session.student_profile || student).replace(/"/g, '&quot;')})">
+                                <div class="profile-link shrink-0 ring-4 ring-slate-50 dark:ring-slate-800 group-hover/profile:ring-indigo-100 dark:group-hover/profile:ring-indigo-900/30 rounded-2xl overflow-hidden transition-all">
                                     <img src="${studentAvatar}" class="w-12 h-12 md:w-14 md:h-14 object-cover">
-                                </a>
+                                </div>
                                 <div class="min-w-0">
                                     <p class="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-0.5">Student</p>
-                                    <a href="${studentProfileBase}?highlight=${session.student_id}"
-                                       class="profile-link font-bold text-slate-900 dark:text-white truncate block hover:text-indigo-600 transition-colors"
-                                       onclick="event.stopPropagation()">${student.full_name}</a>
+                                    <p class="font-bold text-slate-900 dark:text-white truncate block group-hover/profile:text-indigo-600 transition-colors">${student.full_name}</p>
                                     <div class="flex items-center gap-1.5 mt-1">
                                         <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                                         <p class="text-[10px] text-slate-500 truncate lowercase">${student.email || 'no email'}</p>
@@ -424,7 +422,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             btn.onclick = () => handleDecision(btn.dataset.id, 'cancelled', btn);
         });
         rejectionsList.querySelectorAll('.deny-btn').forEach(btn => {
-            btn.onclick = () => handleDecision(btn.dataset.id, 'confirmed', btn);
+            btn.onclick = () => handleDecision(btn.dataset.id, 'pending_review', btn);
         });
     };
 
@@ -446,6 +444,109 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
             
             if (error) throw error;
+
+            // Trigger notification for instructor/mentor
+            try {
+                const sessionData = allSessions.find(s => s.id === sessionId);
+                if (sessionData) {
+                    const isConfirmed = status === 'cancelled'; // Confirmed the REJECTION -> Cancelled
+                    const isDenied = status === 'pending_review';    // Denied the REJECTION -> Back to Pending
+                    
+                    if (isConfirmed) {
+                        // If the session was paid, auto-create a refund request
+                        const wasPaid = sessionData.booking_status === 'paid_waiting_review';
+                        if (wasPaid) {
+                            try {
+                                // Find the payment record for this session
+                                const { data: payment } = await supabase
+                                    .from('payments')
+                                    .select('id')
+                                    .eq('mentorship_session_id', sessionId)
+                                    .eq('status', 'paid')
+                                    .single();
+
+                                if (payment) {
+                                    await supabase.from('refund_requests').insert({
+                                        payment_id: payment.id,
+                                        student_id: sessionData.student_id,
+                                        reason: 'Session cancelled after payment — mentor rejection confirmed by admin.',
+                                        status: 'pending'
+                                    });
+                                }
+                            } catch (refundErr) {
+                                console.error('Could not auto-create refund request:', refundErr);
+                                // Non-fatal: session is already cancelled
+                            }
+                        }
+
+                        // Notify Mentor
+                        await NotificationService.createNotification(
+                            sessionData.mentor_id,
+                            'Rejection Confirmed',
+                            `Admin has confirmed your request to cancel the session with ${sessionData.student_name || 'your student'}.`,
+                            'booking_cancelled',
+                            { 
+                                session_id: sessionId, 
+                                status: 'cancelled',
+                                student_name: sessionData.student_name,
+                                student_avatar: sessionData.student_avatar,
+                                session_type: sessionData.meeting_type,
+                                scheduled_at: sessionData.scheduled_at
+                            }
+                        );
+
+                        // Notify Student
+                        await NotificationService.createNotification(
+                            sessionData.student_id,
+                            'Session Cancelled',
+                            `Your session with ${sessionData.mentor_name || 'your mentor'} has been cancelled following admin review.`,
+                            'booking_cancelled',
+                            {
+                                session_id: sessionId,
+                                status: 'cancelled',
+                                mentor_name: sessionData.mentor_name,
+                                mentor_avatar: sessionData.mentor_avatar,
+                                session_type: sessionData.meeting_type,
+                                scheduled_at: sessionData.scheduled_at
+                            }
+                        );
+                    } else if (isDenied) {
+                        // Notify Mentor
+                        await NotificationService.createNotification(
+                            sessionData.mentor_id,
+                            'Rejection Denied',
+                            `Admin has denied your request to cancel the session with ${sessionData.student_name || 'your student'}. The session is back to Pending Review and requires your action.`,
+                            'booking_created', // Use booking_created to prompt action
+                            { 
+                                session_id: sessionId, 
+                                status: 'pending_review',
+                                student_name: sessionData.student_name,
+                                student_avatar: sessionData.student_avatar,
+                                session_type: sessionData.meeting_type,
+                                scheduled_at: sessionData.scheduled_at
+                            }
+                        );
+
+                        // Notify Student
+                        await NotificationService.createNotification(
+                            sessionData.student_id,
+                            'Session Restored',
+                            `Admin has denied the rejection request for your session with ${sessionData.mentor_name || 'your mentor'}. The session is back to Pending Review.`,
+                            'booking_confirmed',
+                            {
+                                session_id: sessionId,
+                                status: 'pending_review',
+                                mentor_name: sessionData.mentor_name,
+                                mentor_avatar: sessionData.mentor_avatar,
+                                session_type: sessionData.meeting_type,
+                                scheduled_at: sessionData.scheduled_at
+                            }
+                        );
+                    }
+                }
+            } catch (notifErr) {
+                console.error("Failed to send admin decision notification:", notifErr);
+            }
             
             // Refresh data locally
             allSessions = allSessions.map(s => s.id === sessionId ? { ...s, booking_status: status } : s);
@@ -536,6 +637,100 @@ document.addEventListener('DOMContentLoaded', async () => {
         await AuthService.logout();
         window.location.href = '/src/pages/auth/login-select/index.html';
     };
+
+    // 6. Student Profile Modal Logic
+    window.openStudentProfile = function(student) {
+        const modal = document.getElementById('student-profile-modal');
+        if (!modal) return;
+
+        document.getElementById('student-modal-avatar').src = student.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.full_name || 'S')}&background=random&color=fff`;
+        document.getElementById('student-modal-name').textContent = student.full_name || 'Unknown Student';
+        document.getElementById('student-modal-title').textContent = student.professional_title || 'Student';
+        document.getElementById('student-modal-email').textContent = student.email || 'No email shared';
+        document.getElementById('student-modal-phone').textContent = student.phone_number || 'Not provided';
+        document.getElementById('student-modal-location').textContent = (student.city && student.country) ? `${student.city}, ${student.country}` : (student.country || student.city || 'Not provided');
+        document.getElementById('student-modal-bio').textContent = student.short_bio ? `"${student.short_bio}"` : '"No bio shared yet."';
+
+        // Social Links
+        const socialSection = document.getElementById('student-social-section');
+        const socialLinksContainer = document.getElementById('student-social-links');
+        
+        if (socialSection && socialLinksContainer) {
+            const links = student.social_links;
+            socialLinksContainer.innerHTML = '';
+            
+            const platforms = [
+                { key: 'github', icon: 'github' },
+                { key: 'linkedin', icon: 'linkedin' },
+                { key: 'twitter', icon: 'twitter' },
+                { key: 'facebook', icon: 'facebook' },
+                { key: 'website', icon: 'linktree' }
+            ];
+
+            let html = '';
+            const isDark = document.documentElement.classList.contains('dark');
+            const iconColor = isDark ? 'ffffff' : '475569'; // White in dark, slate-600 in light
+
+            if (links && typeof links === 'object') {
+                platforms.forEach(p => {
+                    const url = links[p.key];
+                    if (url && url.trim() !== '') {
+                        const fullUrl = url.startsWith('http') ? url : `https://${url}`;
+                        const iconUrl = `https://cdn.simpleicons.org/${p.icon}?color=${iconColor}`;
+                        html += `
+                            <a href="${fullUrl}" target="_blank" class="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center hover:bg-slate-700 transition-all group" onclick="event.stopPropagation()">
+                                <img src="${iconUrl}" class="w-5 h-5 opacity-80 group-hover:opacity-100" alt="${p.key}">
+                            </a>
+                        `;
+                    }
+                });
+            }
+
+            if (html) {
+                socialLinksContainer.innerHTML = html;
+                socialSection.classList.remove('hidden');
+            } else {
+                socialSection.classList.add('hidden');
+            }
+        }
+
+        // Interests
+        const interestsContainer = document.getElementById('student-interests-list');
+        if (interestsContainer) {
+            const interests = student.learning_interests || [];
+            if (Array.isArray(interests) && interests.length > 0) {
+                interestsContainer.innerHTML = interests.map(interest => 
+                    `<span class="px-3 py-1 bg-primary/5 text-primary rounded-lg text-[10px] font-black uppercase tracking-widest">${interest}</span>`
+                ).join('');
+            } else {
+                interestsContainer.innerHTML = '<span class="text-slate-400 text-[10px] font-bold uppercase tracking-widest">No interests listed</span>';
+            }
+        }
+
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        document.body.style.overflow = 'hidden';
+    };
+
+    window.closeStudentModal = function() {
+        const modal = document.getElementById('student-profile-modal');
+        if (modal) {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+        document.body.style.overflow = '';
+    };
+
+    // Close on Escape or Backdrop
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') window.closeStudentModal();
+    });
+    const profileModal = document.getElementById('student-profile-modal');
+    if (profileModal) {
+        profileModal.addEventListener('click', (e) => {
+            if (e.target === profileModal) window.closeStudentModal();
+        });
+    }
 
     // Initial Load
     fetchData();

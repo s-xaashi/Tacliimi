@@ -91,9 +91,39 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-4">
-                    <button class="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full">
-                        <span class="material-symbols-outlined">notifications</span>
-                    </button>
+                    <!-- Notification Bell -->
+                    <div class="relative" id="notif-wrapper">
+                        <button id="notif-bell-btn" onclick="window.toggleNotifPanel()" 
+                            class="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all relative">
+                            <span class="material-symbols-outlined">notifications</span>
+                            <span id="notif-badge" class="absolute top-2 right-2 w-2.5 h-2.5 bg-primary border-2 border-white dark:border-slate-900 rounded-full hidden"></span>
+                        </button>
+
+                        <!-- Notification Panel -->
+                        <div id="notif-panel" class="absolute right-0 mt-2 w-80 sm:w-96 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-800 overflow-hidden hidden z-[100] anim-fade-in">
+                            <div class="p-4 border-b border-slate-50 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
+                                <h3 class="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                    Notifications
+                                    <span class="px-2 py-0.5 bg-primary/10 text-primary text-[10px] rounded-full uppercase tracking-wider">Live</span>
+                                </h3>
+                                <button onclick="window.markAllRead()" class="text-xs font-semibold text-primary hover:text-purple-600 transition-colors">Mark all read</button>
+                            </div>
+                            
+                            <div id="notif-list" class="max-h-[420px] overflow-y-auto divide-y divide-slate-50 dark:divide-slate-800/50">
+                                <!-- Notifications injected here -->
+                                <div id="notif-empty" class="py-12 text-center hidden">
+                                    <div class="w-16 h-16 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-3">
+                                        <span class="material-symbols-outlined text-slate-300 dark:text-slate-600 text-3xl">notifications_off</span>
+                                    </div>
+                                    <p class="text-sm text-slate-500 dark:text-slate-400">No notifications yet</p>
+                                </div>
+                            </div>
+
+                            <div class="p-3 border-t border-slate-50 dark:border-slate-800 text-center bg-slate-50/30 dark:bg-slate-800/30">
+                                <button onclick="window.location.href='/src/pages/student/student-dashboard/'" class="text-xs font-bold text-slate-500 hover:text-primary transition-colors uppercase tracking-widest">View Dashboard</button>
+                            </div>
+                        </div>
+                    </div>
                     <div class="flex items-center gap-3">
                         <div class="text-right hidden sm:block">
                             <p class="text-sm font-semibold text-slate-900 dark:text-white">Student Name</p>
@@ -262,6 +292,7 @@
     </footer>
     
 
+    <script type="module" src="/src/services/studentNotifications.js"></script>
 </body>
 
 </html>

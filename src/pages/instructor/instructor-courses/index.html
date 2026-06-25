@@ -82,10 +82,30 @@
         <header class="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-8 sticky top-0 z-10 shrink-0">
             <h1 class="text-lg font-semibold dark:text-white" id="header-page-title">My Courses</h1>
             <div class="flex items-center gap-4">
-                <button class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 relative">
-                    <span class="material-symbols-outlined">notifications</span>
-                    <span class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
-                </button>
+                <!-- NOTIFICATION BELL -->
+                <div class="relative" id="notif-wrapper">
+                    <button id="notif-bell-btn" onclick="toggleNotifPanel()"
+                        class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 relative transition-colors">
+                        <span class="material-symbols-outlined">notifications</span>
+                        <span id="notif-badge"
+                            class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full hidden"></span>
+                    </button>
+                    <!-- DROPDOWN PANEL -->
+                    <div id="notif-panel"
+                        class="hidden absolute right-0 top-12 w-96 max-h-[520px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl flex flex-col z-50 overflow-hidden">
+                        <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800 shrink-0">
+                            <span class="font-bold text-slate-800 dark:text-white text-base">Notifications</span>
+                            <button onclick="markAllRead()"
+                                class="text-xs text-primary hover:underline font-medium">Mark all read</button>
+                        </div>
+                        <div id="notif-list" class="flex-1 overflow-y-auto divide-y divide-slate-50 dark:divide-slate-800">
+                            <div id="notif-empty" class="flex flex-col items-center justify-center py-16 text-center">
+                                <span class="material-symbols-outlined text-4xl text-slate-300 mb-3">notifications_none</span>
+                                <p class="text-slate-400 text-sm">You're all caught up!</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <button class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" onclick="document.documentElement.classList.toggle('dark')">
                     <span class="material-symbols-outlined">dark_mode</span>
                 </button>
@@ -109,6 +129,7 @@
                     <nav class="flex gap-8 -mb-px" id="course-tabs">
                         <a class="tab-btn py-4 px-1 text-sm border-b-2 font-bold cursor-pointer transition-all border-indigo-600 text-primary" data-status="published">Published (<span id="count-published">0</span>)</a>
                         <a class="tab-btn py-4 px-1 text-sm border-b-2 font-medium cursor-pointer transition-all border-transparent text-slate-500" data-status="draft">Drafts (<span id="count-draft">0</span>)</a>
+                        <a class="tab-btn py-4 px-1 text-sm border-b-2 font-medium cursor-pointer transition-all border-transparent text-slate-500" data-status="rejected">Rejected (<span id="count-rejected">0</span>)</a>
                         <a class="tab-btn py-4 px-1 text-sm border-b-2 font-medium cursor-pointer transition-all border-transparent text-slate-500" data-status="private">Private (<span id="count-private">0</span>)</a>
                         <a class="tab-btn py-4 px-1 text-sm border-b-2 font-medium cursor-pointer transition-all border-transparent text-slate-500" data-status="review">In Review (<span id="count-review">0</span>)</a>
                     </nav>
@@ -148,6 +169,36 @@
                 </footer>
             </div>
         </main>
+    </div>
+
+    <!-- ═══ APPEAL MODAL ═══ -->
+    <div id="appeal-modal" class="fixed inset-0 z-[200] hidden items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+            <div class="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center gap-4">
+                <div class="w-12 h-12 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center flex-shrink-0">
+                    <span class="material-symbols-outlined text-primary text-2xl">campaign</span>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white">Appeal Rejection</h3>
+                    <p class="text-xs text-primary font-semibold uppercase tracking-widest">Submit your reasoning</p>
+                </div>
+            </div>
+            <div class="p-6 space-y-4">
+                <p class="text-sm text-slate-600 dark:text-slate-400">Provide a clear explanation for why this course should be reconsidered for publication.</p>
+                <textarea id="appeal-reason" rows="4" placeholder="Your appeal message..."
+                    class="w-full px-4 py-3 text-sm border border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 focus:ring-2 focus:ring-primary outline-none transition-all"></textarea>
+            </div>
+            <div class="px-6 pb-6 flex gap-3">
+                <button onclick="closeAppealModal()"
+                    class="flex-1 py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                    Cancel
+                </button>
+                <button id="appeal-submit-btn" onclick="submitAppeal()"
+                    class="flex-1 py-3 bg-primary text-white font-bold rounded-xl hover:bg-indigo-700 transition-all">
+                    Submit Appeal
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- ═══ DELETE WARNING MODAL ═══ -->
@@ -234,13 +285,15 @@
             function updateCounters(courses) {
                 const counts = {
                     published: courses.filter(c => c.status === 'published' && c.is_public !== false).length,
-                    draft: courses.filter(c => c.status === 'draft' || c.status === 'rejected').length,
+                    draft: courses.filter(c => c.status === 'draft').length,
+                    rejected: courses.filter(c => c.status === 'rejected' || c.status === 'appealed' || (c.status === 'pending_review' && c.has_rejection_history)).length,
                     private: courses.filter(c => c.status === 'published' && c.is_public === false).length,
                     review: courses.filter(c => c.status === 'pending_review').length
                 };
 
                 document.getElementById('count-published').innerText = counts.published;
                 document.getElementById('count-draft').innerText = counts.draft;
+                document.getElementById('count-rejected').innerText = counts.rejected;
                 document.getElementById('count-private').innerText = counts.private;
                 document.getElementById('count-review').innerText = counts.review;
             }
@@ -248,7 +301,8 @@
             function render(filter) {
                 const filtered = allCourses.filter(c => {
                     if (filter === 'published') return c.status === 'published' && c.is_public !== false;
-                    if (filter === 'draft') return c.status === 'draft' || c.status === 'rejected';
+                    if (filter === 'draft') return c.status === 'draft';
+                    if (filter === 'rejected') return c.status === 'rejected' || c.status === 'appealed' || (c.status === 'pending_review' && c.has_rejection_history);
                     // Private tab: only fully approved private courses (published + is_public=false)
                     if (filter === 'private') return c.status === 'published' && c.is_public === false;
                     if (filter === 'review') return c.status === 'pending_review';
@@ -268,10 +322,17 @@
                             published: isPrivate ? 'bg-violet-100 text-violet-700' : 'bg-emerald-100 text-emerald-700',
                             draft: 'bg-slate-100 text-slate-700',
                             pending_review: 'bg-amber-100 text-amber-700',
-                            rejected: 'bg-red-100 text-red-700'
+                            rejected: 'bg-rose-100 text-rose-700',
+                            appealed: 'bg-indigo-100 text-indigo-700'
                         };
                         const color = statusColors[course.status] || 'bg-slate-100';
-                        const formattedStatus = isPrivate ? 'PRIVATE' : course.status.replace('_', ' ').toUpperCase();
+                        let formattedStatus = isPrivate ? 'PRIVATE' : course.status.replace('_', ' ').toUpperCase();
+                        
+                        // Resubmitted indicator for Rejected tab
+                        const isResubmitted = filter === 'rejected' && course.status === 'pending_review';
+                        if (isResubmitted) {
+                            formattedStatus = 'RESUBMITTED';
+                        }
 
                         // Copy Link: ONLY for approved private courses (filter === private is already handled above)
                         // Since we're in the filtered list for 'private', all these are approved private
@@ -288,14 +349,27 @@
                                 <div class="relative aspect-video overflow-hidden">
                                     <img src="${course.thumbnail_url || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80'}" 
                                         class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="${course.title}">
-                                    <div class="absolute top-4 right-4 px-3 py-1 rounded-full text-[10px] font-black ${color} shadow-sm backdrop-blur-md">
-                                        ${formattedStatus}
+                                    <div class="absolute top-4 right-4 flex flex-col items-end gap-2">
+                                        <div class="px-3 py-1 rounded-full text-[10px] font-black ${isResubmitted ? 'bg-emerald-500 text-white shadow-lg' : color} shadow-sm backdrop-blur-md flex items-center gap-1.5">
+                                            ${isResubmitted ? '<span class="w-2 h-2 bg-white rounded-full animate-pulse"></span>' : ''}
+                                            ${formattedStatus}
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="p-6 flex-1 flex flex-col">
                                     <p class="text-xs font-bold text-primary uppercase tracking-widest mb-2">${course.category?.name || 'Uncategorized'}</p>
                                     <h3 class="font-bold text-lg dark:text-white mb-2 line-clamp-1">${course.title}</h3>
-                                    <p class="text-sm text-slate-500 dark:text-slate-400 mb-6 line-clamp-2">${course.subtitle || 'Learn something new today with this comprehensive course.'}</p>
+                                    <p class="text-sm text-slate-500 dark:text-slate-400 mb-4 line-clamp-1">${course.subtitle || 'Learn something new today with this comprehensive course.'}</p>
+                                    
+                                    ${course.rejection_reason && filter === 'rejected' ? `
+                                        <div class="mb-6 p-4 rounded-xl bg-rose-50 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-900/30">
+                                            <p class="text-[10px] font-black text-rose-500 uppercase tracking-widest mb-1 flex items-center gap-1.5">
+                                                <span class="material-symbols-outlined text-sm">info</span>
+                                                Previous Rejection Reason
+                                            </p>
+                                            <p class="text-xs text-rose-700 dark:text-rose-400 font-medium italic">"${course.rejection_reason.length > 80 ? course.rejection_reason.substring(0, 80) + '...' : course.rejection_reason}"</p>
+                                        </div>
+                                    ` : ''}
                                     
                                     <div class="mt-auto flex items-center justify-between pt-4 border-t border-slate-50 dark:border-slate-800">
                                         <div class="flex items-center gap-2">
@@ -303,6 +377,28 @@
                                         </div>
                                         <div class="flex items-center gap-2">
                                             ${copyLinkBtn}
+                                            
+                                            ${course.status === 'rejected' ? `
+                                                <button onclick="confirmRejection('${course.id}')"
+                                                    title="Accept rejection and fix"
+                                                    class="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-lg text-xs font-bold hover:bg-emerald-100 transition-colors">
+                                                    <span class="material-symbols-outlined text-base">check_circle</span>
+                                                    FIX
+                                                </button>
+                                                <button onclick="openAppealModal('${course.id}')"
+                                                    title="Appeal decision"
+                                                    class="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-lg text-xs font-bold hover:bg-indigo-100 transition-colors">
+                                                    <span class="material-symbols-outlined text-base">campaign</span>
+                                                    APPEAL
+                                                </button>
+                                            ` : ''}
+
+                                            ${course.status === 'appealed' ? `
+                                                <div class="px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-lg text-[10px] font-black uppercase tracking-widest">
+                                                    Appeal Pending
+                                                </div>
+                                            ` : ''}
+
                                             <!-- Edit button -->
                                             <button onclick="window.location.href='/src/pages/instructor/instructor-courses/wizard.html?id=${course.id}'"
                                                 title="Edit course"
@@ -406,6 +502,58 @@
                 }
             };
 
+            // Appeal Handlers
+            let courseToAppeal = null;
+
+            window.openAppealModal = function(courseId) {
+                courseToAppeal = courseId;
+                document.getElementById('appeal-reason').value = '';
+                const modal = document.getElementById('appeal-modal');
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            };
+
+            window.closeAppealModal = function() {
+                const modal = document.getElementById('appeal-modal');
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                courseToAppeal = null;
+            };
+
+            window.submitAppeal = async function() {
+                const reason = document.getElementById('appeal-reason').value.trim();
+                if (!reason) return alert('Please provide a reason for your appeal.');
+
+                const btn = document.getElementById('appeal-submit-btn');
+                const originalText = btn.innerText;
+                
+                try {
+                    btn.disabled = true;
+                    btn.innerText = 'Submitting...';
+                    await CourseService.appealCourse(courseToAppeal, reason);
+                    window.closeAppealModal();
+                    await fetchAndRender();
+                } catch (e) {
+                    console.error('Appeal failed:', e);
+                    alert('Failed to submit appeal. Please try again.');
+                } finally {
+                    btn.disabled = false;
+                    btn.innerText = originalText;
+                }
+            };
+
+            window.confirmRejection = async function(courseId) {
+                if (!confirm('Are you sure? This will move the course to Drafts for you to edit and resubmit.')) return;
+                
+                try {
+                    await CourseService.confirmRejection(courseId);
+                    await fetchAndRender();
+                } catch (e) {
+                    console.error('Confirm rejection failed:', e);
+                    alert('Failed to process confirmation.');
+                }
+            };
+
             // Close modal on backdrop click
             document.getElementById('delete-modal').addEventListener('click', (e) => {
                 if (e.target === e.currentTarget) window.closeDeleteModal();
@@ -439,6 +587,8 @@
     <!-- Router Logic -->
     <script src="/src/utils/js/instructor-app.js"></script>
     <script type="module" src="/src/pages/instructor/instructor-mentorship/mentorship.js"></script>
+    <!-- Notification System -->
+    <script type="module" src="/src/services/instructorNotifications.js"></script>
 </body>
 
 </html>

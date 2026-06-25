@@ -32,8 +32,50 @@ window.openStudentProfile = function(studentJson) {
     document.getElementById('student-modal-email').textContent = student.email || 'No email shared';
     document.getElementById('student-modal-phone').textContent = student.phone_number || 'Not provided';
     document.getElementById('student-modal-location').textContent = (student.city && student.country) ? `${student.city}, ${student.country}` : (student.country || student.city || 'Not provided');
-    document.getElementById('student-modal-gender').textContent = student.gender ? (student.gender.charAt(0).toUpperCase() + student.gender.slice(1)) : 'Not provided';
     document.getElementById('student-modal-bio').textContent = student.short_bio ? `"${student.short_bio}"` : '"No bio shared yet."';
+
+    // Social Links Handling
+    const socialSection = document.getElementById('student-social-section');
+    const socialLinksContainer = document.getElementById('student-social-links');
+    
+    if (socialSection && socialLinksContainer) {
+        const links = student.social_links;
+        socialLinksContainer.innerHTML = '';
+        
+        const platforms = [
+            { key: 'github', icon: 'github' },
+            { key: 'linkedin', icon: 'linkedin' },
+            { key: 'twitter', icon: 'twitter' },
+            { key: 'facebook', icon: 'facebook' },
+            { key: 'website', icon: 'linktree' }
+        ];
+
+        let html = '';
+        const isDark = document.documentElement.classList.contains('dark');
+        const iconColor = isDark ? 'ffffff' : '475569'; // White in dark, slate-600 in light
+
+        if (links && typeof links === 'object') {
+            platforms.forEach(p => {
+                const url = links[p.key];
+                if (url && url.trim() !== '') {
+                    const fullUrl = url.startsWith('http') ? url : `https://${url}`;
+                    const iconUrl = `https://cdn.simpleicons.org/${p.icon}?color=${iconColor}`;
+                    html += `
+                        <a href="${fullUrl}" target="_blank" class="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center hover:bg-slate-700 transition-all group" onclick="event.stopPropagation()">
+                            <img src="${iconUrl}" class="w-5 h-5 opacity-80 group-hover:opacity-100" alt="${p.key}">
+                        </a>
+                    `;
+                }
+            });
+        }
+
+        if (html) {
+            socialLinksContainer.innerHTML = html;
+            socialSection.classList.remove('hidden');
+        } else {
+            socialSection.classList.add('hidden');
+        }
+    }
 
     const interestsContainer = document.getElementById('student-interests-list');
     if (interestsContainer) {
@@ -48,12 +90,16 @@ window.openStudentProfile = function(studentJson) {
     }
 
     modal.classList.remove('hidden');
+    modal.classList.add('flex');
     document.body.style.overflow = 'hidden';
 };
 
 window.closeStudentModal = function() {
     const modal = document.getElementById('student-profile-modal');
-    if (modal) modal.classList.add('hidden');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
     document.body.style.overflow = '';
 };
 
@@ -86,8 +132,19 @@ async function initMentorship() {
 
     // Default tab: Show setup if profile is missing OR if it hasn't been "applied" yet (missing key application fields)
     const isIncomplete = !mentoProfile || !mentoProfile.mentorship_email || !mentoProfile.mentorship_phone;
+    
+    // Check for hash-based routing (e.g. #requests)
+    const hash = window.location.hash.replace('#', '');
+    const validTabs = ['upcoming', 'requests', 'completed', 'availability', 'pricing', 'setup', 'privacy'];
+    
     let currentTab = isIncomplete ? 'setup' : 'upcoming';
-
+    if (hash && validTabs.includes(hash)) {
+        if (isIncomplete && hash !== 'setup') {
+            // Stay on setup if incomplete
+        } else {
+            currentTab = hash;
+        }
+    }
     // 2) Function to fetch and render the HTML view
     const loadMentorshipView = async (tabName) => {
         try {
@@ -261,6 +318,15 @@ async function initMentorship() {
 document.addEventListener('DOMContentLoaded', initMentorship);
 document.addEventListener('instructor-page-loaded', (e) => {
     if (e.detail && e.detail.path && e.detail.path.includes('mentorship')) initMentorship();
+});
+
+// Handle hash changes for tab switching (e.g. from notification clicks)
+window.addEventListener('hashchange', () => {
+    const hash = window.location.hash.replace('#', '');
+    const tabBtn = document.querySelector(`.mentorship-tab[data-tab="${hash}"]`);
+    if (tabBtn && !tabBtn.hasAttribute('disabled')) {
+        tabBtn.click();
+    }
 });
 
 const dayMap = { 'sunday': 0, 'monday': 1, 'tuesday': 2, 'wednesday': 3, 'thursday': 4, 'friday': 5, 'saturday': 6 };
@@ -650,20 +716,22 @@ async function bindRequestsInteractions(container, userId) {
                 </div>
             `;
             
-            const [pending, awaiting, negotiating] = await Promise.all([
+            const [pending, paidWaiting, awaiting, negotiating, rejectedReview] = await Promise.all([
                 MentorService.getMentorSessions(userId, 'pending_review'),
+                MentorService.getMentorSessions(userId, 'paid_waiting_review'),
                 MentorService.getMentorSessions(userId, 'awaiting_meeting_link'),
-                MentorService.getMentorSessions(userId, 'location_negotiation')
+                MentorService.getMentorSessions(userId, 'location_negotiation'),
+                MentorService.getMentorSessions(userId, 'pending_rejection_review')
             ]);
             
-            const allRequests = [...pending, ...awaiting, ...negotiating].sort((a,b) => new Date(a.scheduled_at) - new Date(b.scheduled_at));
+            const allRequests = [...pending, ...paidWaiting, ...awaiting, ...negotiating, ...rejectedReview].sort((a,b) => new Date(a.scheduled_at) - new Date(b.scheduled_at));
 
             // Helper to determine filter
             const filterBtns = container.querySelectorAll('.request-filter-btn');
             const activeFilter = Array.from(filterBtns).find(b => b.classList.contains('bg-white'))?.dataset.status || 'pending_review';
 
             let filtered = allRequests;
-            if (activeFilter === 'pending_review') filtered = pending;
+            if (activeFilter === 'pending_review') filtered = [...pending, ...paidWaiting, ...rejectedReview];
             if (activeFilter === 'action_required') filtered = [...awaiting, ...negotiating];
 
             if (filtered.length === 0) {
@@ -687,6 +755,21 @@ async function bindRequestsInteractions(container, userId) {
 
                 if (status === 'pending_review') {
                     statusBadge = `<span class="px-2 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-600 rounded text-[10px] font-bold uppercase tracking-wider">Pending Review</span>`;
+                    actionsHtml = `
+                        <div class="flex gap-2">
+                            <button class="accept-btn px-6 py-2.5 bg-primary text-white font-bold rounded-xl hover:bg-primary/90 transition-all text-sm whitespace-nowrap flex items-center gap-2 shadow-lg shadow-primary/20" data-id="${session.id}" data-type="${session.meeting_type}">
+                                <span class="material-symbols-outlined text-[18px]">check_circle</span> Accept
+                            </button>
+                            <button class="reject-btn px-6 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 text-red-500 font-bold rounded-xl hover:bg-red-50 dark:hover:bg-red-900/10 transition-all text-sm whitespace-nowrap flex items-center gap-2" data-id="${session.id}">
+                                <span class="material-symbols-outlined text-[18px]">cancel</span> Reject
+                            </button>
+                            <button class="message-btn px-4 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all text-sm flex items-center gap-2" data-id="${session.id}" data-name="${studentName}">
+                                <span class="material-symbols-outlined text-[18px]">forum</span>
+                            </button>
+                        </div>
+                    `;
+                } else if (status === 'paid_waiting_review') {
+                    statusBadge = `<span class="px-2 py-0.5 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 rounded text-[10px] font-bold uppercase tracking-wider">💳 Paid · Awaiting Review</span>`;
                     actionsHtml = `
                         <div class="flex gap-2">
                             <button class="accept-btn px-6 py-2.5 bg-primary text-white font-bold rounded-xl hover:bg-primary/90 transition-all text-sm whitespace-nowrap flex items-center gap-2 shadow-lg shadow-primary/20" data-id="${session.id}" data-type="${session.meeting_type}">
@@ -731,6 +814,19 @@ async function bindRequestsInteractions(container, userId) {
                             </button>
                             <button class="reject-btn px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-red-500" data-id="${session.id}">
                                 <span class="material-symbols-outlined text-[18px]">cancel</span>
+                            </button>
+                        </div>
+                    `;
+                } else if (status === 'pending_rejection_review') {
+                    statusBadge = `<span class="px-2 py-0.5 bg-red-100 dark:bg-red-900/30 text-red-600 border border-red-200 dark:border-red-900/50 rounded text-[10px] font-bold uppercase tracking-wider">Admin Reviewing Rejection</span>`;
+                    actionsHtml = `
+                        <div class="flex gap-2">
+                            <div class="flex items-center gap-2 px-4 py-2 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700">
+                                <span class="material-symbols-outlined text-slate-400 text-sm animate-pulse">hourglass_empty</span>
+                                <span class="text-xs text-slate-500 font-medium">Awaiting Admin Decision</span>
+                            </div>
+                            <button class="message-btn px-4 py-2.5 bg-primary/10 text-primary font-bold rounded-xl hover:bg-primary/20 transition-all text-sm flex items-center gap-2" data-id="${session.id}" data-name="${studentName}">
+                                <span class="material-symbols-outlined text-[18px]">forum</span>
                             </button>
                         </div>
                     `;

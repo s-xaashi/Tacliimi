@@ -127,30 +127,7 @@ export const GlobalProfile = {
             // (Avatar update code will be handled later if needed)
         }
 
-        // --- NOTIFICATIONS CHECK ---
-        try {
-            const { data: notifications } = await supabase
-                .from('notifications')
-                .select('*')
-                .eq('user_id', session.user.id)
-                .is('is_read', false); // using .is() because boolean might be false or null based on schema defaults
-
-            if (notifications && notifications.length > 0) {
-                const unread = notifications.filter(n => n.is_read !== true);
-                if (unread.length > 0) {
-                    // Show standard alert to user
-                    setTimeout(() => {
-                        unread.forEach(n => alert(`🔔 NOTIFICATION: ${n.title}\n\n${n.message}`));
-                    }, 500);
-
-                    // Mark as read so we don't spam multiple times
-                    const idsToUpdate = unread.map(n => n.id);
-                    await supabase.from('notifications').update({ is_read: true }).in('id', idsToUpdate);
-                }
-            }
-        } catch (e) {
-            console.warn("Failed to fetch notifications:", e);
-        }
+        // Removed legacy alert-based notifications to prioritize the new notification bell system
 
         const imgElements = document.querySelectorAll('[data-role="profile-image"] img, img.profile-picture-img');
         imgElements.forEach(img => {
@@ -174,7 +151,9 @@ export const GlobalProfile = {
                 const href = el.getAttribute('href') || el.getAttribute('onclick') || '';
                 const html = el.innerHTML || '';
                 if (el.id === 'mobile-menu' || el.closest('#mobile-menu') || el.children.length > 3) return false;
-                const isLoginLink = (href.includes('/src/pages/auth/login/') && !href.includes('instructor-login') && !href.includes('login-select')) || href.includes('user-login');
+                const isLoginLink = (href.includes('/src/pages/auth/login') && !href.includes('instructor-login') && !href.includes('login-select')) || 
+                                    href.includes('user-login') || 
+                                    (el.tagName === 'BUTTON' && (el.innerText.toLowerCase().includes('log in') || el.innerText.toLowerCase().includes('sign up')));
                 const isPlaceholderProfile = (html.includes('account_circle') || html.includes('Student Name') || html.includes('Instructor account') || html.includes('Admin Account') || html.includes('ID: ') || html.includes('JD') || html.includes('User Profile') || html.includes('Student Profile') || html.includes('Admin Profile')) &&
                     (el.tagName === 'DIV' || el.tagName === 'BUTTON' || el.tagName === 'A');
                 return isLoginLink || isPlaceholderProfile;
@@ -183,7 +162,16 @@ export const GlobalProfile = {
 
         authElements = authElements.filter(el => {
             const isInsideHeader = el.closest('header') || el.closest('nav');
-            return isInsideHeader && !authElements.some(other => other !== el && el.contains(other));
+            if (!isInsideHeader) return false;
+
+            // Strict check: If it's in a <header> that contains an <h1>, it's likely a hero section, not a nav.
+            // We should only inject if it's NOT in a hero-style header unless there's no <nav> at all.
+            const header = el.closest('header');
+            if (header && header.querySelector('h1') && document.querySelector('nav')) {
+                return false;
+            }
+
+            return !authElements.some(other => other !== el && el.contains(other));
         });
 
         const parentMap = new Map();
@@ -196,13 +184,25 @@ export const GlobalProfile = {
                 }
             });
             if (!fallbackContainer) {
-                const navOrHeader = document.querySelector('header') || document.querySelector('nav');
+                const navOrHeader = document.querySelector('nav') || document.querySelector('header');
                 if (navOrHeader) {
-                    const rootDivs = Array.from(navOrHeader.children).filter(c => c.tagName === 'DIV');
-                    if (rootDivs.length > 0) {
-                        fallbackContainer = rootDivs[rootDivs.length - 1];
-                    } else {
-                        fallbackContainer = navOrHeader;
+                    // Avoid injecting into hero-like headers with H1
+                    if (navOrHeader.tagName === 'HEADER' && navOrHeader.querySelector('h1')) {
+                        // If it's a hero header, try to find a nav instead
+                        const nav = document.querySelector('nav');
+                        if (nav) {
+                            const navDivs = Array.from(nav.children).filter(c => c.tagName === 'DIV');
+                            fallbackContainer = navDivs.length > 0 ? navDivs[navDivs.length - 1] : nav;
+                        }
+                    }
+
+                    if (!fallbackContainer) {
+                        const rootDivs = Array.from(navOrHeader.children).filter(c => c.tagName === 'DIV');
+                        if (rootDivs.length > 0) {
+                            fallbackContainer = rootDivs[rootDivs.length - 1];
+                        } else {
+                            fallbackContainer = navOrHeader;
+                        }
                     }
                 }
             }
@@ -281,7 +281,8 @@ export const GlobalProfile = {
                 const text = (btn.innerText + btn.innerHTML).toLowerCase();
                 const title = (btn.getAttribute('title') || '').toLowerCase();
                 const id = btn.id || '';
-                if (text.includes('notifications') || text.includes('dark_mode') || text.includes('light_mode') || title.includes('theme') || id.includes('theme')) {
+                // Only remove theme-toggle duplicates — DO NOT remove notification buttons
+                if (text.includes('dark_mode') || text.includes('light_mode') || title.includes('theme') || id.includes('theme')) {
                     if (!btn.closest('.tacliimi-injected-profile')) {
                         btn.remove();
                     }
@@ -303,12 +304,6 @@ export const GlobalProfile = {
 
             const headerControlsHtml = `
             <div class="flex items-center gap-1 tacliimi-injected-profile">
-                <!-- Notifications Block -->
-                <button class="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full hidden sm:flex items-center justify-center transition-colors !outline-none relative">
-                    <span class="material-symbols-outlined text-[22px]">notifications</span>
-                    <span class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
-                </button>
-                            
                 ${themeToggleHtml}
                 ${(!isPublicPage || isAdmin) ? logoutHtml : ''}
 
