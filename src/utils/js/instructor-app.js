@@ -1,131 +1,136 @@
 /**
- * SPA Router for Instructor Application
- * Intercepts navigation clicks to instructor routes, fetching and swapping
- * the main content area seamlessly without reloading the shell (sidebar/header).
+ * instructor-app.js
+ * SPA Router for the Instructor Dashboard shell.
+ * Uses ROUTES constants — no hardcoded paths.
+ * Includes a retry/reload error boundary on network failure.
  */
+
+import { INSTRUCTOR } from './routes.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     const contentArea = document.getElementById('instructor-content-area');
-    const pageTitle = document.getElementById('header-page-title');
-    const navLinks = document.querySelectorAll('#instructor-sidebar-nav .nav-link');
+    const pageTitle   = document.getElementById('header-page-title');
+    const navLinks    = document.querySelectorAll('#instructor-sidebar-nav .nav-link');
 
-    // Helper: Update Active Nav State
+    // ── Active Nav ─────────────────────────────────────────────
     function updateActiveNav(urlPath) {
         navLinks.forEach(link => {
             const linkPath = new URL(link.href).pathname;
-            // Exact match or active section
-            if (urlPath === linkPath || (linkPath !== '/' && urlPath.startsWith(linkPath))) {
-                // Add active styles (Stitch uses bg-indigo-50 text-primary for active)
-                link.classList.remove('text-slate-600', 'dark:text-slate-400', 'hover:bg-slate-50', 'dark:hover:bg-slate-800');
-                link.classList.add('bg-indigo-50', 'dark:bg-indigo-900/20', 'text-primary', 'font-medium');
-            } else {
-                // Remove active styles, restore inactive styles
-                link.classList.remove('bg-indigo-50', 'dark:bg-indigo-900/20', 'text-primary', 'font-medium');
-                link.classList.add('text-slate-600', 'dark:text-slate-400', 'hover:bg-slate-50', 'dark:hover:bg-slate-800');
-            }
+            const isActive = urlPath === linkPath || (linkPath !== '/' && urlPath.startsWith(linkPath));
+            link.classList.toggle('bg-indigo-50',          isActive);
+            link.classList.toggle('dark:bg-indigo-900/20', isActive);
+            link.classList.toggle('text-primary',          isActive);
+            link.classList.toggle('font-medium',           isActive);
+            link.classList.toggle('text-slate-600',        !isActive);
+            link.classList.toggle('dark:text-slate-400',   !isActive);
+            link.classList.toggle('hover:bg-slate-50',     !isActive);
+            link.classList.toggle('dark:hover:bg-slate-800', !isActive);
         });
     }
 
-    // Helper: Format pathname to Header Title
+    // ── Title Formatter ────────────────────────────────────────
     function formatTitle(pathname) {
-        // e.g. /instructor-mentorship/ -> Mentorship
-        if (pathname === '/src/pages/instructor/instructor-dashboard/' || pathname === '/instructor-dashboard') return 'Dashboard';
-        const parts = pathname.replace(/\/$/, '').split('/');
-        const lastPart = parts[parts.length - 1]; // e.g. instructor-mentorship
+        if (pathname === INSTRUCTOR.DASHBOARD) return 'Dashboard';
+        const parts    = pathname.replace(/\/$/, '').split('/');
+        const lastPart = parts[parts.length - 1];
         if (!lastPart || !lastPart.startsWith('instructor-')) return 'Dashboard';
         const name = lastPart.replace('instructor-', '');
         return name.charAt(0).toUpperCase() + name.slice(1);
     }
 
-    // Helper: Fetch and Swap Content
+    // ── Error Boundary ─────────────────────────────────────────
+    // Uses createElement so no innerHTML XSS surface is created.
+    function showErrorBoundary(url) {
+        contentArea.innerHTML = '';
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'flex flex-col items-center justify-center p-12 text-center h-[50vh]';
+
+        const icon = document.createElement('span');
+        icon.className = 'material-symbols-outlined text-4xl text-slate-300 mb-4';
+        icon.textContent = 'cloud_off';
+
+        const heading = document.createElement('h2');
+        heading.className = 'text-xl font-bold dark:text-white mb-2';
+        heading.textContent = 'Failed to load content';
+
+        const sub = document.createElement('p');
+        sub.className = 'text-slate-500 mb-6';
+        sub.textContent = 'A network error occurred. Check your connection and try again.';
+
+        const btnRow = document.createElement('div');
+        btnRow.className = 'flex gap-3';
+
+        const retryBtn = document.createElement('button');
+        retryBtn.className = 'px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors';
+        retryBtn.textContent = 'Retry';
+        retryBtn.addEventListener('click', () => loadPage(url));
+
+        const reloadBtn = document.createElement('button');
+        reloadBtn.className = 'px-4 py-2 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 rounded-lg text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors';
+        reloadBtn.textContent = 'Full Reload';
+        reloadBtn.addEventListener('click', () => window.location.reload());
+
+        btnRow.appendChild(retryBtn);
+        btnRow.appendChild(reloadBtn);
+        wrapper.appendChild(icon);
+        wrapper.appendChild(heading);
+        wrapper.appendChild(sub);
+        wrapper.appendChild(btnRow);
+        contentArea.appendChild(wrapper);
+    }
+
+    // ── Page Loader ────────────────────────────────────────────
     async function loadPage(url, push = true) {
         contentArea.classList.add('loading');
-        
         try {
             const response = await fetch(url);
-            if (!response.ok) throw new Error('Network response was not ok');
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const htmlText = await response.text();
-            
-            // Parse the fetched HTML
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(htmlText, 'text/html');
-            
-            // Extract the new main content
+
+            const doc        = new DOMParser().parseFromString(htmlText, 'text/html');
             const newContent = doc.getElementById('instructor-content-area');
-            
+
             if (newContent) {
-                // Swap the inner HTML
                 contentArea.innerHTML = newContent.innerHTML;
-                
-                // Update the Header Title
                 const path = new URL(url, window.location.origin).pathname;
                 if (pageTitle) pageTitle.textContent = formatTitle(path);
-                
-                // Update the Browser Title
                 document.title = doc.title || 'Tacliimi Learn';
-                
-                // Update active nav state
                 updateActiveNav(path);
-
-                // Push state to history
-                if (push) {
-                    window.history.pushState({ path: path }, '', path);
-                }
-                
-                // Trigger an event so page-specific scripts know they were loaded
-                const event = new CustomEvent('instructor-page-loaded', { detail: { path: path } });
-                document.dispatchEvent(event);
+                if (push) window.history.pushState({ path }, '', path);
+                document.dispatchEvent(new CustomEvent('instructor-page-loaded', { detail: { path } }));
             }
         } catch (error) {
-            console.error('Error loading page:', error);
-            contentArea.innerHTML = `
-                <div class="flex flex-col items-center justify-center p-12 text-center h-[50vh]">
-                    <span class="material-symbols-outlined text-4xl text-slate-300 mb-4">error</span>
-                    <h2 class="text-xl font-bold dark:text-white mb-2">Failed to load content</h2>
-                    <p class="text-slate-500">Please check your connection or try refreshing the page.</p>
-                </div>
-            `;
+            console.error('[Router] Page load failed:', error);
+            showErrorBoundary(url);
         } finally {
             contentArea.classList.remove('loading');
         }
     }
 
-    // Intercept navigation clicks
+    // ── Click Interception ─────────────────────────────────────
     document.body.addEventListener('click', e => {
-        // Find the closest anchor tag
         const link = e.target.closest('a');
-        
-        // Only intercept actual application routing links (must start with /instructor- and not be hard escapes)
-        if (link && link.href) {
-            const url = new URL(link.href);
-            // Ignore external links or non-instructor routes
-            if (url.origin === window.location.origin && url.pathname.startsWith('/instructor-')) {
-                // Allow login/availability to be their own standalone / hard refresh if we want, 
-                // but if we want them inside SPA, leave them. 
-                // Exception: login/register should be outside the core shell layout.
-                if (url.pathname.includes('login') || url.pathname.includes('become')) return;
-                
-                e.preventDefault();
-                // Prevent duplicate loading
-                if (url.pathname !== window.location.pathname) {
-                    loadPage(url.href);
-                }
-            }
+        if (!link?.href) return;
+        const url = new URL(link.href);
+        if (
+            url.origin === window.location.origin &&
+            url.pathname.startsWith('/instructor-') &&
+            !url.pathname.includes('login') &&
+            !url.pathname.includes('become')
+        ) {
+            e.preventDefault();
+            if (url.pathname !== window.location.pathname) loadPage(url.href);
         }
     });
 
-    // Handle Back/Forward browser buttons
+    // ── Browser Back/Forward ───────────────────────────────────
     window.addEventListener('popstate', e => {
-        if (e.state && e.state.path) {
-            loadPage(e.state.path, false);
-        } else {
-            loadPage(window.location.pathname, false);
-        }
+        loadPage(e.state?.path || window.location.pathname, false);
     });
 
-    // Initialization run
+    // ── Init ───────────────────────────────────────────────────
     updateActiveNav(window.location.pathname);
     if (pageTitle) pageTitle.textContent = formatTitle(window.location.pathname);
-    // Replace initial state so popstate works consistently
     window.history.replaceState({ path: window.location.pathname }, '', window.location.pathname);
 });

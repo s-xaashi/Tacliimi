@@ -23,7 +23,7 @@ export const MentorService = {
 
         if (pErr || tErr) throw new Error("Incomplete profile data preventing mentorship publishing.");
 
-        console.log("DEBUG: publishMentorshipProfile syncing video URL:", teachingProfile?.introduction_video_url);
+
 
         const { error } = await supabase
             .from('mentorship_profiles')
@@ -194,6 +194,7 @@ export const MentorService = {
                     is_public,
                     meeting_types,
                     currency,
+                    rating_stats:mentor_rating_stats!inner(avg_rating, review_count),
                     profile:profiles!inner (
                         full_name,
                         avatar_url,
@@ -224,28 +225,16 @@ export const MentorService = {
                 .eq('profile.instructor.approval_status', 'approved');
 
             if (error) throw error;
-            console.log("DEBUG: getActiveMentors raw data retrieved");
 
-
-            // Fetch reviews for rating averages
-            const { data: reviews, error: rErr } = await supabase
-                .from('mentorship_reviews')
-                .select('mentor_id, rating');
-
-            if (rErr) throw rErr;
-
-            // Map the data
+            // Map the data — rating comes from pre-aggregated view, no JS loop needed
             return data.map(mentor => {
-                const mentorReviews = reviews.filter(r => r.mentor_id === mentor.instructor_id);
-                const avgRating = mentorReviews.length > 0 
-                    ? mentorReviews.reduce((sum, r) => sum + r.rating, 0) / mentorReviews.length 
-                    : 0;
-
                 const teachingData = Array.isArray(mentor.profile?.teaching) 
                     ? mentor.profile.teaching[0] 
                     : mentor.profile?.teaching;
 
-                console.log(`DEBUG: Mapping mentor ${mentor.instructor_id}, teachingData:`, JSON.stringify(teachingData, null, 2));
+                const ratingStats = Array.isArray(mentor.rating_stats)
+                    ? mentor.rating_stats[0]
+                    : mentor.rating_stats;
 
                 return {
                     id: mentor.id,
@@ -255,22 +244,14 @@ export const MentorService = {
                     short_bio: mentor.profile?.short_bio || mentor.bio || 'No bio available.',
                     expertise: mentor.profile?.expertise?.map(e => e.expertise_name) || [],
                     introduction_video: mentor.introduction_video_url || teachingData?.introduction_video_url,
-                    languages: typeof teachingData?.languages_spoken === 'string' ? JSON.parse(teachingData.languages_spoken) : (teachingData?.languages_spoken || []),
-                    educational_background: typeof teachingData?.educational_background === 'string' ? JSON.parse(teachingData.educational_background) : (teachingData?.educational_background || []),
+                    languages: teachingData?.languages_spoken || [],
+                    educational_background: teachingData?.educational_background || [],
                     teaching_experience: teachingData?.teaching_experience,
                     experience: teachingData?.teaching_experience,
                     education: teachingData?.educational_background,
-                    education_list: teachingData?.educational_background ? 
-                        (() => {
-                            try {
-                                const edu = teachingData.educational_background;
-                                return typeof edu === 'string' ? JSON.parse(edu) : edu;
-                            } catch (e) {
-                                console.warn("Failed to parse education JSON:", e);
-                                return [];
-                            }
-                        })() : [],
-                    languages: teachingData?.languages_spoken,
+                    education_list: teachingData?.educational_background
+                        ? (() => { try { const e = teachingData.educational_background; return typeof e === 'string' ? JSON.parse(e) : e; } catch { return []; } })()
+                        : [],
                     hourly_rate: mentor.hourly_rate || 0,
                     monthly_rate: mentor.monthly_rate || (mentor.hourly_rate * 20),
                     currency: mentor.currency || 'USD',
@@ -279,8 +260,8 @@ export const MentorService = {
                     country: mentor.profile?.country || mentor.mentorship_country,
                     city: mentor.profile?.city || mentor.mentorship_city,
                     headline: mentor.headline,
-                    rating: avgRating.toFixed(1),
-                    review_count: mentorReviews.length,
+                    rating: ratingStats?.avg_rating ?? '0.0',
+                    review_count: ratingStats?.review_count ?? 0,
                     meeting_types: mentor.meeting_types,
                     serial_id: mentor.profile?.serial_id
                 };
@@ -297,6 +278,7 @@ export const MentorService = {
                 .from('mentorship_profiles')
                 .select(`
                     *,
+                    rating_stats:mentor_rating_stats(avg_rating, review_count),
                     profile:profiles (
                         full_name,
                         avatar_url,
@@ -324,10 +306,11 @@ export const MentorService = {
                 ? data.profile.teaching[0] 
                 : data.profile?.teaching;
 
-            console.log("DEBUG: getMentorById raw data retrieved successfully");
+            const ratingStats = Array.isArray(data.rating_stats)
+                ? data.rating_stats[0]
+                : data.rating_stats;
 
-            // Fetch reviews for rating averages
-            // Simplified join to avoid potential connection issues if student_id FK name is ambiguous
+            // Fetch full reviews with comments (for display); rating average from view
             const { data: reviews, error: rErr } = await supabase
                 .from('mentorship_reviews')
                 .select('rating, comment, created_at, student:profiles!mentorship_reviews_student_id_fkey(full_name, avatar_url)')
@@ -338,9 +321,6 @@ export const MentorService = {
             }
 
             const activeReviews = reviews || [];
-            const avgRating = activeReviews.length > 0 
-                ? activeReviews.reduce((sum, r) => sum + r.rating, 0) / activeReviews.length 
-                : 0;
 
             const { data: availability, error: aErr } = await supabase
                 .from('mentor_availability')
@@ -367,16 +347,9 @@ export const MentorService = {
                 mentorship_style: teachingData?.mentorship_style,
                 experience: teachingData?.teaching_experience,
                 education: teachingData?.educational_background,
-                education_list: teachingData?.educational_background ? 
-                    (() => {
-                        try {
-                            const edu = teachingData.educational_background;
-                            return typeof edu === 'string' ? JSON.parse(edu) : edu;
-                        } catch (e) {
-                            console.warn("Failed to parse education JSON:", e);
-                            return [];
-                        }
-                    })() : [],
+                education_list: teachingData?.educational_background
+                    ? (() => { try { const e = teachingData.educational_background; return typeof e === 'string' ? JSON.parse(e) : e; } catch { return []; } })()
+                    : [],
                 languages: teachingData?.languages_spoken,
                 hourly_rate: data.hourly_rate || 0,
                 monthly_rate: data.monthly_rate || (data.hourly_rate * 20),
@@ -386,8 +359,8 @@ export const MentorService = {
                 country: data.mentorship_country,
                 city: data.mentorship_city,
                 headline: data.headline,
-                rating: avgRating.toFixed(1),
-                review_count: activeReviews.length,
+                rating: ratingStats?.avg_rating ?? '0.0',
+                review_count: ratingStats?.review_count ?? 0,
                 reviews: activeReviews,
                 meeting_types: data.meeting_types,
                 availability: availability || [],

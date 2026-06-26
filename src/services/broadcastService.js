@@ -1,9 +1,21 @@
+/**
+ * broadcastService.js
+ * ===========================================================
+ * NOTE: Notification fan-out is handled server-side.
+ * When a broadcast is inserted, the `trg_broadcast_notifications`
+ * PostgreSQL trigger fires `fn_broadcast_notifications()` which
+ * bulk-inserts one notification row per matching user in a single
+ * SQL statement. No client-side looping is required or safe.
+ * See: src/db/migrations/20260626_architectural_fixes.sql
+ * ===========================================================
+ */
 import { supabase } from './supabaseClient.js';
 
 export const BroadcastService = {
 
     /**
      * SuperAdmin sends a system-wide broadcast.
+     * Fan-out notifications are handled by the DB trigger — no JS loop needed.
      */
     async sendBroadcast({ title, message, targetAudience = 'all', expiresAt = null, adminId }) {
         const { data, error } = await supabase
@@ -21,38 +33,7 @@ export const BroadcastService = {
 
         if (error) throw error;
 
-        // NEW: Trigger notifications for target audience members
-        try {
-            // Fetch relevant users based on audience
-            let userQuery = supabase.from('profiles').select('id');
-            if (targetAudience === 'instructors') {
-                userQuery = userQuery.eq('role', 'instructor');
-            } else if (targetAudience === 'students') {
-                userQuery = userQuery.eq('role', 'student');
-            }
-            
-            const { data: users } = await userQuery;
-            
-            if (users && users.length > 0) {
-                // Batch create notifications (limited to avoid performance issues if users count is massive, but for system broadcasts we'll do it)
-                // Note: For massive scale, we should use a background job/trigger. 
-                // Here we'll do a promise.all for the first 100 users or so as a safeguard, or assume small scale for now.
-                const notificationPromises = users.slice(0, 500).map(u => 
-                    NotificationService.createNotification(
-                        u.id,
-                        `📢 ${title}`,
-                        message,
-                        'broadcast',
-                        { broadcastId: data.id }
-                    )
-                );
-                await Promise.allSettled(notificationPromises);
-            }
-        } catch (notifErr) {
-            console.error('Failed to trigger broadcast notifications:', notifErr);
-        }
-
-        // Log the action
+        // Log the admin action
         await supabase.from('admin_audit_logs').insert({
             admin_id: adminId,
             action: 'send_broadcast',
