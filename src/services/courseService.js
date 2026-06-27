@@ -472,6 +472,28 @@ export const CourseService = {
         return data;
     },
 
+    /** COUPON VALIDATION */
+    async validateCoupon(courseId, code) {
+        if (!code) return null;
+        
+        const now = new Date().toISOString();
+        const { data, error } = await supabase
+            .from('course_coupons')
+            .select('*')
+            .eq('course_id', courseId)
+            .eq('code', code.trim().toUpperCase())
+            .eq('is_active', true)
+            .lte('starts_at', now)
+            .gte('expires_at', now)
+            .maybeSingle();
+
+        if (error) {
+            console.error('Coupon validation error:', error);
+            return null;
+        }
+        return data; // Returns coupon object { discount_percent, etc } or null
+    },
+
     /** INSTRUCTOR COURSES */
     async getInstructorCourses() {
         const session = await AuthService.getSession();
@@ -612,12 +634,22 @@ export const CourseService = {
         // 2. Create Payment Record if paymentData is provided
         let paymentSerialId = null;
         if (paymentData) {
+            let finalAmount = paymentData.amount || 0;
+            
+            // 🔥 APPLY COUPON DISCOUNT IF PROVIDED
+            if (paymentData.couponCode) {
+                const coupon = await this.validateCoupon(courseId, paymentData.couponCode);
+                if (coupon && coupon.discount_percent) {
+                    finalAmount = finalAmount * (1 - (coupon.discount_percent / 100));
+                }
+            }
+
             const { data: payRecord, error: payError } = await supabase
                 .from('payments')
                 .insert([{
                     student_id: studentId,
                     course_id: courseId,
-                    amount: paymentData.amount || 0,
+                    amount: finalAmount,
                     currency: paymentData.currency || 'USD',
                     payment_provider: paymentData.provider || 'unknown',
                     payment_status: 'paid'
@@ -764,5 +796,22 @@ export const CourseService = {
             .select('expertise_name')
             .eq('instructor_id', instructorId);
         return data?.map(e => e.expertise_name) || [];
+    },
+
+    /** COURSE APPEALS */
+    async appealCourse(courseId, reason) {
+        const { data, error } = await supabase
+            .from('courses')
+            .update({
+                status: 'appealed',
+                rejection_reason: reason,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', courseId)
+            .select()
+            .single();
+
+        if (error) throw error;
+        return data;
     }
 };

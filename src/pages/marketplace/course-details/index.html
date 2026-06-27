@@ -901,7 +901,23 @@
                         </div>
                     </div>
 
-                    <div class="pt-4 border-t border-white/5 flex items-center justify-between">
+                    <!-- Coupon Code Section -->
+                    <div class="mb-4 pt-1">
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-indigo-300/40">Apply Coupon</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <input id="pm-coupon-input" type="text" placeholder="E.G. EARLYBIRD" 
+                                class="flex-1 bg-white dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white outline-none focus:border-primary/50 transition-all">
+                            <button onclick="applyPaymentCoupon()" id="btn-apply-coupon"
+                                class="px-4 py-2 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-600 dark:text-white/70 text-xs font-bold rounded-xl transition-all">
+                                Apply
+                            </button>
+                        </div>
+                        <p id="pm-coupon-msg" class="text-[10px] font-medium mt-2 hidden"></p>
+                    </div>
+
+                    <div class="pt-4 border-t border-slate-200 dark:border-white/5 flex items-center justify-between">
                         <div class="flex items-center gap-2">
                             <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                             <p class="text-slate-500 dark:text-white/40 text-[11px] font-medium italic">Instant access after pay</p>
@@ -1080,6 +1096,12 @@
                     document.getElementById('pm-course-title').textContent = course.title || 'Course';
                     document.getElementById('pm-price').textContent = `$${finalPrice.toFixed(2)}`;
                     
+                    // Reset coupon UI
+                    const couponInput = document.getElementById('pm-coupon-input');
+                    const couponMsg = document.getElementById('pm-coupon-msg');
+                    if (couponInput) couponInput.value = '';
+                    if (couponMsg) couponMsg.classList.add('hidden');
+                    
                     // Thumbnail
                     const thumbEl = document.getElementById('pm-thumbnail');
                     thumbEl.src = course.thumbnail_url || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&q=80';
@@ -1257,47 +1279,104 @@
 
     </script>
 
-    <script>
-        // Coupon logic — still active (discount applied before Sifalo checkout redirect)
-        async function applyCoupon() {
+        // ── Coupon Implementation ──
+        window.applyCourseCoupon = async function() {
             const input = document.getElementById('coupon-input');
             const btn = document.getElementById('apply-coupon-btn');
+            const msg = document.getElementById('cd-coupon-msg');
+            const priceEl = document.getElementById('cd-price');
             const code = input.value.trim().toUpperCase();
+            
             if (!code) return;
 
-            const urlParams = new URLSearchParams(window.location.search);
-            const courseId = urlParams.get('id');
-
             btn.disabled = true;
-            btn.innerHTML = '<span class="animate-spin inline-block w-3 h-3 border-2 border-white border-t-transparent rounded-full"></span>';
+            btn.innerHTML = '<span class="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>';
 
             try {
-                const { data: coupon, error } = await supabase
-                    .from('course_coupons')
-                    .select('*')
-                    .eq('course_id', courseId)
-                    .eq('code', code)
-                    .eq('is_active', true)
-                    .single();
+                // Use the centralized service for validation
+                const coupon = await CourseService.validateCoupon(courseId, code);
 
-                if (error || !coupon) throw new Error("Invalid coupon code");
+                if (coupon) {
+                    if (window.basePrice === undefined) {
+                        window.basePrice = parseFloat(priceEl.textContent.replace('$', ''));
+                    }
 
-                const now = new Date();
-                if (coupon.starts_at && new Date(coupon.starts_at) > now)
-                    throw new Error(`Coupon not active yet`);
-                if (coupon.expires_at && new Date(coupon.expires_at) < now)
-                    throw new Error("Coupon has expired");
+                    const discount = coupon.discount_percent;
+                    const newPrice = window.basePrice * (1 - discount / 100);
+                    
+                    priceEl.textContent = `$${newPrice.toFixed(2)}`;
+                    document.getElementById('cd-original-price').textContent = `$${window.basePrice.toFixed(2)}`;
+                    document.getElementById('cd-original-price').classList.remove('hidden');
+                    document.getElementById('cd-discount-badge').textContent = `${discount}% OFF`;
+                    document.getElementById('cd-discount-badge').classList.remove('hidden');
+                    
+                    // Store for enrollment
+                    window._pmContext.couponCode = code;
+                    window._pmContext.amount = newPrice;
 
-                const priceEl = document.getElementById('cd-price');
-                if (window.basePrice === undefined)
-                    window.basePrice = parseFloat(priceEl.textContent.replace('$', ''));
+                    if (msg) {
+                        msg.textContent = `Success! ${discount}% discount applied.`;
+                        msg.className = 'text-xs font-bold text-emerald-500 mt-2 block animate-pulse';
+                    }
+                } else {
+                    if (msg) {
+                        msg.textContent = 'Invalid or expired coupon code.';
+                        msg.className = 'text-xs font-medium text-red-500 mt-2 block';
+                    }
+                }
+            } catch (e) {
+                console.error('Coupon error:', e);
+                if (msg) msg.textContent = 'Error validating coupon.';
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Apply';
+            }
+        };
 
-                const newPrice = window.basePrice * (1 - coupon.discount_percent / 100);
-                priceEl.textContent = `$${newPrice.toFixed(2)}`;
+        // ── Unified Payment Submission ──
+        window.submitDirectPayment = async function() {
+            const phone = document.getElementById('pm-phone-input').value.trim();
+            const errEl = document.getElementById('pm-phone-error');
 
-                document.getElementById('cd-original-price').textContent = `$${window.basePrice.toFixed(2)}`;
-                document.getElementById('cd-original-price').classList.remove('hidden');
-                document.getElementById('cd-discount-badge').textContent = `${coupon.discount_percent}% OFF`;
+            if (!phone || phone.length < 7) {
+                errEl.textContent = 'Please enter a valid phone number';
+                errEl.classList.remove('hidden');
+                return;
+            }
+            errEl.classList.add('hidden');
+
+            const { amount, currency, gateway, couponCode } = window._pmContext;
+            showStep('processing');
+
+            try {
+                // Enrollment payload includes coupon for server-side verification and discount
+                const paymentData = {
+                    amount: window.basePrice || amount, // Pass base price, service calculates discount
+                    currency,
+                    provider: gateway || 'waafi',
+                    account: phone,
+                    couponCode: couponCode || null
+                };
+
+                const result = await CourseService.enrollCourse(courseId, currentUser.id, paymentData);
+                
+                showResult(true, 'Enrollment Successful! 🎉', 
+                    'Welcome to the course! You now have full access to all sections and lessons.');
+                
+                setTimeout(() => {
+                    window.location.href = `/src/pages/learning/learning-interface/index.html?id=${courseId}`;
+                }, 2500);
+                
+            } catch (err) {
+                showResult(false, 'Payment Failed', err.message || 'Could not process your enrollment.');
+            }
+        };
+    </script>
+    
+    <style>
+        .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+    </style>
                 document.getElementById('cd-discount-badge').classList.remove('hidden');
 
                 input.classList.add('border-emerald-500', 'bg-emerald-50');

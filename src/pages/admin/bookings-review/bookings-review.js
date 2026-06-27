@@ -1,6 +1,7 @@
 import { supabase } from '/src/services/supabaseClient.js';
 import { AuthService } from '/src/services/authService.js';
 import { MentorService } from '/src/services/mentorService.js';
+import { showToast, showConfirmModal, showAlertModal } from '/src/services/uiUtils.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
     const overviewList = document.getElementById('overview-list');
@@ -445,19 +446,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             if (error) throw error;
 
-            // Trigger notification for instructor/mentor
+            // Refund logic for confirmed rejections
             try {
                 const sessionData = allSessions.find(s => s.id === sessionId);
                 if (sessionData) {
-                    const isConfirmed = status === 'cancelled'; // Confirmed the REJECTION -> Cancelled
-                    const isDenied = status === 'pending_review';    // Denied the REJECTION -> Back to Pending
+                    const isConfirmed = status === 'cancelled';
                     
                     if (isConfirmed) {
-                        // If the session was paid, auto-create a refund request
                         const wasPaid = sessionData.booking_status === 'paid_waiting_review';
                         if (wasPaid) {
                             try {
-                                // Find the payment record for this session
                                 const { data: payment } = await supabase
                                     .from('payments')
                                     .select('id')
@@ -475,77 +473,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 }
                             } catch (refundErr) {
                                 console.error('Could not auto-create refund request:', refundErr);
-                                // Non-fatal: session is already cancelled
                             }
                         }
-
-                        // Notify Mentor
-                        await NotificationService.createNotification(
-                            sessionData.mentor_id,
-                            'Rejection Confirmed',
-                            `Admin has confirmed your request to cancel the session with ${sessionData.student_name || 'your student'}.`,
-                            'booking_cancelled',
-                            { 
-                                session_id: sessionId, 
-                                status: 'cancelled',
-                                student_name: sessionData.student_name,
-                                student_avatar: sessionData.student_avatar,
-                                session_type: sessionData.meeting_type,
-                                scheduled_at: sessionData.scheduled_at
-                            }
-                        );
-
-                        // Notify Student
-                        await NotificationService.createNotification(
-                            sessionData.student_id,
-                            'Session Cancelled',
-                            `Your session with ${sessionData.mentor_name || 'your mentor'} has been cancelled following admin review.`,
-                            'booking_cancelled',
-                            {
-                                session_id: sessionId,
-                                status: 'cancelled',
-                                mentor_name: sessionData.mentor_name,
-                                mentor_avatar: sessionData.mentor_avatar,
-                                session_type: sessionData.meeting_type,
-                                scheduled_at: sessionData.scheduled_at
-                            }
-                        );
-                    } else if (isDenied) {
-                        // Notify Mentor
-                        await NotificationService.createNotification(
-                            sessionData.mentor_id,
-                            'Rejection Denied',
-                            `Admin has denied your request to cancel the session with ${sessionData.student_name || 'your student'}. The session is back to Pending Review and requires your action.`,
-                            'booking_created', // Use booking_created to prompt action
-                            { 
-                                session_id: sessionId, 
-                                status: 'pending_review',
-                                student_name: sessionData.student_name,
-                                student_avatar: sessionData.student_avatar,
-                                session_type: sessionData.meeting_type,
-                                scheduled_at: sessionData.scheduled_at
-                            }
-                        );
-
-                        // Notify Student
-                        await NotificationService.createNotification(
-                            sessionData.student_id,
-                            'Session Restored',
-                            `Admin has denied the rejection request for your session with ${sessionData.mentor_name || 'your mentor'}. The session is back to Pending Review.`,
-                            'booking_confirmed',
-                            {
-                                session_id: sessionId,
-                                status: 'pending_review',
-                                mentor_name: sessionData.mentor_name,
-                                mentor_avatar: sessionData.mentor_avatar,
-                                session_type: sessionData.meeting_type,
-                                scheduled_at: sessionData.scheduled_at
-                            }
-                        );
                     }
                 }
-            } catch (notifErr) {
-                console.error("Failed to send admin decision notification:", notifErr);
+            } catch (err) {
+                console.error('Error in post-decision logic:', err);
             }
             
             // Refresh data locally
@@ -553,7 +486,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             renderTab();
         } catch (err) {
             console.error(err);
-            alert("Error processing decision: " + err.message);
+            showAlertModal({ title: 'Error', message: 'Error processing decision: ' + err.message, type: 'error' });
             btn.disabled = false;
             btn.innerText = originalText;
         }

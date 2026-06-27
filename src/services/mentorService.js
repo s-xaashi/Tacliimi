@@ -1,6 +1,5 @@
 import { supabase } from './supabaseClient.js';
 import { ProfileService } from './profileService.js';
-import { NotificationService } from './notificationService.js';
 
 export const MentorService = {
     /**
@@ -177,7 +176,7 @@ export const MentorService = {
      */
     async getActiveMentors() {
         try {
-            // Join with profiles, teaching_profiles, and expertise_areas
+            // ── Query 1: Core mentor + profile data (required) ──────────────
             const { data, error } = await supabase
                 .from('mentorship_profiles')
                 .select(`
@@ -194,7 +193,6 @@ export const MentorService = {
                     is_public,
                     meeting_types,
                     currency,
-                    rating_stats:mentor_rating_stats!inner(avg_rating, review_count),
                     profile:profiles!inner (
                         full_name,
                         avatar_url,
@@ -224,17 +222,67 @@ export const MentorService = {
                 .eq('profile.account_status', 'active')
                 .eq('profile.instructor.approval_status', 'approved');
 
-            if (error) throw error;
+            // ── Query 2: Rating stats (Aggregated from source table) ──────
+            // This bypasses the unreliable mentor_rating_stats view.
+            let ratingMap = {};
+            try {
+                // Fetch all ratings to aggregate in JS (efficient for marketplace)
+                const { data: reviews } = await supabase
+                    .from('mentorship_reviews')
+                    .select('mentor_id, rating');
 
-            // Map the data — rating comes from pre-aggregated view, no JS loop needed
+                if (reviews) {
+                    reviews.forEach(r => {
+                        if (!ratingMap[r.mentor_id]) {
+                            ratingMap[r.mentor_id] = { total: 0, count: 0 };
+                        }
+                        ratingMap[r.mentor_id].total += (r.rating || 0);
+                        ratingMap[r.mentor_id].count += 1;
+                    });
+                }
+            } catch (ratingErr) {
+                console.warn('[Marketplace] Could not load raw reviews for ratings:', ratingErr.message);
+                
+                // Tertiary fallback: Try the view if raw table fetch fails
+                try {
+                    const { data: vRatings } = await supabase
+                        .from('mentor_rating_stats')
+                        .select('instructor_id, avg_rating, review_count');
+                    if (vRatings) {
+                        vRatings.forEach(r => {
+                            ratingMap[r.instructor_id] = { 
+                                avg: r.avg_rating ?? '0.0', 
+                                count: r.review_count ?? 0 
+                            };
+                        });
+                    }
+                } catch (vErr) {
+                    console.warn('[Marketplace] View fallback also failed:', vErr.message);
+                }
+            }
+
+            // ── Merge and map ────────────────────────────────────────────────
             return data.map(mentor => {
                 const teachingData = Array.isArray(mentor.profile?.teaching) 
                     ? mentor.profile.teaching[0] 
                     : mentor.profile?.teaching;
 
-                const ratingStats = Array.isArray(mentor.rating_stats)
-                    ? mentor.rating_stats[0]
-                    : mentor.rating_stats;
+                // Priority: (1) JS-aggregated raw reviews, (2) View fallback, (3) 0.0
+                const stats = ratingMap[mentor.instructor_id];
+                let finalRating = '0.0';
+                let finalCount = 0;
+
+                if (stats) {
+                    if (stats.avg !== undefined) {
+                        // From View
+                        finalRating = stats.avg;
+                        finalCount = stats.count;
+                    } else if (stats.count > 0) {
+                        // From JS aggregation
+                        finalRating = (stats.total / stats.count).toFixed(1);
+                        finalCount = stats.count;
+                    }
+                }
 
                 return {
                     id: mentor.id,
@@ -260,8 +308,8 @@ export const MentorService = {
                     country: mentor.profile?.country || mentor.mentorship_country,
                     city: mentor.profile?.city || mentor.mentorship_city,
                     headline: mentor.headline,
-                    rating: ratingStats?.avg_rating ?? '0.0',
-                    review_count: ratingStats?.review_count ?? 0,
+                    rating: finalRating,
+                    review_count: finalCount,
                     meeting_types: mentor.meeting_types,
                     serial_id: mentor.profile?.serial_id
                 };
@@ -272,13 +320,14 @@ export const MentorService = {
         }
     },
 
+
     async getMentorById(mentorId) {
         try {
+            // ── Query 1: Core profile (required) ────────────────────────────
             const { data, error } = await supabase
                 .from('mentorship_profiles')
                 .select(`
                     *,
-                    rating_stats:mentor_rating_stats(avg_rating, review_count),
                     profile:profiles (
                         full_name,
                         avatar_url,
@@ -301,16 +350,25 @@ export const MentorService = {
 
             if (error) throw error;
             if (!data) return null;
+
+            // ── Query 2: Rating stats (optional) ────────────────────────────
+            let ratingStats = null;
+            try {
+                const { data: rs } = await supabase
+                    .from('mentor_rating_stats')
+                    .select('avg_rating, review_count')
+                    .eq('instructor_id', mentorId)
+                    .maybeSingle();
+                ratingStats = rs || null;
+            } catch (ratingErr) {
+                console.warn('[MentorProfile] Could not load rating stats:', ratingErr.message);
+            }
             
             const teachingData = Array.isArray(data.profile?.teaching) 
                 ? data.profile.teaching[0] 
                 : data.profile?.teaching;
 
-            const ratingStats = Array.isArray(data.rating_stats)
-                ? data.rating_stats[0]
-                : data.rating_stats;
-
-            // Fetch full reviews with comments (for display); rating average from view
+            // Fetch full reviews with comments (for display)
             const { data: reviews, error: rErr } = await supabase
                 .from('mentorship_reviews')
                 .select('rating, comment, created_at, student:profiles!mentorship_reviews_student_id_fkey(full_name, avatar_url)')
@@ -321,6 +379,20 @@ export const MentorService = {
             }
 
             const activeReviews = reviews || [];
+
+            // ── Compute rating from actual reviews (source of truth) ─────────
+            // This ensures the header always matches the reviews section.
+            // The ratingStats view is only used as fallback when no reviews exist.
+            let computedRating = '0.0';
+            let computedReviewCount = 0;
+            if (activeReviews.length > 0) {
+                const avg = activeReviews.reduce((sum, r) => sum + (r.rating || 0), 0) / activeReviews.length;
+                computedRating = avg.toFixed(1);
+                computedReviewCount = activeReviews.length;
+            } else if (ratingStats) {
+                computedRating = ratingStats.avg_rating ?? '0.0';
+                computedReviewCount = ratingStats.review_count ?? 0;
+            }
 
             const { data: availability, error: aErr } = await supabase
                 .from('mentor_availability')
@@ -359,14 +431,15 @@ export const MentorService = {
                 country: data.mentorship_country,
                 city: data.mentorship_city,
                 headline: data.headline,
-                rating: ratingStats?.avg_rating ?? '0.0',
-                review_count: ratingStats?.review_count ?? 0,
+                rating: computedRating,
+                review_count: computedReviewCount,
                 reviews: activeReviews,
                 meeting_types: data.meeting_types,
                 availability: availability || [],
                 serial_id: data.profile?.serial_id
             };
         } catch (error) {
+
             console.error('Error in getMentorById:', error);
             throw error;
         }
@@ -521,46 +594,6 @@ export const MentorService = {
 
         if (error) throw error;
 
-        // Trigger notifications
-        try {
-            const { data: student } = await supabase.from('profiles').select('full_name, avatar_url').eq('id', sessionData.studentId).single();
-            const { data: mentor } = await supabase.from('profiles').select('full_name, avatar_url').eq('id', sessionData.mentorId).single();
-            
-            const typeLabel = sessionData.meetingType === 'online' ? 'Online' : 'In-Person';
-            
-            // 1. Notify Mentor (New Request)
-            await NotificationService.createNotification(
-                sessionData.mentorId,
-                'New Booking Request',
-                `${student?.full_name || 'A student'} booked a new ${typeLabel} session with you.`,
-                'booking_created',
-                { 
-                    session_id: data.id, 
-                    student_name: student?.full_name, 
-                    student_avatar: student?.avatar_url,
-                    session_type: typeLabel,
-                    scheduled_at: sessionData.scheduledAt
-                }
-            );
-
-            // 2. Notify Student (Request Sent)
-            await NotificationService.createNotification(
-                sessionData.studentId,
-                'Booking Request Sent',
-                `Your ${typeLabel} session request has been sent to ${mentor?.full_name || 'the mentor'}.`,
-                'booking_created',
-                {
-                    session_id: data.id,
-                    mentor_name: mentor?.full_name,
-                    mentor_avatar: mentor?.avatar_url,
-                    session_type: typeLabel,
-                    scheduled_at: sessionData.scheduledAt
-                }
-            );
-        } catch (nErr) {
-            console.error('Failed to send booking notifications:', nErr);
-        }
-
         return data;
     },
 
@@ -664,65 +697,6 @@ export const MentorService = {
 
         if (error) throw error;
 
-        // Trigger notification for student
-        try {
-            console.log('Fetching session for notification. SessionId:', sessionId);
-            const { data: session, error: sError } = await supabase
-                .from('mentorship_sessions')
-                .select('student_id, meeting_type, scheduled_at, mentor:profiles!mentorship_sessions_mentor_id_fkey(full_name, avatar_url)')
-                .eq('id', sessionId)
-                .single();
-
-            if (sError) {
-                console.error('Error fetching session for notification:', sError);
-            }
-
-            if (session) {
-                console.log('Found session for notification. StudentId:', session.student_id);
-                const mentorName = session.mentor?.full_name || 'Your Mentor';
-                const mentorAvatar = session.mentor?.avatar_url;
-                const typeLabel = session.meeting_type === 'online' ? 'Online' : 'In-Person';
-                let title = 'Session Update';
-                let message = `Your ${typeLabel} session status has been updated to ${status.replace(/_/g, ' ')}.`;
-                let type = 'status_update';
-
-                if (status === 'cancelled') {
-                    title = 'Session Rejected';
-                    message = `Your ${typeLabel} session request was rejected by ${mentorName}. A refund has been processed.`;
-                    type = 'booking_cancelled';
-                } else if (status === 'awaiting_meeting_link') {
-                    title = 'Request Accepted';
-                    message = `${mentorName} accepted your ${typeLabel} session! Waiting for meeting link.`;
-                    type = 'booking_confirmed';
-                } else if (status === 'location_negotiation') {
-                    title = 'Location Negotiation';
-                    message = `${mentorName} wants to negotiate the location for your In-Person session.`;
-                    type = 'booking_negotiating';
-                } else if (status === 'pending_rejection_review') {
-                    title = 'Rejection Pending Review';
-                    message = `${mentorName} has requested to reject your session. It is currently under admin review.`;
-                    type = 'pending_rejection_review';
-                }
-
-                await NotificationService.createNotification(
-                    session.student_id,
-                    title,
-                    message,
-                    type,
-                    { 
-                        sessionId, 
-                        status, 
-                        mentor_name: mentorName, 
-                        mentor_avatar: mentorAvatar,
-                        session_type: typeLabel, 
-                        scheduled_at: session.scheduled_at 
-                    }
-                );
-            }
-        } catch (nErr) {
-            console.error('Failed to send status notification:', nErr);
-        }
-
         return true;
     },
 
@@ -754,36 +728,6 @@ export const MentorService = {
 
         if (error) throw error;
 
-        // Trigger notification for student
-        try {
-            const { data: session } = await supabase
-                .from('mentorship_sessions')
-                .select('student_id, meeting_type, scheduled_at, mentor:profiles!mentorship_sessions_mentor_id_fkey(full_name, avatar_url)')
-                .eq('id', sessionId)
-                .single();
-
-            if (session) {
-                const typeLabel = session.meeting_type === 'online' ? 'Online' : 'In-Person';
-                await NotificationService.createNotification(
-                    session.student_id,
-                    'Meeting Link Added',
-                    `${session.mentor?.full_name || 'Your mentor'} added a meeting link for your ${typeLabel} session.`,
-                    'link_provided',
-                    { 
-                        sessionId, 
-                        status: 'confirmed', 
-                        meetingLink: link,
-                        mentor_name: session.mentor?.full_name,
-                        mentor_avatar: session.mentor?.avatar_url,
-                        session_type: typeLabel,
-                        scheduled_at: session.scheduled_at
-                    }
-                );
-            }
-        } catch (nErr) {
-            console.error('Failed to send link notification:', nErr);
-        }
-
         return true;
     },
 
@@ -806,48 +750,6 @@ export const MentorService = {
             });
 
         if (error) throw error;
-
-        // Trigger notification for recipient
-        try {
-            const { data: booking } = await supabase
-                .from('mentorship_sessions')
-                .select('student_id, mentor_id, meeting_type, scheduled_at')
-                .eq('id', bookingId)
-                .single();
-
-            if (booking) {
-                const recipientId = role === 'mentor' ? booking.student_id : booking.mentor_id;
-                const { data: sender } = await supabase.from('profiles').select('full_name, avatar_url').eq('id', senderId).single();
-                
-                const typeLabel = booking.meeting_type === 'online' ? 'Online' : 'In-Person';
-                
-                const metadata = { 
-                    bookingId, 
-                    session_type: typeLabel, 
-                    scheduled_at: booking.scheduled_at 
-                };
-
-                if (role === 'mentor') {
-                    // Sender is mentor, notify student
-                    metadata.mentor_name = sender?.full_name;
-                    metadata.mentor_avatar = sender?.avatar_url;
-                } else {
-                    // Sender is student, notify mentor
-                    metadata.student_name = sender?.full_name;
-                    metadata.student_avatar = sender?.avatar_url;
-                }
-                
-                await NotificationService.createNotification(
-                    recipientId,
-                    'New Message',
-                    `You got a message from ${sender?.full_name || 'someone'} related to your ${typeLabel} session.`,
-                    'message',
-                    metadata
-                );
-            }
-        } catch (nErr) {
-            console.error('Failed to send message notification:', nErr);
-        }
 
         return true;
     },
@@ -882,36 +784,6 @@ export const MentorService = {
             .eq('id', sessionId);
 
         if (error) throw error;
-
-        // Trigger notification for student
-        try {
-            const { data: session } = await supabase
-                .from('mentorship_sessions')
-                .select('student_id, meeting_type, scheduled_at, mentor:profiles!mentorship_sessions_mentor_id_fkey(full_name, avatar_url)')
-                .eq('id', sessionId)
-                .single();
-
-            if (session) {
-                const typeLabel = session.meeting_type === 'online' ? 'Online' : 'In-Person';
-                await NotificationService.createNotification(
-                    session.student_id,
-                    'Location Proposed',
-                    `${session.mentor?.full_name || 'Your mentor'} proposed a location for your In-Person session.`,
-                    'booking_negotiating',
-                    { 
-                        sessionId, 
-                        status: 'location_negotiation', 
-                        location,
-                        mentor_name: session.mentor?.full_name,
-                        mentor_avatar: session.mentor?.avatar_url,
-                        session_type: typeLabel,
-                        scheduled_at: session.scheduled_at
-                    }
-                );
-            }
-        } catch (nErr) {
-            console.error('Failed to send location notification:', nErr);
-        }
 
         return true;
     }

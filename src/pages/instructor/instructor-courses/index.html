@@ -109,7 +109,7 @@
                 <button class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" onclick="document.documentElement.classList.toggle('dark')">
                     <span class="material-symbols-outlined">dark_mode</span>
                 </button>
-                <div class="flex items-center gap-3 pl-4 border-l border-slate-200 dark:border-slate-800 cursor-pointer hover:opacity-80 transition-opacity" onclick="window.location.href='/src/pages/instructor/instructor-profile/index.html'">
+                <div id="global-profile-header-container" class="flex items-center gap-3 pl-4 border-l border-slate-200 dark:border-slate-800 cursor-pointer hover:opacity-80 transition-opacity" onclick="window.location.href='/src/pages/instructor/instructor-profile/index.html'">
                     <div class="text-right hidden sm:block">
                         <p class="text-sm font-medium dark:text-white">Instructor account</p>
                     </div>
@@ -497,7 +497,7 @@
                     
                 } catch (error) {
                     console.error('Background delete failed:', error);
-                    alert('Failed to delete course permanently. Restoring list...');
+                    showToast('Failed to delete course. Restoring list...', 'error');
                     fetchAndRender(); 
                 }
             };
@@ -522,7 +522,7 @@
 
             window.submitAppeal = async function() {
                 const reason = document.getElementById('appeal-reason').value.trim();
-                if (!reason) return alert('Please provide a reason for your appeal.');
+                if (!reason) return showToast('Please provide a reason for your appeal.', 'warning');
 
                 const btn = document.getElementById('appeal-submit-btn');
                 const originalText = btn.innerText;
@@ -531,11 +531,13 @@
                     btn.disabled = true;
                     btn.innerText = 'Submitting...';
                     await CourseService.appealCourse(courseToAppeal, reason);
+                    
+                    showToast('Appeal submitted successfully! Our team will review it shortly.', 'success');
                     window.closeAppealModal();
                     await fetchAndRender();
                 } catch (e) {
                     console.error('Appeal failed:', e);
-                    alert('Failed to submit appeal. Please try again.');
+                    showToast('Failed to submit appeal. Please try again.', 'error');
                 } finally {
                     btn.disabled = false;
                     btn.innerText = originalText;

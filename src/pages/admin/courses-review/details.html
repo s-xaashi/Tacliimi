@@ -265,6 +265,7 @@
         import { supabase } from '/src/services/supabaseClient.js';
         import { CourseService } from '/src/services/courseService.js';
         import { AuthService } from '/src/services/authService.js';
+        import { showToast, showConfirmModal, showAlertModal } from '/src/services/notificationUI.js';
 
         let currentCourse = null;
 
@@ -273,8 +274,8 @@
             const courseId = params.get('id');
 
             if (!courseId) {
-                alert("No course ID provided.");
-                window.location.href = 'index.html';
+                showAlertModal({ title: 'Error', message: 'No course ID provided.', type: 'error' });
+                setTimeout(() => window.location.href = 'index.html', 2000);
                 return;
             }
 
@@ -866,92 +867,6 @@
             });
         };
 
-        // =============================================
-        // CUSTOM MODALS UTILITIES
-        // =============================================
-        const modalContainer = document.getElementById('modal-container');
-        const modalOverlay = document.getElementById('modal-overlay');
-        const confirmModal = document.getElementById('confirm-modal');
-        const alertModal = document.getElementById('alert-modal');
-
-        function showModal(modalEl) {
-            modalContainer.classList.remove('hidden');
-            modalContainer.classList.add('flex');
-            setTimeout(() => {
-                modalEl.classList.remove('scale-95', 'opacity-0');
-                modalEl.classList.add('scale-100', 'opacity-100');
-            }, 10);
-        }
-
-        function hideModal(modalEl) {
-            modalEl.classList.remove('scale-100', 'opacity-100');
-            modalEl.classList.add('scale-95', 'opacity-0');
-            setTimeout(() => {
-                modalContainer.classList.add('hidden');
-                modalContainer.classList.remove('flex');
-                modalEl.classList.add('hidden'); // Ensure it's hidden from layout
-            }, 300);
-        }
-
-        // We need a way to track which modal is active to hide it properly
-        let activeModal = null;
-
-        window.showConfirmModal = function({ title, message, icon = 'help', confirmText = 'Confirm', variant = 'indigo' }, onConfirm) {
-            if (activeModal) activeModal.classList.add('hidden');
-            
-            document.getElementById('confirm-title').innerText = title;
-            document.getElementById('confirm-message').innerText = message;
-            document.getElementById('confirm-icon').innerText = icon;
-            
-            const proceedBtn = document.getElementById('confirm-proceed-btn');
-            proceedBtn.innerText = confirmText;
-            
-            // Variants
-            proceedBtn.className = `flex-1 py-3.5 px-4 rounded-2xl font-bold text-xs shadow-lg transition-all active:scale-95 text-white ${
-                variant === 'danger' ? 'bg-rose-500 hover:bg-rose-600 shadow-rose-100' : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-100'
-            }`;
-            
-            const cancelBtn = document.getElementById('confirm-cancel-btn');
-            
-            showModal(confirmModal);
-            confirmModal.classList.remove('hidden');
-            activeModal = confirmModal;
-
-            proceedBtn.onclick = () => {
-                hideModal(confirmModal);
-                onConfirm();
-            };
-            cancelBtn.onclick = () => hideModal(confirmModal);
-            modalOverlay.onclick = () => hideModal(confirmModal);
-        };
-
-        window.showAlertModal = function({ title, message, type = 'success' }) {
-            if (activeModal) activeModal.classList.add('hidden');
-
-            document.getElementById('alert-title').innerText = title;
-            document.getElementById('alert-message').innerText = message;
-            
-            const iconBg = document.getElementById('alert-icon-bg');
-            const icon = document.getElementById('alert-icon');
-            
-            if (type === 'error') {
-                iconBg.className = "w-16 h-16 bg-rose-50 dark:bg-rose-900/30 rounded-2xl flex items-center justify-center mx-auto mb-6";
-                icon.className = "material-symbols-outlined text-rose-500 text-3xl font-bold";
-                icon.innerText = 'error';
-            } else {
-                iconBg.className = "w-16 h-16 bg-emerald-50 dark:bg-emerald-900/30 rounded-2xl flex items-center justify-center mx-auto mb-6";
-                icon.className = "material-symbols-outlined text-emerald-500 text-3xl font-bold";
-                icon.innerText = 'check_circle';
-            }
-
-            showModal(alertModal);
-            alertModal.classList.remove('hidden');
-            activeModal = alertModal;
-
-            document.getElementById('alert-close-btn').onclick = () => hideModal(alertModal);
-            modalOverlay.onclick = () => hideModal(alertModal);
-        };
-
         async function handleApprove() {
             showConfirmModal({
                 title: 'Publish Course?',
@@ -966,7 +881,7 @@
                 try {
                     const instId = currentCourse.instructor_id || (currentCourse.instructor ? currentCourse.instructor.id : null);
                     await CourseService.approveCourse(currentCourse.id, instId);
-                    showAlertModal({ title: 'Published!', message: 'Course successfully published to the marketplace.' });
+                    showToast('Course successfully published!');
                     setTimeout(() => window.location.href = 'index.html', 2000);
                 } catch (e) {
                     console.error(e);
@@ -1023,8 +938,8 @@
             const config = decision === 'approve' 
                 ? {
                     title: 'Accept Appeal?',
-                    message: 'Are you sure you want to accept this appeal and move the course back to pending review?',
-                    icon: 'check_circle',
+                    message: "Are you sure you want to ACCEPT this appeal? The course will return to the 'Pending Review' queue.",
+                    icon: 'history',
                     confirmText: 'Accept Appeal',
                     variant: 'indigo'
                 }
@@ -1041,11 +956,7 @@
                     const notes = decision === 'approve' ? 'Appeal accepted.' : 'Appeal rejected. Course deleted.';
                     await CourseService.handleAppeal(currentCourse.id, decision, notes);
                     
-                    showAlertModal({ 
-                        title: decision === 'approve' ? 'Appeal Accepted' : 'Course Deleted', 
-                        message: decision === 'approve' ? 'The course has been moved back to review status.' : 'The course and its data have been permanently removed.'
-                    });
-                    
+                    showToast(decision === 'approve' ? 'Appeal accepted successfully.' : 'Course deleted.');
                     setTimeout(() => window.location.href = 'index.html', 2000);
                 } catch (e) {
                     console.error("Appeal handling failed:", e);
@@ -1054,38 +965,5 @@
             });
         };
     </script>
-    <!-- Modals Container -->
-    <div id="modal-container" class="fixed inset-0 z-[100] hidden items-center justify-center p-4">
-        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" id="modal-overlay"></div>
-        
-        <!-- Confirmation Modal -->
-        <div id="confirm-modal" class="relative bg-white dark:bg-slate-900 rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl scale-95 opacity-0 transition-all duration-300 transform hidden">
-            <div class="px-8 pt-10 pb-6 text-center">
-                <div class="w-16 h-16 bg-indigo-50 dark:bg-indigo-900/30 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                    <span class="material-symbols-outlined text-indigo-500 text-3xl font-bold" id="confirm-icon">help</span>
-                </div>
-                <h3 class="text-xl font-bold text-slate-800 dark:text-white mb-2" id="confirm-title">Are you sure?</h3>
-                <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed" id="confirm-message">This action cannot be undone.</p>
-            </div>
-            <div class="px-8 pb-10 flex gap-3">
-                <button id="confirm-cancel-btn" class="flex-1 py-3.5 px-4 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-2xl font-bold text-xs transition-all active:scale-95">Cancel</button>
-                <button id="confirm-proceed-btn" class="flex-1 py-3.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold text-xs shadow-lg shadow-indigo-200 dark:shadow-none transition-all active:scale-95">Confirm</button>
-            </div>
-        </div>
-
-        <!-- Alert Modal -->
-        <div id="alert-modal" class="relative bg-white dark:bg-slate-900 rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl scale-95 opacity-0 transition-all duration-300 transform hidden">
-            <div class="px-8 pt-10 pb-6 text-center">
-                <div class="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6" id="alert-icon-bg">
-                    <span class="material-symbols-outlined text-3xl font-bold" id="alert-icon">check_circle</span>
-                </div>
-                <h3 class="text-xl font-bold text-slate-800 dark:text-white mb-2" id="alert-title">Success</h3>
-                <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed" id="alert-message">Action completed successfully.</p>
-            </div>
-            <div class="px-8 pb-10">
-                <button id="alert-close-btn" class="w-full py-3.5 px-4 bg-slate-900 dark:bg-white dark:text-slate-900 text-white rounded-2xl font-bold text-xs transition-all active:scale-95">Close</button>
-            </div>
-        </div>
-    </div>
 </body>
 </html>

@@ -123,7 +123,7 @@ async function loadDraft(courseId) {
             pricing: {
                 type: course.price_type || 'free',
                 currency: course.currency || 'USD',
-                price: course.price || null,
+                price: course.price ?? null,
                 coupon: '',
                 coupon_percent: null,
                 coupon_start: null,
@@ -555,7 +555,11 @@ async function saveCurrentStepData(shouldSaveToDb = false) {
         window.courseDraft.level = document.getElementById('course-level')?.value || 'Beginner';
     } else if (window.currentStep === 3) {
         window.courseDraft.pricing.currency = document.getElementById('course-currency')?.value || 'USD';
-        window.courseDraft.pricing.price = document.getElementById('course-price')?.value || null;
+        
+        // 🔥 CRITICAL: Match DB column 'price' instead of just local draft state
+        const priceVal = parseFloat(document.getElementById('course-price')?.value);
+        window.courseDraft.pricing.price = isNaN(priceVal) ? null : priceVal;
+        
         window.courseDraft.pricing.coupon = document.getElementById('course-coupon')?.value || '';
         window.courseDraft.pricing.coupon_percent = parseInt(document.getElementById('course-coupon-percent')?.value) || null;
         window.courseDraft.pricing.coupon_start = document.getElementById('course-coupon-start')?.value || null;
@@ -1251,15 +1255,23 @@ async function saveModalResource() {
 function setPricingTier(tier) {
     window.courseDraft.pricing.type = tier;
     const detailsContainer = document.getElementById('pricing-details-container');
+    const btnFree = document.getElementById('btn-tier-free');
+    const btnPaid = document.getElementById('btn-tier-paid');
 
     if (tier === 'free') {
         detailsContainer.style.opacity = '0.5';
         detailsContainer.style.pointerEvents = 'none';
         document.getElementById('course-price').value = '';
         window.courseDraft.pricing.price = null;
+        // Highlight Free button
+        if (btnFree) { btnFree.classList.add('bg-white', 'dark:bg-slate-600', 'shadow-sm', 'text-slate-900', 'dark:text-white'); btnFree.classList.remove('text-slate-500', 'dark:text-slate-400', 'hover:text-slate-700', 'dark:hover:text-white'); }
+        if (btnPaid) { btnPaid.classList.remove('bg-white', 'dark:bg-slate-600', 'shadow-sm', 'text-slate-900', 'dark:text-white'); btnPaid.classList.add('text-slate-500', 'dark:text-slate-400', 'hover:text-slate-700', 'dark:hover:text-white'); }
     } else {
         detailsContainer.style.opacity = '1';
         detailsContainer.style.pointerEvents = 'auto';
+        // Highlight Paid button
+        if (btnPaid) { btnPaid.classList.add('bg-white', 'dark:bg-slate-600', 'shadow-sm', 'text-slate-900', 'dark:text-white'); btnPaid.classList.remove('text-slate-500', 'dark:text-slate-400', 'hover:text-slate-700', 'dark:hover:text-white'); }
+        if (btnFree) { btnFree.classList.remove('bg-white', 'dark:bg-slate-600', 'shadow-sm', 'text-slate-900', 'dark:text-white'); btnFree.classList.add('text-slate-500', 'dark:text-slate-400', 'hover:text-slate-700', 'dark:hover:text-white'); }
     }
     calculatePayout();
 }
@@ -1591,10 +1603,10 @@ function wizardCalculatePayout() {
     
     // Determine the source of the price
     let price;
-    if (priceInput && document.getElementById('step-3-container')?.classList.contains('block')) {
-        // If we're on Step 3 and the input exists, use its live value
+    if (priceInput) {
+        // If the input exists, use its live value and sync to draft
         price = parseFloat(priceInput.value) || 0;
-        window.courseDraft.pricing.price = price; // Sync back to draft for real-time preview
+        window.courseDraft.pricing.price = price; 
     } else {
         // Otherwise use the draft state (reliable for Step 4)
         price = parseFloat(window.courseDraft.pricing.price || 0);

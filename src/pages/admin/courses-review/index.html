@@ -169,6 +169,7 @@
         import { supabase } from '/src/services/supabaseClient.js';
         import { CourseService } from '/src/services/courseService.js';
         import { AuthService } from '/src/services/authService.js';
+        import { showToast, showConfirmModal, showAlertModal } from '/src/services/notificationUI.js';
 
         document.addEventListener('DOMContentLoaded', async () => {
             const grid = document.getElementById('courses-grid');
@@ -314,49 +315,59 @@
 
             // Action Handlers
             window.acceptAppeal = async (courseId) => {
-                if (!confirm("Are you sure you want to ACCEPT this appeal? The course will return to the 'Pending Review' queue.")) return;
-                
-                try {
-                    const { error } = await supabase
-                        .from('courses')
-                        .update({ status: 'pending_review' })
-                        .eq('id', courseId);
-                    
-                    if (error) throw error;
+                showConfirmModal({
+                    title: 'Accept Appeal?',
+                    message: "Are you sure you want to ACCEPT this appeal? The course will return to the 'Pending Review' queue.",
+                    icon: 'history',
+                    confirmText: 'Accept Appeal'
+                }, async () => {
+                    try {
+                        const { error } = await supabase
+                            .from('courses')
+                            .update({ status: 'pending_review' })
+                            .eq('id', courseId);
+                        
+                        if (error) throw error;
 
-                    await supabase.from('course_moderation_logs').insert({
-                        course_id: courseId,
-                        decision: 'pending_review',
-                        notes: 'Appeal accepted by admin. Course returned to review queue.'
-                    });
+                        await supabase.from('course_moderation_logs').insert({
+                            course_id: courseId,
+                            decision: 'pending_review',
+                            notes: 'Appeal accepted by admin. Course returned to review queue.'
+                        });
 
-                    alert("Appeal accepted successfully.");
-                    await loadReviews();
-                } catch (e) {
-                    alert("Failed to accept appeal: " + e.message);
-                }
+                        showToast("Appeal accepted successfully.");
+                        await loadReviews();
+                    } catch (e) {
+                        showAlertModal({ title: 'Error', message: "Failed to accept appeal: " + e.message, type: 'error' });
+                    }
+                });
             };
 
             window.rejectAppeal = async (courseId) => {
-                const warningMsg = "CAUTION: This will PERMANENTLY DELETE the course and all its content (lessons, sections, quizzes, etc.). This action cannot be undone.\n\nAre you sure you want to REJECT this appeal and DELETE the course?";
+                const warningMsg = "CAUTION: This will PERMANENTLY DELETE the course and all its content (lessons, sections, quizzes, etc.). This action cannot be undone.";
                 
-                if (!confirm(warningMsg)) return;
+                showConfirmModal({
+                    title: 'Reject & Delete?',
+                    message: warningMsg,
+                    icon: 'delete_forever',
+                    confirmText: 'Reject & Delete',
+                    variant: 'danger'
+                }, async () => {
+                    try {
+                        // Destroy everything. Postgres cascade should handle this if foreign keys are set up.
+                        const { error } = await supabase
+                            .from('courses')
+                            .delete()
+                            .eq('id', courseId);
+                        
+                        if (error) throw error;
 
-                try {
-                    // Destroy everything. Postgres cascade should handle this if foreign keys are set up.
-                    // Based on my knowledge, they are.
-                    const { error } = await supabase
-                        .from('courses')
-                        .delete()
-                        .eq('id', courseId);
-                    
-                    if (error) throw error;
-
-                    alert("Appeal rejected and course permanently deleted.");
-                    await loadReviews();
-                } catch (e) {
-                    alert("Failed to reject appeal: " + e.message);
-                }
+                        showToast("Appeal rejected and course deleted.");
+                        await loadReviews();
+                    } catch (e) {
+                        showAlertModal({ title: 'Error', message: "Failed to reject appeal: " + e.message, type: 'error' });
+                    }
+                });
             };
 
             await loadReviews();
