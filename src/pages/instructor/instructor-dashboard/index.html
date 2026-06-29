@@ -118,30 +118,7 @@
             class="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-8 sticky top-0 z-10 shrink-0">
             <h1 class="text-lg font-semibold dark:text-white" id="header-page-title">Dashboard</h1>
             <div class="flex items-center gap-4">
-                <!-- NOTIFICATION BELL -->
-                <div class="relative" id="notif-wrapper">
-                    <button id="notif-bell-btn" onclick="toggleNotifPanel()"
-                        class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 relative transition-colors">
-                        <span class="material-symbols-outlined">notifications</span>
-                        <span id="notif-badge"
-                            class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full hidden"></span>
-                    </button>
-                    <!-- DROPDOWN PANEL -->
-                    <div id="notif-panel"
-                        class="hidden absolute right-0 top-12 w-96 max-h-[520px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl flex flex-col z-50 overflow-hidden">
-                        <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800 shrink-0">
-                            <span class="font-bold text-slate-800 dark:text-white text-base">Notifications</span>
-                            <button onclick="markAllRead()"
-                                class="text-xs text-primary hover:underline font-medium">Mark all read</button>
-                        </div>
-                        <div id="notif-list" class="flex-1 overflow-y-auto divide-y divide-slate-50 dark:divide-slate-800">
-                            <div id="notif-empty" class="flex flex-col items-center justify-center py-16 text-center">
-                                <span class="material-symbols-outlined text-4xl text-slate-300 mb-3">notifications_none</span>
-                                <p class="text-slate-400 text-sm">You're all caught up!</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+
 
                 <button class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                     onclick="document.documentElement.classList.toggle('dark')">
@@ -219,61 +196,120 @@
                     <p class="text-slate-500 mt-2 text-lg">Your dashboard provides an overview of your teaching success.
                     </p>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-                    <div
-                        class="bg-white dark:bg-slate-900 p-8 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                        <div class="flex items-center gap-4 mb-4">
-                            <div
-                                class="w-12 h-12 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 rounded-lg flex items-center justify-center">
+                <!-- DASHBOARD WIDGETS -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+                    <!-- Total Earnings (Existing) -->
+                    <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
+                        <div class="flex items-center gap-3 mb-3">
+                            <div class="w-10 h-10 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 rounded-xl flex items-center justify-center">
                                 <span class="material-symbols-outlined">payments</span>
                             </div>
-                            <h3 class="font-semibold text-slate-600 dark:text-slate-400">Total Earnings</h3>
+                            <h3 class="font-semibold text-slate-500 dark:text-slate-400 text-sm">Total Earnings</h3>
                         </div>
-                        <div class="text-4xl font-bold dark:text-white mb-2">$0.00</div>
-                        <p class="text-slate-500 text-sm leading-relaxed">Statistics will appear once you start selling.
-                        </p>
+                        <div id="total-earnings-metric" class="text-3xl font-bold dark:text-white mb-1">$0.00</div>
+                        <p class="text-slate-400 text-xs">All-time life revenue</p>
                     </div>
-                    <div
-                        class="bg-white dark:bg-slate-900 p-8 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                        <div class="flex items-center gap-4 mb-4">
-                            <div
-                                class="w-12 h-12 bg-indigo-50 dark:bg-indigo-900/30 text-primary rounded-lg flex items-center justify-center">
+
+                    <!-- Total Courses (Existing) -->
+                    <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
+                        <div class="flex items-center gap-3 mb-3">
+                            <div class="w-10 h-10 bg-indigo-50 dark:bg-indigo-900/30 text-primary rounded-xl flex items-center justify-center">
                                 <span class="material-symbols-outlined">auto_stories</span>
                             </div>
-                            <h3 class="font-semibold text-slate-600 dark:text-slate-400">Total Courses</h3>
+                            <h3 class="font-semibold text-slate-500 dark:text-slate-400 text-sm">Total Courses</h3>
                         </div>
-                        <div id="total-courses-metric" class="text-4xl font-bold dark:text-white mb-2">0</div>
-                        <p id="total-courses-desc" class="text-slate-500 text-sm leading-relaxed">Create your first
-                            course to begin.</p>
+                        <div id="total-courses-metric" class="text-3xl font-bold dark:text-white mb-1">0</div>
+                        <p id="total-courses-desc" class="text-slate-400 text-xs">Your portfolio size</p>
+                    </div>
+
+                    <!-- Total Students (New) -->
+                    <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
+                        <div class="flex items-center gap-3 mb-3">
+                            <div class="w-10 h-10 bg-amber-50 dark:bg-amber-900/30 text-amber-600 rounded-xl flex items-center justify-center">
+                                <span class="material-symbols-outlined">group</span>
+                            </div>
+                            <h3 class="font-semibold text-slate-500 dark:text-slate-400 text-sm">Enrolled Students</h3>
+                        </div>
+                        <div id="total-students-metric" class="text-3xl font-bold dark:text-white mb-1">0</div>
+                        <p class="text-slate-400 text-xs">Global reach</p>
+                    </div>
+
+                    <!-- Mentorship Activity (New) -->
+                    <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
+                        <div class="flex items-center gap-3 mb-3">
+                            <div class="w-10 h-10 bg-rose-50 dark:bg-rose-900/30 text-rose-600 rounded-xl flex items-center justify-center">
+                                <span class="material-symbols-outlined">forum</span>
+                            </div>
+                            <h3 class="font-semibold text-slate-500 dark:text-slate-400 text-sm">Active Mentorship</h3>
+                        </div>
+                        <div id="mentorship-sessions-metric" class="text-3xl font-bold dark:text-white mb-1">0</div>
+                        <p id="next-session-desc" class="text-slate-400 text-xs">Pending sessions</p>
                     </div>
                 </div>
-                <div
-                    class="bg-white dark:bg-slate-900 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 p-16 flex flex-col items-center text-center">
-                    <div
-                        class="w-24 h-24 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-6">
-                        <span
-                            class="material-symbols-outlined text-slate-300 dark:text-slate-600 text-5xl">auto_stories</span>
+
+                <!-- QUICK ACTIONS & FILTER BAR -->
+                <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 mb-8 flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex flex-wrap items-center gap-4 flex-1">
+                        <div class="relative flex-1 max-w-md">
+                            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+                            <input type="text" id="course-search-input" placeholder="Search courses by name, ID or category..." 
+                                class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20 transition-all dark:text-white">
+                        </div>
+                        <select id="status-filter" class="bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm py-2.5 px-4 focus:ring-2 focus:ring-primary/20 dark:text-white">
+                            <option value="all">All Statuses</option>
+                            <option value="published">Published</option>
+                            <option value="pending_review">Pending Review</option>
+                            <option value="draft">Draft</option>
+                            <option value="rejected">Rejected</option>
+                        </select>
                     </div>
-                    <h3 class="text-xl font-bold dark:text-white mb-2">You haven't created any courses yet</h3>
-                    <p class="text-slate-500 max-w-sm mb-8">Your journey as an educator starts here. Create your first
-                        course and reach thousands of students worldwide.</p>
                     <button onclick="window.location.href='/src/pages/instructor/instructor-courses/wizard.html'"
-                        class="bg-primary hover:bg-indigo-700 text-white px-8 py-4 rounded-xl flex items-center gap-3 font-semibold transition-all shadow-xl shadow-indigo-200 dark:shadow-none hover:scale-105 active:scale-95">
-                        <span class="material-symbols-outlined text-2xl">add_circle</span>
-                        Create Your First Course
+                        class="bg-primary hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl flex items-center gap-2 font-semibold transition-all shadow-lg shadow-indigo-100 dark:shadow-none whitespace-nowrap">
+                        <span class="material-symbols-outlined text-xl">add_circle</span>
+                        Create New Course
                     </button>
-                    <div class="mt-12 flex items-center gap-6 text-sm text-slate-400">
-                        <div class="flex items-center gap-2">
-                            <span class="material-symbols-outlined text-base">verified</span>
-                            Instructor Badge
+                </div>
+
+                <!-- PORTFOLIO SECTION -->
+                <div id="dashboard-portfolio-container">
+                    <!-- LOADING STATE -->
+                    <div id="portfolio-loading" class="py-20 flex flex-col items-center justify-center text-slate-400">
+                        <div class="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
+                        <p>Loading your portfolio...</p>
+                    </div>
+
+                    <!-- EMPTY STATE (Hidden by default) -->
+                    <div id="portfolio-empty" class="hidden bg-white dark:bg-slate-900 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 p-16 flex flex-col items-center text-center">
+                        <div class="w-24 h-24 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-6">
+                            <span class="material-symbols-outlined text-slate-300 dark:text-slate-600 text-5xl">auto_stories</span>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <span class="material-symbols-outlined text-base">group</span>
-                            Community Access
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <span class="material-symbols-outlined text-base">support_agent</span>
-                            24/7 Support
+                        <h3 class="text-xl font-bold dark:text-white mb-2">You haven't created any courses yet</h3>
+                        <p class="text-slate-500 max-w-sm mb-8">Your journey as an educator starts here. Create your first course and reach thousands of students worldwide.</p>
+                        <button onclick="window.location.href='/src/pages/instructor/instructor-courses/wizard.html'"
+                            class="bg-primary hover:bg-indigo-700 text-white px-8 py-4 rounded-xl flex items-center gap-3 font-semibold transition-all shadow-xl shadow-indigo-200 dark:shadow-none hover:scale-105 active:scale-95">
+                            <span class="material-symbols-outlined text-2xl">add_circle</span>
+                            Create Your First Course
+                        </button>
+                    </div>
+
+                    <!-- DATA GRID -->
+                    <div id="portfolio-grid-wrapper" class="hidden">
+                        <div class="overflow-x-auto bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
+                            <table class="w-full text-left">
+                                <thead>
+                                    <tr class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">
+                                        <th class="px-6 py-4">Course Details</th>
+                                        <th class="px-6 py-4">Category / ID</th>
+                                        <th class="px-6 py-4">Status</th>
+                                        <th class="px-6 py-4">Performance</th>
+                                        <th class="px-6 py-4">Price</th>
+                                        <th class="px-6 py-4 text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="portfolio-table-body" class="divide-y divide-slate-100 dark:divide-slate-800 text-sm">
+                                    <!-- Dynamic Rows -->
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
@@ -294,27 +330,231 @@
         <script type="module">
             import { supabase } from '/src/services/supabaseClient.js';
             import { AuthService } from '/src/services/authService.js';
+            import { CourseService } from '/src/services/courseService.js';
+            import { MentorService } from '/src/services/mentorService.js';
+            import { PayoutService } from '/src/services/payoutService.js';
 
-            document.addEventListener('DOMContentLoaded', async () => {
+            let allCourses = [];
+
+            async function initDashboard() {
+                console.log("[Dashboard] Starting initialization...");
+                const loadingText = document.getElementById('portfolio-loading');
+                
                 try {
                     const session = await AuthService.getSession();
-                    if (!session) return;
-
-                    const { count, error } = await supabase
-                        .from('courses')
-                        .select('*', { count: 'exact', head: true })
-                        .eq('instructor_id', session.user.id);
-
-                    if (!error && count !== null) {
-                        const metricEl = document.getElementById('total-courses-metric');
-                        const descEl = document.getElementById('total-courses-desc');
-                        if (metricEl) metricEl.innerText = count;
-                        if (descEl && count > 0) descEl.innerText = "Keep up the great work!";
+                    if (!session) {
+                        console.warn("[Dashboard] No session found, redirecting...");
+                        return;
                     }
+                    const instructorId = session.user.id;
+                    console.log("[Dashboard] Instructor ID:", instructorId);
+
+                    // 1. Fetch Summary Data with individual error handling to prevent total hang
+                    console.log("[Dashboard] Fetching data...");
+                    const [stats, earnings, sessions, courses] = await Promise.all([
+                        CourseService.getInstructorStats(instructorId).catch(err => {
+                            console.error("[Dashboard] Stats fetch failed:", err);
+                            return { totalCourses: 0, totalStudents: 0 };
+                        }),
+                        calculateEarnings(instructorId).catch(err => {
+                            console.error("[Dashboard] Earnings calculation failed:", err);
+                            return { totalEarnings: 0 };
+                        }),
+                        MentorService.getMentorSessions(instructorId).catch(err => {
+                            console.error("[Dashboard] Mentor sessions fetch failed:", err);
+                            return [];
+                        }),
+                        CourseService.getInstructorCourses().catch(err => {
+                            console.error("[Dashboard] Courses fetch failed:", err);
+                            return [];
+                        })
+                    ]);
+
+                    allCourses = courses || [];
+                    console.log("[Dashboard] Data fetched successfully:", { stats, earnings, sessionsCount: sessions?.length, coursesCount: allCourses.length });
+
+                    // 2. Populate Metrics
+                    updateMetrics({
+                        earnings: earnings.totalEarnings || 0,
+                        courses: stats.totalCourses || 0,
+                        students: stats.totalStudents || 0,
+                        sessions: sessions.filter(s => s.booking_status === 'pending_review').length
+                    });
+
+                    // 3. Render Portfolio
+                    renderPortfolio(allCourses);
+
+                    // 4. Setup Search & Filters
+                    setupListeners();
+
                 } catch (e) {
-                    console.error("Failed to load metrics", e);
+                    console.error("[Dashboard] Critical Init Error:", e);
+                    if (loadingText) {
+                        loadingText.innerHTML = `
+                            <div class="text-red-500 flex flex-col items-center">
+                                <span class="material-symbols-outlined text-4xl mb-2">error</span>
+                                <p>Failed to load dashboard data. ${e.message || ''}</p>
+                                <button onclick="window.location.reload()" class="mt-4 px-4 py-2 bg-primary text-white rounded-lg">Retry</button>
+                            </div>
+                        `;
+                    }
                 }
-            });
+            }
+
+            async function calculateEarnings(instructorId) {
+                const [transactions, payouts] = await Promise.all([
+                    PayoutService.getTransactions(instructorId),
+                    PayoutService.getPayoutHistory(instructorId)
+                ]);
+
+                let totalEarnings = 0;
+                if (transactions && transactions.length > 0) {
+                    totalEarnings = transactions
+                        .filter(tx => tx.status === 'completed')
+                        .reduce((sum, tx) => sum + parseFloat(tx.amount || 0), 0);
+                }
+
+                return { totalEarnings };
+            }
+
+            function updateMetrics({ earnings, courses, students, sessions }) {
+                document.getElementById('total-earnings-metric').innerText = `$${parseFloat(earnings).toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
+                document.getElementById('total-courses-metric').innerText = courses;
+                document.getElementById('total-students-metric').innerText = students;
+                document.getElementById('mentorship-sessions-metric').innerText = sessions;
+                
+                const nextSessionDesc = document.getElementById('next-session-desc');
+                if (nextSessionDesc) {
+                    if (sessions > 0) {
+                        nextSessionDesc.innerText = `${sessions} pending approval`;
+                        nextSessionDesc.classList.add('text-rose-500', 'font-medium');
+                    } else {
+                        nextSessionDesc.innerText = "No pending sessions";
+                        nextSessionDesc.classList.remove('text-rose-500', 'font-medium');
+                    }
+                }
+            }
+
+            function renderPortfolio(courses) {
+                const loading = document.getElementById('portfolio-loading');
+                const empty = document.getElementById('portfolio-empty');
+                const grid = document.getElementById('portfolio-grid-wrapper');
+                const tbody = document.getElementById('portfolio-table-body');
+
+                if (loading) loading.classList.add('hidden');
+
+                if (!courses || courses.length === 0) {
+                    if (empty) empty.classList.remove('hidden');
+                    if (grid) grid.classList.add('hidden');
+                    return;
+                }
+
+                if (empty) empty.classList.add('hidden');
+                if (grid) grid.classList.remove('hidden');
+
+                if (tbody) {
+                    tbody.innerHTML = courses.map(course => {
+                        const statusColors = {
+                            'published': 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+                            'pending_review': 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+                            'draft': 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400',
+                            'rejected': 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                        };
+                        const statusClass = statusColors[course.status] || statusColors.draft;
+                        const statusLabel = (course.status || 'draft').replace('_', ' ');
+                        const createdDate = new Date(course.created_at).toLocaleDateString();
+
+                        return `
+                            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
+                                <td class="px-6 py-5">
+                                    <div class="flex items-center gap-4">
+                                        <div class="w-12 h-12 rounded-lg bg-slate-100 dark:bg-slate-800 overflow-hidden flex-shrink-0 border border-slate-200 dark:border-slate-700">
+                                            ${course.thumbnail_url ? `<img src="${course.thumbnail_url}" class="w-full h-full object-cover">` : `<span class="material-symbols-outlined text-slate-400 w-full h-full flex items-center justify-center">image</span>`}
+                                        </div>
+                                        <div>
+                                            <div class="font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors">${course.title || 'Untitled Course'}</div>
+                                            <div class="text-xs text-slate-400 mt-1 flex items-center gap-2">
+                                                <span class="material-symbols-outlined text-[14px]">calendar_today</span>
+                                                Created: ${createdDate}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-5">
+                                    <div class="text-xs font-mono bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded inline-block mb-1 text-slate-500 dark:text-slate-400">
+                                        ${course.serial_id || 'CRS-XXXX'}
+                                    </div>
+                                    <div class="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                                        ${course.category?.name || 'Uncategorized'}
+                                    </div>
+                                </td>
+                                <td class="px-6 py-5">
+                                    <span class="px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider ${statusClass}">
+                                        ${statusLabel}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-5">
+                                    <div class="flex flex-col gap-1.5">
+                                        <div class="flex items-center gap-2 text-slate-600 dark:text-slate-300">
+                                            <span class="material-symbols-outlined text-sm">group</span>
+                                            <span class="font-semibold">${course.enrolled_count || 0}</span>
+                                        </div>
+                                        <div class="flex items-center gap-2 text-amber-500">
+                                            <span class="material-symbols-outlined text-sm">star</span>
+                                            <span class="font-semibold">${course.avg_rating || '0.0'}</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-5">
+                                    <div class="font-bold text-slate-900 dark:text-white">$${parseFloat(course.price || 0).toFixed(2)}</div>
+                                    <div class="text-[10px] text-slate-400 uppercase mt-0.5">${course.price > 0 ? 'One-time' : 'Free'}</div>
+                                </td>
+                                <td class="px-6 py-5 text-right">
+                                    <div class="flex items-center justify-end gap-2">
+                                        <button onclick="window.location.href='/src/pages/instructor/instructor-courses/wizard.html?id=${course.id}'" 
+                                            class="p-2 hover:bg-primary/10 hover:text-primary rounded-lg transition-all text-slate-400" title="Edit Course">
+                                            <span class="material-symbols-outlined text-xl">edit</span>
+                                        </button>
+                                        <button onclick="window.location.href='/src/pages/learning/learning-interface/index.html?id=${course.id}'" 
+                                            class="p-2 hover:bg-emerald-500/10 hover:text-emerald-500 rounded-lg transition-all text-slate-400" title="Preview Course">
+                                            <span class="material-symbols-outlined text-xl">visibility</span>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+            }
+
+            function setupListeners() {
+                const searchInput = document.getElementById('course-search-input');
+                const statusFilter = document.getElementById('status-filter');
+
+                if (searchInput && statusFilter) {
+                    const handleFilter = () => {
+                        const searchTerm = searchInput.value.toLowerCase();
+                        const statusValue = statusFilter.value;
+
+                        const filtered = allCourses.filter(course => {
+                            const matchesSearch = (course.title || '').toLowerCase().includes(searchTerm) || 
+                                                (course.serial_id || '').toLowerCase().includes(searchTerm) ||
+                                                (course.category?.name || '').toLowerCase().includes(searchTerm);
+                            
+                            const matchesStatus = statusValue === 'all' || course.status === statusValue;
+
+                            return matchesSearch && matchesStatus;
+                        });
+
+                        renderPortfolio(filtered);
+                    };
+
+                    searchInput.addEventListener('input', handleFilter);
+                    statusFilter.addEventListener('change', handleFilter);
+                }
+            }
+
+            document.addEventListener('DOMContentLoaded', initDashboard);
         </script>
     </div>
 
@@ -322,8 +562,7 @@
     <script src="/src/utils/js/instructor-app.js"></script>
     <script src="/src/pages/instructor/instructor-mentorship/mentorship.js"></script>
 
-    <!-- NOTIFICATION SYSTEM -->
-    <script type="module" src="/src/services/instructorNotifications.js"></script>
+
 
 </body>
 

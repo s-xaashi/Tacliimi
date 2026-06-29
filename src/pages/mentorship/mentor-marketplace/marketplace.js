@@ -27,7 +27,7 @@ async function initMarketplace() {
             return;
         }
 
-        populateFilters(allMentors);
+        await populateFilters(allMentors);
         setupEventListeners();
         renderMentors(allMentors);
 
@@ -44,27 +44,34 @@ async function initMarketplace() {
     }
 }
 
-function populateFilters(mentors) {
+async function populateFilters(mentors) {
     const categoryContainer = document.getElementById('category-filters');
     const countrySelect = document.getElementById('country-filter');
     const citySelect = document.getElementById('city-filter');
 
-    // Categories
-    const categories = new Set();
-    mentors.forEach(m => m.expertise.forEach(e => categories.add(e)));
-    
-    // Clear dynamic categories (keep "All Categories" button)
+    // Categories — load from centralized mentor_categories table
     const allBtn = categoryContainer.querySelector('[data-category="all"]');
     categoryContainer.innerHTML = '';
     categoryContainer.appendChild(allBtn);
 
-    Array.from(categories).sort().forEach(cat => {
+    let categoryList = [];
+    try {
+        categoryList = await MentorService.getMentorCategories();
+    } catch (err) {
+        // Fallback to dynamic aggregation from mentor data
+        const dynamicCats = new Set();
+        mentors.forEach(m => m.expertise.forEach(e => dynamicCats.add(e)));
+        categoryList = Array.from(dynamicCats).sort().map(n => ({ name: n }));
+    }
+
+    categoryList.sort((a, b) => a.name.localeCompare(b.name)).forEach(cat => {
+        const catName = cat.name;
         const btn = document.createElement('button');
-        btn.dataset.category = cat;
+        btn.dataset.category = catName;
         btn.className = 'w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer filter-category-btn transition-all duration-200 group';
         btn.innerHTML = `
             <span class="material-symbols-outlined text-xl text-slate-400 group-hover:text-primary transition-colors">label</span>
-            <span class="text-sm font-medium text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white">${cat}</span>
+            <span class="text-sm font-medium text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white">${catName}</span>
         `;
         categoryContainer.appendChild(btn);
     });
@@ -169,6 +176,12 @@ function applyFilters() {
     });
 
     renderMentors(filtered);
+
+    // Track search telemetry (fire-and-forget)
+    const keyword = activeFilters.search?.trim();
+    if (keyword) {
+        MentorService.trackSearch(keyword, filtered.length).catch(() => {});
+    }
 }
 
 function formatResponseTime(hours) {

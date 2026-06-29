@@ -358,10 +358,23 @@
             sort: 'Newest'
         };
 
+        // Robust fetch with retry
+        async function fetchWithRetry(fetchFn, retries = 3, delay = 1000) {
+            for (let i = 0; i < retries; i++) {
+                try {
+                    return await fetchFn();
+                } catch (err) {
+                    if (i === retries - 1) throw err;
+                    console.warn(`Retry ${i + 1}/${retries} failed...`, err);
+                    await new Promise(resolve => setTimeout(resolve, delay * (i + 1)));
+                }
+            }
+        }
+
         async function initFilters() {
+            const container = document.getElementById('category-filters');
             try {
-                const categories = await CourseService.getCategories();
-                const container = document.getElementById('category-filters');
+                const categories = await fetchWithRetry(() => CourseService.getCategories());
                 
                 container.innerHTML = categories.map(cat => `
                     <label class="flex items-center gap-3 cursor-pointer group">
@@ -381,6 +394,12 @@
                 });
             } catch (e) {
                 console.error("Filter init error:", e);
+                container.innerHTML = `
+                    <div class="py-4 text-center">
+                        <p class="text-xs text-red-500 mb-2">Failed to load categories</p>
+                        <button onclick="initFilters()" class="text-[10px] font-bold text-primary hover:underline">Retry</button>
+                    </div>
+                `;
             }
         }
 
@@ -437,14 +456,21 @@
             grid.innerHTML = '<div class="col-span-full py-20 text-center"><div class="w-10 h-10 border-4 border-slate-200 border-t-primary rounded-full animate-spin mx-auto"></div><p class="mt-4 text-slate-500 font-medium">Updating courses...</p></div>';
 
             try {
-                const courses = await CourseService.getPublishedCourses(filters);
+                const courses = await fetchWithRetry(() => CourseService.getPublishedCourses(filters));
                 
                 resultsCount.textContent = `Showing ${courses.length} result${courses.length !== 1 ? 's' : ''}`;
+
+                // Track search telemetry (fire-and-forget)
+                const keyword = filters.search?.trim();
+                if (keyword) {
+                    CourseService.trackSearch(keyword, courses.length).catch(() => {});
+                }
 
                 if (courses.length === 0) {
                     grid.innerHTML = '<div class="col-span-full py-20 text-center text-slate-500 italic text-lg">No courses found matching your filters.</div>';
                     return;
                 }
+                
 
                 let html = '';
                 courses.forEach(course => {
@@ -577,7 +603,18 @@
                 grid.innerHTML = html;
             } catch (e) {
                 console.error("Marketplace Error:", e);
-                grid.innerHTML = `<div class="col-span-full py-20 text-center text-red-500 font-bold">Failed to load courses: ${e.message}</div>`;
+                grid.innerHTML = `
+                    <div class="col-span-full py-20 text-center">
+                        <div class="w-16 h-16 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <span class="material-icons-outlined text-red-500">error_outline</span>
+                        </div>
+                        <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Failed to load courses</h3>
+                        <p class="text-gray-500 dark:text-gray-400 mb-6 max-w-xs mx-auto">We encountered a connection issue while fetching the marketplace data.</p>
+                        <button onclick="renderCourses()" class="px-6 py-2.5 bg-primary text-white rounded-xl font-bold shadow-lg shadow-primary/20 hover:shadow-primary/40 active:scale-95 transition-all">
+                            Retry Connection
+                        </button>
+                    </div>
+                `;
             }
         }
 

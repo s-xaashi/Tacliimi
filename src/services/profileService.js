@@ -113,13 +113,48 @@ export const ProfileService = {
         await supabase.from('expertise_areas').delete().eq('instructor_id', userId);
 
         if (expertiseList && expertiseList.length > 0) {
-            const expertisePayload = expertiseList.map(expert => ({
-                instructor_id: userId,
-                expertise_name: expert
-            }));
+            // Resolve expertise names against centralized mentor_categories table
+            // to get the proper mentor_category_id foreign key reference
+            const { data: allCats } = await supabase
+                .from('mentor_categories')
+                .select('id, name, slug');
 
-            const { error: expertErr } = await supabase.from('expertise_areas').insert(expertisePayload);
-            if (expertErr) throw expertErr;
+            const catMap = {};
+            (allCats || []).forEach(c => { catMap[c.name.toLowerCase()] = c; });
+
+            const expertisePayload = [];
+            for (const expert of expertiseList) {
+                const normalizedName = expert.trim();
+                const searchKey = normalizedName.toLowerCase();
+                let catEntry = catMap[searchKey];
+
+                // Auto-create category if not found (instructor entered new expertise)
+                if (!catEntry) {
+                    const newSlug = searchKey.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+                    const { data: newCat, error: catErr } = await supabase
+                        .from('mentor_categories')
+                        .insert([{ name: normalizedName, slug: newSlug }])
+                        .select()
+                        .single();
+                    if (!catErr && newCat) {
+                        catEntry = newCat;
+                        catMap[searchKey] = newCat; // Cache for duplicates in same save
+                    }
+                }
+
+                if (catEntry) {
+                    expertisePayload.push({
+                        instructor_id: userId,
+                        expertise_name: catEntry.name, // Use canonical name from category
+                        mentor_category_id: catEntry.id
+                    });
+                }
+            }
+
+            if (expertisePayload.length > 0) {
+                const { error: expertErr } = await supabase.from('expertise_areas').insert(expertisePayload);
+                if (expertErr) throw expertErr;
+            }
         }
 
         return true;

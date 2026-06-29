@@ -22,7 +22,7 @@
     <style type="text/tailwindcss">
         body { font-family: 'Inter', sans-serif; }
         .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
-        .category-card { @apply bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 transition-all hover:shadow-lg hover:shadow-indigo-100 dark:hover:shadow-none hover:-translate-y-1; }
+        .tab-btn.active { @apply border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400 font-bold; }
     </style>
 
     <script type="module">
@@ -35,6 +35,8 @@
 </head>
 
 <body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 transition-colors duration-200">
+    <div id="toast-container" class="fixed top-6 right-6 z-[200] flex flex-col gap-3"></div>
+
     <!-- Sidebar -->
     <aside id="sidebar" class="fixed left-0 top-0 h-full w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col z-30 transition-transform -translate-x-full lg:translate-x-0">
         <div class="p-8 pb-4">
@@ -48,7 +50,7 @@
 
         <nav class="flex-1 p-6 space-y-2 overflow-y-auto mt-4">
             <a href="/src/pages/admin/dashboard/index.html" class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl transition-all group font-medium">
-                <span class="material-symbols-outlined shrink-0" style="font-variation-settings:'FILL' 0;">dashboard</span>
+                <span class="material-symbols-outlined shrink-0">dashboard</span>
                 Dashboard
             </a>
             <a href="/src/pages/admin/courses-review/index.html" class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl transition-all group font-medium">
@@ -60,7 +62,7 @@
                 Bookings Review
             </a>
             <a href="/src/pages/admin/users/index.html" class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl transition-all group font-medium">
-                <span class="material-symbols-outlined shrink-0" style="font-variation-settings:'FILL' 0;">group</span>
+                <span class="material-symbols-outlined shrink-0">group</span>
                 Users
             </a>
             <a href="/src/pages/admin/instructors/index.html" class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl transition-all group font-medium">
@@ -99,8 +101,8 @@
                     <span class="material-symbols-outlined">menu_open</span>
                 </button>
                 <div>
-                    <h2 class="text-xl font-black tracking-tight text-slate-900 dark:text-white">Category Taxonomy</h2>
-                    <p class="text-xs text-slate-400 font-medium tracking-wide">Protocol: Content Organization</p>
+                    <h2 class="text-xl font-black tracking-tight text-slate-900 dark:text-white">Central categories</h2>
+                    <p class="text-xs text-slate-400 font-medium tracking-wide">Course & Mentor Taxonomy System</p>
                 </div>
             </div>
             
@@ -117,35 +119,259 @@
         </header>
 
         <!-- Content -->
-        <div class="p-8 lg:p-12 max-w-[1400px] mx-auto w-full">
-            <div id="categories-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-                <!-- Skeleton -->
-                <div class="h-40 bg-slate-100 dark:bg-slate-800/50 rounded-2xl animate-pulse"></div>
-                <div class="h-40 bg-slate-100 dark:bg-slate-800/50 rounded-2xl animate-pulse opacity-50"></div>
+        <div class="p-8 lg:p-12 max-w-[1400px] mx-auto w-full space-y-8">
+            
+            <!-- Metrics Cards Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <!-- Course Categories -->
+                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex items-center gap-4">
+                    <div class="w-12 h-12 bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 rounded-xl flex items-center justify-center">
+                        <span class="material-symbols-outlined text-2xl">menu_book</span>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Courses Categories</p>
+                        <h3 id="stat-course-categories" class="text-2xl font-black mt-1">...</h3>
+                    </div>
+                </div>
+                <!-- Mentor Categories -->
+                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex items-center gap-4">
+                    <div class="w-12 h-12 bg-purple-50 dark:bg-purple-950/30 text-purple-600 dark:text-purple-400 rounded-xl flex items-center justify-center">
+                        <span class="material-symbols-outlined text-2xl">supervisor_account</span>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Mentorship Categories</p>
+                        <h3 id="stat-mentor-categories" class="text-2xl font-black mt-1">...</h3>
+                    </div>
+                </div>
+                <!-- Top Trend Category -->
+                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex items-center gap-4 col-span-1">
+                    <div class="w-12 h-12 bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 rounded-xl flex items-center justify-center">
+                        <span class="material-symbols-outlined text-2xl">trending_up</span>
+                    </div>
+                    <div class="truncate max-w-[calc(100%-3rem)]">
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Top Category</p>
+                        <h3 id="stat-top-category" class="text-lg font-black mt-1 truncate">...</h3>
+                    </div>
+                </div>
+                <!-- Missing Searches -->
+                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex items-center gap-4">
+                    <div class="w-12 h-12 bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 rounded-xl flex items-center justify-center">
+                        <span class="material-symbols-outlined text-2xl">search_off</span>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Missing Queries</p>
+                        <h3 id="stat-missing-queries" class="text-2xl font-black mt-1">...</h3>
+                    </div>
+                </div>
             </div>
+
+            <!-- Tab Selectors -->
+            <div class="border-b border-slate-200 dark:border-slate-800 flex gap-6">
+                <button id="tab-courses" class="tab-btn active px-4 py-3 border-b-2 border-transparent text-sm font-semibold text-slate-500 hover:text-slate-900 dark:hover:text-white transition-all flex items-center gap-2">
+                    <span class="material-symbols-outlined text-lg">school</span>
+                    Course Marketplace
+                    <span id="badge-course-count" class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs px-2 py-0.5 rounded-full font-bold ml-1">0</span>
+                </button>
+                <button id="tab-mentors" class="tab-btn px-4 py-3 border-b-2 border-transparent text-sm font-semibold text-slate-500 hover:text-slate-900 dark:hover:text-white transition-all flex items-center gap-2">
+                    <span class="material-symbols-outlined text-lg">record_voice_over</span>
+                    Mentor Marketplace
+                    <span id="badge-mentor-count" class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs px-2 py-0.5 rounded-full font-bold ml-1">0</span>
+                </button>
+                <button id="tab-search" class="tab-btn px-4 py-3 border-b-2 border-transparent text-sm font-semibold text-slate-500 hover:text-slate-900 dark:hover:text-white transition-all flex items-center gap-2">
+                    <span class="material-symbols-outlined text-lg">analytics</span>
+                    Search Intelligence
+                </button>
+            </div>
+
+            <!-- Panel: Categories Table -->
+            <div id="panel-categories" class="space-y-6">
+                <!-- Search & Filters -->
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800">
+                    <div class="relative flex-1 max-w-md">
+                        <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+                        <input type="text" id="category-search" placeholder="Search categories by name or ID..." class="w-full pl-12 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 transition-all text-slate-900 dark:text-white">
+                    </div>
+                </div>
+
+                <!-- Table Container -->
+                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                                    <th class="py-4 px-6">Category Name</th>
+                                    <th class="py-4 px-6">Category ID</th>
+                                    <th class="py-4 px-6 text-center">Usage Count</th>
+                                    <th class="py-4 px-6">Popularity</th>
+                                    <th class="py-4 px-6">Date Created</th>
+                                    <th class="py-4 px-6 text-center">Status</th>
+                                    <th class="py-4 px-6 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="categories-table-body" class="divide-y divide-slate-100 dark:divide-slate-800">
+                                <!-- Loaded dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel: Search Intelligence -->
+            <div id="panel-search" class="hidden transition-all space-y-8">
+                <!-- Two Columns Layout -->
+                <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                    <!-- Column 1: Missing Search Opportunities -->
+                    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 space-y-4">
+                        <div>
+                            <h3 class="text-lg font-black tracking-tight text-slate-900 dark:text-white">Missing Search Opportunities</h3>
+                            <p class="text-xs text-slate-400">Search queries yielding zero results. Add them as categories or ignore them.</p>
+                        </div>
+                        <div class="overflow-x-auto min-h-[300px]">
+                            <table class="w-full text-left">
+                                <thead class="border-b border-slate-100 dark:border-slate-800 text-[10px] uppercase font-bold text-slate-400">
+                                    <tr>
+                                        <th class="py-3 px-2">Keyword</th>
+                                        <th class="py-3 px-2">Marketplace</th>
+                                        <th class="py-3 px-2 text-center">Search Count</th>
+                                        <th class="py-3 px-2 text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="missing-opportunities-body" class="text-sm divide-y divide-slate-100 dark:divide-slate-800">
+                                    <!-- Dynamic -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Column 2: Trending / Top Queries -->
+                    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 space-y-4">
+                        <div>
+                            <h3 class="text-lg font-black tracking-tight text-slate-900 dark:text-white">Trending Search Analytics</h3>
+                            <p class="text-xs text-slate-400">Successful search terms and their usage volumes.</p>
+                        </div>
+                        <div class="overflow-x-auto min-h-[300px]">
+                            <table class="w-full text-left">
+                                <thead class="border-b border-slate-100 dark:border-slate-800 text-[10px] uppercase font-bold text-slate-400">
+                                    <tr>
+                                        <th class="py-3 px-2">Keyword</th>
+                                        <th class="py-3 px-2">Marketplace</th>
+                                        <th class="py-3 px-2 text-center">Search Count</th>
+                                        <th class="py-3 px-2 text-center">Hits</th>
+                                        <th class="py-3 px-2">Last Searched</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="trending-queries-body" class="text-sm divide-y divide-slate-100 dark:divide-slate-800">
+                                    <!-- Dynamic -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </main>
 
-    <!-- Modal Tool (Add/Edit) -->
+    <!-- Modal: Creation & Edit -->
     <div id="category-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] hidden items-center justify-center p-6">
-        <div class="bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800">
-            <div class="p-8 border-b border-slate-100 dark:border-slate-800">
-                <h3 id="modal-title" class="text-xl font-black text-slate-900 dark:text-white tracking-tight">Create New Entry</h3>
-                <p class="text-xs text-slate-400 mt-1 uppercase tracking-widest font-black">Meta Taxonomy Control</p>
-            </div>
-            <div class="p-8 space-y-6">
-                <div class="space-y-2">
-                    <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Title Manifest</label>
-                    <input type="text" id="cat-name" placeholder="e.g. Computer Science" class="w-full px-4 py-3.5 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-indigo-500 transition-all">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800">
+            <div class="p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center">
+                <div>
+                    <h3 id="modal-title" class="text-lg font-black text-slate-900 dark:text-white tracking-tight">Create Category</h3>
+                    <p class="text-xs text-slate-400">Step 1 of 2: Classification details</p>
                 </div>
-                <div class="space-y-2">
-                    <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Icon Identifier</label>
-                    <input type="text" id="cat-icon" placeholder="e.g. computer" class="w-full px-4 py-3.5 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-indigo-500 transition-all">
+                <button id="modal-close" class="text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            
+            <div class="p-6 space-y-6">
+                <!-- Step 1: Type Selection -->
+                <div id="step-1-container" class="space-y-4">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-400">Marketplace Type</label>
+                    <div class="grid grid-cols-2 gap-4">
+                        <label id="btn-type-course" class="border-2 border-indigo-600 rounded-xl p-4 flex flex-col items-center gap-2 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-all relative">
+                            <input type="radio" name="modal-type" value="course" class="sr-only" checked>
+                            <span class="material-symbols-outlined text-4xl text-indigo-600">school</span>
+                            <span class="text-sm font-bold">Course</span>
+                        </label>
+                        <label id="btn-type-mentor" class="border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex flex-col items-center gap-2 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-all relative">
+                            <input type="radio" name="modal-type" value="mentor" class="sr-only">
+                            <span class="material-symbols-outlined text-4xl text-slate-400 dark:text-slate-600">record_voice_over</span>
+                            <span class="text-sm font-bold text-slate-500 dark:text-slate-400">Mentor</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Step 2: Details Form -->
+                <div class="space-y-4">
+                    <div class="space-y-2">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-400">Category Name</label>
+                        <input type="text" id="cat-name" placeholder="e.g. Graphic Design" class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700/50 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 text-slate-900 dark:text-white">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-400">Slug Preview</label>
+                        <input type="text" id="cat-slug" class="w-full px-4 py-3 bg-slate-100 dark:bg-slate-800/80 border-none rounded-xl text-sm font-mono text-slate-500" readonly>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <input type="checkbox" id="cat-active" checked class="h-4.5 w-4.5 text-indigo-600 border-slate-300 dark:border-slate-700 rounded focus:ring-indigo-500 bg-slate-50 dark:bg-slate-800">
+                        <label for="cat-active" class="text-sm font-bold text-slate-700 dark:text-slate-350">Active & Available for Selection</label>
+                    </div>
                 </div>
             </div>
-            <div class="p-8 bg-slate-50/50 dark:bg-slate-800/30 flex items-center justify-end gap-3">
-                <button id="btn-cancel-modal" class="px-6 py-3 text-xs font-black uppercase tracking-widest text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors">Abort</button>
-                <button id="btn-save-modal" class="px-8 py-3 bg-indigo-600 text-white rounded-xl font-black text-xs uppercase tracking-widest hover:bg-indigo-700 shadow-xl shadow-indigo-100 dark:shadow-none transition-all">Synchronize</button>
+
+            <div class="p-6 bg-slate-50/50 dark:bg-slate-800/30 border-t border-slate-200 dark:border-slate-850 flex items-center justify-end gap-3">
+                <button id="btn-cancel-modal" class="px-5 py-2.5 text-xs font-bold uppercase tracking-widest text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors">Cancel</button>
+                <button id="btn-save-modal" class="px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-md shadow-indigo-100 dark:shadow-none">Save Category</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: View Related Items -->
+    <div id="related-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] hidden items-center justify-center p-6">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800">
+            <div class="p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50/30 dark:bg-slate-800/10">
+                <div>
+                    <h3 id="related-title" class="text-lg font-black text-slate-900 dark:text-white tracking-tight">Related Records</h3>
+                    <p id="related-subtitle" class="text-xs text-slate-400">Total entries linked to this category</p>
+                </div>
+                <button id="related-close" class="text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            
+            <div class="p-6 space-y-4 max-h-[350px] overflow-y-auto">
+                <ul id="related-list" class="divide-y divide-slate-100 dark:divide-slate-800 text-sm">
+                    <!-- Loaded dynamically -->
+                </ul>
+            </div>
+
+            <div class="p-6 bg-slate-50/50 dark:bg-slate-800/30 border-t border-slate-200 dark:border-slate-850 flex items-center justify-end">
+                <button id="btn-close-related" class="px-6 py-2 bg-indigo-600 text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-indigo-700 transition-all">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Safety / Deactivation Dialog -->
+    <div id="safety-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] hidden items-center justify-center p-6">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800 p-6 space-y-6">
+            <div class="flex items-center gap-3 text-red-650 dark:text-red-400">
+                <span class="material-symbols-outlined text-4xl">warning</span>
+                <div>
+                    <h3 class="text-lg font-black tracking-tight text-slate-900 dark:text-white">Deletion Protected</h3>
+                    <p class="text-xs text-slate-400">Database constraint violation</p>
+                </div>
+            </div>
+            <p class="text-sm text-slate-500 dark:text-slate-400">
+                This category is actively referenced by courses or mentor profiles. True deletion is not allowed to prevent database integrity failure (orphaned child records).
+            </p>
+            <div class="bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl space-y-2 border border-slate-100 dark:border-slate-800 text-xs">
+                <p id="safety-details" class="font-semibold text-slate-700 dark:text-slate-300"></p>
+                <p class="text-slate-400">Fallback option: Deactivate this category. Inactive categories remain readable in historic profiles/courses for transcripts but are hidden from new creators.</p>
+            </div>
+            <div class="flex items-center justify-end gap-3">
+                <button id="btn-safety-cancel" class="px-5 py-2.5 text-xs font-bold uppercase tracking-widest text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors">Abort</button>
+                <button id="btn-safety-deactivate" class="px-6 py-2.5 bg-indigo-605 text-white bg-indigo-600 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-indigo-700 transition-all">Deactivate Instead</button>
             </div>
         </div>
     </div>
@@ -154,113 +380,620 @@
         import { supabase } from '/src/services/supabaseClient.js';
         import { AuthService } from '/src/services/authService.js';
 
-        let categories = [];
-        let editingId = null;
+        let currentTab = 'course'; // or 'mentor', 'search'
+        let courseCategories = [];
+        let mentorCategories = [];
+        let searchLogs = [];
+        
+        let editingCategory = null; // store category object if editing
+        let activeDeletionItem = null; // store ID and type for verification
 
-        const grid = document.getElementById('categories-grid');
-        const modal = document.getElementById('category-modal');
+        // DOM elements
+        const categoriesTableBody = document.getElementById('categories-table-body');
+        const panelCategories = document.getElementById('panel-categories');
+        const panelSearch = document.getElementById('panel-search');
+        const tabCourses = document.getElementById('tab-courses');
+        const tabMentors = document.getElementById('tab-mentors');
+        const tabSearch = document.getElementById('tab-search');
+        const searchInput = document.getElementById('category-search');
+        const badgeCourseCount = document.getElementById('badge-course-count');
+        const badgeMentorCount = document.getElementById('badge-mentor-count');
+
+        // Modal elements
+        const catModal = document.getElementById('category-modal');
         const inputName = document.getElementById('cat-name');
-        const inputIcon = document.getElementById('cat-icon');
+        const inputSlug = document.getElementById('cat-slug');
+        const inputActive = document.getElementById('cat-active');
+        const radioTypeCourse = document.querySelector('input[value="course"]');
+        const radioTypeMentor = document.querySelector('input[value="mentor"]');
+        const containerStep1 = document.getElementById('step-1-container');
 
-        async function fetchCategories() {
-            const { data, error } = await supabase.from('categories').select('*').order('name');
-            if(error) { console.error(error); return; }
-            categories = data;
-            renderCategories();
+        // Related items modal elements
+        const relatedModal = document.getElementById('related-modal');
+        const relatedList = document.getElementById('related-list');
+
+        // Safety warning modal elements
+        const safetyModal = document.getElementById('safety-modal');
+
+        // Setup toast helper
+        window.showToast = (message, type = 'info') => {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `flex items-center gap-3 px-5 py-3.5 rounded-xl border shadow-lg text-sm font-bold transition-all transform translate-y-2 opacity-0 duration-300 ${
+                type === 'success' ? 'bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900/50' :
+                type === 'error' ? 'bg-red-50 dark:bg-red-950/20 text-red-650 dark:text-red-400 border-red-100 dark:border-red-900/30' :
+                'bg-blue-50 dark:bg-blue-950/20 text-indigo-650 dark:text-indigo-400 border-indigo-100 dark:border-indigo-900/30'
+            }`;
+            toast.innerHTML = `
+                <span class="material-symbols-outlined">${type === 'success' ? 'check_circle' : type === 'error' ? 'cancel' : 'info'}</span>
+                <span>${message}</span>
+            `;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            }, 10);
+            setTimeout(() => {
+                toast.classList.add('translate-y-2', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        };
+
+        async function initDashboard() {
+            await fetchAllData();
+            renderDashboard();
         }
 
-        function renderCategories() {
-            grid.innerHTML = '';
-            categories.forEach(cat => {
-                const card = document.createElement('div');
-                card.className = 'category-card group';
-                card.innerHTML = `
-                    <div class="flex items-start justify-between mb-6">
-                        <div class="w-14 h-14 bg-indigo-50 dark:bg-indigo-900/30 rounded-2xl flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition-all">
-                            <span class="material-symbols-outlined text-2xl">${cat.icon || 'category'}</span>
-                        </div>
-                        <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button onclick="editCategory('${cat.id}')" class="p-2 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/40 rounded-lg">
-                                <span class="material-symbols-outlined text-[18px]">edit</span>
-                            </button>
-                            <button onclick="deleteCategory('${cat.id}')" class="p-2 text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/40 rounded-lg">
-                                <span class="material-symbols-outlined text-[18px]">delete</span>
-                            </button>
-                        </div>
-                    </div>
-                    <div>
-                        <h4 class="text-xl font-black text-slate-900 dark:text-white tracking-tight">${cat.name}</h4>
-                        <p class="text-[10px] font-black uppercase text-indigo-600 dark:text-indigo-400 mt-1 tracking-widest">Active Class</p>
-                    </div>
+        async function fetchAllData() {
+            try {
+                // Fetch Course Categories with courses count
+                const { data: coursesData, error: errC } = await supabase
+                    .from('course_categories')
+                    .select('*, courses(id)')
+                    .order('name');
+                if (errC) throw errC;
+                courseCategories = coursesData || [];
+
+                // Fetch Mentor Categories with mentor expertise counts
+                const { data: mentorsData, error: errM } = await supabase
+                    .from('mentor_categories')
+                    .select('*, expertise_areas(id)')
+                    .order('name');
+                if (errM) throw errM;
+                mentorCategories = mentorsData || [];
+
+                // Fetch Search Opportunities
+                const { data: searchData, error: errS } = await supabase
+                    .from('search_opportunities')
+                    .select('*')
+                    .order('search_count', { ascending: false });
+                if (errS) throw errS;
+                searchLogs = searchData || [];
+
+                // Update metrics summary stats cards
+                document.getElementById('stat-course-categories').innerText = courseCategories.length;
+                document.getElementById('stat-mentor-categories').innerText = mentorCategories.length;
+                badgeCourseCount.innerText = courseCategories.filter(c => c.is_active).length;
+                badgeMentorCount.innerText = mentorCategories.filter(c => c.is_active).length;
+
+                // Find top trending category (both marketplaces)
+                let topCatName = 'None';
+                let topCatScore = -1;
+                
+                // Course category score logic: count * 10 + searches * 2
+                courseCategories.forEach(c => {
+                    const searchRecord = searchLogs.find(sl => sl.keyword === c.name.toLowerCase() && sl.marketplace_type === 'course');
+                    const searchCount = searchRecord ? searchRecord.search_count : 0;
+                    c. popularity = (c.courses?.length || 0) * 10 + searchCount * 2;
+                    if (c.popularity > topCatScore) {
+                        topCatScore = c.popularity;
+                        topCatName = `${c.name} (Course)`;
+                    }
+                });
+
+                mentorCategories.forEach(c => {
+                    const searchRecord = searchLogs.find(sl => sl.keyword === c.name.toLowerCase() && sl.marketplace_type === 'mentor');
+                    const searchCount = searchRecord ? searchRecord.search_count : 0;
+                    c.popularity = (c.expertise_areas?.length || 0) * 10 + searchCount * 2;
+                    if (c.popularity > topCatScore) {
+                        topCatScore = c.popularity;
+                        topCatName = `${c.name} (Mentor)`;
+                    }
+                });
+
+                document.getElementById('stat-top-category').innerText = topCatName === 'None' ? 'N/A' : `${topCatName} (${topCatScore} pts)`;
+
+                // Missing keywords count (0 results count, is_ignored is false)
+                const missingCount = searchLogs.filter(s => s.results_count === 0 && !s.is_ignored).length;
+                document.getElementById('stat-missing-queries').innerText = missingCount;
+
+            } catch (err) {
+                console.error("Error fetching data:", err);
+                showToast("Failed to retrieve category repository: " + err.message, "error");
+            }
+        }
+
+        // Render Dashboard
+        function renderDashboard() {
+            categoriesTableBody.innerHTML = '';
+            
+            if (currentTab === 'search') {
+                const missingRows = searchLogs.filter(s => s.results_count === 0 && !s.is_ignored);
+                const trendingRows = searchLogs.filter(s => s.results_count > 0);
+
+                const missingBody = document.getElementById('missing-opportunities-body');
+                missingBody.innerHTML = '';
+                if (missingRows.length === 0) {
+                    missingBody.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-slate-400">No missing query keywords tracked</td></tr>`;
+                } else {
+                    missingRows.forEach(row => {
+                        const tr = document.createElement('tr');
+                        tr.className = "hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors";
+                        tr.innerHTML = `
+                            <td class="py-4 px-2 font-bold font-mono">${row.keyword}</td>
+                            <td class="py-4 px-2 capitalize">
+                                <span class="px-2 py-0.5 text-xs rounded-lg font-bold ${row.marketplace_type === 'course' ? 'bg-indigo-50 dark:bg-indigo-950/20 text-indigo-600 dark:text-indigo-400' : 'bg-purple-50 dark:bg-purple-950/20 text-purple-600 dark:text-purple-400'}">${row.marketplace_type}</span>
+                            </td>
+                            <td class="py-4 px-2 text-center font-bold">${row.search_count}</td>
+                            <td class="py-4 px-2 text-right space-x-1">
+                                <button onclick="quickAddCategory('${encodeURIComponent(row.keyword)}', '${row.marketplace_type}', '${row.id}')" class="px-3 py-1 bg-indigo-650 btn-add-cat text-xs bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 transition-colors">Add</button>
+                                <button onclick="ignoreOpportunity('${row.id}')" class="px-3 py-1 text-xs border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-red-500 rounded-lg hover:border-red-200 dark:hover:border-red-900/30 transition-colors">Ignore</button>
+                            </td>
+                        `;
+                        missingBody.appendChild(tr);
+                    });
+                }
+
+                const trendingBody = document.getElementById('trending-queries-body');
+                trendingBody.innerHTML = '';
+                if (trendingRows.length === 0) {
+                    trendingBody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-slate-400">No trending query analytics</td></tr>`;
+                } else {
+                    trendingRows.forEach(row => {
+                        const tr = document.createElement('tr');
+                        tr.className = "hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors";
+                        tr.innerHTML = `
+                            <td class="py-4 px-2 font-bold font-mono">${row.keyword}</td>
+                            <td class="py-4 px-2 capitalize">
+                                <span class="px-2 py-0.5 text-xs rounded-lg font-bold ${row.marketplace_type === 'course' ? 'bg-indigo-50 dark:bg-indigo-950/20 text-indigo-600 dark:text-indigo-400' : 'bg-purple-50 dark:bg-purple-950/20 text-purple-600 dark:text-purple-400'}">${row.marketplace_type}</span>
+                            </td>
+                            <td class="py-4 px-2 text-center font-bold">${row.search_count}</td>
+                            <td class="py-4 px-2 text-center text-slate-400">${row.results_count}</td>
+                            <td class="py-4 px-2 text-xs text-slate-400">${new Date(row.updated_at).toLocaleString()}</td>
+                        `;
+                        trendingBody.appendChild(tr);
+                    });
+                }
+                return;
+            }
+
+            // Categories list (Course or Mentor)
+            const list = currentTab === 'course' ? courseCategories : mentorCategories;
+            const filterKeyword = searchInput.value.toLowerCase().trim();
+            const filtered = list.filter(item => 
+                item.name.toLowerCase().includes(filterKeyword) || 
+                item.id.toLowerCase().includes(filterKeyword)
+            );
+
+            if (filtered.length === 0) {
+                categoriesTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="p-12 text-center text-slate-400 font-semibold">
+                            No categories matched search criteria
+                        </td>
+                    </tr>
                 `;
-                grid.appendChild(card);
+                return;
+            }
+
+            filtered.forEach(cat => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors';
+                
+                const count = currentTab === 'course' ? (cat.courses?.length || 0) : (cat.expertise_areas?.length || 0);
+
+                tr.innerHTML = `
+                    <td class="py-4 px-6">
+                        <div class="font-bold text-slate-900 dark:text-white">${cat.name}</div>
+                        <div class="text-xs text-slate-400 font-mono mt-0.5">${cat.slug}</div>
+                    </td>
+                    <td class="py-4 px-6 text-xs font-mono text-slate-400">${cat.id}</td>
+                    <td class="py-4 px-6 text-center font-bold">
+                        <span class="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-full text-xs font-bold">${count}</span>
+                    </td>
+                    <td class="py-4 px-6 font-bold text-sm text-indigo-600 dark:text-indigo-400">${cat.popularity || 0} pts</td>
+                    <td class="py-4 px-6 text-slate-400 text-xs">${new Date(cat.created_at).toLocaleDateString()}</td>
+                    <td class="py-4 px-6 text-center">
+                        <button onclick="toggleActiveState('${cat.id}', ${cat.is_active})" class="focus:outline-none">
+                            <span class="px-2.5 py-1 text-xs rounded-full font-bold transition-all shadow-sm ${
+                                cat.is_active 
+                                ? 'bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100' 
+                                : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200'
+                            }">
+                                ${cat.is_active ? 'Active' : 'Inactive'}
+                            </span>
+                        </button>
+                    </td>
+                    <td class="py-4 px-6 text-right space-x-1">
+                        <button onclick="openRelatedItems('${cat.id}', '${cat.name}')" title="View Related" class="p-2 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-xl transition-all">
+                            <span class="material-symbols-outlined text-[20px] align-middle">visibility</span>
+                        </button>
+                        <button onclick="editModal('${cat.id}')" title="Edit" class="p-2 text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/30 rounded-xl transition-all">
+                            <span class="material-symbols-outlined text-[20px] align-middle">edit</span>
+                        </button>
+                        <button onclick="confirmDeletion('${cat.id}', ${count})" title="Delete" class="p-2 text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-xl transition-all">
+                            <span class="material-symbols-outlined text-[20px] align-middle">delete</span>
+                        </button>
+                    </td>
+                `;
+                categoriesTableBody.appendChild(tr);
             });
         }
 
-        window.editCategory = (id) => {
-            const cat = categories.find(c => c.id === id);
-            editingId = id;
+        // Active State toggler
+        window.toggleActiveState = async (id, currentVal) => {
+            const table = currentTab === 'course' ? 'course_categories' : 'mentor_categories';
+            try {
+                const { error } = await supabase
+                    .from(table)
+                    .update({ is_active: !currentVal })
+                    .eq('id', id);
+                if (error) throw error;
+                showToast("Category status updated successfully", "success");
+                initDashboard();
+            } catch (err) {
+                showToast("Failed to toggle status: " + err.message, "error");
+            }
+        };
+
+        // Quick add category from search opportunity
+        window.quickAddCategory = (keywordDecoded, type, opportunityId) => {
+            const keyword = decodeURIComponent(keywordDecoded);
+            editingCategory = null;
+            document.getElementById('modal-title').innerText = 'Create Category';
+            document.querySelector('#modal-title + p').innerText = "Step 2 of 2: Classification Details";
+            
+            // disable Type radio changes & set the values
+            containerStep1.classList.add('opacity-40', 'pointer-events-none');
+            if (type === 'course') {
+                radioTypeCourse.checked = true;
+            } else {
+                radioTypeMentor.checked = true;
+            }
+
+            inputName.value = keyword;
+            updateSlug();
+            inputActive.checked = true;
+            activeDeletionItem = { optId: opportunityId }; // save reference to clear log on save
+
+            catModal.classList.remove('hidden');
+            catModal.classList.add('flex');
+        };
+
+        // Ignore dynamic keyword opportunity
+        window.ignoreOpportunity = async (id) => {
+            try {
+                const { error } = await supabase
+                    .from('search_opportunities')
+                    .update({ is_ignored: true })
+                    .eq('id', id);
+                if (error) throw error;
+                showToast("Search opportunity keyword muted", "success");
+                initDashboard();
+            } catch (err) {
+                showToast("Failed to ignore: " + err.message, "error");
+            }
+        };
+
+        // View related items modal
+        window.openRelatedItems = async (catId, catName) => {
+            relatedList.innerHTML = `<li class="p-8 text-center text-slate-400">Loading relation records...</li>`;
+            document.getElementById('related-title').innerText = `Related Items for: ${catName}`;
+            relatedModal.classList.remove('hidden');
+            relatedModal.classList.add('flex');
+
+            try {
+                if (currentTab === 'course') {
+                    const { data, error } = await supabase
+                        .from('courses')
+                        .select('id, title, status, instructor:profiles!inner(full_name)')
+                        .eq('category_id', catId);
+                    
+                    if (error) throw error;
+                    
+                    document.getElementById('related-subtitle').innerText = `Associated courses count: ${data?.length || 0}`;
+                    relatedList.innerHTML = '';
+                    if (!data || data.length === 0) {
+                        relatedList.innerHTML = `<li class="py-4 text-center text-slate-400">No courses assigned to this category</li>`;
+                    } else {
+                        data.forEach(c => {
+                            const li = document.createElement('li');
+                            li.className = "py-4 flex justify-between items-center";
+                            li.innerHTML = `
+                                <div>
+                                    <div class="font-bold text-slate-900 dark:text-white">${c.title}</div>
+                                    <div class="text-xs text-slate-400 mt-0.5">Instructor: ${c.instructor?.full_name || 'N/A'}</div>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider ${
+                                        c.status === 'published' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'
+                                    }">${c.status}</span>
+                                    <a href="/src/pages/marketplace/course-details/index.html?id=${c.id}" class="text-xs text-indigo-600 dark:text-indigo-400 font-bold hover:underline">View Page</a>
+                                </div>
+                            `;
+                            relatedList.appendChild(li);
+                        });
+                    }
+                } else {
+                    // Mentors: expertise_areas joins profiles
+                    const { data, error } = await supabase
+                        .from('expertise_areas')
+                        .select('id, instructor_id, profiles!inner(id, full_name)')
+                        .eq('mentor_category_id', catId);
+                    
+                    if (error) throw error;
+                    
+                    document.getElementById('related-subtitle').innerText = `Associated mentors count: ${data?.length || 0}`;
+                    relatedList.innerHTML = '';
+                    if (!data || data.length === 0) {
+                        relatedList.innerHTML = `<li class="py-4 text-center text-slate-400">No mentors mapped to this category</li>`;
+                    } else {
+                        data.forEach(m => {
+                            const li = document.createElement('li');
+                            li.className = "py-4 flex justify-between items-center";
+                            li.innerHTML = `
+                                <div>
+                                    <div class="font-bold text-slate-900 dark:text-white">${m.profiles?.full_name || 'N/A'}</div>
+                                    <div class="text-xs text-slate-400 mt-0.5">ID: ${m.instructor_id}</div>
+                                </div>
+                                <a href="/src/pages/mentorship/mentor-profile/index.html?id=${m.instructor_id}" class="text-xs text-indigo-600 dark:text-indigo-400 font-bold hover:underline">View Profile</a>
+                            `;
+                            relatedList.appendChild(li);
+                        });
+                    }
+                }
+            } catch (err) {
+                relatedList.innerHTML = `<li class="p-8 text-center text-red-500 font-bold">Query Error: ${err.message}</li>`;
+            }
+        };
+
+        // Edit category trigger
+        window.editModal = (id) => {
+            const list = currentTab === 'course' ? courseCategories : mentorCategories;
+            const cat = list.find(c => c.id === id);
+            if (!cat) return;
+
+            editingCategory = cat;
+            document.getElementById('modal-title').innerText = 'Edit Category';
+            document.querySelector('#modal-title + p').innerText = "Modifier dashboard category meta";
+            
+            // disable type radio changes
+            containerStep1.classList.add('opacity-40', 'pointer-events-none');
+            if (currentTab === 'course') {
+                radioTypeCourse.checked = true;
+            } else {
+                radioTypeMentor.checked = true;
+            }
+
             inputName.value = cat.name;
-            inputIcon.value = cat.icon || '';
-            document.getElementById('modal-title').innerText = 'Edit Repository Item';
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
+            inputSlug.value = cat.slug;
+            inputActive.checked = cat.is_active;
+
+            activeDeletionItem = null;
+            catModal.classList.remove('hidden');
+            catModal.classList.add('flex');
         };
 
-        window.deleteCategory = async (id) => {
-            if(!confirm("Are you sure? This may affect courses assigned to this category.")) return;
-            const { error } = await supabase.from('categories').delete().eq('id', id);
-            if(error) alert(error.message);
-            else fetchCategories();
+        // Confirmation of Deletion Safety
+        window.confirmDeletion = (id, count) => {
+            if (count > 0) {
+                // Category in use - show safety warning modal
+                document.getElementById('safety-details').innerText = `Linked records size: ${count} item(s)`;
+                activeDeletionItem = { id, action: 'deactivate' };
+                
+                safetyModal.classList.remove('hidden');
+                safetyModal.classList.add('flex');
+            } else {
+                // Not in use - prompt standard confirm
+                if (confirm("Are you sure you want to permanently delete this category? This command is final and cannot be rolled back.")) {
+                    executeHardDelete(id);
+                }
+            }
         };
 
-        document.getElementById('btn-add-category').onclick = () => {
-            editingId = null;
-            inputName.value = '';
-            inputIcon.value = '';
-            document.getElementById('modal-title').innerText = 'Create New Entry';
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-        };
+        async function executeHardDelete(id) {
+            const table = currentTab === 'course' ? 'course_categories' : 'mentor_categories';
+            try {
+                const { error } = await supabase
+                    .from(table)
+                    .delete()
+                    .eq('id', id);
+                if (error) throw error;
+                showToast("Category permanently deleted", "success");
+                initDashboard();
+            } catch (err) {
+                showToast("Deletion blocked: " + err.message, "error");
+            }
+        }
 
-        document.getElementById('btn-cancel-modal').onclick = () => {
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-        };
-
+        // Save action handler
         document.getElementById('btn-save-modal').onclick = async () => {
             const name = inputName.value.trim();
-            const icon = inputIcon.value.trim();
-            if(!name) return;
+            const slug = inputSlug.value.trim();
+            const is_active = inputActive.checked;
+            const type = document.querySelector('input[name="modal-type"]:checked').value;
+            const table = type === 'course' ? 'course_categories' : 'mentor_categories';
 
-            const payload = { name, icon };
-            let result;
-            if(editingId) {
-                result = await supabase.from('categories').update(payload).eq('id', editingId);
-            } else {
-                result = await supabase.from('categories').insert([payload]);
+            if (!name) {
+                showToast("Please provide a category name", "error");
+                return;
             }
 
-            if(result.error) alert(result.error.message);
-            else {
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
-                fetchCategories();
+            try {
+                const payload = { name, slug, is_active };
+                
+                if (editingCategory) {
+                    const { error } = await supabase
+                        .from(table)
+                        .update(payload)
+                        .eq('id', editingCategory.id);
+                    if (error) throw error;
+                    showToast("Category repository item updated", "success");
+                } else {
+                    const { error } = await supabase
+                        .from(table)
+                        .insert([payload]);
+                    if (error) throw error;
+                    
+                    // If creating category from a search opportunity, clean it up
+                    if (activeDeletionItem?.optId) {
+                        await supabase
+                            .from('search_opportunities')
+                            .update({ results_count: 1 }) // Mark as resolved (non-zero results count)
+                            .eq('id', activeDeletionItem.optId);
+                    }
+                    showToast("Category created successfully", "success");
+                }
+
+                catModal.classList.add('hidden');
+                catModal.classList.remove('flex');
+                initDashboard();
+            } catch (err) {
+                showToast("Transaction failed: " + err.message, "error");
             }
         };
 
-        // Standard Admin Behaviors
+        // Auto slug generation helper
+        function updateSlug() {
+            const val = inputName.value;
+            const slugified = val.toLowerCase()
+                .trim()
+                .replace(/[^a-z0-9\s-]/g, '') // remove special chars
+                .replace(/[\s_]+/g, '-')     // replace spaces with hyphens
+                .replace(/-+/g, '-')          // dedup hyphens
+                .replace(/^-+|-+$/g, '');     // trim hyphens
+            inputSlug.value = slugified;
+        }
+
+        inputName.oninput = updateSlug;
+
+        // Tabs setup listeners
+        tabCourses.onclick = () => {
+            if (currentTab === 'course') return;
+            currentTab = 'course';
+            toggleActiveTabHeader(tabCourses);
+            panelCategories.classList.remove('hidden');
+            panelSearch.classList.add('hidden');
+            renderDashboard();
+        };
+
+        tabMentors.onclick = () => {
+            if (currentTab === 'mentor') return;
+            currentTab = 'mentor';
+            toggleActiveTabHeader(tabMentors);
+            panelCategories.classList.remove('hidden');
+            panelSearch.classList.add('hidden');
+            renderDashboard();
+        };
+
+        tabSearch.onclick = () => {
+            if (currentTab === 'search') return;
+            currentTab = 'search';
+            toggleActiveTabHeader(tabSearch);
+            panelCategories.classList.add('hidden');
+            panelSearch.classList.remove('hidden');
+            renderDashboard();
+        };
+
+        function toggleActiveTabHeader(activeBtn) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            activeBtn.classList.add('active');
+        }
+
+        // Search inputs filtering
+        searchInput.oninput = renderDashboard;
+
+        // Control buttons
+        document.getElementById('btn-add-category').onclick = () => {
+            editingCategory = null;
+            activeDeletionItem = null;
+            document.getElementById('modal-title').innerText = 'Create Category';
+            document.querySelector('#modal-title + p').innerText = "Step 1 of 2: Classification details";
+            
+            containerStep1.classList.remove('opacity-40', 'pointer-events-none');
+            
+            inputName.value = '';
+            inputSlug.value = '';
+            inputActive.checked = true;
+
+            catModal.classList.remove('hidden');
+            catModal.classList.add('flex');
+        };
+
+        const hideModals = () => {
+            catModal.classList.add('hidden');
+            catModal.classList.remove('flex');
+            relatedModal.classList.add('hidden');
+            relatedModal.classList.remove('flex');
+            safetyModal.classList.add('hidden');
+            safetyModal.classList.remove('flex');
+        };
+
+        document.getElementById('modal-close').onclick = hideModals;
+        document.getElementById('btn-cancel-modal').onclick = hideModals;
+        document.getElementById('related-close').onclick = hideModals;
+        document.getElementById('btn-close-related').onclick = hideModals;
+        document.getElementById('btn-safety-cancel').onclick = hideModals;
+
+        // Safety fallback deactivation
+        document.getElementById('btn-safety-deactivate').onclick = async () => {
+            if (!activeDeletionItem?.id) return;
+            
+            const table = currentTab === 'course' ? 'course_categories' : 'mentor_categories';
+            try {
+                const { error } = await supabase
+                    .from(table)
+                    .update({ is_active: false })
+                    .eq('id', activeDeletionItem.id);
+                if (error) throw error;
+                showToast("Category deactivated instead of deletion", "success");
+                hideModals();
+                initDashboard();
+            } catch (err) {
+                showToast("Failed to deactivate: " + err.message, "error");
+            }
+        };
+
+        // Type selection styling triggers
+        radioTypeCourse.onchange = () => {
+            document.getElementById('btn-type-course').className = "border-2 border-indigo-600 rounded-xl p-4 flex flex-col items-center gap-2 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-all relative";
+            document.getElementById('btn-type-course').querySelector('span').className = "material-symbols-outlined text-4xl text-indigo-600";
+            document.getElementById('btn-type-course').querySelector('.text-sm').className = "text-sm font-bold text-slate-900 dark:text-white";
+
+            document.getElementById('btn-type-mentor').className = "border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex flex-col items-center gap-2 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-all relative";
+            document.getElementById('btn-type-mentor').querySelector('span').className = "material-symbols-outlined text-4xl text-slate-400 dark:text-slate-600";
+            document.getElementById('btn-type-mentor').querySelector('.text-sm').className = "text-sm font-bold text-slate-500 dark:text-slate-400";
+        };
+
+        radioTypeMentor.onchange = () => {
+            document.getElementById('btn-type-mentor').className = "border-2 border-indigo-600 rounded-xl p-4 flex flex-col items-center gap-2 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-all relative";
+            document.getElementById('btn-type-mentor').querySelector('span').className = "material-symbols-outlined text-4xl text-indigo-600";
+            document.getElementById('btn-type-mentor').querySelector('.text-sm').className = "text-sm font-bold text-slate-900 dark:text-white";
+
+            document.getElementById('btn-type-course').className = "border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex flex-col items-center gap-2 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-all relative";
+            document.getElementById('btn-type-course').querySelector('span').className = "material-symbols-outlined text-4xl text-slate-400 dark:text-slate-600";
+            document.getElementById('btn-type-course').querySelector('.text-sm').className = "text-sm font-bold text-slate-500 dark:text-slate-400";
+        };
+
+        // Top-level scripts & initializations
         document.getElementById('logout-btn')?.addEventListener('click', async () => {
             await AuthService.logout();
             window.location.href = '/src/pages/auth/login-select/index.html';
         });
 
-        // Toggle Sidebar
         const toggleBtn = document.getElementById('toggle-sidebar');
         const sidebar = document.getElementById('sidebar');
         toggleBtn?.addEventListener('click', () => { sidebar.classList.toggle('-translate-x-full'); });
 
-        // Theme Toggle
         const themeToggle = document.getElementById('theme-toggle');
         themeToggle?.addEventListener('click', () => {
             document.documentElement.classList.toggle('dark');
@@ -268,7 +1001,7 @@
             themeToggle.innerHTML = `<span class="material-symbols-outlined">${isDark ? 'light_mode' : 'dark_mode'}</span>`;
         });
 
-        fetchCategories();
+        initDashboard();
     </script>
 </body>
 </html>

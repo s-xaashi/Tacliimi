@@ -169,7 +169,7 @@
         import { supabase } from '/src/services/supabaseClient.js';
         import { CourseService } from '/src/services/courseService.js';
         import { AuthService } from '/src/services/authService.js';
-        import { showToast, showConfirmModal, showAlertModal } from '/src/services/notificationUI.js';
+        import { showToast, showConfirmModal, showAlertModal } from '/src/services/uiUtils.js';
 
         document.addEventListener('DOMContentLoaded', async () => {
             const grid = document.getElementById('courses-grid');
@@ -186,29 +186,38 @@
                     grid.classList.add('hidden');
                     emptyState.classList.add('hidden');
 
-                    // We reuse getPendingCourses but filter or use a more broad fetcher if needed
-                    // For now, let's assume we can fetch both via service or separate calls
-                    const pending = await CourseService.getPendingCourses();
+                    // Optimized single fetch for all moderation states
                     const { data: modCourses, error } = await supabase
                         .from('courses')
                         .select(`
                             id, title, thumbnail_url, level, status,
-                            instructor:profiles(full_name, email),
+                            instructor:profiles(full_name, email, avatar_url),
                             category:course_categories(name),
                             moderation_logs:course_moderation_logs(decision, notes, created_at)
                         `)
                         .in('status', ['pending_review', 'rejected', 'appealed'])
-                        .order('created_at', { ascending: false });
+                        .order('created_at', { ascending: false })
+                        .order('created_at', { foreignTable: 'course_moderation_logs', ascending: false });
 
                     if (error) throw error;
-                    allCourses = modCourses;
+                    allCourses = modCourses || [];
                     
                     render();
                 } catch (e) {
                     console.error("Failed to load reviews:", e);
-                    loader.innerHTML = `<p class="text-red-500 font-bold">Protocol Error: ${e.message}</p>`;
+                    if (loader) {
+                        loader.innerHTML = `
+                            <div class="text-red-500 p-6 bg-red-50 dark:bg-red-900/10 rounded-2xl border border-red-100 dark:border-red-900/20 max-w-lg mx-auto">
+                                <h4 class="font-black text-sm uppercase tracking-widest mb-2">Protocol Sync Error</h4>
+                                <p class="text-xs font-medium opacity-80">${e.message || 'The moderation service is currently unavailable.'}</p>
+                                <button onclick="window.location.reload()" class="mt-4 px-4 py-2 bg-red-600 text-white text-[10px] font-black uppercase tracking-widest rounded-lg">Retry Sync</button>
+                            </div>
+                        `;
+                    }
                 } finally {
-                    loader.classList.add('hidden');
+                    if (loader && !loader.innerHTML.includes('Sync Error')) {
+                        loader.classList.add('hidden');
+                    }
                 }
             }
 
@@ -234,7 +243,6 @@
                     card.onclick = () => window.location.href = `/src/pages/admin/courses-review/details.html?id=${course.id}`;
 
                     const instructorName = course.instructor ? course.instructor.full_name : 'Unknown';
-                    const categoryName = course.category ? course.category.name : 'General';
                     const thumb = course.thumbnail_url || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400';
 
                     const statusLabels = {
@@ -244,10 +252,16 @@
                     };
                     const label = statusLabels[course.status] || statusLabels.pending_review;
 
-                    // Last log (for appeal/rejection reason)
-                    const lastLog = course.moderation_logs && course.moderation_logs.length > 0 
-                        ? course.moderation_logs.sort((a,b) => new Date(b.created_at) - new Date(a.created_at))[0]
-                        : null;
+                    // Finding log for appeal/rejection reason
+                    const logs = course.moderation_logs || [];
+                    const lastLog = course.status === 'appealed' 
+                        ? logs.find(l => l.decision === 'appealed')
+                        : (logs.length > 0 ? logs[0] : null);
+
+                    const categoryName = course.category ? course.category.name : 'General';
+                    const instructorAvatar = (course.instructor && course.instructor.avatar_url) 
+                        ? course.instructor.avatar_url 
+                        : `https://ui-avatars.com/api/?name=${encodeURIComponent(instructorName)}&background=4F46E5&color=fff`;
 
                     card.innerHTML = `
                         <div class="relative h-56 bg-slate-100 dark:bg-slate-800 overflow-hidden">
@@ -275,7 +289,7 @@
                                 <div class="flex items-center justify-between">
                                     <div class="flex items-center gap-2">
                                         <div class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden">
-                                            <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(instructorName)}" class="w-full h-full object-cover">
+                                            <img src="${instructorAvatar}" class="w-full h-full object-cover">
                                         </div>
                                         <span class="text-xs font-bold text-slate-600 dark:text-slate-400">${instructorName}</span>
                                     </div>
@@ -322,19 +336,7 @@
                     confirmText: 'Accept Appeal'
                 }, async () => {
                     try {
-                        const { error } = await supabase
-                            .from('courses')
-                            .update({ status: 'pending_review' })
-                            .eq('id', courseId);
-                        
-                        if (error) throw error;
-
-                        await supabase.from('course_moderation_logs').insert({
-                            course_id: courseId,
-                            decision: 'pending_review',
-                            notes: 'Appeal accepted by admin. Course returned to review queue.'
-                        });
-
+                        await CourseService.handleAppeal(courseId, 'approve', 'Appeal accepted by admin. Course returned to review queue.');
                         showToast("Appeal accepted successfully.");
                         await loadReviews();
                     } catch (e) {
@@ -344,7 +346,7 @@
             };
 
             window.rejectAppeal = async (courseId) => {
-                const warningMsg = "CAUTION: This will PERMANENTLY DELETE the course and all its content (lessons, sections, quizzes, etc.). This action cannot be undone.";
+                const warningMsg = "CAUTION: This will PERMANENTLY DELETE the course and all its content. This action cannot be undone.";
                 
                 showConfirmModal({
                     title: 'Reject & Delete?',
@@ -354,14 +356,7 @@
                     variant: 'danger'
                 }, async () => {
                     try {
-                        // Destroy everything. Postgres cascade should handle this if foreign keys are set up.
-                        const { error } = await supabase
-                            .from('courses')
-                            .delete()
-                            .eq('id', courseId);
-                        
-                        if (error) throw error;
-
+                        await CourseService.handleAppeal(courseId, 'reject', 'Appeal rejected. Course deleted.');
                         showToast("Appeal rejected and course deleted.");
                         await loadReviews();
                     } catch (e) {

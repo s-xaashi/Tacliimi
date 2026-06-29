@@ -786,5 +786,65 @@ export const MentorService = {
         if (error) throw error;
 
         return true;
+    },
+
+    /** MENTOR CATEGORY MANAGEMENT */
+    async getMentorCategories() {
+        // Public-facing: only return active categories
+        const { data, error } = await supabase
+            .from('mentor_categories')
+            .select('*')
+            .eq('is_active', true)
+            .order('name');
+        if (error) throw error;
+        return data;
+    },
+
+    async getAllMentorCategoriesAdmin() {
+        const { data, error } = await supabase
+            .from('mentor_categories')
+            .select('*, expertise_areas(id)')
+            .order('name');
+        if (error) throw error;
+        return data;
+    },
+
+    async createMentorCategory(name, slug, isActive = true) {
+        const { data, error } = await supabase
+            .from('mentor_categories')
+            .insert([{ name, slug, is_active: isActive }])
+            .select()
+            .single();
+        if (error) throw error;
+        return data;
+    },
+
+    async updateMentorCategory(id, updates) {
+        const { data, error } = await supabase
+            .from('mentor_categories')
+            .update(updates)
+            .eq('id', id)
+            .select()
+            .single();
+        if (error) throw error;
+        return data;
+    },
+
+    async deleteMentorCategory(id) {
+        const { error } = await supabase
+            .from('mentor_categories')
+            .delete()
+            .eq('id', id);
+        if (error) throw error;
+    },
+
+    /** SEARCH TRACKING */
+    async trackSearch(keyword, resultsCount) {
+        const { error } = await supabase.rpc('track_search', {
+            p_keyword: keyword,
+            p_marketplace_type: 'mentor',
+            p_results_count: resultsCount
+        });
+        if (error) console.warn('Mentor search tracking failed:', error.message);
     }
 };

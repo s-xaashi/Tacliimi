@@ -10,9 +10,64 @@ export const CourseService = {
 
     /** CATEGORIES */
     async getCategories() {
-        const { data, error } = await supabase.from('course_categories').select('*').order('name');
+        // Public-facing: only return active categories
+        const { data, error } = await supabase
+            .from('course_categories')
+            .select('*')
+            .eq('is_active', true)
+            .order('name');
         if (error) throw error;
         return data;
+    },
+
+    /** ADMIN CATEGORY MANAGEMENT */
+    async getAllCategoriesAdmin() {
+        const { data, error } = await supabase
+            .from('course_categories')
+            .select('*, courses(id)')
+            .order('name');
+        if (error) throw error;
+        return data;
+    },
+
+    async createCategory(name, slug, isActive = true) {
+        const { data, error } = await supabase
+            .from('course_categories')
+            .insert([{ name, slug, is_active: isActive }])
+            .select()
+            .single();
+        if (error) throw error;
+        return data;
+    },
+
+    async updateCategory(id, updates) {
+        const { data, error } = await supabase
+            .from('course_categories')
+            .update(updates)
+            .eq('id', id)
+            .select()
+            .single();
+        if (error) throw error;
+        return data;
+    },
+
+    async deleteCategory(id) {
+        const { error } = await supabase
+            .from('course_categories')
+            .delete()
+            .eq('id', id);
+        if (error) throw error;
+    },
+
+    /** SEARCH TRACKING */
+    async trackSearch(keyword, resultsCount) {
+        // Uses security definer RPC to safely upsert search telemetry
+        const { error } = await supabase.rpc('track_search', {
+            p_keyword: keyword,
+            p_marketplace_type: 'course',
+            p_results_count: resultsCount
+        });
+        if (error) console.warn('Search tracking failed:', error.message);
     },
 
     /** COURSE CRUD */
@@ -719,6 +774,7 @@ export const CourseService = {
             .from('course_reviews')
             .select(`
                 id,
+                student_id,
                 rating,
                 review_text,
                 created_at,
@@ -772,22 +828,38 @@ export const CourseService = {
     },
 
     async getInstructorStats(instructorId) {
-        const [coursesRes, studentsRes] = await Promise.all([
-            supabase
+        try {
+            // 1. Get Course IDs for this instructor first
+            const { data: courses, error: cErr } = await supabase
                 .from('courses')
-                .select('id', { count: 'exact', head: true })
-                .eq('instructor_id', instructorId),
-            supabase
+                .select('id')
+                .eq('instructor_id', instructorId);
+            
+            if (cErr) throw cErr;
+            
+            const courseIds = courses?.map(c => c.id) || [];
+            
+            // 2. If no courses, return zeroed stats immediately
+            if (courseIds.length === 0) {
+                return { totalCourses: 0, totalStudents: 0 };
+            }
+
+            // 3. Get student count from enrollments for these courses
+            const { count: studentCount, error: sErr } = await supabase
                 .from('enrollments')
-                .select('course_id', { count: 'exact', head: false })
-                .in('course_id',
-                    (await supabase.from('courses').select('id').eq('instructor_id', instructorId)).data?.map(c => c.id) || []
-                )
-        ]);
-        return {
-            totalCourses: coursesRes.count || 0,
-            totalStudents: studentsRes.data?.length || 0,
-        };
+                .select('*', { count: 'exact', head: true })
+                .in('course_id', courseIds);
+
+            if (sErr) throw sErr;
+
+            return {
+                totalCourses: courseIds.length,
+                totalStudents: studentCount || 0,
+            };
+        } catch (e) {
+            console.error('Error fetching instructor stats:', e);
+            return { totalCourses: 0, totalStudents: 0 };
+        }
     },
 
     async getInstructorExpertise(instructorId) {
@@ -800,18 +872,36 @@ export const CourseService = {
 
     /** COURSE APPEALS */
     async appealCourse(courseId, reason) {
-        const { data, error } = await supabase
-            .from('courses')
-            .update({
-                status: 'appealed',
-                rejection_reason: reason,
-                updated_at: new Date().toISOString()
-            })
-            .eq('id', courseId)
-            .select()
-            .single();
+        console.log('CourseService.appealCourse:', { courseId, reason });
+        const { data, error } = await supabase.rpc('appeal_course_rejection_instructor', {
+            p_course_id: courseId,
+            p_appeal_reason: reason
+        });
 
-        if (error) throw error;
+        if (error) {
+            console.error('Appeal RPC Error:', error);
+            throw error;
+        }
+        return data;
+    },
+
+    /** ADMIN APPEAL HANDLING */
+    async handleAppeal(courseId, decision, notes = "") {
+        console.log('CourseService.handleAppeal:', { courseId, decision, notes });
+        const session = await AuthService.getSession();
+        const moderatorId = session ? session.user.id : null;
+
+        const { data, error } = await supabase.rpc('handle_course_appeal_admin', {
+            p_course_id: courseId,
+            p_decision: decision,
+            p_moderator_id: moderatorId,
+            p_notes: notes
+        });
+
+        if (error) {
+            console.error('Handle Appeal RPC Error:', error);
+            throw error;
+        }
         return data;
     }
 };

@@ -143,70 +143,87 @@
         let completedLessonIds = new Set();
         let totalLessonCount = 0;
 
-        function loadReviews(lessonId) {
-            const reviewsStr = localStorage.getItem('tacliimi_lesson_reviews');
-            const reviews = reviewsStr ? JSON.parse(reviewsStr) : {};
-            return reviews[lessonId] || null;
+        async function loadReview(courseId, studentId) {
+            const reviews = await CourseService.getCourseReviews(courseId);
+            return reviews.find(r => r.student_id === studentId) || null;
         }
 
-        function saveReview(lessonId, rating, comment) {
-            const reviewsStr = localStorage.getItem('tacliimi_lesson_reviews');
-            const reviews = reviewsStr ? JSON.parse(reviewsStr) : {};
-            reviews[lessonId] = { rating, comment, date: new Date().toISOString() };
-            localStorage.setItem('tacliimi_lesson_reviews', JSON.stringify(reviews));
+        async function saveReview(courseId, studentId, rating, comment) {
+            await CourseService.submitReview(courseId, studentId, rating, comment);
         }
 
-        function renderReviewTab(lessonId) {
-            const existingReview = loadReviews(lessonId);
+        async function renderReviewTab() {
+            if (!currentCourseData || !currentUser) return;
             const reviewContainer = document.getElementById('tab-content-review');
             if (!reviewContainer) return;
 
-            if (existingReview) {
-                let stars = '';
-                for (let i = 1; i <= 5; i++) {
-                    stars += `<span class="material-symbols-outlined text-lg ${i <= existingReview.rating ? 'text-yellow-400' : 'text-slate-300'}">star</span>`;
-                }
-                reviewContainer.innerHTML = `
-                    <div class="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 mb-6 max-w-xl">
-                        <div class="flex justify-between items-start mb-4">
-                            <div>
-                                <h3 class="font-bold text-slate-900 dark:text-white mb-1">Your Review</h3>
-                                <div class="flex gap-0.5">${stars}</div>
+            reviewContainer.innerHTML = '<p class="text-slate-600 dark:text-slate-400">Loading your review...</p>';
+
+            try {
+                const existingReview = await loadReview(currentCourseData.id, currentUser.id);
+
+                if (existingReview) {
+                    let stars = '';
+                    for (let i = 1; i <= 5; i++) {
+                        stars += `<span class="material-symbols-outlined text-lg ${i <= existingReview.rating ? 'text-yellow-400' : 'text-slate-300'}">star</span>`;
+                    }
+                    reviewContainer.innerHTML = `
+                        <div class="bg-white dark:bg-slate-800 p-8 rounded-2xl border border-slate-200 dark:border-slate-800 mb-6 max-w-2xl shadow-sm">
+                            <div class="flex justify-between items-start mb-6">
+                                <div>
+                                    <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-2">Your Course Review</h3>
+                                    <div class="flex gap-1">${stars}</div>
+                                </div>
+                                <span class="text-xs font-bold text-slate-500 bg-slate-100 dark:bg-slate-800/50 px-4 py-1.5 rounded-full border border-slate-200 dark:border-slate-700">${new Date(existingReview.created_at).toLocaleDateString()}</span>
                             </div>
-                            <span class="text-xs font-semibold text-slate-500 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full">${new Date(existingReview.date).toLocaleDateString()}</span>
+                            <p class="text-slate-600 dark:text-slate-300 text-base whitespace-pre-wrap leading-relaxed italic">"${existingReview.review_text}"</p>
                         </div>
-                        <p class="text-slate-700 dark:text-slate-300 text-sm whitespace-pre-wrap leading-relaxed">${existingReview.comment}</p>
-                    </div>
-                    <button onclick="renderReviewForm('${lessonId}', ${existingReview.rating}, '${existingReview.comment.replace(/'/g, "\\'")}')" class="text-sm text-primary font-semibold hover:underline flex items-center gap-1"><span class="material-symbols-outlined text-sm">edit</span> Edit Review</button>
-                `;
-            } else {
-                renderReviewForm(lessonId);
+                        <button onclick="renderReviewForm(${existingReview.rating}, '${existingReview.review_text.replace(/'/g, "\\'")}')" class="group px-6 py-2.5 rounded-xl border-2 border-primary/20 text-primary font-bold hover:bg-primary hover:text-white transition-all flex items-center gap-2">
+                            <span class="material-symbols-outlined text-xl transition-transform group-hover:rotate-12">edit</span> 
+                            Edit Your Review
+                        </button>
+                    `;
+                } else {
+                    renderReviewForm();
+                }
+            } catch (e) {
+                reviewContainer.innerHTML = `<p class="text-rose-500 font-medium">Error loading review: ${e.message}</p>`;
             }
         }
 
-        window.renderReviewForm = function (lessonId, initRating = 0, initComment = '') {
+        window.renderReviewForm = function (initRating = 0, initComment = '') {
             const reviewContainer = document.getElementById('tab-content-review');
             if (!reviewContainer) return;
 
             let starsHtml = '';
             for (let i = 1; i <= 5; i++) {
-                starsHtml += `<button type="button" onclick="setDraftRating(${i})" class="review-star-btn material-symbols-outlined text-3xl ${i <= initRating ? 'text-yellow-400' : 'text-slate-300'} hover:text-yellow-300 transition-colors" data-rating="${i}">star</button>`;
+                starsHtml += `<button type="button" onclick="setDraftRating(${i})" class="review-star-btn material-symbols-outlined text-4xl ${i <= initRating ? 'text-yellow-400' : 'text-slate-300'} hover:text-yellow-400 transition-all active:scale-90" data-rating="${i}">star</button>`;
             }
 
             reviewContainer.innerHTML = `
-                <div class="max-w-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-xl">
-                    <h3 class="font-bold text-slate-900 dark:text-white mb-6">Leave a Review for this Lesson</h3>
-                    <div class="mb-6">
-                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wider text-[11px]">Rating</label>
-                        <div class="flex gap-2" id="review-stars-container" data-current="${initRating}">
+                <div class="max-w-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 rounded-2xl shadow-sm">
+                    <div class="mb-8">
+                        <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2">Review your experience</h3>
+                        <p class="text-sm text-slate-500">Your feedback helps us and other students improve the learning journey.</p>
+                    </div>
+                    
+                    <div class="mb-8">
+                        <label class="block text-xs font-bold text-slate-400 mb-3 uppercase tracking-widest">Rate the entire course</label>
+                        <div class="flex gap-3" id="review-stars-container" data-current="${initRating}">
                             ${starsHtml}
                         </div>
                     </div>
-                    <div class="mb-6">
-                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wider text-[11px]">Comment</label>
-                        <textarea id="review-comment-input" rows="4" class="w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 focus:ring-primary focus:border-primary text-sm p-4 transition-colors" placeholder="What did you think of this lesson?">${initComment}</textarea>
+                    
+                    <div class="mb-8">
+                        <label class="block text-xs font-bold text-slate-400 mb-3 uppercase tracking-widest">Your review</label>
+                        <textarea id="review-comment-input" rows="5" class="w-full rounded-2xl border-slate-200 dark:border-slate-800 dark:bg-slate-900/50 focus:ring-2 focus:ring-primary/20 focus:border-primary text-base p-5 transition-all placeholder:text-slate-400" placeholder="What did you think of the curriculum, instructor, and overall content?">${initComment}</textarea>
                     </div>
-                    <button onclick="submitReview('${lessonId}')" class="px-6 py-3 bg-primary hover:bg-indigo-600 text-white font-bold rounded-xl transition-all shadow-lg shadow-indigo-100 flex items-center gap-2"><span class="material-symbols-outlined text-sm">save</span> Save Review</button>
+                    
+                    <button id="submit-review-btn" onclick="submitReview()" class="w-fit px-8 py-4 bg-primary hover:bg-indigo-700 text-white font-bold rounded-2xl transition-all shadow-xl shadow-primary/20 active:scale-[0.98] flex items-center gap-3">
+                        <span class="material-symbols-outlined text-xl">send</span> 
+                        Submit Review
+                    </button>
+                    <p id="review-error-msg" class="mt-4 text-sm text-rose-500 font-medium hidden"></p>
                 </div>
             `;
         }
@@ -226,18 +243,41 @@
             });
         };
 
-        window.submitReview = function (lessonId) {
-            const ratingStr = document.getElementById('review-stars-container').getAttribute('data-current');
+        window.submitReview = async function () {
+            const starsContainer = document.getElementById('review-stars-container');
+            const ratingStr = starsContainer ? starsContainer.getAttribute('data-current') : '0';
             const rating = parseInt(ratingStr, 10);
             const comment = document.getElementById('review-comment-input').value.trim();
+            const submitBtn = document.getElementById('submit-review-btn');
+            const errorMsg = document.getElementById('review-error-msg');
 
             if (!rating) {
-                alert("Please select a rating.");
+                if (errorMsg) {
+                    errorMsg.textContent = "Please select a rating.";
+                    errorMsg.classList.remove('hidden');
+                }
                 return;
             }
 
-            saveReview(lessonId, rating, comment);
-            renderReviewTab(lessonId);
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="animate-spin inline-block w-5 h-5 border-2 border-white/30 border-t-white rounded-full mr-2"></span> Submitting...';
+            }
+
+            try {
+                await saveReview(currentCourseData.id, currentUser.id, rating, comment);
+                renderReviewTab();
+            } catch (e) {
+                console.error("Review submission error:", e);
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<span class="material-symbols-outlined text-xl">send</span> Submit Review';
+                }
+                if (errorMsg) {
+                    errorMsg.textContent = "Failed to save review: " + e.message;
+                    errorMsg.classList.remove('hidden');
+                }
+            }
         };
 
         window.playLesson = function (sIdx, lIdx) {
@@ -354,8 +394,7 @@
             }
 
             // Load & render review tab
-            const lessonId = `course-${currentCourseData.id}-l${lesson.id}`;
-            renderReviewTab(lessonId);
+            renderReviewTab();
 
             // Auto-switch tabs if no video
             if (!lesson.video_url) {
