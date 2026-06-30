@@ -75,6 +75,23 @@ function renderMentorInfo(mentor) {
     const bioEl = document.querySelector('aside p.text-slate-500');
     if (bioEl) bioEl.textContent = mentor.short_bio || 'Expert mentor ready to guide you.';
 
+    // Expertise tags — cap at 3 in the compact booking sidebar
+    const tags = (mentor.expertise || []).slice(0, 3);
+    if (tags.length > 0) {
+        let tagsContainer = document.getElementById('mentor-expertise-tags');
+        if (!tagsContainer && bioEl) {
+            tagsContainer = document.createElement('div');
+            tagsContainer.id = 'mentor-expertise-tags';
+            tagsContainer.className = 'flex flex-wrap gap-1.5 mt-3';
+            bioEl.parentNode.insertBefore(tagsContainer, bioEl.nextSibling);
+        }
+        if (tagsContainer) {
+            tagsContainer.innerHTML = tags.map(tag =>
+                `<span class="px-2 py-1 bg-primary/10 text-primary rounded-lg text-[10px] font-bold">${tag}</span>`
+            ).join('');
+        }
+    }
+
     const stats = document.querySelectorAll('aside .font-bold');
     if (stats.length >= 2) {
         // Rating and Sessions findable by their parent text

@@ -1,6 +1,7 @@
 import { MentorService } from '../../../services/mentorService.js';
 
 let allMentors = [];
+let expandedDomains = new Set(); // Track which domain groups are open
 let activeFilters = {
     search: '',
     category: 'all',
@@ -49,31 +50,66 @@ async function populateFilters(mentors) {
     const countrySelect = document.getElementById('country-filter');
     const citySelect = document.getElementById('city-filter');
 
-    // Categories — load from centralized mentor_categories table
-    const allBtn = categoryContainer.querySelector('[data-category="all"]');
-    categoryContainer.innerHTML = '';
-    categoryContainer.appendChild(allBtn);
-
-    let categoryList = [];
+    // Fetch categories grouped by domain from the mentor_categories table
+    let domainGroups = [];
     try {
-        categoryList = await MentorService.getMentorCategories();
+        domainGroups = await MentorService.getGroupedMentorCategories();
     } catch (err) {
-        // Fallback to dynamic aggregation from mentor data
+        // Fallback: aggregate distinct expertise strings from mentor data
         const dynamicCats = new Set();
         mentors.forEach(m => m.expertise.forEach(e => dynamicCats.add(e)));
-        categoryList = Array.from(dynamicCats).sort().map(n => ({ name: n }));
+        domainGroups = [{ domain: 'Expertise', categories: Array.from(dynamicCats).sort().map(n => ({ name: n, slug: n })) }];
     }
 
-    categoryList.sort((a, b) => a.name.localeCompare(b.name)).forEach(cat => {
-        const catName = cat.name;
-        const btn = document.createElement('button');
-        btn.dataset.category = catName;
-        btn.className = 'w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer filter-category-btn transition-all duration-200 group';
-        btn.innerHTML = `
-            <span class="material-symbols-outlined text-xl text-slate-400 group-hover:text-primary transition-colors">label</span>
-            <span class="text-sm font-medium text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white">${catName}</span>
+    // Render grouped hierarchical filter
+    categoryContainer.innerHTML = `
+        <button data-category="all"
+            class="w-full flex items-center gap-3 p-3 rounded-xl bg-primary text-white shadow-lg shadow-primary/20 cursor-pointer filter-category-btn transition-all duration-200 mb-2">
+            <span class="material-symbols-outlined text-xl">grid_view</span>
+            <span class="text-sm font-bold">All Mentors</span>
+        </button>
+    `;
+
+    domainGroups.forEach(group => {
+        const domainKey = group.domain.replace(/\s+/g, '-').toLowerCase();
+        const isOpen = expandedDomains.has(domainKey);
+
+        const groupEl = document.createElement('div');
+        groupEl.className = 'domain-group mb-1';
+        groupEl.dataset.domain = domainKey;
+
+        // Domain icon mapping
+        const iconMap = {
+            'technology & programming': 'code',
+            'design & creative': 'palette',
+            'languages': 'translate',
+            'islamic studies': 'mosque',
+            'business & finance': 'trending_up',
+            'mathematics & science': 'calculate',
+            'general': 'label',
+        };
+        const domainLower = group.domain.toLowerCase();
+        const icon = Object.entries(iconMap).find(([k]) => domainLower.includes(k.split(' ')[0]))?.['1'] || 'category';
+
+        groupEl.innerHTML = `
+            <button class="domain-header w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200 text-left group" data-domain-key="${domainKey}">
+                <div class="flex items-center gap-2.5">
+                    <span class="material-symbols-outlined text-lg text-primary/70">${icon}</span>
+                    <span class="text-xs font-extrabold uppercase tracking-widest text-slate-500 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-white">${group.domain}</span>
+                </div>
+                <span class="material-symbols-outlined text-base text-slate-400 transition-transform duration-200 domain-chevron ${isOpen ? 'rotate-180' : ''}">expand_more</span>
+            </button>
+            <div class="subcategory-list pl-2 space-y-0.5 overflow-hidden transition-all duration-300 ${isOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}">
+                ${group.categories.map(cat => `
+                    <button data-category="${cat.name}"
+                        class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer filter-category-btn transition-all duration-150 group/item text-left">
+                        <span class="w-1.5 h-1.5 rounded-full bg-slate-300 group-hover/item:bg-primary flex-shrink-0 transition-colors"></span>
+                        <span class="text-sm font-medium text-slate-600 dark:text-slate-400 group-hover/item:text-slate-900 dark:group-hover/item:text-white">${cat.name}</span>
+                    </button>
+                `).join('')}
+            </div>
         `;
-        categoryContainer.appendChild(btn);
+        categoryContainer.appendChild(groupEl);
     });
 
     // Countries
@@ -85,7 +121,7 @@ async function populateFilters(mentors) {
         countrySelect.appendChild(opt);
     });
 
-    // Cities (initially show all cities found)
+    // Cities
     updateCityOptions(mentors);
 }
 
@@ -104,11 +140,70 @@ function updateCityOptions(mentors) {
     citySelect.value = cities.has(currentVal) ? currentVal : 'all';
 }
 
+function setActiveCategory(selectedCategory) {
+    activeFilters.category = selectedCategory;
+
+    // Reset all subcategory buttons
+    document.querySelectorAll('.filter-category-btn').forEach(b => {
+        const isAll = b.dataset.category === 'all';
+        const isSelected = b.dataset.category === selectedCategory;
+
+        if (isAll) {
+            b.className = selectedCategory === 'all'
+                ? 'w-full flex items-center gap-3 p-3 rounded-xl bg-primary text-white shadow-lg shadow-primary/20 cursor-pointer filter-category-btn transition-all duration-200 mb-2'
+                : 'w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer filter-category-btn transition-all duration-200 mb-2';
+            const icon = b.querySelector('.material-symbols-outlined');
+            const text = b.querySelector('span:not(.material-symbols-outlined)');
+            if (selectedCategory === 'all') {
+                if (icon) icon.className = 'material-symbols-outlined text-xl';
+                if (text) text.className = 'text-sm font-bold';
+            } else {
+                if (icon) icon.className = 'material-symbols-outlined text-xl text-slate-400';
+                if (text) text.className = 'text-sm font-bold text-slate-600 dark:text-slate-400';
+            }
+        } else {
+            // subCategory button
+            if (isSelected) {
+                b.className = 'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg bg-primary/10 cursor-pointer filter-category-btn transition-all duration-150 group/item text-left';
+                const dot = b.querySelector('.w-1\\.5');
+                const label = b.querySelector('span:last-child');
+                if (dot) dot.className = 'w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0';
+                if (label) label.className = 'text-sm font-bold text-primary';
+            } else {
+                b.className = 'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer filter-category-btn transition-all duration-150 group/item text-left';
+                const dot = b.querySelector('.w-1\\.5');
+                const label = b.querySelector('span:last-child');
+                if (dot) dot.className = 'w-1.5 h-1.5 rounded-full bg-slate-300 group-hover/item:bg-primary flex-shrink-0 transition-colors';
+                if (label) label.className = 'text-sm font-medium text-slate-600 dark:text-slate-400 group-hover/item:text-slate-900 dark:group-hover/item:text-white';
+            }
+        }
+    });
+
+    applyFilters();
+}
+
+function toggleDomain(domainKey) {
+    const groupEl = document.querySelector(`.domain-group[data-domain="${domainKey}"]`);
+    if (!groupEl) return;
+
+    const subcategoryList = groupEl.querySelector('.subcategory-list');
+    const chevron = groupEl.querySelector('.domain-chevron');
+
+    if (expandedDomains.has(domainKey)) {
+        expandedDomains.delete(domainKey);
+        subcategoryList.className = subcategoryList.className.replace('max-h-[500px] opacity-100', 'max-h-0 opacity-0');
+        chevron.classList.remove('rotate-180');
+    } else {
+        expandedDomains.add(domainKey);
+        subcategoryList.className = subcategoryList.className.replace('max-h-0 opacity-0', 'max-h-[500px] opacity-100');
+        chevron.classList.add('rotate-180');
+    }
+}
+
 function setupEventListeners() {
     const searchInput = document.getElementById('marketplace-search');
     const countrySelect = document.getElementById('country-filter');
     const citySelect = document.getElementById('city-filter');
-    const categoryBtns = document.querySelectorAll('.filter-category-btn');
 
     searchInput?.addEventListener('input', (e) => {
         activeFilters.search = e.target.value.toLowerCase();
@@ -117,7 +212,6 @@ function setupEventListeners() {
 
     countrySelect?.addEventListener('change', (e) => {
         activeFilters.country = e.target.value;
-        // Filter cities based on country
         const filteredByCountry = activeFilters.country === 'all' 
             ? allMentors 
             : allMentors.filter(m => m.country === activeFilters.country);
@@ -130,30 +224,22 @@ function setupEventListeners() {
         applyFilters();
     });
 
+    // Delegated handler for category filter container (domain toggles + subcategory selections)
     document.getElementById('category-filters')?.addEventListener('click', (e) => {
-        const btn = e.target.closest('.filter-category-btn');
-        if (!btn) return;
+        // Domain header toggle
+        const domainBtn = e.target.closest('.domain-header');
+        if (domainBtn) {
+            toggleDomain(domainBtn.dataset.domainKey);
+            return;
+        }
 
-        activeFilters.category = btn.dataset.category;
-        
-        // Update UI states
-        document.querySelectorAll('.filter-category-btn').forEach(b => {
-            b.className = 'w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer filter-category-btn transition-all duration-200 group';
-            const icon = b.querySelector('.material-symbols-outlined');
-            const text = b.querySelector('span:not(.material-symbols-outlined)');
-            if (icon) icon.className = 'material-symbols-outlined text-xl text-slate-400 group-hover:text-primary transition-colors';
-            if (text) text.className = 'text-sm font-medium text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white';
-        });
-
-        btn.className = 'w-full flex items-center gap-3 p-3 rounded-xl bg-primary text-white shadow-lg shadow-primary/20 cursor-pointer filter-category-btn transition-all duration-200';
-        const icon = btn.querySelector('.material-symbols-outlined');
-        const text = btn.querySelector('span:not(.material-symbols-outlined)');
-        if (icon) icon.className = 'material-symbols-outlined text-xl text-white';
-        if (text) text.className = 'text-sm font-bold text-white';
-
-        applyFilters();
+        // Subcategory or "All" button
+        const catBtn = e.target.closest('.filter-category-btn');
+        if (!catBtn) return;
+        setActiveCategory(catBtn.dataset.category);
     });
 }
+
 
 function applyFilters() {
     const filtered = allMentors.filter(m => {
@@ -261,7 +347,7 @@ function renderMentors(mentors) {
                     </div>
                     <div>
                         <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Sessions</p>
-                        <p class="text-xs font-bold text-slate-700 dark:text-slate-200">${mentor.total_sessions || 0}</p>
+                        <p class="text-xs font-bold text-slate-700 dark:text-slate-200">${mentor.completed_sessions ?? mentor.total_sessions ?? 0}</p>
                     </div>
                 </div>
                 <div class="flex items-center gap-2">

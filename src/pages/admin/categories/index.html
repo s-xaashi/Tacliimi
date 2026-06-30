@@ -317,6 +317,20 @@
                         <input type="checkbox" id="cat-active" checked class="h-4.5 w-4.5 text-indigo-600 border-slate-300 dark:border-slate-700 rounded focus:ring-indigo-500 bg-slate-50 dark:bg-slate-800">
                         <label for="cat-active" class="text-sm font-bold text-slate-700 dark:text-slate-350">Active & Available for Selection</label>
                     </div>
+                    <!-- Domain Group: only relevant for Mentor categories -->
+                    <div id="domain-field" class="space-y-2 hidden">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-400">Domain Group <span class="text-purple-400 normal-case font-normal">(Mentor only)</span></label>
+                        <select id="cat-domain" class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700/50 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-purple-500 text-slate-900 dark:text-white">
+                            <option value="General">General</option>
+                            <option value="Technology & Programming">Technology & Programming</option>
+                            <option value="Design & Creative">Design & Creative</option>
+                            <option value="Languages">Languages</option>
+                            <option value="Islamic Studies">Islamic Studies</option>
+                            <option value="Business & Finance">Business & Finance</option>
+                            <option value="Mathematics & Science">Mathematics & Science</option>
+                        </select>
+                        <p class="text-[10px] text-slate-400">Groups this category under a domain heading in the Mentor Marketplace filter sidebar.</p>
+                    </div>
                 </div>
             </div>
 
@@ -778,10 +792,32 @@
             inputSlug.value = cat.slug;
             inputActive.checked = cat.is_active;
 
+            // Show/populate domain field for mentor categories
+            const domainField = document.getElementById('domain-field');
+            const domainSelect = document.getElementById('cat-domain');
+            if (currentTab === 'mentor') {
+                domainField.classList.remove('hidden');
+                domainSelect.value = cat.domain_name || 'General';
+            } else {
+                domainField.classList.add('hidden');
+            }
+
             activeDeletionItem = null;
             catModal.classList.remove('hidden');
             catModal.classList.add('flex');
         };
+
+        // Toggle domain field visibility when type radio changes
+        document.querySelectorAll('input[name="modal-type"]').forEach(radio => {
+            radio.addEventListener('change', () => {
+                const domainField = document.getElementById('domain-field');
+                if (radio.value === 'mentor' && radio.checked) {
+                    domainField.classList.remove('hidden');
+                } else if (radio.value === 'course' && radio.checked) {
+                    domainField.classList.add('hidden');
+                }
+            });
+        });
 
         // Confirmation of Deletion Safety
         window.confirmDeletion = (id, count) => {
@@ -830,6 +866,10 @@
 
             try {
                 const payload = { name, slug, is_active };
+                // Only include domain_name for mentor categories
+                if (type === 'mentor') {
+                    payload.domain_name = document.getElementById('cat-domain').value || 'General';
+                }
                 
                 if (editingCategory) {
                     const { error } = await supabase

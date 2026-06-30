@@ -6,6 +6,13 @@ export const ProfileService = {
      * Get the completely structured profile including teaching and payout data
      */
     async getFullProfile(userId) {
+        // Helper: safely parse a JSON string field
+        const safeJson = (raw, fallback = []) => {
+            if (!raw) return fallback;
+            if (Array.isArray(raw)) return raw; // already parsed
+            try { return JSON.parse(raw); } catch { return fallback; }
+        };
+
         // 1. Base Profile
         const { data: profile, error: pErr } = await supabase
             .from('profiles')
@@ -23,26 +30,30 @@ export const ProfileService = {
             .eq('instructor_id', userId)
             .maybeSingle();
 
-        // 3. Expertise
+        // 3. Expertise (deduplicated by name, case-insensitive)
         const { data: expertise } = await supabase
             .from('expertise_areas')
-            .select('*')
+            .select('expertise_name')
             .eq('instructor_id', userId);
 
-        let expertiseList = expertise ? expertise.map(e => e.expertise_name) : [];
+        const seenExp = new Set();
+        const expertiseList = (expertise || []).reduce((acc, e) => {
+            const key = (e.expertise_name || '').toLowerCase();
+            if (key && !seenExp.has(key)) { seenExp.add(key); acc.push(e.expertise_name); }
+            return acc;
+        }, []);
 
         // 4. Payout
         const payoutMethod = await PayoutService.getMyPayoutMethod(userId);
 
-        // Map back to the legacy object structure expected by the UI for easy transition
         return {
             ...profile,
             teaching_experience: teachingProfile?.teaching_experience || "",
             experience: teachingProfile?.teaching_experience || "",
             introVideo: teachingProfile?.introduction_video_url || "",
             mentorship_style: teachingProfile?.mentorship_style || "",
-            education_list: teachingProfile?.educational_background ? JSON.parse(teachingProfile.educational_background) : [],
-            language_list: teachingProfile?.languages_spoken ? JSON.parse(teachingProfile.languages_spoken) : [],
+            education_list: safeJson(teachingProfile?.educational_background),
+            language_list: safeJson(teachingProfile?.languages_spoken),
             expertise_list: expertiseList,
             payout_method: payoutMethod ? (payoutMethod.method_type === 'cod' ? 'Cash on Delivery' : 'Mobile Money') : null,
             payout_details: payoutMethod ? {
@@ -82,39 +93,38 @@ export const ProfileService = {
      * Upserts teaching profile data
      */
     async saveTeachingProfile(userId, teachingData, expertiseList) {
-        // 1. Save Teaching Profile
+        // 1. Save Teaching Profile row
         const { error: teachingErr } = await supabase
             .from('teaching_profiles')
             .upsert({
                 instructor_id: userId,
-                introduction_video_url: teachingData.introVideo,
-                teaching_experience: teachingData.experience,
-                mentorship_style: teachingData.mentorship_style,
-                educational_background: teachingData.education,
-                languages_spoken: teachingData.languages
+                introduction_video_url: teachingData.introVideo || '',
+                teaching_experience: teachingData.experience || '',
+                mentorship_style: teachingData.mentorship_style || null,
+                educational_background: teachingData.education || '[]',
+                languages_spoken: teachingData.languages || '[]'
             }, { onConflict: 'instructor_id' });
 
         if (teachingErr) throw teachingErr;
 
-        // Sync video and experience to mentorship_profiles if it exists
-        const mentorUpdates = {};
-        if (teachingData.introVideo) mentorUpdates.introduction_video_url = teachingData.introVideo;
-        if (teachingData.experience) mentorUpdates.experience_years = teachingData.experience;
-
-        if (Object.keys(mentorUpdates).length > 0) {
+        // Sync video to mentorship_profiles (non-blocking)
+        if (teachingData.introVideo) {
             await supabase
                 .from('mentorship_profiles')
-                .update(mentorUpdates)
+                .update({ introduction_video_url: teachingData.introVideo })
                 .eq('instructor_id', userId);
         }
 
-        // 2. Clear old expertise and insert new
-        // WE ALWAYS DELETE FIRST to ensure a fresh sync
+        // 2. Deduplicate incoming expertise list before processing
+        const uniqueExpertise = [...new Set(
+            (expertiseList || []).map(e => e.trim()).filter(Boolean)
+        )];
+
+        // 3. Clear old expertise and insert fresh set
         await supabase.from('expertise_areas').delete().eq('instructor_id', userId);
 
-        if (expertiseList && expertiseList.length > 0) {
-            // Resolve expertise names against centralized mentor_categories table
-            // to get the proper mentor_category_id foreign key reference
+        if (uniqueExpertise.length > 0) {
+            // Resolve names against mentor_categories
             const { data: allCats } = await supabase
                 .from('mentor_categories')
                 .select('id, name, slug');
@@ -123,37 +133,55 @@ export const ProfileService = {
             (allCats || []).forEach(c => { catMap[c.name.toLowerCase()] = c; });
 
             const expertisePayload = [];
-            for (const expert of expertiseList) {
-                const normalizedName = expert.trim();
-                const searchKey = normalizedName.toLowerCase();
+            for (const expert of uniqueExpertise) {
+                const searchKey = expert.toLowerCase();
                 let catEntry = catMap[searchKey];
 
-                // Auto-create category if not found (instructor entered new expertise)
+                // Auto-create a new category if not found
                 if (!catEntry) {
                     const newSlug = searchKey.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-                    const { data: newCat, error: catErr } = await supabase
+                    // Check if a slug collision exists first
+                    const { data: existingCat } = await supabase
                         .from('mentor_categories')
-                        .insert([{ name: normalizedName, slug: newSlug }])
-                        .select()
-                        .single();
-                    if (!catErr && newCat) {
-                        catEntry = newCat;
-                        catMap[searchKey] = newCat; // Cache for duplicates in same save
+                        .select('id, name')
+                        .ilike('name', expert)
+                        .maybeSingle();
+
+                    if (existingCat) {
+                        catEntry = existingCat;
+                        catMap[searchKey] = existingCat;
+                    } else {
+                        const { data: newCat, error: catErr } = await supabase
+                            .from('mentor_categories')
+                            .insert([{ name: expert, slug: newSlug, domain_name: 'General' }])
+                            .select()
+                            .single();
+                        if (!catErr && newCat) {
+                            catEntry = newCat;
+                            catMap[searchKey] = newCat;
+                        } else {
+                            console.warn('[ProfileService] Could not create category for:', expert, catErr?.message);
+                        }
                     }
                 }
 
                 if (catEntry) {
                     expertisePayload.push({
                         instructor_id: userId,
-                        expertise_name: catEntry.name, // Use canonical name from category
+                        expertise_name: catEntry.name,
                         mentor_category_id: catEntry.id
                     });
                 }
             }
 
             if (expertisePayload.length > 0) {
-                const { error: expertErr } = await supabase.from('expertise_areas').insert(expertisePayload);
-                if (expertErr) throw expertErr;
+                const { error: expertErr } = await supabase
+                    .from('expertise_areas')
+                    .insert(expertisePayload);
+                if (expertErr) {
+                    console.error('[ProfileService] Failed to insert expertise_areas:', expertErr);
+                    throw expertErr;
+                }
             }
         }
 

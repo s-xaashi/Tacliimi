@@ -901,11 +901,19 @@
                     input.focus();
 
                     const saveExpertise = () => {
-                        const newExp = input.value;
-                        if (newExp && newExp.trim() !== "") {
+                        const newExp = input.value.trim();
+                        if (newExp) {
+                            const hint = document.getElementById('expertise-empty-hint');
+                            if (hint) hint.remove();
                             const span = document.createElement('span');
-                            span.className = "flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary";
-                            span.innerHTML = `${newExp} <button class="material-symbols-outlined text-[14px]">close</button>`;
+                            span.className = "flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary expertise-tag";
+                            // Use text node so close icon text doesn't contaminate on save
+                            span.appendChild(document.createTextNode(newExp + ' '));
+                            const closeBtn = document.createElement('button');
+                            closeBtn.className = 'material-symbols-outlined text-[14px]';
+                            closeBtn.type = 'button';
+                            closeBtn.textContent = 'close';
+                            span.appendChild(closeBtn);
                             expertiseContainer.insertBefore(span, inputContainer);
                         }
                         inputContainer.remove();
@@ -957,9 +965,9 @@
                 });
             }
 
-            // Languages Spoken
+            // Languages Spoken — find edit button by ID
             const languagesContainer = document.getElementById('languages-container');
-            const editLanguagesBtn = languagesContainer ? languagesContainer.parentElement.querySelector('button.bg-primary\\/10') : null;
+            const editLanguagesBtn = document.getElementById('edit-languages-btn');
 
             if (editLanguagesBtn && languagesContainer) {
                 editLanguagesBtn.addEventListener('click', (e) => {
@@ -983,12 +991,18 @@
                     input.focus();
 
                     const saveLang = () => {
-                        const newLang = input.value;
-                        if (newLang && newLang.trim() !== "") {
+                        const newLang = input.value.trim();
+                        if (newLang) {
                             const span = document.createElement('span');
-                            span.className = "rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-300 flex items-center gap-1 group cursor-pointer hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/30";
-                            span.innerHTML = `${newLang} <span class="material-symbols-outlined text-[14px] opacity-0 group-hover:opacity-100 transition-opacity">close</span>`;
-                            languagesContainer.insertBefore(span, inputContainer);
+                            span.className = "rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-300 flex items-center gap-1 group cursor-pointer hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/30 lang-tag";
+                            // Use text node to keep text separate from icon text
+                            span.appendChild(document.createTextNode(newLang));
+                            const icon = document.createElement('span');
+                            icon.className = 'material-symbols-outlined text-[14px] opacity-0 group-hover:opacity-100 transition-opacity';
+                            icon.textContent = 'close';
+                            span.appendChild(icon);
+                            const currentEditBtn = document.getElementById('edit-languages-btn');
+                            languagesContainer.insertBefore(span, currentEditBtn || inputContainer);
                         }
                         inputContainer.remove();
                     };
@@ -1141,19 +1155,38 @@
                 if (profile.teaching_experience) document.getElementById('experience').value = profile.teaching_experience;
                 if (profile.mentorship_style) document.getElementById('mentorshipStyle').value = profile.mentorship_style;
 
-                // Expertise Tags
+                // Expertise Tags — clear ALL existing tags (including HTML placeholders) then repopulate
                 const expCont = document.getElementById('expertise-container');
-                if (expCont && profile.expertise_list) {
-                    // Keep the "Add Expertise" button
-                    const addBtn = expCont.querySelector('button.border-dashed');
+                if (expCont) {
+                    // Save the Add-Expertise button before clearing
+                    const addExpBtn = expCont.querySelector('button.border-dashed');
+                    // Remove ALL children (clears hardcoded placeholder tags too)
                     expCont.innerHTML = '';
-                    profile.expertise_list.forEach(exp => {
+                    // Re-add saved expertise tags
+                    const expList = profile.expertise_list || [];
+                    expList.forEach(exp => {
                         const span = document.createElement('span');
-                        span.className = "flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary";
-                        span.innerHTML = `${exp} <button class="material-symbols-outlined text-[14px]">close</button>`;
+                        span.className = "flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary expertise-tag";
+                        const textNode = document.createTextNode(exp + ' ');
+                        span.appendChild(textNode);
+                        const closeBtn = document.createElement('button');
+                        closeBtn.className = 'material-symbols-outlined text-[14px]';
+                        closeBtn.type = 'button';
+                        closeBtn.textContent = 'close';
+                        span.appendChild(closeBtn);
                         expCont.appendChild(span);
                     });
-                    if (addBtn) expCont.appendChild(addBtn);
+                    // Re-add the Add button
+                    if (addExpBtn) expCont.appendChild(addExpBtn);
+                    // If we got no expertise, show empty state hint
+                    if (expList.length === 0) {
+                        const hint = document.createElement('p');
+                        hint.className = 'text-xs text-slate-400';
+                        hint.textContent = 'No expertise added yet. Click "Add Expertise" to get started.';
+                        hint.id = 'expertise-empty-hint';
+                        if (addExpBtn) expCont.insertBefore(hint, addExpBtn);
+                        else expCont.appendChild(hint);
+                    }
                 }
 
                 // Education Blocks
@@ -1186,19 +1219,34 @@
                     });
                 }
 
-                // Language Tags
+                // Language Tags — use button ID (not class) to find the edit button
                 const langCont = document.getElementById('languages-container');
-                if (langCont && profile.language_list) {
-                    // Keep the "Add" button
-                    const addBtn = langCont.querySelector('button.bg-primary\\/10');
+                if (langCont) {
+                    // Save the edit button before clearing
+                    const editLangBtn = document.getElementById('edit-languages-btn');
                     langCont.innerHTML = '';
-                    profile.language_list.forEach(lang => {
+                    const langList = profile.language_list || [];
+                    langList.forEach(lang => {
                         const span = document.createElement('span');
-                        span.className = "rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-300 flex items-center gap-1 group cursor-pointer hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/30";
-                        span.innerHTML = `${lang} <span class="material-symbols-outlined text-[14px] opacity-0 group-hover:opacity-100 transition-opacity">close</span>`;
+                        span.className = "rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-300 flex items-center gap-1 group cursor-pointer hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/30 lang-tag";
+                        const textNode = document.createTextNode(lang);
+                        span.appendChild(textNode);
+                        const closeIcon = document.createElement('span');
+                        closeIcon.className = 'material-symbols-outlined text-[14px] opacity-0 group-hover:opacity-100 transition-opacity';
+                        closeIcon.textContent = 'close';
+                        span.appendChild(closeIcon);
                         langCont.appendChild(span);
                     });
-                    if (addBtn) langCont.appendChild(addBtn);
+                    // Re-add the edit button
+                    if (editLangBtn) langCont.appendChild(editLangBtn);
+                    else {
+                        // Rebuild edit button if it was lost
+                        const newEditBtn = document.createElement('button');
+                        newEditBtn.id = 'edit-languages-btn';
+                        newEditBtn.className = 'material-symbols-outlined rounded-lg bg-primary/10 p-1 text-primary';
+                        newEditBtn.textContent = 'edit';
+                        langCont.appendChild(newEditBtn);
+                    }
                 }
 
                 // Video Info
@@ -1354,13 +1402,19 @@
                     const expertiseInputWrapper = expertiseContainer.parentElement;
                     expertiseInputWrapper.classList.remove('border-red-500', 'ring-1', 'ring-red-500');
 
-                    const expertiseTags = expertiseContainer.querySelectorAll('span.rounded-full');
+                    // Collect expertise tags — use .expertise-tag class to skip "Add" button
+                    const expertiseTags = expertiseContainer.querySelectorAll('span.expertise-tag');
                     if (expertiseTags.length === 0) {
                         expertiseInputWrapper.classList.add('border-red-500', 'ring-1', 'ring-red-500', 'p-2', 'rounded-lg');
                         tabValid = false;
                     } else {
                         const experience = document.getElementById('experience').value;
-                        const expertiseList = Array.from(expertiseTags).map(span => span.innerText.replace('close', '').trim());
+                        // Read text from first child text node only — excludes the 'close' icon text
+                        const expertiseList = Array.from(expertiseTags).map(span => {
+                            // Get only direct text nodes (excludes nested element text like 'close')
+                            const textNode = Array.from(span.childNodes).find(n => n.nodeType === Node.TEXT_NODE);
+                            return textNode ? textNode.textContent.trim() : span.childNodes[0]?.textContent?.trim() || '';
+                        }).filter(Boolean);
 
                         const educationList = [];
                         document.querySelectorAll('.education-item').forEach(item => {
@@ -1369,8 +1423,12 @@
                             if (uni && deg) educationList.push({ university: uni, degree: deg });
                         });
 
-                        const languageTags = document.querySelectorAll('#languages-container span.rounded-lg:not(.material-symbols-outlined)');
-                        const languageList = Array.from(languageTags).map(span => span.innerText.replace('close', '').trim());
+                        // Collect language tags — use .lang-tag class, read only text nodes
+                        const languageTags = document.querySelectorAll('#languages-container span.lang-tag, #languages-container span.rounded-lg');
+                        const languageList = Array.from(languageTags).map(span => {
+                            const textNode = Array.from(span.childNodes).find(n => n.nodeType === Node.TEXT_NODE);
+                            return textNode ? textNode.textContent.trim() : '';
+                        }).filter(Boolean);
 
                         const mentorshipStyle = document.getElementById('mentorshipStyle').value.trim();
 

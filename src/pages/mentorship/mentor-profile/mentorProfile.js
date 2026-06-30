@@ -162,21 +162,31 @@ function renderProfile(mentor) {
         }
     }
 
-    // Expertise Tags - Look for the expertise section by finding the section with "psychology" text
-    const expertiseSection = Array.from(document.querySelectorAll('section')).find(section => 
-        section.textContent.includes('Expertise')
-    );
-    if (expertiseSection) {
-        const expertiseContainer = expertiseSection.querySelector('.flex.flex-wrap.gap-2');
-        if (expertiseContainer) {
-            const tags = mentor.expertise || [];
-            if (tags.length > 0) {
-                expertiseContainer.innerHTML = tags.map(tag => `
-                    <span class="px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-lg text-sm font-medium transition-colors hover:bg-primary/10 hover:text-primary cursor-default">${tag}</span>
-                `).join('');
-            } else {
-                expertiseContainer.innerHTML = '<p class="text-sm text-slate-400">No expertise areas listed.</p>';
-            }
+    // Expertise Tags — cap at 4 badges on public profile
+    const expertiseTagsContainer = document.getElementById('expertise-tags-container');
+    if (expertiseTagsContainer) {
+        const tags = (mentor.expertise || []).slice(0, 4); // Max 4 badges
+        if (tags.length > 0) {
+            expertiseTagsContainer.innerHTML = tags.map(tag =>
+                `<span class="px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-lg text-sm font-medium transition-colors hover:bg-primary/10 hover:text-primary cursor-default">${tag}</span>`
+            ).join('');
+        } else {
+            expertiseTagsContainer.innerHTML = '<p class="text-sm text-slate-400">No expertise areas listed.</p>';
+        }
+    }
+
+    // Languages Spoken — show section only if data exists
+    const languagesSection = document.getElementById('languages-section');
+    const languagesList = document.getElementById('languages-list');
+    if (languagesSection && languagesList) {
+        const langs = mentor.language_list || [];
+        if (langs.length > 0) {
+            languagesSection.classList.remove('hidden');
+            languagesList.innerHTML = langs.map(lang =>
+                `<span class="px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-lg text-sm font-medium">${lang}</span>`
+            ).join('');
+        } else {
+            languagesSection.classList.add('hidden');
         }
     }
 

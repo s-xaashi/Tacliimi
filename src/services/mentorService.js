@@ -261,6 +261,39 @@ export const MentorService = {
                 }
             }
 
+            // ── Query 3: Completed sessions count (live, per mentor) ─────────
+            let sessionCountMap = {};
+            try {
+                const { data: completedSessions } = await supabase
+                    .from('mentorship_sessions')
+                    .select('mentor_id')
+                    .or('booking_status.eq.completed,status.eq.completed');
+
+                if (completedSessions) {
+                    completedSessions.forEach(s => {
+                        sessionCountMap[s.mentor_id] = (sessionCountMap[s.mentor_id] || 0) + 1;
+                    });
+                }
+            } catch (sessErr) {
+                console.warn('[Marketplace] Could not load session counts:', sessErr.message);
+            }
+
+            // ── Query 4: Live response times ─────────────────────────────────
+            let responseTimeMap = {};
+            try {
+                const { data: responseTimes } = await supabase
+                    .from('mentor_response_times_view')
+                    .select('mentor_id, avg_response_time_hours');
+
+                if (responseTimes) {
+                    responseTimes.forEach(rt => {
+                        responseTimeMap[rt.mentor_id] = rt.avg_response_time_hours || 0;
+                    });
+                }
+            } catch (rtErr) {
+                console.warn('[Marketplace] Could not load response times:', rtErr.message);
+            }
+
             // ── Merge and map ────────────────────────────────────────────────
             return data.map(mentor => {
                 const teachingData = Array.isArray(mentor.profile?.teaching) 
@@ -303,8 +336,12 @@ export const MentorService = {
                     hourly_rate: mentor.hourly_rate || 0,
                     monthly_rate: mentor.monthly_rate || (mentor.hourly_rate * 20),
                     currency: mentor.currency || 'USD',
+                    // Live completed-session count from mentorship_sessions table
+                    completed_sessions: sessionCountMap[mentor.instructor_id] || 0,
+                    // Legacy field kept for compatibility
                     total_sessions: mentor.total_sessions || 0,
-                    avg_response_time: mentor.avg_response_time_hours || 0,
+                    // Live response time calculated from mentorship_booking_messages
+                    avg_response_time: responseTimeMap[mentor.instructor_id] !== undefined ? responseTimeMap[mentor.instructor_id] : (mentor.avg_response_time_hours || 0),
                     country: mentor.profile?.country || mentor.mentorship_country,
                     city: mentor.profile?.city || mentor.mentorship_city,
                     headline: mentor.headline,
@@ -406,6 +443,12 @@ export const MentorService = {
                 console.warn("Failed to fetch mentor availability:", aErr);
             }
 
+            const safeJsonMentor = (raw, fallback = []) => {
+                if (!raw) return fallback;
+                if (Array.isArray(raw)) return raw;
+                try { return JSON.parse(raw); } catch { return fallback; }
+            };
+
             return {
                 id: data.id,
                 instructor_id: data.instructor_id,
@@ -419,10 +462,9 @@ export const MentorService = {
                 mentorship_style: teachingData?.mentorship_style,
                 experience: teachingData?.teaching_experience,
                 education: teachingData?.educational_background,
-                education_list: teachingData?.educational_background
-                    ? (() => { try { const e = teachingData.educational_background; return typeof e === 'string' ? JSON.parse(e) : e; } catch { return []; } })()
-                    : [],
+                education_list: safeJsonMentor(teachingData?.educational_background),
                 languages: teachingData?.languages_spoken,
+                language_list: safeJsonMentor(teachingData?.languages_spoken),
                 hourly_rate: data.hourly_rate || 0,
                 monthly_rate: data.monthly_rate || (data.hourly_rate * 20),
                 currency: data.currency || 'USD',
@@ -790,14 +832,30 @@ export const MentorService = {
 
     /** MENTOR CATEGORY MANAGEMENT */
     async getMentorCategories() {
-        // Public-facing: only return active categories
+        // Public-facing: only return active categories, ordered by domain then name for grouping
         const { data, error } = await supabase
             .from('mentor_categories')
-            .select('*')
+            .select('id, name, slug, domain_name')
             .eq('is_active', true)
+            .order('domain_name')
             .order('name');
         if (error) throw error;
         return data;
+    },
+
+    /** Returns categories grouped by domain_name for hierarchical filter UI */
+    async getGroupedMentorCategories() {
+        const categories = await this.getMentorCategories();
+        const groups = {};
+        for (const cat of categories) {
+            const domain = cat.domain_name || 'General';
+            if (!groups[domain]) groups[domain] = [];
+            groups[domain].push(cat);
+        }
+        // Return as sorted array of { domain, categories[] }
+        return Object.entries(groups)
+            .sort(([a], [b]) => a.localeCompare(b))
+            .map(([domain, cats]) => ({ domain, categories: cats }));
     },
 
     async getAllMentorCategoriesAdmin() {
