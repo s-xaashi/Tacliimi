@@ -349,12 +349,14 @@
             document.documentElement.classList.add('dark');
         }
 
+        const urlParams = new URLSearchParams(window.location.search);
+
         const filters = {
-            categories: [],
+            categories: urlParams.get('category') ? [urlParams.get('category')] : [],
             levels: [],
             price_types: [],
             rating: null,
-            search: '',
+            search: urlParams.get('search') || '',
             sort: 'Newest'
         };
 
@@ -378,7 +380,11 @@
                 
                 container.innerHTML = categories.map(cat => `
                     <label class="flex items-center gap-3 cursor-pointer group">
-                        <input class="filter-input" type="checkbox" value="${cat.id}" data-type="category" />
+                        <input class="filter-input" type="checkbox" value="${cat.id}" data-type="category" ${
+                            (filters.categories && filters.categories.includes(cat.name)) || 
+                            (filters.categories && filters.categories.includes(cat.id.toString())) 
+                            ? 'checked' : ''
+                        } />
                         <div class="filter-check">
                             <span class="material-icons-outlined text-white text-[14px] scale-0 opacity-0 check-icon transition-all duration-200">check</span>
                         </div>
@@ -428,6 +434,10 @@
 
         // Search listener
         const searchInput = document.getElementById('marketplace-search');
+        if (filters.search) {
+            searchInput.value = filters.search;
+        }
+
         searchInput.addEventListener('input', (e) => {
             filters.search = e.target.value;
             // Debounce search
@@ -447,6 +457,18 @@
             filters.levels = [];
             filters.price_types = [];
             filters.rating = null;
+            
+            // Clear search filter as well
+            filters.search = '';
+            if (searchInput) {
+                searchInput.value = '';
+            }
+
+            // Also clear the URL parameters
+            if (window.history.replaceState) {
+                window.history.replaceState({}, '', window.location.pathname);
+            }
+
             renderCourses();
         });
 
@@ -618,9 +640,9 @@
             }
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            initFilters();
-            renderCourses();
+        document.addEventListener('DOMContentLoaded', async () => {
+            await initFilters();
+            updateFilters();
         });
     </script>
 

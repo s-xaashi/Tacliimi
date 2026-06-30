@@ -374,7 +374,7 @@ async function loadMentors(forceRefresh = false) {
                 statusLabel = "Awaiting Payment";
                 statusColor = "bg-orange-100 dark:bg-orange-900/30 text-orange-600";
                 actionHtml = `
-                    <a href="/src/pages/marketplace/index.html" class="flex-1 px-4 py-2.5 bg-orange-500 text-white font-bold rounded-xl hover:bg-orange-600 transition-all text-sm flex items-center gap-2 justify-center">
+                    <a href="/src/pages/mentorship/mentor-booking/index.html?id=${session.mentor_id}&resumeSession=${session.id}" class="flex-1 px-4 py-2.5 bg-orange-500 text-white font-bold rounded-xl hover:bg-orange-600 transition-all text-sm flex items-center gap-2 justify-center">
                         <span class="material-symbols-outlined text-[18px]">payment</span> Complete Payment
                     </a>
                 `;

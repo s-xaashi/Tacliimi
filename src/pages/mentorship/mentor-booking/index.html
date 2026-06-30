@@ -137,14 +137,14 @@
                         <div class="w-full grid grid-cols-2 gap-4 mt-6">
                             <div class="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl">
                                 <span class="block text-xs text-slate-400 font-medium mb-1">Rating</span>
-                                <div class="flex items-center justify-center gap-1 font-bold">
+                                <div id="mentor-rating-box" class="flex items-center justify-center gap-1 font-bold">
                                     <span class="material-symbols-outlined text-yellow-400 text-base fill-1">star</span>
                                     —
                                 </div>
                             </div>
                             <div class="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl">
                                 <span class="block text-xs text-slate-400 font-medium mb-1">Sessions</span>
-                                <div class="font-bold text-slate-900 dark:text-slate-100">—</div>
+                                <div id="mentor-sessions-box" class="font-bold text-slate-900 dark:text-slate-100">—</div>
                             </div>
                         </div>
                     </div>
@@ -616,6 +616,211 @@
             </div>
         </div>
     </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+         RESUME BANNER — shown when student is restoring a pending-payment session
+    ════════════════════════════════════════════════════════ -->
+    <div id="resume-session-banner" class="hidden fixed top-16 inset-x-0 z-40 px-4 py-3 bg-amber-500 text-white flex items-center justify-center gap-3 shadow-lg">
+        <span class="material-symbols-outlined text-xl">info</span>
+        <p class="text-sm font-bold">Resuming your pending booking — complete payment below to confirm your session.</p>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+         PAYMENT MODAL — Tacliimi Pay (same as course checkout)
+         Somali/local users → e-wallet selector (stays on site)
+         International users → redirect to Sifalo checkout
+    ════════════════════════════════════════════════════════ -->
+    <div id="booking-payment-modal" class="fixed inset-0 z-[9999] hidden" role="dialog" aria-modal="true">
+        <!-- Backdrop -->
+        <div id="booking-payment-backdrop" class="fixed inset-0 bg-slate-900/40 dark:bg-[#0f0c29]/80 backdrop-blur-xl transition-all duration-500" onclick="closeBookingPaymentModal()"></div>
+
+        <!-- Scrollable Wrapper -->
+        <div class="fixed inset-0 overflow-y-auto flex items-start justify-center p-4 sm:p-8 pointer-events-none">
+            <!-- Modal card -->
+            <div class="relative z-10 w-full max-w-[440px] my-auto pointer-events-auto rounded-3xl overflow-hidden shadow-2xl dark:shadow-[0_40px_100px_rgba(0,0,0,0.8)] border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900">
+
+            <!-- Glow Effects -->
+            <div class="absolute -top-24 -left-24 w-48 h-48 bg-indigo-500/20 rounded-full blur-[80px]"></div>
+            <div class="absolute -bottom-24 -right-24 w-48 h-48 bg-purple-500/20 rounded-full blur-[80px]"></div>
+
+            <div class="relative z-20">
+                <!-- Header -->
+                <div class="px-8 pt-8 pb-6 flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg transform rotate-3 hover:rotate-0 transition-transform duration-300"
+                             style="background: linear-gradient(135deg, #6c63ff, #4f46e5);">
+                            <span class="material-symbols-outlined text-white text-2xl">account_balance_wallet</span>
+                        </div>
+                        <div>
+                            <h2 class="text-slate-900 dark:text-white font-bold text-xl tracking-tight">Tacliimi Pay</h2>
+                            <p class="text-primary dark:text-indigo-300/60 text-xs font-medium uppercase tracking-widest">Secure Checkout</p>
+                        </div>
+                    </div>
+                    <button onclick="closeBookingPaymentModal()" class="w-10 h-10 rounded-full flex items-center justify-center text-slate-400 dark:text-white/30 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-all">
+                        <span class="material-symbols-outlined text-xl">close</span>
+                    </button>
+                </div>
+
+                <!-- Session Summary -->
+                <div class="mx-8 mb-6 p-5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10">
+                    <div class="flex gap-4 mb-4">
+                        <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                            <img id="bpm-mentor-avatar" src="" alt="Mentor Avatar" class="w-full h-full object-cover">
+                        </div>
+                        <div class="flex-1 flex flex-col justify-center min-w-0">
+                            <p class="text-primary/50 dark:text-indigo-300/50 text-[10px] font-bold uppercase tracking-widest mb-1">Booking Session With</p>
+                            <h3 id="bpm-mentor-name" class="text-slate-900 dark:text-white font-bold text-base leading-tight line-clamp-1">Mentor</h3>
+                        </div>
+                    </div>
+                    <div class="pt-4 border-t border-slate-200 dark:border-white/5 flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <p class="text-slate-500 dark:text-white/40 text-[11px] font-medium italic">Session confirmed after payment</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-primary/50 dark:text-indigo-300/50 text-[10px] font-bold uppercase tracking-widest">Total Due</p>
+                            <p id="bpm-price" class="text-xl font-bold text-slate-900 dark:text-white tracking-tight">$0.00</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Content Area -->
+                <div class="px-8 pb-8">
+                    <!-- Step 1: Method Selection -->
+                    <div id="bpm-step-method">
+                        <p class="text-slate-600 dark:text-white/80 text-sm font-semibold mb-4">Select Payment Method</p>
+                        <div class="grid grid-cols-1 gap-3">
+                            <!-- EVC Plus / Zaad / Sahal -->
+                            <button onclick="bpmSelectWallet('waafi', 'EVC Plus / Zaad / Sahal', '61')"
+                                class="group relative flex items-center gap-4 p-4 rounded-2xl border border-slate-200 dark:border-white/5 bg-white dark:bg-white/[0.02] hover:bg-slate-50 dark:hover:bg-white/[0.08] hover:border-primary/50 dark:hover:border-indigo-500/50 transition-all duration-300 text-left shadow-sm hover:shadow-md">
+                                <div class="w-10 h-10 rounded-xl bg-orange-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                    <span class="material-symbols-outlined text-orange-600 dark:text-orange-400">smartphone</span>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="text-slate-900 dark:text-white text-sm font-bold">EVC Plus / Zaad / Sahal</p>
+                                    <p class="text-slate-500 dark:text-white/40 text-[11px]">Primary Choice · Instant Mobile Pay</p>
+                                </div>
+                                <span class="material-symbols-outlined text-slate-300 dark:text-white/10 group-hover:text-primary dark:group-hover:text-indigo-400 group-hover:translate-x-1 transition-all">chevron_right</span>
+                            </button>
+
+                            <!-- eDahab -->
+                            <button onclick="bpmSelectWallet('edahab', 'eDahab', '63')"
+                                class="group relative flex items-center gap-4 p-4 rounded-2xl border border-slate-200 dark:border-white/5 bg-white dark:bg-white/[0.02] hover:bg-slate-50 dark:hover:bg-white/[0.08] hover:border-primary/50 dark:hover:border-indigo-500/50 transition-all duration-300 text-left shadow-sm hover:shadow-md">
+                                <div class="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                    <span class="material-symbols-outlined text-blue-600 dark:text-blue-400">account_balance</span>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="text-slate-900 dark:text-white text-sm font-bold">eDahab</p>
+                                    <p class="text-slate-500 dark:text-white/40 text-[11px]">Dahabshiil Group · Fast & Secure</p>
+                                </div>
+                                <span class="material-symbols-outlined text-slate-300 dark:text-white/10 group-hover:text-primary dark:group-hover:text-indigo-400 group-hover:translate-x-1 transition-all">chevron_right</span>
+                            </button>
+
+                            <!-- Premier Wallet -->
+                            <button onclick="bpmSelectWallet('pbwallet', 'Premier Wallet', '65')"
+                                class="group relative flex items-center gap-4 p-4 rounded-2xl border border-slate-200 dark:border-white/5 bg-white dark:bg-white/[0.02] hover:bg-slate-50 dark:hover:bg-white/[0.08] hover:border-primary/50 dark:hover:border-indigo-500/50 transition-all duration-300 text-left shadow-sm hover:shadow-md">
+                                <div class="w-10 h-10 rounded-xl bg-teal-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                    <span class="material-symbols-outlined text-teal-600 dark:text-teal-400">payments</span>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="text-slate-900 dark:text-white text-sm font-bold">Premier Wallet</p>
+                                    <p class="text-slate-500 dark:text-white/40 text-[11px]">Direct Bank Sync · VIP Experience</p>
+                                </div>
+                                <span class="material-symbols-outlined text-slate-300 dark:text-white/10 group-hover:text-primary dark:group-hover:text-indigo-400 group-hover:translate-x-1 transition-all">chevron_right</span>
+                            </button>
+
+                            <!-- Divider -->
+                            <div class="h-[1px] bg-slate-100 dark:bg-white/5 my-2"></div>
+
+                            <!-- International -->
+                            <button onclick="bpmRedirectToSifalo()"
+                                class="group relative flex items-center gap-4 p-4 rounded-2xl border border-slate-200 dark:border-white/5 bg-white dark:bg-white/[0.02] hover:bg-slate-50 dark:hover:bg-white/[0.08] hover:border-primary/50 dark:hover:border-indigo-500/50 transition-all duration-300 text-left shadow-sm hover:shadow-md">
+                                <div class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                    <span class="material-symbols-outlined text-slate-600 dark:text-white/60">public</span>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="text-slate-900 dark:text-white text-sm font-bold">International (Card / Apple / Google)</p>
+                                    <p class="text-slate-500 dark:text-white/40 text-[11px]">Visa · Mastercard · Pay via Sifalo Checkout</p>
+                                </div>
+                                <span class="material-symbols-outlined text-slate-300 dark:text-white/10 group-hover:text-primary dark:group-hover:text-indigo-400 group-hover:translate-x-1 transition-all">chevron_right</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Phone Input -->
+                    <div id="bpm-step-phone" class="hidden">
+                        <button onclick="bpmBackToMethod()" class="flex items-center gap-2 text-primary text-xs font-bold mb-6 hover:text-primary/70 transition-colors uppercase tracking-widest">
+                            <span class="material-symbols-outlined text-sm">arrow_back</span>
+                            Change Method
+                        </button>
+                        <div class="mb-6">
+                            <h3 class="text-slate-900 dark:text-white font-bold text-lg mb-1">Mobile Details</h3>
+                            <p class="text-slate-500 dark:text-white/50 text-xs">Enter your <span id="bpm-wallet-name" class="text-primary dark:text-indigo-300 font-bold"></span> mobile number</p>
+                        </div>
+                        <div class="relative group">
+                            <div class="absolute inset-y-0 left-4 flex items-center gap-2 pr-2 border-r border-slate-200 dark:border-white/10">
+                                <span class="text-slate-400 dark:text-white/60 font-mono text-sm">+252</span>
+                            </div>
+                            <input id="bpm-phone-input" type="tel" inputmode="numeric" maxlength="9"
+                                placeholder="61xxxxxxx"
+                                class="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl pl-[72px] pr-4 py-4 text-slate-900 dark:text-white text-base font-mono outline-none focus:border-primary/50 dark:focus:border-indigo-500/50 focus:bg-white dark:focus:bg-white/[0.08] transition-all"
+                                oninput="this.value=this.value.replace(/\D/g,'')">
+                        </div>
+                        <p id="bpm-phone-error" class="text-red-400 text-xs mt-3 flex items-center gap-2 hidden">
+                            <span class="material-symbols-outlined text-[14px]">error_outline</span>
+                            <span id="bpm-phone-error-text">Please enter a valid number</span>
+                        </p>
+                        <button id="bpm-pay-btn" onclick="bpmSubmitDirectPayment()"
+                            class="mt-8 w-full py-4 rounded-2xl font-bold border-0 text-white shadow-[0_10px_20px_rgba(79,70,229,0.3)] hover:shadow-[0_15px_25px_rgba(79,70,229,0.4)] hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center gap-3"
+                            style="background: linear-gradient(135deg, #6c63ff, #4f46e5);">
+                            <span class="material-symbols-outlined">bolt</span>
+                            Proceed to Pay
+                        </button>
+                    </div>
+
+                    <!-- Step 3: Processing -->
+                    <div id="bpm-step-processing" class="hidden py-12 text-center">
+                        <div class="relative w-24 h-24 mx-auto mb-8">
+                            <div class="absolute inset-0 border-4 border-slate-100 dark:border-white/5 rounded-full"></div>
+                            <div class="absolute inset-0 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                            <div class="absolute inset-4 bg-indigo-500/10 rounded-full flex items-center justify-center">
+                                <span class="material-symbols-outlined text-indigo-400 text-3xl animate-pulse">sync</span>
+                            </div>
+                        </div>
+                        <h3 class="text-slate-900 dark:text-white font-bold text-xl mb-2">Processing payment...</h3>
+                        <p class="text-slate-500 dark:text-white/40 text-sm">Validating payment details with Sifalo Pay Gateway</p>
+                    </div>
+
+                    <!-- Step 4: Result -->
+                    <div id="bpm-step-result" class="hidden py-6 text-center">
+                        <div id="bpm-result-container" class="w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-6 text-4xl shadow-xl">
+                            <span id="bpm-result-icon" class="material-symbols-outlined text-5xl">check_circle</span>
+                        </div>
+                        <h3 id="bpm-result-title" class="text-slate-900 dark:text-white font-bold text-2xl mb-2">Success!</h3>
+                        <p id="bpm-result-msg" class="text-slate-500 dark:text-white/50 text-sm mb-10 leading-relaxed px-4"></p>
+                        <button id="bpm-result-btn"
+                            class="w-full py-4 rounded-2xl font-bold text-white transition-all shadow-lg hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0">
+                            Continue
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="px-8 py-4 bg-slate-50 dark:bg-black/20 border-t border-slate-200 dark:border-white/5 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="material-symbols-outlined text-emerald-500/50 text-base">verified_user</span>
+                        <p class="text-slate-400 dark:text-white/20 text-[10px] font-bold uppercase tracking-widest">Sifalo Certified</p>
+                    </div>
+                    <div class="flex gap-4">
+                        <span class="material-symbols-outlined text-slate-300 dark:text-white/10 text-xl" title="256-bit SSL">lock</span>
+                        <span class="material-symbols-outlined text-slate-300 dark:text-white/10 text-xl" title="Anti-Fraud">security</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </div>
+    </div>
+    <!-- END BOOKING PAYMENT MODAL -->
 
     <script type="module" src="./booking.js"></script>
     <script>

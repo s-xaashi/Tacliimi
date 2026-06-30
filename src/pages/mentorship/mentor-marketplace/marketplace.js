@@ -10,8 +10,12 @@ let activeFilters = {
 };
 
 async function initMarketplace() {
-    const grid = document.querySelector('.grid.grid-cols-1.md\\:grid-cols-2.xl\\:grid-cols-3');
-    if (!grid) return;
+    const grid = document.getElementById('mentor-cards-grid');
+    if (!grid) {
+        console.error('[Marketplace] Grid element #mentor-cards-grid not found. Retrying in 250ms...');
+        setTimeout(initMarketplace, 250);
+        return;
+    }
 
     try {
         grid.innerHTML = `
@@ -385,4 +389,8 @@ function renderEmptyState(container, isFiltered = false) {
     `;
 }
 
-document.addEventListener('DOMContentLoaded', initMarketplace);
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initMarketplace);
+} else {
+    initMarketplace();
+}

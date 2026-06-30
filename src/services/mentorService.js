@@ -267,7 +267,7 @@ export const MentorService = {
                 const { data: completedSessions } = await supabase
                     .from('mentorship_sessions')
                     .select('mentor_id')
-                    .or('booking_status.eq.completed,status.eq.completed');
+                    .or('booking_status.eq.confirmed,status.eq.confirmed');
 
                 if (completedSessions) {
                     completedSessions.forEach(s => {
@@ -443,6 +443,33 @@ export const MentorService = {
                 console.warn("Failed to fetch mentor availability:", aErr);
             }
 
+            // ── Live Sessions & Response Time ──────────────────────────────
+            let completedSessions = 0;
+            try {
+                const { count } = await supabase
+                    .from('mentorship_sessions')
+                    .select('id', { count: 'exact', head: true })
+                    .eq('mentor_id', mentorId)
+                    .or('booking_status.eq.confirmed,status.eq.confirmed');
+                completedSessions = count || 0;
+            } catch (err) {
+                console.warn("Failed to fetch completed sessions count:", err);
+            }
+
+            let liveResponseTime = data.avg_response_time_hours || 0;
+            try {
+                const { data: rt } = await supabase
+                    .from('mentor_response_times_view')
+                    .select('avg_response_time_hours')
+                    .eq('mentor_id', mentorId)
+                    .maybeSingle();
+                if (rt) {
+                    liveResponseTime = rt.avg_response_time_hours || 0;
+                }
+            } catch (err) {
+                console.warn("Failed to fetch live response time:", err);
+            }
+
             const safeJsonMentor = (raw, fallback = []) => {
                 if (!raw) return fallback;
                 if (Array.isArray(raw)) return raw;
@@ -468,8 +495,9 @@ export const MentorService = {
                 hourly_rate: data.hourly_rate || 0,
                 monthly_rate: data.monthly_rate || (data.hourly_rate * 20),
                 currency: data.currency || 'USD',
+                completed_sessions: completedSessions,
                 total_sessions: data.total_sessions || 0,
-                avg_response_time: data.avg_response_time_hours || 0,
+                avg_response_time: liveResponseTime,
                 country: data.mentorship_country,
                 city: data.mentorship_city,
                 headline: data.headline,
@@ -565,7 +593,7 @@ export const MentorService = {
                 .from('mentorship_coupons')
                 .select('*')
                 .eq('mentor_id', mentorId)
-                .eq('code', code.toUpperCase())
+                .ilike('code', code)
                 .maybeSingle();
 
             if (error) {
@@ -574,6 +602,10 @@ export const MentorService = {
                     return { valid: false, message: 'Coupon system not yet initialized. Please contact the administrator (SQL migration needed).' };
                 }
                 throw error;
+            }
+
+            if (!data) {
+                return { valid: false, message: 'Invalid coupon code' };
             }
 
             const now = new Date();
