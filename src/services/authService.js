@@ -160,7 +160,9 @@ export const AuthService = {
      */
     async logout() {
         const { error } = await supabase.auth.signOut();
-        if (error) throw error;
+        // Ignore "AuthSessionMissingError" because if they don't have a session, 
+        // they are effectively already logged out.
+        if (error && error.name !== 'AuthSessionMissingError') throw error;
     },
 
     /**

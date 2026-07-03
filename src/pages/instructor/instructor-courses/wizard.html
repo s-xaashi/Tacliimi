@@ -324,13 +324,11 @@
                         style="opacity: 0.5; pointer-events: none;">
                         <div class="space-y-2">
                             <label class="block text-sm font-bold text-slate-700 dark:text-slate-300">Currency</label>
-                            <select id="course-currency"
-                                class="w-full rounded-lg border-slate-200 dark:border-slate-700 dark:bg-slate-800 focus:ring-accent focus:border-accent course-input"
-                                data-field="currency">
-                                <option value="USD">USD - US Dollar ($)</option>
-                                <option value="EUR">EUR - Euro (€)</option>
-                                <option value="GBP">GBP - British Pound (£)</option>
-                            </select>
+                            <div class="w-full rounded-lg border border-slate-200 dark:border-slate-700 dark:bg-slate-800 px-3 py-2 flex items-center gap-2 text-slate-700 dark:text-slate-300 text-sm">
+                                <span class="font-bold text-slate-500 text-xs bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded">$</span>
+                                USD &mdash; US Dollar
+                                <input id="course-currency" type="hidden" value="USD" />
+                            </div>
                         </div>
                         <div class="space-y-2">
                             <label class="block text-sm font-bold text-slate-700 dark:text-slate-300">Course
@@ -344,28 +342,18 @@
                                     data-field="price" placeholder="0.00" type="number" step="0.01" min="0" />
                             </div>
                         </div>
-                        <div class="space-y-2 md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div>
-                                <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Coupon
-                                    Code</label>
-                                <div class="flex gap-2">
-                                    <input id="course-coupon"
-                                        class="w-full uppercase rounded-lg border-slate-200 dark:border-slate-700 dark:bg-slate-800 focus:ring-accent focus:border-accent"
-                                        placeholder="e.g. EARLYBIRD" type="text" />
+                        <div class="space-y-4 md:col-span-2 mt-4 pt-4 border-t border-slate-100 dark:border-slate-800/50">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h4 class="font-bold text-slate-900 dark:text-white">Coupons (Optional)</h4>
+                                    <p class="text-sm text-slate-500 dark:text-slate-400">Offer discounts to your students.</p>
                                 </div>
+                                <button type="button" onclick="addCourseCoupon()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-lg text-sm font-bold transition flex items-center gap-2 dark:text-white">
+                                    <span class="material-symbols-outlined text-[18px]">add</span> Add Coupon
+                                </button>
                             </div>
-                            <div>
-                                <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Discount
-                                    (%)</label>
-                                <input id="course-coupon-percent" type="number" min="1" max="100"
-                                    class="w-full rounded-lg border-slate-200 dark:border-slate-700 dark:bg-slate-800 focus:ring-accent focus:border-accent text-sm text-slate-700 dark:text-slate-300"
-                                    placeholder="10" />
-                            </div>
-                            <div>
-                                <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Expiry
-                                    Date</label>
-                                <input id="course-coupon-expiry" type="datetime-local"
-                                    class="w-full rounded-lg border-slate-200 dark:border-slate-700 dark:bg-slate-800 focus:ring-accent focus:border-accent text-sm text-slate-700 dark:text-slate-300" />
+                            <div id="course-coupons-container" class="space-y-3">
+                                <!-- Dynamic coupons injected here -->
                             </div>
                         </div>
                     </div>

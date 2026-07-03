@@ -103,6 +103,7 @@ export const CourseService = {
                 *,
                 serial_id,
                 instructor:profiles(full_name, avatar_url, professional_title, short_bio, expertise_list),
+                course_coupons(*),
                 course_sections(
                     id, title, order_index,
                     course_lessons(
@@ -215,7 +216,6 @@ export const CourseService = {
         let courseId = courseData.id;
 
         // Ensure slug exists and is URL-safe
-        // (Guard against old bug where subtitle text was written to slug column)
         const slugIsInvalid = !courseData.slug || /\s/.test(courseData.slug);
         if (slugIsInvalid && courseData.title) {
             courseData.slug = this.generateSlug(courseData.title);
@@ -227,6 +227,11 @@ export const CourseService = {
         delete payload.coupons;
         delete payload.category;
 
+        // Keep price as null if not set — do NOT default to 0
+        if (payload.price === undefined || payload.price === '' || isNaN(payload.price)) {
+            payload.price = null;
+        }
+
         if (courseId) {
             const { data, error } = await supabase.from('courses').update(payload).eq('id', courseId).select().maybeSingle();
             if (error) throw error;
@@ -236,6 +241,57 @@ export const CourseService = {
             if (error) throw error;
             return data;
         }
+    },
+
+    /** COUPON MANAGEMENT */
+    async saveCoupon(courseId, code, discountPercent, expiresAt = null, startsAt = null) {
+        const { data, error } = await supabase
+            .from('course_coupons')
+            .insert([
+                {
+                    course_id: courseId,
+                    code: code.toUpperCase().trim(),
+                    discount_percent: discountPercent,
+                    expires_at: expiresAt || null,
+                    starts_at: startsAt || new Date().toISOString(),
+                    is_active: true
+                }
+            ])
+            .select()
+            .single();
+        if (error) throw error;
+        return data;
+    },
+
+    async deleteCoupon(courseId, couponCode = null) {
+        // If couponCode is provided, delete that specific coupon.
+        // Otherwise, delete ALL coupons for this course (used before a full-rebuild).
+        let query = supabase.from('course_coupons').delete().eq('course_id', courseId);
+        if (couponCode) {
+            query = query.eq('code', couponCode.toUpperCase().trim());
+        }
+        const { error } = await query;
+        if (error) throw error;
+    },
+
+    async validateCoupon(courseId, code) {
+        if (!courseId || !code) return null;
+        const { data, error } = await supabase.rpc('validate_course_coupon', {
+            p_course_id: courseId,
+            p_code: code.trim()
+        });
+            
+        if (error) throw error;
+        
+        // RPC returns { discount_percent, valid, message }
+        // The endpoint may return an array of 1 element.
+        const result = Array.isArray(data) ? data[0] : data;
+        
+        if (!result || !result.valid) {
+            throw new Error(result?.message || 'Invalid coupon code');
+        }
+        
+        return result;
     },
 
     async publishCourse(courseId) {
@@ -512,42 +568,7 @@ export const CourseService = {
         return await this.uploadFile('course_resources', fileName, file);
     },
 
-    /** COUPONS */
-    async saveCoupon(courseId, code, discountPercent, expiresAt, startsAt = null) {
-        const payload = {
-            course_id: courseId,
-            code: code,
-            discount_percent: discountPercent,
-            expires_at: expiresAt,
-            starts_at: startsAt || new Date().toISOString(),
-            is_active: true
-        };
-        const { data, error } = await supabase.from('course_coupons').insert([payload]).select().maybeSingle();
-        if (error) throw error;
-        return data;
-    },
 
-    /** COUPON VALIDATION */
-    async validateCoupon(courseId, code) {
-        if (!code) return null;
-        
-        const now = new Date().toISOString();
-        const { data, error } = await supabase
-            .from('course_coupons')
-            .select('*')
-            .eq('course_id', courseId)
-            .eq('code', code.trim().toUpperCase())
-            .eq('is_active', true)
-            .lte('starts_at', now)
-            .gte('expires_at', now)
-            .maybeSingle();
-
-        if (error) {
-            console.error('Coupon validation error:', error);
-            return null;
-        }
-        return data; // Returns coupon object { discount_percent, etc } or null
-    },
 
     /** INSTRUCTOR COURSES */
     async getInstructorCourses() {

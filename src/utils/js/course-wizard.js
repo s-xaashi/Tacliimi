@@ -123,11 +123,8 @@ async function loadDraft(courseId) {
             pricing: {
                 type: course.price_type || 'free',
                 currency: course.currency || 'USD',
-                price: course.price ?? null,
-                coupon: '',
-                coupon_percent: null,
-                coupon_start: null,
-                coupon_expiry: null
+                price: course.price != null ? parseFloat(course.price) : null,
+                coupons: course.course_coupons || []
             },
             privacy: course.is_public ? 'public' : 'private',
             status: course.status || 'draft',
@@ -287,7 +284,9 @@ async function performSave(silent = false) {
             thumbnail_url: window.courseDraft.thumbnail_url || null,
             intro_video_url: window.courseDraft.intro_video_url || null,
             price_type: window.courseDraft.pricing.type || 'free',
-            price: parseFloat(window.courseDraft.pricing.price) || 0,
+            price: (window.courseDraft.pricing.price != null && !isNaN(parseFloat(window.courseDraft.pricing.price)))
+                ? parseFloat(window.courseDraft.pricing.price)
+                : null,
             currency: window.courseDraft.pricing.currency || 'USD',
             is_public: window.courseDraft.privacy === 'public',
             status: window.courseDraft.status || 'draft'
@@ -342,16 +341,25 @@ async function performSave(silent = false) {
             // For now, let's at least ensure we're not doing a full rebuild.
         }
 
-        // --- STEP 3: Save Coupon (optional) ---
-        if (window.courseDraft.pricing.coupon && window.courseDraft.id) {
+        // --- STEP 3: Save Coupons (optional array) ---
+        if (window.courseDraft.id) {
             try {
-                await CourseService.saveCoupon(
-                    window.courseDraft.id,
-                    window.courseDraft.pricing.coupon,
-                    window.courseDraft.pricing.coupon_percent || 10,
-                    window.courseDraft.pricing.coupon_expiry,
-                    window.courseDraft.pricing.coupon_start
-                );
+                // Clear existing coupons first
+                await CourseService.deleteCoupon(window.courseDraft.id);
+                // Insert validated ones
+                if (window.courseDraft.pricing.coupons && window.courseDraft.pricing.coupons.length > 0) {
+                    for (const cp of window.courseDraft.pricing.coupons) {
+                        if (cp.code && cp.percent) {
+                            await CourseService.saveCoupon(
+                                window.courseDraft.id,
+                                cp.code,
+                                cp.percent,
+                                cp.expiry || null,
+                                null // No start date required by UI spec
+                            );
+                        }
+                    }
+                }
             } catch (e) {
                 console.warn("Coupon save warning:", e.message);
             }
@@ -560,10 +568,7 @@ async function saveCurrentStepData(shouldSaveToDb = false) {
         const priceVal = parseFloat(document.getElementById('course-price')?.value);
         window.courseDraft.pricing.price = isNaN(priceVal) ? null : priceVal;
         
-        window.courseDraft.pricing.coupon = document.getElementById('course-coupon')?.value || '';
-        window.courseDraft.pricing.coupon_percent = parseInt(document.getElementById('course-coupon-percent')?.value) || null;
-        window.courseDraft.pricing.coupon_start = document.getElementById('course-coupon-start')?.value || null;
-        window.courseDraft.pricing.coupon_expiry = document.getElementById('course-coupon-expiry')?.value || null;
+        syncCourseCoupons();
     } else if (window.currentStep === 4) {
         const privacyEl = document.querySelector('input[name="privacy"]:checked');
         if (privacyEl) {
@@ -600,20 +605,23 @@ function populateFields() {
     } else if (window.currentStep === 2) {
         renderCurriculum();
     } else if (window.currentStep === 3) {
+        // 1. First: set the pricing type toggle (free/paid) and enable/disable the container.
+        //    For 'paid' this does NOT clear the price. For 'free' it sets price to null.
+        //    We call this BEFORE setting the input so the container is enabled.
+        const savedPrice = window.courseDraft.pricing.price;
         setPricingTier(window.courseDraft.pricing.type);
-        // Restore price & currency values that were saved in the draft
+
+        // 2. Restore price after calling setPricingTier (so 'paid' re-enabling doesn't interfere)
         const priceEl = document.getElementById('course-price');
-        const currencyEl = document.getElementById('course-currency');
-        const couponEl = document.getElementById('course-coupon');
-        const couponPctEl = document.getElementById('course-coupon-percent');
-        const couponExpiryEl = document.getElementById('course-coupon-expiry');
-        
-        if (priceEl && window.courseDraft.pricing.price != null) priceEl.value = window.courseDraft.pricing.price;
-        if (currencyEl && window.courseDraft.pricing.currency) currencyEl.value = window.courseDraft.pricing.currency;
-        if (couponEl) couponEl.value = window.courseDraft.pricing.coupon || '';
-        if (couponPctEl && window.courseDraft.pricing.coupon_percent) couponPctEl.value = window.courseDraft.pricing.coupon_percent;
-        if (couponExpiryEl && window.courseDraft.pricing.coupon_expiry) couponExpiryEl.value = window.courseDraft.pricing.coupon_expiry;
-        
+        if (priceEl && savedPrice != null) {
+            priceEl.value = savedPrice;
+            window.courseDraft.pricing.price = savedPrice; // re-hydrate in case setPricingTier cleared it
+        }
+
+        // 3. Render existing coupons
+        renderCourseCoupons();
+
+        // 4. Recalculate payout display
         calculatePayout();
     } else if (window.currentStep === 4) {
         renderFinalPreview();
@@ -623,8 +631,9 @@ function populateFields() {
 async function setupEventListeners() {
     // Nav Buttons
     document.getElementById('btn-next')?.addEventListener('click', async () => {
-        // Save locally only
-        await saveCurrentStepData(false);
+        // On the pricing step, always do a full DB save to persist price + coupons
+        const saveToDb = (window.currentStep === 3);
+        await saveCurrentStepData(saveToDb);
         if (validateStep(window.currentStep)) goToStep(window.currentStep + 1);
     });
 
@@ -1942,3 +1951,71 @@ function registerGlobals() {
 
 registerGlobals();
 
+// --- COUPON MANAGEMENT ---
+
+function renderCourseCoupons() {
+    const container = document.getElementById('course-coupons-container');
+    if (!container) return;
+    container.innerHTML = '';
+    
+    if (!window.courseDraft.pricing.coupons || window.courseDraft.pricing.coupons.length === 0) {
+        return;
+    }
+
+    let html = '';
+    window.courseDraft.pricing.coupons.forEach((cp, idx) => {
+        html += `
+        <div class="flex items-center gap-3 p-3 border border-slate-200 dark:border-slate-700 rounded-lg bg-slate-50 dark:bg-slate-800/50">
+            <div class="flex-1 grid grid-cols-3 gap-3">
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Coupon Code</label>
+                    <input id="cp-code-${idx}" class="w-full text-sm uppercase rounded bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:ring-accent focus:border-accent" value="${cp.code || cp.coupon_code || ''}" placeholder="SUMMER20" />
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Discount (%)</label>
+                    <input id="cp-pct-${idx}" type="number" min="1" max="100" class="w-full text-sm rounded bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:ring-accent focus:border-accent" value="${cp.percent || cp.discount_percent || ''}" placeholder="20" />
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Expiration</label>
+                    <input id="cp-exp-${idx}" type="date" class="w-full text-sm rounded bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:ring-accent focus:border-accent" value="${(cp.expiry || cp.expires_at || '').split('T')[0]}" />
+                </div>
+            </div>
+            <button onclick="removeCourseCoupon(${idx})" class="p-2 mt-4 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition shrink-0">
+                <span class="material-symbols-outlined text-[20px]">delete</span>
+            </button>
+        </div>`;
+    });
+    container.innerHTML = html;
+}
+
+function syncCourseCoupons() {
+    if (!window.courseDraft.pricing.coupons) return;
+    const synced = [];
+    window.courseDraft.pricing.coupons.forEach((cp, idx) => {
+        const codeInput = document.getElementById(`cp-code-${idx}`);
+        const pctInput = document.getElementById(`cp-pct-${idx}`);
+        const expInput = document.getElementById(`cp-exp-${idx}`);
+        
+        if (codeInput && pctInput) {
+            synced.push({
+                code: codeInput.value.toUpperCase().trim(),
+                percent: parseInt(pctInput.value) || null,
+                expiry: expInput.value || null
+            });
+        }
+    });
+    window.courseDraft.pricing.coupons = synced;
+}
+
+window.addCourseCoupon = function() {
+    syncCourseCoupons();
+    window.courseDraft.pricing.coupons = window.courseDraft.pricing.coupons || [];
+    window.courseDraft.pricing.coupons.push({ code: '', percent: null, expiry: null });
+    renderCourseCoupons();
+};
+
+window.removeCourseCoupon = function(idx) {
+    syncCourseCoupons();
+    window.courseDraft.pricing.coupons.splice(idx, 1);
+    renderCourseCoupons();
+};
