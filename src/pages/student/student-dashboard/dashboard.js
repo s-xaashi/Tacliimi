@@ -77,6 +77,26 @@ async function loadMyCourses() {
         .from('enrollments')
         .select('*, courses(*, course_categories(*), instructor:profiles(*))')
         .eq('student_id', currentUserSession.user.id);
+
+    // Fetch unredeemed update offers for this student.
+    // from_version_id  = the version they are currently enrolled in
+    // to_version_id    = the new version the instructor published
+    const { data: updateOffers, error: offerErr } = await supabase
+        .from('course_update_offers')
+        .select(`
+            id, root_course_id, from_version_id, to_version_id, notified_at, created_at,
+            coupon:course_coupons(id, code, discount_percent),
+            to_version:courses!course_update_offers_to_version_id_fkey(
+                id, title, subtitle, thumbnail_url, version_number, price, price_type,
+                course_sections(id, title, course_lessons(id, title))
+            ),
+            from_version:courses!course_update_offers_from_version_id_fkey(
+                id, version_number,
+                course_sections(id, title, course_lessons(id, title))
+            )
+        `)
+        .eq('student_id', currentUserSession.user.id)
+        .is('redeemed_at', null);
     
     const continueSection = document.getElementById('continue-learning-section');
     const newStudentSection = document.getElementById('new-student-section');
@@ -156,10 +176,24 @@ async function loadMyCourses() {
             }
         }
 
+        // Build offer lookup: keyed by the from_version_id (what the student is enrolled in)
+        const offerMap = {};
+        for (const offer of (updateOffers || [])) {
+            if (offer.from_version_id) offerMap[offer.from_version_id] = offer;
+            // Also match by root_course_id as fallback (handles older enrollments)
+            if (offer.root_course_id && !offerMap[offer.root_course_id]) {
+                offerMap[offer.root_course_id] = offer;
+            }
+        }
+
         // Render active courses grid
         let activeHtml = '';
         activeEnrollments.forEach(enr => {
-            activeHtml += renderCourseCard(enr);
+            // Match offer by: enrolled course_id → from_version_id, or root_course_id
+            const offer = offerMap[enr.course_id]
+                || offerMap[enr.courses?.root_course_id]
+                || null;
+            activeHtml += renderCourseCard(enr, offer);
         });
         enrolledCoursesGrid.innerHTML = activeHtml || `
             <div class="col-span-full py-12 text-center">
@@ -172,7 +206,10 @@ async function loadMyCourses() {
         const completedEmptyState = document.getElementById('completed-courses-empty-state');
         let completedHtml = '';
         completedEnrollments.forEach(enr => {
-            completedHtml += renderCourseCard(enr);
+            const offer = offerMap[enr.course_id]
+                || offerMap[enr.courses?.root_course_id]
+                || null;
+            completedHtml += renderCourseCard(enr, offer);
         });
         
         if (completedGrid) {
@@ -188,21 +225,130 @@ async function loadMyCourses() {
     }
 }
 
-function renderCourseCard(enr) {
+// ----- Update Offer Modal State -----
+window._activeOffer = null;
+
+window.openUpdateModal = function(offerId) {
+    const offer = window._offerRegistry?.[offerId];
+    if (!offer) return;
+    window._activeOffer = offer;
+
+    const modal = document.getElementById('course-update-modal');
+    if (!modal) return;
+
+    const newCourse = offer.to_version;
+    const oldCourse = offer.from_version;
+    const versionLabel = newCourse?.version_number ? `V${newCourse.version_number}` : 'New Version';
+    const coupon = offer.coupon;
+    const price = newCourse?.price_type === 'free' ? 'Free' : `$${parseFloat(newCourse?.price || 0).toFixed(2)}`;
+
+    // Compute changelog diff (sections/lessons added or removed)
+    const oldLessons = new Set();
+    const newLessons = new Set();
+    const oldSectionTitles = new Set();
+    const newSectionTitles = new Set();
+
+    (oldCourse?.course_sections || []).forEach(sec => {
+        oldSectionTitles.add(sec.title);
+        (sec.course_lessons || []).forEach(l => oldLessons.add(l.title));
+    });
+    (newCourse?.course_sections || []).forEach(sec => {
+        newSectionTitles.add(sec.title);
+        (sec.course_lessons || []).forEach(l => newLessons.add(l.title));
+    });
+
+    const addedSections = [...newSectionTitles].filter(t => !oldSectionTitles.has(t));
+    const removedSections = [...oldSectionTitles].filter(t => !newSectionTitles.has(t));
+    const addedLessons = [...newLessons].filter(t => !oldLessons.has(t));
+    const removedLessons = [...oldLessons].filter(t => !newLessons.has(t));
+
+    const hasChanges = addedSections.length || removedSections.length || addedLessons.length || removedLessons.length;
+
+    const changelogHtml = hasChanges ? `
+        <div class="space-y-3">
+            ${addedSections.length ? `<div><p class="text-[10px] font-bold uppercase tracking-widest text-emerald-600 mb-1">New Sections Added</p>${addedSections.map(s => `<div class="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300"><span class="material-symbols-outlined text-emerald-500 text-[16px]">add_circle</span>${s}</div>`).join('')}</div>` : ''}
+            ${removedSections.length ? `<div><p class="text-[10px] font-bold uppercase tracking-widest text-red-500 mb-1">Sections Removed</p>${removedSections.map(s => `<div class="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300"><span class="material-symbols-outlined text-red-400 text-[16px]">remove_circle</span>${s}</div>`).join('')}</div>` : ''}
+            ${addedLessons.length ? `<div><p class="text-[10px] font-bold uppercase tracking-widest text-emerald-600 mb-1">Lessons Added</p>${addedLessons.slice(0, 6).map(l => `<div class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400"><span class="material-symbols-outlined text-emerald-400 text-[16px]">play_circle</span>${l}</div>`).join('')}${addedLessons.length > 6 ? `<p class="text-xs text-slate-400 mt-1">+ ${addedLessons.length - 6} more</p>` : ''}</div>` : ''}
+            ${removedLessons.length ? `<div><p class="text-[10px] font-bold uppercase tracking-widest text-red-500 mb-1">Lessons Removed</p>${removedLessons.slice(0, 6).map(l => `<div class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400"><span class="material-symbols-outlined text-red-400 text-[16px]">cancel</span>${l}</div>`).join('')}${removedLessons.length > 6 ? `<p class="text-xs text-slate-400 mt-1">+ ${removedLessons.length - 6} more</p>` : ''}</div>` : ''}
+        </div>
+    ` : `<p class="text-slate-400 italic text-sm">The instructor has updated the course content. Enroll to access the latest version.</p>`;
+
+    const couponHtml = coupon ? `
+        <div class="flex items-center gap-3 p-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl">
+            <span class="material-symbols-outlined text-emerald-500">local_offer</span>
+            <div>
+                <p class="text-xs font-bold text-slate-500">Exclusive Discount Coupon</p>
+                <p class="font-black text-emerald-600 dark:text-emerald-400 text-lg tracking-widest">${coupon.code}</p>
+                <p class="text-xs text-emerald-600">${coupon.discount_percent}% off — applied automatically when you re-enroll</p>
+            </div>
+        </div>
+    ` : `<div class="flex items-center gap-3 p-3 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-xl">
+        <span class="material-symbols-outlined text-indigo-500">card_giftcard</span>
+        <p class="text-sm font-bold text-indigo-600">No coupon needed — this version is available at the standard price.</p>
+    </div>`;
+
+    document.getElementById('modal-update-version').textContent = versionLabel;
+    document.getElementById('modal-update-title').textContent = newCourse?.title || 'Updated Course';
+    document.getElementById('modal-update-thumbnail').src = newCourse?.thumbnail_url || 'https://placehold.co/600x400';
+    document.getElementById('modal-update-price').textContent = price;
+    document.getElementById('modal-update-changelog').innerHTML = changelogHtml;
+    document.getElementById('modal-update-coupon').innerHTML = couponHtml;
+
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    document.body.style.overflow = 'hidden';
+};
+
+window.closeUpdateModal = function() {
+    const modal = document.getElementById('course-update-modal');
+    if (!modal) return;
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+    document.body.style.overflow = '';
+    window._activeOffer = null;
+};
+
+window.reEnrollWithCoupon = async function() {
+    const offer = window._activeOffer;
+    if (!offer?.to_version_id) return;
+    const couponCode = offer.coupon?.code || '';
+    const couponParam = couponCode ? `&coupon=${encodeURIComponent(couponCode)}` : '';
+    // Redirect to course details with the coupon pre-applied
+    window.location.href = `/src/pages/marketplace/course-details/index.html?id=${offer.to_version_id}${couponParam}&offer=${offer.id}`;
+};
+
+function renderCourseCard(enr, updateOffer) {
     const course = enr.courses;
     if(!course) return '';
-    const category = course.categories ? course.categories.name : 'Course';
+    const category = course.course_categories ? course.course_categories.name : 'Course';
     const progress = enr.progress_percentage || 0;
     
+    // Register offer in a global registry so openUpdateModal can access full data
+    if (!window._offerRegistry) window._offerRegistry = {};
+    if (updateOffer) window._offerRegistry[updateOffer.id] = updateOffer;
+
+    let updateBadgeHtml = '';
+    if (updateOffer && updateOffer.to_version) {
+        const newVer = updateOffer.to_version.version_number;
+        updateBadgeHtml = `
+            <button onclick="event.stopPropagation(); window.openUpdateModal('${updateOffer.id}');"
+                class="absolute top-2 left-2 z-10 flex items-center gap-1.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-[10px] font-black uppercase tracking-wider px-2.5 py-1.5 rounded-full shadow-lg shadow-indigo-500/30 hover:scale-105 transition-transform animate-pulse-slow cursor-pointer">
+                <span class="material-symbols-outlined text-[13px]">system_update</span>
+                UPDATE V${newVer} AVAILABLE
+            </button>
+        `;
+    }
+
     return `
-    <div class="flex flex-col group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer h-full" onclick="window.location.href='/src/pages/learning/learning-interface/index.html?course=${encodeURIComponent(course.id)}'">
+    <div class="flex flex-col group bg-white dark:bg-slate-900 border ${updateOffer ? 'border-indigo-300 dark:border-indigo-700 shadow-indigo-100 dark:shadow-indigo-900/10 shadow-md' : 'border-slate-200 dark:border-slate-800'} rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer h-full" onclick="window.location.href='/src/pages/learning/learning-interface/index.html?course=${encodeURIComponent(course.id)}'">
         <div class="aspect-video relative overflow-hidden bg-slate-100 dark:bg-slate-800 shrink-0">
+            ${updateBadgeHtml}
             <img src="${course.thumbnail_url || 'https://placehold.co/600x400'}" alt="${course.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
             <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                 <span class="material-symbols-outlined text-white text-5xl">${progress === 100 ? 'replay' : 'play_circle'}</span>
             </div>
             ${progress === 100 ? `
-            <div class="absolute top-3 right-3 bg-emerald-500 text-white px-2 py-1 rounded-md text-[10px] font-bold flex items-center gap-1 shadow-lg">
+            <div class="absolute top-2 right-2 bg-emerald-500 text-white px-2 py-1 rounded-full text-[10px] font-bold flex items-center gap-1 shadow-lg z-10">
                 <span class="material-symbols-outlined text-[12px]">verified</span> COMPLETED
             </div>
             ` : ''}
@@ -221,6 +367,12 @@ function renderCourseCard(enr) {
                 <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
                     <div class="${progress === 100 ? 'bg-emerald-500' : 'bg-primary'} h-full rounded-full transition-all duration-1000" style="width: ${progress}%"></div>
                 </div>
+                ${updateOffer ? `
+                <button onclick="event.stopPropagation(); window.openUpdateModal('${updateOffer.id}');"
+                    class="w-full mt-2 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold rounded-xl text-xs flex items-center gap-2 justify-center hover:opacity-90 transition-opacity shadow-lg shadow-indigo-500/20">
+                    <span class="material-symbols-outlined text-[16px]">system_update</span>
+                    View Course Update
+                </button>` : ''}
             </div>
         </div>
     </div>

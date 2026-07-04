@@ -401,6 +401,22 @@
                 document.getElementById('cd-original-price').classList.add('hidden');
                 document.getElementById('cd-discount-badge').classList.add('hidden');
 
+                // ── Auto-apply coupon from URL param (e.g. from student update offer) ──
+                const urlCoupon = urlParams.get('coupon');
+                const urlOfferId = urlParams.get('offer');
+                if (urlCoupon) {
+                    const couponInput = document.getElementById('coupon-input');
+                    if (couponInput) {
+                        couponInput.value = urlCoupon;
+                        // Trigger the apply after a tick so price elements are ready
+                        setTimeout(() => window.applyCoupon && window.applyCoupon(), 400);
+                    }
+                }
+                if (urlOfferId) {
+                    // Store offer ID so we can mark it redeemed after enrollment
+                    window._pendingOfferRedemption = urlOfferId;
+                }
+
                 const descEl = document.getElementById('cd-description');
                 if (descEl) descEl.textContent = courseData.description || 'No description provided.';
 
@@ -812,6 +828,13 @@
                         enrollBtn.innerHTML = '<span class="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></span> Enrolling...';
                         try {
                             const result = await CourseService.enrollCourse(courseId, currentUser.id);
+                            
+                            // If user is enrolling via an update offer, mark it as redeemed
+                            if (window._pendingOfferRedemption) {
+                                await CourseService.markOfferRedeemed(window._pendingOfferRedemption);
+                                window._pendingOfferRedemption = null; // Clear it to prevent double-calls if something weird happens
+                            }
+
                             showSuccessModal(courseData.serial_id, result.paymentSerialId);
                         } catch (e) {
                             alert('Failed to enroll: ' + e.message);

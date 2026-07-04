@@ -274,6 +274,15 @@ export const CourseService = {
         if (error) throw error;
     },
 
+    async getCourseCoupons(courseId) {
+        const { data, error } = await supabase.from('course_coupons')
+            .select('*')
+            .eq('course_id', courseId)
+            .order('created_at', { ascending: false });
+        if (error) throw error;
+        return data;
+    },
+
     async validateCoupon(courseId, code) {
         if (!courseId || !code) return null;
         const { data, error } = await supabase.rpc('validate_course_coupon', {
@@ -404,6 +413,15 @@ export const CourseService = {
             const videoUrl = lessonData.video?.url || lessonData.video_url;
             if (videoUrl) {
                 dbPayload.video_url = videoUrl;
+                // Auto-resolve media_asset_id from the catalog if it's a platform upload
+                const { data: assetData } = await supabase
+                    .from('course_media_assets')
+                    .select('id')
+                    .eq('public_url', videoUrl)
+                    .maybeSingle();
+                if (assetData) {
+                    dbPayload.media_asset_id = assetData.id;
+                }
             }
 
 
@@ -560,7 +578,17 @@ export const CourseService = {
 
     async uploadLessonVideo(lessonId, file) {
         const fileName = `lessons/${lessonId ? lessonId : 'new'}/video_${Date.now()}`;
-        return await this.uploadFile('course_videos', fileName, file);
+        const publicUrl = await this.uploadFile('course_videos', fileName, file);
+        
+        // Register in media assets
+        await supabase.from('course_media_assets').insert([{
+            storage_provider: 'supabase',
+            storage_path: fileName,
+            public_url: publicUrl,
+            file_size_bytes: file.size || null
+        }]);
+        
+        return publicUrl;
     },
 
     async uploadLessonResource(lessonId, file) {
@@ -924,5 +952,118 @@ export const CourseService = {
             throw error;
         }
         return data;
+    },
+
+    // =========================================================================
+    // COURSE REVISION WORKFLOW
+    // =========================================================================
+
+    /**
+     * For a published course: returns an existing uncommitted revision, or
+     * creates a deep clone (copy-on-write video assets) and returns its ID.
+     * Safe to call repeatedly — idempotent.
+     */
+    async getOrCreateCourseRevision(courseId) {
+        const { data, error } = await supabase.rpc('get_or_create_course_revision', {
+            p_course_id: courseId
+        });
+        if (error) throw error;
+        return data; // UUID of the draft revision
+    },
+
+    /**
+     * Fetch all course versions in a family grouped by root_course_id.
+     * Returns the published version + any pending revision.
+     */
+    async getInstructorCourseFamily(rootCourseId) {
+        if (!rootCourseId || rootCourseId === 'null') return [];
+        const { data, error } = await supabase
+            .from('courses')
+            .select('id, title, status, version_status, version_number, is_latest_published, root_course_id, created_at, rejection_reason, thumbnail_url')
+            .or(`id.eq.${rootCourseId},root_course_id.eq.${rootCourseId}`)
+            .order('version_number', { ascending: false });
+        if (error) throw error;
+        return data;
+    },
+
+    /**
+     * Fetch all instructor courses grouped by family (one entry per family).
+     * Returns the latest published or pending revision per family.
+     */
+    async getInstructorCoursesGrouped(instructorId = null) {
+        let authId = instructorId;
+        if (!authId) {
+            const session = await AuthService.getSession();
+            if (!session) throw new Error("Not authenticated");
+            authId = session.user.id;
+        }
+
+        const { data, error } = await supabase
+            .from('courses')
+            .select('id, title, status, version_status, version_number, is_latest_published, root_course_id, created_at, rejection_reason, thumbnail_url, subtitle, price, price_type, category:course_categories(name)')
+            .eq('instructor_id', authId)
+            .is('deleted_at', null)
+            .order('created_at', { ascending: false });
+        if (error) throw error;
+
+        // Group by family: COALESCE(root_course_id, id)
+        const families = {};
+        for (const course of data) {
+            const familyId = course.root_course_id || course.id;
+            if (!families[familyId]) families[familyId] = [];
+            families[familyId].push(course);
+        }
+        // Return one object per family with both the published version and any pending revision
+        return Object.values(families).map(versions => {
+            const published = versions.find(v => v.is_latest_published) || versions[0];
+            const revision  = versions.find(v => !v.is_latest_published && v.version_status !== 'archived');
+            return { ...published, pendingRevision: revision || null };
+        });
+    },
+
+    /**
+     * Notify enrolled students (on older versions) that a new approved version
+     * of the course is available. Optionally attaches an update_migration coupon.
+     * Returns count of students notified.
+     */
+    async createUpdateOffer(rootCourseId, toVersionId, couponId = null, notify = true) {
+        const { data, error } = await supabase.rpc('create_update_offer', {
+            p_root_course_id: rootCourseId,
+            p_to_version_id: toVersionId,
+            p_coupon_id: couponId,
+            p_notify: notify
+        });
+        if (error) throw error;
+        return data; // number of students offered
+    },
+
+    /**
+     * Fetch all unredeemed update offers for the currently authenticated student.
+     */
+    async getUpdateOffersForStudent() {
+        const { data, error } = await supabase
+            .from('course_update_offers')
+            .select(`
+                id, root_course_id, to_version_id, from_version_id, notified_at, redeemed_at,
+                coupon:course_coupons!coupon_id (id, code, discount_percent),
+                to_version:courses!to_version_id(id, title, thumbnail_url, slug, version_number, price, price_type, course_sections(title, course_lessons(title))),
+                from_version:courses!from_version_id(id, title, course_sections(title, course_lessons(title)))
+            `)
+            .is('redeemed_at', null)
+            .not('notified_at', 'is', null);
+        if (error) throw error;
+        return data;
+    },
+
+    /**
+     * Mark a course update offer as redeemed (called after successful re-enrollment).
+     */
+    async markOfferRedeemed(offerId) {
+        const { error } = await supabase
+            .from('course_update_offers')
+            .update({ redeemed_at: new Date().toISOString() })
+            .eq('id', offerId);
+        if (error) throw error;
     }
 };
+
