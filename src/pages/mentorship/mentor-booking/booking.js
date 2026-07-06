@@ -2,6 +2,7 @@ import { MentorService } from '../../../services/mentorService.js';
 import { AuthService } from '../../../services/authService.js';
 import { supabase } from '../../../services/supabaseClient.js';
 import { PaymentService } from '../../../services/paymentService.js';
+import { isNonStudentRole, showStudentOnlyModal } from '../../../services/roleGuard.js';
 
 let selectedSlot = null;
 let currentMentor = null;
@@ -415,6 +416,12 @@ async function confirmBooking() {
         if (!session) {
             alert("Please log in to book a session.");
             window.location.href = '/src/pages/auth/login/index.html';
+            return;
+        }
+
+        // Block instructors/mentors from booking
+        if (isNonStudentRole(session)) {
+            showStudentOnlyModal();
             return;
         }
 

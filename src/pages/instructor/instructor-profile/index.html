@@ -524,6 +524,7 @@
                                                 <input id="mm-phone" type="tel"
                                                     class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                                                     placeholder="+252 6X XXXXXXX" />
+                                                <span id="mm-phone-error" class="hidden text-xs text-red-500 mt-1"></span>
                                             </div>
                                         </div>
                                     </div>
@@ -561,6 +562,7 @@
                                                     <input id="cod-phone" type="tel"
                                                         class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                                                         placeholder="+252 6X XXXXXXX" />
+                                                    <span id="cod-phone-error" class="hidden text-xs text-red-500 mt-1"></span>
                                                 </div>
                                             </div>
                                         </div>
@@ -635,6 +637,7 @@
                                         class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">
                                         Security Settings</h3>
                                 </div>
+                                <p id="security-error-msg" class="text-sm font-medium text-red-500 hidden mb-4 rounded-lg border border-red-500/20 bg-red-50 p-4 dark:border-red-500/30 dark:bg-red-900/10"></p>
                                 <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                                     <div class="md:col-span-2">
                                         <label
@@ -749,9 +752,12 @@
             </main>
         </div>
         <div
-            class="fixed bottom-0 z-50 flex w-full items-center justify-end border-t border-slate-200 bg-white/80 px-4 py-4 backdrop-blur-md lg:px-10 dark:border-slate-800 dark:bg-background-dark/80">
-            <div class="flex gap-4">
-                <button
+            class="fixed bottom-0 z-50 flex w-full items-center justify-between border-t border-slate-200 bg-white/80 px-4 py-4 backdrop-blur-md lg:px-10 dark:border-slate-800 dark:bg-background-dark/80">
+            
+            <div id="global-action-error" class="hidden text-sm font-medium text-red-500 bg-red-50 dark:bg-red-900/10 border border-red-500/20 px-4 py-2 rounded-lg max-w-lg truncate"></div>
+            
+            <div class="flex gap-4 ml-auto">
+                <button id="discard-profile-btn"
                     class="rounded-lg px-6 py-2 text-sm font-bold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">
                     Discard changes
                 </button>
@@ -1070,7 +1076,13 @@
                         TacliimiDB.applyGlobalProfile();
                     }
                 } catch (err) {
-                    alert("Failed to upload image: " + err.message);
+                    const globalErr = document.getElementById('global-action-error');
+                    if (globalErr) {
+                        globalErr.textContent = "Failed to upload image: " + err.message;
+                        globalErr.classList.remove('hidden');
+                        setTimeout(() => globalErr.classList.add('hidden'), 5000);
+                    }
+                    
                     if (document.getElementById('avatar-loading-toast')) {
                         document.getElementById('avatar-loading-toast').remove();
                     }
@@ -1105,7 +1117,13 @@
                     TacliimiDB.applyGlobalProfile();
                 }
             } catch (err) {
-                alert("Failed to remove image: " + err.message);
+                const globalErr = document.getElementById('global-action-error');
+                if (globalErr) {
+                    globalErr.textContent = "Failed to remove image: " + err.message;
+                    globalErr.classList.remove('hidden');
+                    setTimeout(() => globalErr.classList.add('hidden'), 5000);
+                }
+                
                 if (document.getElementById('avatar-loading-toast')) {
                     document.getElementById('avatar-loading-toast').remove();
                 }
@@ -1260,6 +1278,7 @@
                 }
 
                 // Payout
+                // Payout
                 if (profile.payout_method) {
                     const method = profile.payout_method;
                     const details = profile.payout_details || {};
@@ -1267,16 +1286,21 @@
                     const value = methodMap[method] || method;
 
                     document.getElementById('selectedPayoutMethod').value = value;
+                    
+                    // Always populate both fields if they exist so the user can see them
+                    if (details.provider) document.getElementById('mm-provider').value = details.provider;
+                    if (details.mm_phone) document.getElementById('mm-phone').value = details.mm_phone;
+                    if (details.cod_phone) document.getElementById('cod-phone').value = details.cod_phone;
+                    
+                    if (details.address) document.getElementById('cod-address').value = details.address;
+                    if (details.city) document.getElementById('cod-city').value = details.city;
+                    if (details.country) document.getElementById('cod-country').value = details.country;
+                    
+                    // Click the dominant one to show the tab
                     if (value === 'mm') {
                         document.getElementById('btn-mm').click();
-                        if (details.provider) document.getElementById('mm-provider').value = details.provider;
-                        if (details.phone) document.getElementById('mm-phone').value = details.phone;
                     } else if (value === 'cod') {
                         document.getElementById('btn-cod').click();
-                        if (details.address) document.getElementById('cod-address').value = details.address;
-                        if (details.city) document.getElementById('cod-city').value = details.city;
-                        if (details.country) document.getElementById('cod-country').value = details.country;
-                        if (details.phone) document.getElementById('cod-phone').value = details.phone;
                     }
                 }
 
@@ -1338,7 +1362,12 @@
                                 GlobalProfile.applyProfile();
                             } catch (e) { console.error('Error refreshing UI:', e); }
                         } catch (err) {
-                            alert('Error clearing data: ' + err.message);
+                            const globalErr = document.getElementById('global-action-error');
+                            if (globalErr) {
+                                globalErr.textContent = "Error clearing data: " + err.message;
+                                globalErr.classList.remove('hidden');
+                                setTimeout(() => globalErr.classList.add('hidden'), 5000);
+                            }
                         } finally {
                             discardBtnEl.disabled = false;
                             discardBtnEl.innerHTML = `Discard changes`;
@@ -1350,6 +1379,8 @@
             saveBtn.addEventListener('click', async (e) => {
                 e.preventDefault();
                 const profile = window.currentProfile;
+                const securityErr = document.getElementById('security-error-msg');
+                if (securityErr) securityErr.classList.add('hidden');
                 const isSetupMode = profile && profile.role === 'instructor' && !profile.profile_completed;
 
                 const activeTab = document.querySelector('.profile-panel.block');
@@ -1447,10 +1478,24 @@
                     const codAddressInput = document.getElementById('cod-address');
                     const codCityInput = document.getElementById('cod-city');
                     const codPhoneInput = document.getElementById('cod-phone');
+                    const codCountryInput = document.getElementById('cod-country');
 
-                    [mmProviderInput, mmPhoneInput, codAddressInput, codCityInput, codPhoneInput].forEach(el => {
+                    [mmProviderInput, mmPhoneInput, codAddressInput, codCityInput, codPhoneInput, codCountryInput].forEach(el => {
                         if (el) el.classList.remove('border-red-500', 'ring-1', 'ring-red-500');
                     });
+                    
+                    const mmErr = document.getElementById('mm-phone-error');
+                    const codErr = document.getElementById('cod-phone-error');
+                    if (mmErr) { mmErr.textContent = ''; mmErr.classList.add('hidden'); }
+                    if (codErr) { codErr.textContent = ''; codErr.classList.add('hidden'); }
+
+                    // Always extract all fields so we don't lose data when the user switches tabs
+                    const mmProvider = mmProviderInput.value;
+                    const mmPhone = mmPhoneInput.value.trim();
+                    const address = codAddressInput.value.trim();
+                    const city = codCityInput.value.trim();
+                    const phone = codPhoneInput.value.trim();
+                    const country = codCountryInput ? codCountryInput.value.trim() : '';
 
                     if (!selectedMethod || selectedMethod === 'bank') {
                         document.querySelectorAll('.payout-method-btn').forEach(btn => {
@@ -1459,22 +1504,17 @@
                         });
                         tabValid = false;
                     } else if (selectedMethod === 'mm') {
-                        const mmProvider = mmProviderInput.value;
-                        const mmPhone = mmPhoneInput.value.trim();
                         if (!mmProvider || !mmPhone) {
                             if (!mmProvider) mmProviderInput.classList.add('border-red-500', 'ring-1', 'ring-red-500');
                             if (!mmPhone) mmPhoneInput.classList.add('border-red-500', 'ring-1', 'ring-red-500');
                             tabValid = false;
                         } else {
-                            updates = { payout_method: 'Mobile Money', payout_details: { provider: mmProvider, phone: mmPhone } };
+                            updates = { 
+                                payout_method: 'Mobile Money', 
+                                payout_details: { provider: mmProvider, mm_phone: mmPhone, address, city, cod_phone: phone, country } 
+                            };
                         }
                     } else if (selectedMethod === 'cod') {
-                        const address = codAddressInput.value.trim();
-                        const city = codCityInput.value.trim();
-                        const phone = codPhoneInput.value.trim();
-                        const codCountryInput = document.getElementById('cod-country');
-                        if (codCountryInput) codCountryInput.classList.remove('border-red-500', 'ring-1', 'ring-red-500');
-                        const country = codCountryInput ? codCountryInput.value.trim() : '';
                         if (!address || !city || !phone || !country) {
                             if (!address) codAddressInput.classList.add('border-red-500', 'ring-1', 'ring-red-500');
                             if (!city) codCityInput.classList.add('border-red-500', 'ring-1', 'ring-red-500');
@@ -1482,7 +1522,11 @@
                             if (!country && codCountryInput) codCountryInput.classList.add('border-red-500', 'ring-1', 'ring-red-500');
                             tabValid = false;
                         } else {
-                            updates = { payout_method: 'Cash on Delivery', payout_details: { address, city, phone, country } };
+                            // If they selected COD, maybe they also had MM fields filled.
+                            updates = { 
+                                payout_method: 'Cash on Delivery', 
+                                payout_details: { address, city, cod_phone: phone, country, provider: mmProvider, mm_phone: mmPhone } 
+                            };
                         }
                     }
                 } else if (activeTabId === 'panel-security') {
@@ -1492,6 +1536,19 @@
                     if (!tosCheckbox.checked) {
                         tosCheckbox.classList.add('ring-2', 'ring-red-500', 'border-red-500');
                         tabValid = false;
+                    }
+                    
+                    const newPw = document.getElementById('new-password').value;
+                    const confirmPw = document.getElementById('confirm-password').value;
+                    document.getElementById('confirm-password').classList.remove('border-red-500', 'ring-1', 'ring-red-500');
+                    if (newPw && newPw !== confirmPw) {
+                        document.getElementById('confirm-password').classList.add('border-red-500', 'ring-1', 'ring-red-500');
+                        tabValid = false;
+                        const securityErr = document.getElementById('security-error-msg');
+                        if (securityErr) {
+                            securityErr.textContent = "New password and confirm password do not match.";
+                            securityErr.classList.remove('hidden');
+                        }
                     }
                 }
 
@@ -1559,12 +1616,41 @@
                         if (updates.payout_method === 'Mobile Money') {
                             await PayoutService.savePayoutMethod(userId, 'mobile_money', updates.payout_details);
                         } else if (updates.payout_method === 'Cash on Delivery') {
-                            await PayoutService.savePayoutMethod(userId, 'cod', updates.payout_details);
+                            await PayoutService.savePayoutMethod(userId, 'cash_on_delivery', updates.payout_details);
                         }
                         if (isSetupMode && updates.setup_progress) {
                             await AuthService.updateProfile({ setup_progress: updates.setup_progress });
                         }
                     } else if (activeTabId === 'panel-security') {
+                        const newPw = document.getElementById('new-password').value;
+                        const currentPw = document.getElementById('current-password').value;
+                        
+                        if (newPw) {
+                            if (!currentPw) {
+                                document.getElementById('current-password').classList.add('border-red-500', 'ring-1', 'ring-red-500');
+                                throw new Error("Current password is required to set a new password.");
+                            }
+                            
+                            saveBtn.innerHTML = `<span class="material-symbols-outlined text-[18px] animate-spin">refresh</span> Verifying Password`;
+                            const isValid = await AuthService.verifyPassword(currentPw);
+                            if (!isValid) {
+                                document.getElementById('current-password').classList.add('border-red-500', 'ring-1', 'ring-red-500');
+                                throw new Error("Current password is incorrect.");
+                            }
+                            
+                            saveBtn.innerHTML = `<span class="material-symbols-outlined text-[18px] animate-spin">refresh</span> Updating Password`;
+                            await AuthService.updatePassword(newPw);
+                            
+                            // Clear password fields
+                            document.getElementById('new-password').value = '';
+                            document.getElementById('current-password').value = '';
+                            document.getElementById('confirm-password').value = '';
+                        }
+                        
+                        // Save the TOS agreement to the database
+                        const tosCheckbox = document.getElementById('tos-checkbox');
+                        await AuthService.updateProfile({ agreed_to_instructor_tos: tosCheckbox.checked });
+
                         if (isSetupMode && updates.profile_completed) {
                             await ProfileService.markProfileCompleted(userId);
                             await AuthService.updateProfile({ setup_progress: updates.setup_progress });
@@ -1626,8 +1712,45 @@
                     }
 
                 } catch (e) {
-                    alert("Error saving profile: " + e.message);
                     saveBtn.disabled = false;
+                    
+                    if (e.message && (e.message.includes('uniqueness') || e.message.includes('already registered'))) {
+                        const mmPhoneInput = document.getElementById('mm-phone');
+                        const codPhoneInput = document.getElementById('cod-phone');
+                        const mmErr = document.getElementById('mm-phone-error');
+                        const codErr = document.getElementById('cod-phone-error');
+                        const selectedMethod = document.getElementById('selectedPayoutMethod').value;
+                        
+                        if (mmPhoneInput.value) {
+                            mmPhoneInput.classList.add('border-red-500', 'ring-1', 'ring-red-500');
+                            if (mmErr) { mmErr.textContent = e.message; mmErr.classList.remove('hidden'); }
+                        }
+                        
+                        if (codPhoneInput.value) {
+                            codPhoneInput.classList.add('border-red-500', 'ring-1', 'ring-red-500');
+                            if (codErr) { codErr.textContent = e.message; codErr.classList.remove('hidden'); }
+                        }
+                        
+                        document.getElementById('payout-forms').scrollIntoView({ behavior: 'smooth' });
+                    } else if (e.message && e.message.includes('password')) {
+                        const securityErr = document.getElementById('security-error-msg');
+                        if (securityErr) {
+                            securityErr.textContent = e.message;
+                            securityErr.classList.remove('hidden');
+                        } else {
+                            const globalErr = document.getElementById('global-action-error');
+                            if (globalErr) { globalErr.textContent = "Error saving profile: " + e.message; globalErr.classList.remove('hidden'); setTimeout(() => globalErr.classList.add('hidden'), 5000); }
+                        }
+                    } else {
+                        const globalErr = document.getElementById('global-action-error');
+                        if (globalErr) { globalErr.textContent = "Error saving profile: " + e.message; globalErr.classList.remove('hidden'); setTimeout(() => globalErr.classList.add('hidden'), 5000); }
+                    }
+                    console.error("Save Error:", e);
+                    saveBtn.innerHTML = `<span class="material-symbols-outlined text-[18px]">error</span> Error`;
+                    setTimeout(() => {
+                        saveBtn.innerHTML = "Save Changes";
+                        saveBtn.disabled = false;
+                    }, 3000);
                 }
             });
 

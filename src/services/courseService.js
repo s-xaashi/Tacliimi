@@ -608,12 +608,29 @@ export const CourseService = {
             .select(`
                 *,
                 serial_id,
-                category:course_categories(name)
+                category:course_categories(name),
+                enrollments(count),
+                course_reviews(rating)
             `)
             .eq('instructor_id', session.user.id)
             .order('created_at', { ascending: false });
         if (error) throw error;
-        return data;
+
+        // Normalize counts into flat fields for the dashboard
+        return (data || []).map(course => {
+            const enrollCount = course.enrollments?.[0]?.count ?? 0;
+            const reviews = course.course_reviews || [];
+            const reviewCount = reviews.length;
+            const avgRating = reviewCount > 0
+                ? reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviewCount
+                : 0;
+            return {
+                ...course,
+                enrolled_count: enrollCount,
+                review_count: reviewCount,
+                avg_rating: avgRating > 0 ? avgRating.toFixed(1) : '0.0'
+            };
+        });
     },
 
     /** ADMIN / MODERATION */
@@ -1000,7 +1017,14 @@ export const CourseService = {
 
         const { data, error } = await supabase
             .from('courses')
-            .select('id, title, status, version_status, version_number, is_latest_published, root_course_id, created_at, rejection_reason, thumbnail_url, subtitle, price, price_type, category:course_categories(name)')
+            .select(`
+                id, title, status, version_status, version_number, is_latest_published, 
+                root_course_id, created_at, rejection_reason, thumbnail_url, subtitle, 
+                price, price_type, is_public,
+                category:course_categories(name),
+                enrollments(count),
+                course_reviews(rating)
+            `)
             .eq('instructor_id', authId)
             .is('deleted_at', null)
             .order('created_at', { ascending: false });
@@ -1013,11 +1037,34 @@ export const CourseService = {
             if (!families[familyId]) families[familyId] = [];
             families[familyId].push(course);
         }
-        // Return one object per family with both the published version and any pending revision
+        // Return one object per family with both the published version and any pending revision, computing family-wide metrics
         return Object.values(families).map(versions => {
             const published = versions.find(v => v.is_latest_published) || versions[0];
             const revision  = versions.find(v => !v.is_latest_published && v.version_status !== 'archived');
-            return { ...published, pendingRevision: revision || null };
+            
+            // Aggregate metrics across all versions in the family
+            let familyEnrollCount = 0;
+            let familyReviews = [];
+            
+            for (const v of versions) {
+                familyEnrollCount += v.enrollments?.[0]?.count ?? 0;
+                if (v.course_reviews && v.course_reviews.length > 0) {
+                    familyReviews.push(...v.course_reviews);
+                }
+            }
+            
+            const reviewCount = familyReviews.length;
+            const avgRating = reviewCount > 0
+                ? familyReviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviewCount
+                : 0;
+
+            return { 
+                ...published, 
+                pendingRevision: revision || null,
+                enrolled_count: familyEnrollCount,
+                review_count: reviewCount,
+                avg_rating: avgRating > 0 ? avgRating.toFixed(1) : '0.0'
+            };
         });
     },
 

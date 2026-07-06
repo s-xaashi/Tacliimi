@@ -109,6 +109,7 @@
                         <a class="tab-btn py-4 px-1 text-sm border-b-2 font-medium cursor-pointer transition-all border-transparent text-slate-500" data-status="rejected">Rejected (<span id="count-rejected">0</span>)</a>
                         <a class="tab-btn py-4 px-1 text-sm border-b-2 font-medium cursor-pointer transition-all border-transparent text-slate-500" data-status="private">Private (<span id="count-private">0</span>)</a>
                         <a class="tab-btn py-4 px-1 text-sm border-b-2 font-medium cursor-pointer transition-all border-transparent text-slate-500" data-status="review">In Review (<span id="count-review">0</span>)</a>
+                        <a class="tab-btn py-4 px-1 text-sm border-b-2 font-medium cursor-pointer transition-all border-transparent text-slate-500" data-status="revisions">In Revision (<span id="count-revisions">0</span>)</a>
                     </nav>
                 </div>
 
@@ -304,7 +305,8 @@
                     draft: courses.filter(c => c.status === 'draft').length,
                     rejected: courses.filter(c => c.status === 'rejected' || c.status === 'appealed' || (c.status === 'pending_review' && c.has_rejection_history)).length,
                     private: courses.filter(c => c.status === 'published' && c.is_public === false).length,
-                    review: courses.filter(c => c.status === 'pending_review').length
+                    review: courses.filter(c => c.status === 'pending_review').length,
+                    revisions: courses.filter(c => c.pendingRevision !== null && c.pendingRevision !== undefined).length
                 };
 
                 document.getElementById('count-published').innerText = counts.published;
@@ -312,6 +314,7 @@
                 document.getElementById('count-rejected').innerText = counts.rejected;
                 document.getElementById('count-private').innerText = counts.private;
                 document.getElementById('count-review').innerText = counts.review;
+                document.getElementById('count-revisions').innerText = counts.revisions;
             }
 
             function render(filter) {
@@ -322,6 +325,8 @@
                     // Private tab: only fully approved private courses (published + is_public=false)
                     if (filter === 'private') return c.status === 'published' && c.is_public === false;
                     if (filter === 'review') return c.status === 'pending_review';
+                    // Revisions tab: published courses that have an active pending revision
+                    if (filter === 'revisions') return !!(c.pendingRevision);
                     return false;
                 });
 
@@ -372,21 +377,28 @@
                             }
                         }
 
-                        // Edit: for published courses, use revision flow
+                        // Edit: for published courses, use revision flow.
+                        // If a pendingRevision already exists, go directly to that draft.
                         const isPublished = course.status === 'published';
                         const editBtn = isPublished
-                            ? `<button onclick="editPublishedCourse('${course.id}')"
-                                    title="Edit published course (creates a revision)"
-                                    class="p-2 bg-slate-50 dark:bg-slate-800 rounded-lg text-slate-400 hover:text-primary transition-colors">
-                                    <span class="material-symbols-outlined text-xl">edit_note</span>
-                                </button>`
+                            ? (pendRev
+                                ? `<button onclick="window.location.href='/src/pages/instructor/instructor-courses/wizard.html?id=${pendRev.id}&revision=true'"
+                                        title="Continue editing draft revision"
+                                        class="p-2 bg-amber-50 dark:bg-amber-900/20 rounded-lg text-amber-500 hover:text-amber-700 transition-colors">
+                                        <span class="material-symbols-outlined text-xl">edit_note</span>
+                                    </button>`
+                                : `<button onclick="editPublishedCourse('${course.id}')"
+                                        title="Edit published course (creates a revision)"
+                                        class="p-2 bg-slate-50 dark:bg-slate-800 rounded-lg text-slate-400 hover:text-primary transition-colors">
+                                        <span class="material-symbols-outlined text-xl">edit_note</span>
+                                    </button>`)
                             : `<button onclick="window.location.href='/src/pages/instructor/instructor-courses/wizard.html?id=${course.id}'"
                                     title="Edit course"
                                     class="p-2 bg-slate-50 dark:bg-slate-800 rounded-lg text-slate-400 hover:text-primary transition-colors">
                                     <span class="material-symbols-outlined text-xl">edit_note</span>
                                 </button>`;
 
-                        // Notify Update button (only when published and has a prior version enrolled students)
+                        // Notify Update button (only when published)
                         const notifyBtn = isPublished ? `
                             <button onclick="openNotifyUpdateModal('${course.root_course_id || course.id}', '${course.id}')"
                                 title="Notify enrolled students of the latest version"
@@ -394,6 +406,25 @@
                                 <span class="material-symbols-outlined text-base">campaign</span>
                                 Notify Update
                             </button>` : '';
+
+                        // Pending revision sub-banner: shows details of the in-progress edit
+                        const revisionBanner = pendRev ? (() => {
+                            const revStatusMap = {
+                                draft: { color: 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700', icon: 'edit_document', iconColor: 'text-slate-500', label: 'Draft in Progress', hint: 'Continue editing to submit for review.' },
+                                pending_review: { color: 'bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800', icon: 'pending', iconColor: 'text-amber-500', label: 'Revision Under Review', hint: 'Admin is reviewing your edits.' },
+                                rejected: { color: 'bg-rose-50 dark:bg-rose-900/10 border-rose-200 dark:border-rose-800', icon: 'cancel', iconColor: 'text-rose-500', label: 'Revision Rejected', hint: pendRev.rejection_reason ? `"${pendRev.rejection_reason.substring(0,60)}..."` : 'Open the wizard to fix and resubmit.' }
+                            };
+                            const s = revStatusMap[pendRev.version_status] || revStatusMap['draft'];
+                            return `<div class="mt-3 p-3 rounded-xl border ${s.color} flex items-start gap-3">
+                                <span class="material-symbols-outlined text-lg ${s.iconColor} mt-0.5 flex-shrink-0">${s.icon}</span>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-xs font-black uppercase tracking-widest ${s.iconColor}">${s.label}</p>
+                                    <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">${s.hint}</p>
+                                </div>
+                                <a href="/src/pages/instructor/instructor-courses/wizard.html?id=${pendRev.id}&revision=true"
+                                    class="ml-auto flex-shrink-0 text-[10px] font-bold text-primary hover:underline whitespace-nowrap">Open Draft →</a>
+                            </div>`;
+                        })() : '';
 
                         return `
                             <div class="bg-white dark:bg-slate-900 rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-800 group hover:shadow-xl transition-all flex flex-col">
@@ -411,7 +442,8 @@
                                 <div class="p-6 flex-1 flex flex-col">
                                     <p class="text-xs font-bold text-primary uppercase tracking-widest mb-2">${course.category?.name || 'Uncategorized'}</p>
                                     <h3 class="font-bold text-lg dark:text-white mb-2 line-clamp-1">${course.title}</h3>
-                                    <p class="text-sm text-slate-500 dark:text-slate-400 mb-4 line-clamp-1">${course.subtitle || 'Learn something new today with this comprehensive course.'}</p>
+                                    <p class="text-sm text-slate-500 dark:text-slate-400 mb-1 line-clamp-1">${course.subtitle || 'Learn something new today with this comprehensive course.'}</p>
+                                    ${revisionBanner}
                                     
                                     ${course.rejection_reason && filter === 'rejected' ? `
                                         <div class="mb-6 p-4 rounded-xl bg-rose-50 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-900/30">
@@ -543,7 +575,7 @@
                     await CourseService.deleteCourse(deleteId);
                     
                     // 4. Minimal background fetch to keep in sync
-                    const freshData = await CourseService.getInstructorCourses();
+                    const freshData = await CourseService.getInstructorCoursesGrouped(null);
                     allCourses = freshData;
                     // No need to re-render if it matches our optimistic state, 
                     // but we update counters just in case stats changed

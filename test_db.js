@@ -16,10 +16,9 @@ async function queryTable(tableName, params = '') {
 
 async function test() {
   try {
-    console.log('Querying mentor_categories...');
-    const categories = await queryTable('mentor_categories', 'order=created_at.desc&limit=10');
-    console.log('Recent categories:', JSON.stringify(categories, null, 2));
-
+    console.log('Querying payout_methods for column...');
+    const result = await queryTable('payout_methods', 'select=phone_cash_on_delivery&limit=1');
+    console.log('payout_methods Select Result:', JSON.stringify(result, null, 2));
   } catch (e) {
     console.error('Error:', e);
   }

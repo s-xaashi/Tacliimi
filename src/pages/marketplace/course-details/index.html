@@ -275,6 +275,10 @@
     <script type="module">
         import { CourseService } from '/src/services/courseService.js?v=6';
         import { AuthService } from '/src/services/authService.js?v=6';
+        import { showStudentOnlyModal } from '/src/services/roleGuard.js';
+
+        // Expose to window for inline handlers
+        window.showStudentOnlyModal = showStudentOnlyModal;
 
         // Expose to window for payment modal access
         window.CourseService = CourseService;
@@ -816,6 +820,14 @@
                         window.location.href = `/src/pages/auth/login/?return=${encodeURIComponent(window.location.pathname + window.location.search)}`;
                         return;
                     }
+
+                    // Block instructor/mentor accounts from enrolling
+                    const userRole = currentUser.user_metadata?.role || '';
+                    if (userRole === 'instructor' || userRole === 'mentor') {
+                        showStudentOnlyModal();
+                        return;
+                    }
+
                     const isEnrolled = await CourseService.checkEnrollment(courseId, currentUser.id);
                     if (!isEnrolled) {
                         const isFree = !courseData.price || courseData.price === 0 || courseData.price === 'Free' || parseFloat(courseData.price) === 0;

@@ -454,14 +454,17 @@
 
                 if (tbody) {
                     tbody.innerHTML = courses.map(course => {
+                        const isPrivate = course.is_public === false && course.status === 'published';
                         const statusColors = {
-                            'published': 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+                            'published': isPrivate 
+                                ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400'
+                                : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
                             'pending_review': 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
                             'draft': 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400',
                             'rejected': 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
                         };
                         const statusClass = statusColors[course.status] || statusColors.draft;
-                        const statusLabel = (course.status || 'draft').replace('_', ' ');
+                        const statusLabel = isPrivate ? 'PRIVATE' : (course.status || 'draft').replace('_', ' ');
                         const createdDate = new Date(course.created_at).toLocaleDateString();
 
                         return `
@@ -498,10 +501,12 @@
                                         <div class="flex items-center gap-2 text-slate-600 dark:text-slate-300">
                                             <span class="material-symbols-outlined text-sm">group</span>
                                             <span class="font-semibold">${course.enrolled_count || 0}</span>
+                                            <span class="text-xs text-slate-400">students</span>
                                         </div>
                                         <div class="flex items-center gap-2 text-amber-500">
                                             <span class="material-symbols-outlined text-sm">star</span>
                                             <span class="font-semibold">${course.avg_rating || '0.0'}</span>
+                                            <span class="text-xs text-slate-400">(${course.review_count || 0})</span>
                                         </div>
                                     </div>
                                 </td>

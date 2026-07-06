@@ -55,10 +55,11 @@ export const ProfileService = {
             education_list: safeJson(teachingProfile?.educational_background),
             language_list: safeJson(teachingProfile?.languages_spoken),
             expertise_list: expertiseList,
-            payout_method: payoutMethod ? (payoutMethod.method_type === 'cod' ? 'Cash on Delivery' : 'Mobile Money') : null,
+            payout_method: payoutMethod ? (payoutMethod.method_type === 'cash_on_delivery' ? 'Cash on Delivery' : 'Mobile Money') : null,
             payout_details: payoutMethod ? {
                 provider: payoutMethod.provider_name,
-                phone: payoutMethod.phone_number,
+                mm_phone: payoutMethod.phone_mobile_money,
+                cod_phone: payoutMethod.phone_cash_on_delivery,
                 address: payoutMethod.address,
                 city: payoutMethod.city,
                 country: payoutMethod.country
