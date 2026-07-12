@@ -211,6 +211,9 @@ function renderAvailability() {
 }
 
 function selectSlot(btn, slot) {
+    const errorSlot = document.getElementById('error-slot');
+    if (errorSlot) errorSlot.classList.add('hidden');
+
     // Reset others
     document.querySelectorAll('[data-slot-id]').forEach(s => {
         s.className = 'w-full flex items-center justify-between p-4 border border-slate-200 dark:border-slate-800 rounded-xl hover:border-primary hover:bg-primary/5 transition-all group';
@@ -385,7 +388,13 @@ async function confirmBooking() {
     const duration = document.querySelector('input[name="mentorship_duration"]:checked')?.value;
 
     if (!window._resumingSessionId && !selectedSlot) {
-        alert("Please select a time slot.");
+        const errorSlot = document.getElementById('error-slot');
+        if (errorSlot) {
+            errorSlot.classList.remove('hidden');
+            errorSlot.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+            alert("Please select a time slot.");
+        }
         return;
     }
     if (!meetingType) {
