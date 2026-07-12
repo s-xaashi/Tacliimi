@@ -54,9 +54,9 @@
         import { AuthService } from '/src/services/authService.js';
 
         // If the URL contains an access token from an email link or OAuth, do not prematurely redirect
-        const isOAuthRedirect = window.location.hash.includes('access_token=') || 
-                                window.location.search.includes('access_token=') ||
-                                window.location.hash.includes('type=signup');
+        const isOAuthRedirect = window.location.hash.includes('access_token=') ||
+            window.location.search.includes('access_token=') ||
+            window.location.hash.includes('type=signup');
 
         if (!isOAuthRedirect) {
             AuthService.getSession().then(session => {
@@ -124,7 +124,8 @@
                     onclick="document.documentElement.classList.toggle('dark')">
                     <span class="material-symbols-outlined">dark_mode</span>
                 </button>
-                <div id="global-profile-header-container" class="flex items-center gap-3 pl-4 border-l border-slate-200 dark:border-slate-800 cursor-pointer hover:opacity-80 transition-opacity"
+                <div id="global-profile-header-container"
+                    class="flex items-center gap-3 pl-4 border-l border-slate-200 dark:border-slate-800 cursor-pointer hover:opacity-80 transition-opacity"
                     onclick="window.location.href='/src/pages/instructor/instructor-profile/index.html'">
                     <div class="text-right hidden sm:block">
                         <p class="user-display-name text-sm font-medium dark:text-white">Instructor account</p>
@@ -199,9 +200,11 @@
                 <!-- DASHBOARD WIDGETS -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
                     <!-- Total Earnings (Existing) -->
-                    <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
+                    <div
+                        class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
                         <div class="flex items-center gap-3 mb-3">
-                            <div class="w-10 h-10 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 rounded-xl flex items-center justify-center">
+                            <div
+                                class="w-10 h-10 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 rounded-xl flex items-center justify-center">
                                 <span class="material-symbols-outlined">payments</span>
                             </div>
                             <h3 class="font-semibold text-slate-500 dark:text-slate-400 text-sm">Total Earnings</h3>
@@ -211,9 +214,11 @@
                     </div>
 
                     <!-- Total Courses (Existing) -->
-                    <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
+                    <div
+                        class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
                         <div class="flex items-center gap-3 mb-3">
-                            <div class="w-10 h-10 bg-indigo-50 dark:bg-indigo-900/30 text-primary rounded-xl flex items-center justify-center">
+                            <div
+                                class="w-10 h-10 bg-indigo-50 dark:bg-indigo-900/30 text-primary rounded-xl flex items-center justify-center">
                                 <span class="material-symbols-outlined">auto_stories</span>
                             </div>
                             <h3 class="font-semibold text-slate-500 dark:text-slate-400 text-sm">Total Courses</h3>
@@ -223,9 +228,11 @@
                     </div>
 
                     <!-- Total Students (New) -->
-                    <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
+                    <div
+                        class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
                         <div class="flex items-center gap-3 mb-3">
-                            <div class="w-10 h-10 bg-amber-50 dark:bg-amber-900/30 text-amber-600 rounded-xl flex items-center justify-center">
+                            <div
+                                class="w-10 h-10 bg-amber-50 dark:bg-amber-900/30 text-amber-600 rounded-xl flex items-center justify-center">
                                 <span class="material-symbols-outlined">group</span>
                             </div>
                             <h3 class="font-semibold text-slate-500 dark:text-slate-400 text-sm">Enrolled Students</h3>
@@ -235,9 +242,11 @@
                     </div>
 
                     <!-- Mentorship Activity (New) -->
-                    <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
+                    <div
+                        class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
                         <div class="flex items-center gap-3 mb-3">
-                            <div class="w-10 h-10 bg-rose-50 dark:bg-rose-900/30 text-rose-600 rounded-xl flex items-center justify-center">
+                            <div
+                                class="w-10 h-10 bg-rose-50 dark:bg-rose-900/30 text-rose-600 rounded-xl flex items-center justify-center">
                                 <span class="material-symbols-outlined">forum</span>
                             </div>
                             <h3 class="font-semibold text-slate-500 dark:text-slate-400 text-sm">Active Mentorship</h3>
@@ -248,14 +257,18 @@
                 </div>
 
                 <!-- QUICK ACTIONS & FILTER BAR -->
-                <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 mb-8 flex flex-wrap items-center justify-between gap-4">
+                <div
+                    class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 mb-8 flex flex-wrap items-center justify-between gap-4">
                     <div class="flex flex-wrap items-center gap-4 flex-1">
                         <div class="relative flex-1 max-w-md">
-                            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
-                            <input type="text" id="course-search-input" placeholder="Search courses by name, ID or category..." 
+                            <span
+                                class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+                            <input type="text" id="course-search-input"
+                                placeholder="Search courses by name, ID or category..."
                                 class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20 transition-all dark:text-white">
                         </div>
-                        <select id="status-filter" class="bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm py-2.5 px-4 focus:ring-2 focus:ring-primary/20 dark:text-white">
+                        <select id="status-filter"
+                            class="bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm py-2.5 px-4 focus:ring-2 focus:ring-primary/20 dark:text-white">
                             <option value="all">All Statuses</option>
                             <option value="published">Published</option>
                             <option value="pending_review">Pending Review</option>
@@ -274,17 +287,23 @@
                 <div id="dashboard-portfolio-container">
                     <!-- LOADING STATE -->
                     <div id="portfolio-loading" class="py-20 flex flex-col items-center justify-center text-slate-400">
-                        <div class="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
+                        <div
+                            class="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4">
+                        </div>
                         <p>Loading your portfolio...</p>
                     </div>
 
                     <!-- EMPTY STATE (Hidden by default) -->
-                    <div id="portfolio-empty" class="hidden bg-white dark:bg-slate-900 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 p-16 flex flex-col items-center text-center">
-                        <div class="w-24 h-24 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-6">
-                            <span class="material-symbols-outlined text-slate-300 dark:text-slate-600 text-5xl">auto_stories</span>
+                    <div id="portfolio-empty"
+                        class="hidden bg-white dark:bg-slate-900 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 p-16 flex flex-col items-center text-center">
+                        <div
+                            class="w-24 h-24 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-6">
+                            <span
+                                class="material-symbols-outlined text-slate-300 dark:text-slate-600 text-5xl">auto_stories</span>
                         </div>
                         <h3 class="text-xl font-bold dark:text-white mb-2">You haven't created any courses yet</h3>
-                        <p class="text-slate-500 max-w-sm mb-8">Your journey as an educator starts here. Create your first course and reach thousands of students worldwide.</p>
+                        <p class="text-slate-500 max-w-sm mb-8">Your journey as an educator starts here. Create your
+                            first course and reach thousands of students worldwide.</p>
                         <button onclick="window.location.href='/src/pages/instructor/instructor-courses/wizard.html'"
                             class="bg-primary hover:bg-indigo-700 text-white px-8 py-4 rounded-xl flex items-center gap-3 font-semibold transition-all shadow-xl shadow-indigo-200 dark:shadow-none hover:scale-105 active:scale-95">
                             <span class="material-symbols-outlined text-2xl">add_circle</span>
@@ -294,10 +313,12 @@
 
                     <!-- DATA GRID -->
                     <div id="portfolio-grid-wrapper" class="hidden">
-                        <div class="overflow-x-auto bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
+                        <div
+                            class="overflow-x-auto bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
                             <table class="w-full text-left">
                                 <thead>
-                                    <tr class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">
+                                    <tr
+                                        class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">
                                         <th class="px-6 py-4">Course Details</th>
                                         <th class="px-6 py-4">Category / ID</th>
                                         <th class="px-6 py-4">Status</th>
@@ -306,7 +327,8 @@
                                         <th class="px-6 py-4 text-right">Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody id="portfolio-table-body" class="divide-y divide-slate-100 dark:divide-slate-800 text-sm">
+                                <tbody id="portfolio-table-body"
+                                    class="divide-y divide-slate-100 dark:divide-slate-800 text-sm">
                                     <!-- Dynamic Rows -->
                                 </tbody>
                             </table>
@@ -333,13 +355,14 @@
             import { CourseService } from '/src/services/courseService.js';
             import { MentorService } from '/src/services/mentorService.js';
             import { PayoutService } from '/src/services/payoutService.js';
+            import { instructorEarningsService } from '/src/services/instructorEarningsService.js';
 
             let allCourses = [];
 
             async function initDashboard() {
                 console.log("[Dashboard] Starting initialization...");
                 const loadingText = document.getElementById('portfolio-loading');
-                
+
                 try {
                     const session = await AuthService.getSession();
                     if (!session) {
@@ -356,15 +379,15 @@
                             console.error("[Dashboard] Stats fetch failed:", err);
                             return { totalCourses: 0, totalStudents: 0 };
                         }),
-                        calculateEarnings(instructorId).catch(err => {
+                        instructorEarningsService.getSummary(instructorId).catch(err => {
                             console.error("[Dashboard] Earnings calculation failed:", err);
-                            return { totalEarnings: 0 };
+                            return { total_earned: 0 };
                         }),
                         MentorService.getMentorSessions(instructorId).catch(err => {
                             console.error("[Dashboard] Mentor sessions fetch failed:", err);
                             return [];
                         }),
-                        CourseService.getInstructorCourses().catch(err => {
+                        CourseService.getInstructorCoursesForDisplay(instructorId).catch(err => {
                             console.error("[Dashboard] Courses fetch failed:", err);
                             return [];
                         })
@@ -375,8 +398,8 @@
 
                     // 2. Populate Metrics
                     updateMetrics({
-                        earnings: earnings.totalEarnings || 0,
-                        courses: stats.totalCourses || 0,
+                        earnings: earnings?.total_earned || 0,
+                        courses: allCourses.length,
                         students: stats.totalStudents || 0,
                         sessions: sessions.filter(s => s.booking_status === 'pending_review').length
                     });
@@ -401,28 +424,12 @@
                 }
             }
 
-            async function calculateEarnings(instructorId) {
-                const [transactions, payouts] = await Promise.all([
-                    PayoutService.getTransactions(instructorId),
-                    PayoutService.getPayoutHistory(instructorId)
-                ]);
-
-                let totalEarnings = 0;
-                if (transactions && transactions.length > 0) {
-                    totalEarnings = transactions
-                        .filter(tx => tx.status === 'completed')
-                        .reduce((sum, tx) => sum + parseFloat(tx.amount || 0), 0);
-                }
-
-                return { totalEarnings };
-            }
-
             function updateMetrics({ earnings, courses, students, sessions }) {
                 document.getElementById('total-earnings-metric').innerText = `$${parseFloat(earnings).toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
                 document.getElementById('total-courses-metric').innerText = courses;
                 document.getElementById('total-students-metric').innerText = students;
                 document.getElementById('mentorship-sessions-metric').innerText = sessions;
-                
+
                 const nextSessionDesc = document.getElementById('next-session-desc');
                 if (nextSessionDesc) {
                     if (sessions > 0) {
@@ -455,16 +462,17 @@
                 if (tbody) {
                     tbody.innerHTML = courses.map(course => {
                         const isPrivate = course.is_public === false && course.status === 'published';
+                        const normalizedStatus = course.status === 'approved' ? 'published' : course.status;
                         const statusColors = {
-                            'published': isPrivate 
+                            'published': isPrivate
                                 ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400'
                                 : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
                             'pending_review': 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
                             'draft': 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400',
                             'rejected': 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
                         };
-                        const statusClass = statusColors[course.status] || statusColors.draft;
-                        const statusLabel = isPrivate ? 'PRIVATE' : (course.status || 'draft').replace('_', ' ');
+                        const statusClass = statusColors[normalizedStatus] || statusColors.draft;
+                        const statusLabel = isPrivate ? 'PRIVATE' : (normalizedStatus || 'draft').replace('_', ' ');
                         const createdDate = new Date(course.created_at).toLocaleDateString();
 
                         return `
@@ -495,6 +503,7 @@
                                     <span class="px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider ${statusClass}">
                                         ${statusLabel}
                                     </span>
+                                    ${course.is_revision ? `<div class="mt-2 text-[10px] text-blue-600 dark:text-blue-400 font-semibold uppercase flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">edit_note</span> Revision Draft</div>` : ''}
                                 </td>
                                 <td class="px-6 py-5">
                                     <div class="flex flex-col gap-1.5">
@@ -516,10 +525,12 @@
                                 </td>
                                 <td class="px-6 py-5 text-right">
                                     <div class="flex items-center justify-end gap-2">
-                                        <button onclick="window.location.href='/src/pages/instructor/instructor-courses/wizard.html?id=${course.id}'" 
-                                            class="p-2 hover:bg-primary/10 hover:text-primary rounded-lg transition-all text-slate-400" title="Edit Course">
-                                            <span class="material-symbols-outlined text-xl">edit</span>
-                                        </button>
+                                        ${normalizedStatus === 'pending_review' 
+                                            ? `<button onclick="withdrawReview('${course.id}')" class="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400 rounded-lg text-xs font-bold transition-all" title="Withdraw submission to edit">Withdraw</button>`
+                                            : normalizedStatus === 'published'
+                                                ? `<button onclick="editPublishedCourse('${course.id}')" class="p-2 hover:bg-primary/10 hover:text-primary rounded-lg transition-all text-slate-400" title="Edit Course"><span class="material-symbols-outlined text-xl">edit</span></button>`
+                                                : `<button onclick="window.location.href='/src/pages/instructor/instructor-courses/wizard.html?id=${course.id}'" class="p-2 hover:bg-primary/10 hover:text-primary rounded-lg transition-all text-slate-400" title="Edit Course"><span class="material-symbols-outlined text-xl">edit</span></button>`
+                                        }
                                         <button onclick="window.location.href='/src/pages/learning/learning-interface/index.html?id=${course.id}'" 
                                             class="p-2 hover:bg-emerald-500/10 hover:text-emerald-500 rounded-lg transition-all text-slate-400" title="Preview Course">
                                             <span class="material-symbols-outlined text-xl">visibility</span>
@@ -542,11 +553,12 @@
                         const statusValue = statusFilter.value;
 
                         const filtered = allCourses.filter(course => {
-                            const matchesSearch = (course.title || '').toLowerCase().includes(searchTerm) || 
-                                                (course.serial_id || '').toLowerCase().includes(searchTerm) ||
-                                                (course.category?.name || '').toLowerCase().includes(searchTerm);
-                            
-                            const matchesStatus = statusValue === 'all' || course.status === statusValue;
+                            const matchesSearch = (course.title || '').toLowerCase().includes(searchTerm) ||
+                                (course.serial_id || '').toLowerCase().includes(searchTerm) ||
+                                (course.category?.name || '').toLowerCase().includes(searchTerm);
+
+                            const normalizedCourseStatus = course.status === 'approved' ? 'published' : course.status;
+                            const matchesStatus = statusValue === 'all' || normalizedCourseStatus === statusValue;
 
                             return matchesSearch && matchesStatus;
                         });
@@ -558,6 +570,57 @@
                     statusFilter.addEventListener('change', handleFilter);
                 }
             }
+
+            window.editPublishedCourse = async (courseId) => {
+                const btn = event ? event.currentTarget : null;
+                const originalHtml = btn ? btn.innerHTML : '';
+                if (btn) {
+                    btn.innerHTML = '<span class="material-symbols-outlined text-xl animate-spin">autorenew</span>';
+                    btn.disabled = true;
+                }
+
+                try {
+                    const revisionId = await CourseService.getOrCreateCourseRevision(courseId);
+                    window.location.href = `/src/pages/instructor/instructor-courses/wizard.html?id=${revisionId}&revision=true`;
+                } catch (error) {
+                    console.error("Failed to edit course:", error);
+                    window.showToast("Failed to start editing. Please try again.", "error");
+                    if (btn) {
+                        btn.innerHTML = originalHtml;
+                        btn.disabled = false;
+                    }
+                }
+            };
+
+            window.withdrawReview = (courseId) => {
+                const btn = event ? event.currentTarget : null;
+                const originalHtml = btn ? btn.innerHTML : '';
+                
+                window.showConfirmModal({
+                    title: "Withdraw Course",
+                    message: "Are you sure you want to withdraw this course from review? It will be returned to Draft status.",
+                    confirmText: "Withdraw",
+                    variant: "danger"
+                }, async () => {
+                    if (btn) {
+                        btn.innerHTML = 'Withdrawing...';
+                        btn.disabled = true;
+                    }
+
+                    try {
+                        await CourseService.withdrawCourseReview(courseId);
+                        await initDashboard(); // refresh
+                        window.showToast("Course withdrawn to Draft status.", "success");
+                    } catch (error) {
+                        console.error("Failed to withdraw review:", error);
+                        window.showToast("Failed to withdraw submission. Please try again.", "error");
+                        if (btn) {
+                            btn.innerHTML = originalHtml;
+                            btn.disabled = false;
+                        }
+                    }
+                });
+            };
 
             document.addEventListener('DOMContentLoaded', initDashboard);
         </script>

@@ -289,6 +289,7 @@
         </div>
     </footer>
 
+    <script type="module" src="/src/services/uiUtils.js"></script>
     <script type="module" src="/src/services/globalProfile.js"></script>
     <script>
         function publishCourse() {
@@ -321,8 +322,10 @@
                 console.error("Could not save to mock DB:", e);
             }
 
-            alert("Course Published Successfully!");
-            window.location.href = '/src/pages/marketplace/marketplace/index.html';
+            window.showToast("Course Published Successfully!", "success");
+            setTimeout(() => {
+                window.location.href = '/src/pages/marketplace/marketplace/index.html';
+            }, 1500);
         }
     </script>
 </body>

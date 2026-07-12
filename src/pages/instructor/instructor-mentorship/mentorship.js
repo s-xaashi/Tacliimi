@@ -264,7 +264,7 @@ async function initMentorship() {
 
             } catch (err) {
                 console.error("Application failed:", err);
-                alert("Failed to start application. Please try again.");
+                window.showToast("Failed to start application. Please try again.", "error");
                 startApplicationBtn.disabled = false;
                 startApplicationBtn.innerHTML = '<span>Start Application</span><span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>';
             }
@@ -414,10 +414,10 @@ async function bindAvailabilityInteractions(container, userId) {
                 };
 
                 await MentorService.saveAvailability(userId, { slots, meetingTypes });
-                alert("Availability and meeting types updated successfully!");
+                window.showToast("Availability and meeting types updated successfully!", "success");
             } catch (err) {
                 console.error(err);
-                alert("Failed to save changes. Please try again.");
+                window.showToast("Failed to save changes. Please try again.", "error");
             } finally {
                 saveBtn.disabled = false;
                 saveBtn.innerHTML = originalBtnText;
@@ -519,8 +519,8 @@ async function bindPricingInteractions(container, userId) {
             const currencyInput = document.getElementById('currency-input');
             const currency = currencyInput?.value || 'USD';
 
-            if (isNaN(hourlyRate) || hourlyRate < 0) return alert("Please enter a valid hourly price.");
-            if (isNaN(monthlyRate) || monthlyRate < 0) return alert("Please enter a valid monthly price.");
+            if (isNaN(hourlyRate) || hourlyRate < 0) return window.showToast("Please enter a valid hourly price.", "error");
+            if (isNaN(monthlyRate) || monthlyRate < 0) return window.showToast("Please enter a valid monthly price.", "error");
 
             try {
                 saveBtn.disabled = true;
@@ -528,10 +528,10 @@ async function bindPricingInteractions(container, userId) {
 
                 await MentorService.updatePricing(userId, hourlyRate, monthlyRate, currency);
 
-                alert("Mentorship pricing updated successfully!");
+                window.showToast("Mentorship pricing updated successfully!", "success");
             } catch (err) {
                 console.error(err);
-                alert("Failed to save pricing changes.");
+                window.showToast("Failed to save pricing changes.", "error");
             } finally {
                 saveBtn.disabled = false;
                 saveBtn.innerHTML = originalBtnText;
@@ -590,15 +590,21 @@ async function bindPricingInteractions(container, userId) {
             // Bind delete buttons
             couponsList.querySelectorAll('.delete-coupon-btn').forEach(btn => {
                 btn.addEventListener('click', async () => {
-                    if (confirm('Are you sure you want to delete this coupon?')) {
+                    window.showConfirmModal({
+                        title: "Delete Coupon",
+                        message: "Are you sure you want to delete this coupon?",
+                        confirmText: "Delete",
+                        variant: "danger"
+                    }, async () => {
                         try {
                             await MentorService.deleteCoupon(btn.dataset.id);
                             renderCoupons();
+                            window.showToast("Coupon deleted successfully.", "success");
                         } catch (err) {
                             console.error(err);
-                            alert('Failed to delete coupon');
+                            window.showToast('Failed to delete coupon', 'error');
                         }
-                    }
+                    });
                 });
             });
 
@@ -614,14 +620,14 @@ async function bindPricingInteractions(container, userId) {
             const expiryRaw = couponExpiryInput.value.trim(); // Expected DD/MM/YYYY
             const parts = expiryRaw.split('/');
             if (parts.length !== 3 || parts[0].length !== 2 || parts[1].length !== 2 || parts[2].length !== 4) {
-                alert('Please use DD/MM/YYYY format for expiry date (e.g. 31/12/2026)');
+                window.showToast('Please use DD/MM/YYYY format for expiry date (e.g. 31/12/2026)', 'error');
                 return;
             }
             const expiry = `${parts[2]}-${parts[1]}-${parts[0]}`; // Convert to YYYY-MM-DD for storage
 
-            if (!code) return alert('Please enter a coupon code.');
-            if (isNaN(discount) || discount < 1 || discount > 100) return alert('Please enter a valid discount percentage (1-100).');
-            if (!expiry) return alert('Please select an expiry date.');
+            if (!code) return window.showToast('Please enter a coupon code.', 'error');
+            if (isNaN(discount) || discount < 1 || discount > 100) return window.showToast('Please enter a valid discount percentage (1-100).', 'error');
+            if (!expiry) return window.showToast('Please select an expiry date.', 'error');
 
             try {
                 addCouponBtn.disabled = true;
@@ -639,13 +645,13 @@ async function bindPricingInteractions(container, userId) {
                 couponExpiryInput.value = '';
 
                 renderCoupons();
-                alert('Coupon created successfully!');
+                window.showToast('Coupon created successfully!', 'success');
             } catch (err) {
                 console.error(err);
                 if (err.message?.includes('unique constraint')) {
-                    alert('This coupon code already exists.');
+                    window.showToast('This coupon code already exists.', 'error');
                 } else {
-                    alert('Failed to create coupon.');
+                    window.showToast('Failed to create coupon.', 'error');
                 }
             } finally {
                 addCouponBtn.disabled = false;
@@ -691,10 +697,10 @@ async function bindPrivacyInteractions(container, userId) {
                 saveBtn.innerHTML = '<span class="animate-spin mr-2">⌛</span> Saving...';
 
                 await MentorService.updatePrivacy(userId, isPublic);
-                alert("Visibility settings updated successfully!");
+                window.showToast("Visibility settings updated successfully!", "success");
             } catch (err) {
                 console.error(err);
-                alert("Failed to update visibility settings.");
+                window.showToast("Failed to update visibility settings.", "error");
             } finally {
                 saveBtn.disabled = false;
                 saveBtn.innerHTML = originalBtnText;
@@ -942,7 +948,7 @@ async function bindRequestsInteractions(container, userId) {
                     const sessionId = btn.dataset.id;
                     const card = listContainer.querySelector(`[data-session-id="${sessionId}"]`);
                     const link = card.querySelector('.meeting-link-input').value.trim();
-                    if (!link) return alert('Link required.');
+                    if (!link) return window.showToast('Link required.', 'error');
                     try {
                         btn.disabled = true;
                         btn.innerText = 'Sending...';
@@ -1042,7 +1048,7 @@ async function bindRequestsInteractions(container, userId) {
             const reason = reasonInput.value.trim();
             if (!reason) {
                 reasonInput.classList.add('border-red-500');
-                return alert('Please provide a reason for the rejection review.');
+                return window.showToast('Please provide a reason for the rejection review.', 'error');
             }
             reasonInput.classList.remove('border-red-500');
 
@@ -1056,7 +1062,7 @@ async function bindRequestsInteractions(container, userId) {
                 if (onComplete) onComplete();
             } catch (err) {
                 console.error(err);
-                alert('Failed to send rejection for review. Please try again.');
+                window.showToast('Failed to send rejection for review. Please try again.', 'error');
                 hide();
             }
         };
@@ -1214,19 +1220,25 @@ async function bindUpcomingInteractions(container, userId) {
 
             listContainer.querySelectorAll('.delete-session-btn').forEach(btn => {
                 btn.addEventListener('click', async () => {
-                    if (!confirm('Are you sure you want to permanently delete this cancelled session record?')) return;
-                    const sessionId = btn.dataset.id;
-                    try {
-                        btn.disabled = true;
-                        btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-[16px]">sync</span>';
-                        await MentorService.deleteSession(sessionId);
-                        renderUpcoming();
-                    } catch (err) {
-                        console.error(err);
-                        btn.disabled = false;
-                        btn.innerHTML = '<span class="material-symbols-outlined text-[18px]">delete</span> Remove';
-                        alert('Failed to delete session.');
-                    }
+                    window.showConfirmModal({
+                        title: "Delete Session",
+                        message: "Are you sure you want to permanently delete this cancelled session record?",
+                        confirmText: "Delete",
+                        variant: "danger"
+                    }, async () => {
+                        const sessionId = btn.dataset.id;
+                        try {
+                            btn.disabled = true;
+                            btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-[16px]">sync</span>';
+                            await MentorService.deleteSession(sessionId);
+                            renderUpcoming();
+                        } catch (err) {
+                            console.error(err);
+                            btn.disabled = false;
+                            btn.innerHTML = '<span class="material-symbols-outlined text-[18px]">delete</span> Remove';
+                            window.showToast('Failed to delete session.', 'error');
+                        }
+                    });
                 });
             });
 
@@ -1401,7 +1413,7 @@ function initMessagingModal() {
             const userId = session?.user?.id;
             
             if (!userId) {
-                alert("Session expired. Please log in again.");
+                window.showToast("Session expired. Please log in again.", "error");
                 return;
             }
 
@@ -1411,7 +1423,7 @@ function initMessagingModal() {
             // Refresh history
             openMessagingModal(currentMessageBookingId, document.getElementById('modal-student-name').innerText);
         } catch (err) {
-            alert('Failed to send message.');
+            window.showToast('Failed to send message.', 'error');
         } finally {
             newSendBtn.disabled = false;
         }
@@ -1431,14 +1443,18 @@ if (document.readyState === 'loading') {
 }
 
 window.deleteSession = async function(sessionId) {
-    if (!confirm("Are you sure you want to permanently remove this cancelled session?")) return;
-    
-    try {
-        await MentorService.deleteSession(sessionId);
-        // Refresh the page
-        window.location.reload();
-    } catch (err) {
-        console.error("Error deleting session:", err);
-        alert("Failed to remove session: " + err.message);
-    }
+    window.showConfirmModal({
+        title: "Remove Session",
+        message: "Are you sure you want to permanently remove this cancelled session?",
+        confirmText: "Remove",
+        variant: "danger"
+    }, async () => {
+        try {
+            await MentorService.deleteSession(sessionId);
+            window.location.reload();
+        } catch (err) {
+            console.error("Error deleting session:", err);
+            window.showToast("Failed to remove session: " + err.message, "error");
+        }
+    });
 };

@@ -104,11 +104,17 @@
                         <button class="tab-btn active" id="tab-withdrawals" onclick="switchTab('withdrawals')">
                             <span class="material-symbols-outlined text-base">account_balance_wallet</span> Withdrawals
                         </button>
+                        <button class="tab-btn" id="tab-finance-reports" onclick="switchTab('finance-reports')">
+                            <span class="material-symbols-outlined text-base">analytics</span> Finance Reports
+                        </button>
                         <button class="tab-btn" id="tab-refunds" onclick="switchTab('refunds')">
                             <span class="material-symbols-outlined text-base">reply</span> Refunds
                         </button>
                         <button class="tab-btn" id="tab-finance-tickets" onclick="switchTab('finance-tickets')">
                             <span class="material-symbols-outlined text-base">confirmation_number</span> Finance Tickets
+                        </button>
+                        <button class="tab-btn" id="tab-settings" onclick="switchTab('settings')">
+                            <span class="material-symbols-outlined text-base">settings</span> Settings
                         </button>
                     </div>
                     <button id="refresh-btn" class="my-4 w-9 h-9 flex items-center justify-center bg-slate-50 dark:bg-slate-800 rounded-xl hover:bg-indigo-50 transition-all" title="Refresh">
@@ -132,7 +138,7 @@
                                 <tr class="bg-slate-50 dark:bg-slate-800/50 text-[10px] uppercase tracking-widest text-slate-400">
                                     <th class="px-6 py-4 font-black">Instructor</th>
                                     <th class="px-6 py-4 font-black">Amount</th>
-                                    <th class="px-6 py-4 font-black">Method</th>
+                                    <th class="px-6 py-4 font-black">Method & Details</th>
                                     <th class="px-6 py-4 font-black">Status</th>
                                     <th class="px-6 py-4 font-black">Date</th>
                                     <th class="px-6 py-4 font-black text-right">Actions</th>
@@ -184,6 +190,55 @@
                         </table>
                     </div>
                 </div>
+
+                <div id="content-finance-reports" class="hidden p-8">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="reports-grid">
+                        <div class="col-span-full text-center text-slate-400 italic py-8">Loading finance reports...</div>
+                    </div>
+                </div>
+
+                <div id="content-settings" class="hidden p-8 max-w-2xl text-sm">
+                    <h3 class="text-xl font-black mb-6">Platform Monetization</h3>
+                    <form id="settings-form" class="space-y-6">
+                        <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-800">
+                            <div>
+                                <h4 class="font-bold">Enable Platform Commission</h4>
+                                <p class="text-xs text-slate-500 mt-1">If disabled, instructors keep 100% of sales. If enabled, the configured revenue split below will apply to all new purchases.</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="setting-commission-enabled" class="sr-only peer">
+                                <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                            </label>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-6 p-4 border border-slate-200 dark:border-slate-800 rounded-xl opacity-50 transition-opacity" id="split-settings-container">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Instructor Percentage (%)</label>
+                                <input type="number" id="setting-instructor-pct" min="0" max="100" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white" value="100">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Platform Percentage (%)</label>
+                                <input type="number" id="setting-platform-pct" min="0" max="100" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white" value="0">
+                            </div>
+                        </div>
+                        <p id="split-error" class="text-xs text-red-500 font-medium hidden">Percentages must sum to exactly 100%.</p>
+
+                        <div class="mt-8">
+                            <h3 class="text-xl font-black mb-6">Withdrawal Controls</h3>
+                            <div class="p-4 border border-slate-200 dark:border-slate-800 rounded-xl">
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Minimum Withdrawal Amount ($)</label>
+                                <input type="number" id="setting-min-withdrawal" min="0" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white" value="10">
+                                <p class="text-xs text-slate-500 mt-2">Instructors cannot request a withdrawal if their available balance is below this amount.</p>
+                            </div>
+                        </div>
+
+                        <div class="pt-6 border-t border-slate-200 dark:border-slate-800 flex justify-end">
+                            <button type="submit" id="save-settings-btn" class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-all shadow-md flex items-center gap-2">
+                                <span class="material-symbols-outlined text-[18px]">save</span> Save Settings
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </main>
@@ -208,6 +263,7 @@
         import { RefundService } from '/src/services/refundService.js';
         import { WithdrawalService } from '/src/services/withdrawalService.js';
         import { SupportService } from '/src/services/supportService.js';
+        import { financeSettingsService } from '/src/services/financeSettingsService.js';
 
         let currentTab = 'withdrawals';
         let currentFilter = 'all';
@@ -278,6 +334,7 @@
         function renderCurrentTab() {
             if (currentTab === 'withdrawals') renderWithdrawals();
             else if (currentTab === 'refunds') renderRefunds();
+            else if (currentTab === 'finance-reports') renderFinanceReports();
             else renderFinanceTickets();
         }
 
@@ -290,26 +347,66 @@
             const rows = filtered(allWithdrawals);
             const tbody = document.getElementById('withdrawals-body');
             if (!rows.length) { tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-10 text-center text-slate-400 italic">No withdrawals found</td></tr>`; return; }
-            tbody.innerHTML = rows.map(w => `
+            tbody.innerHTML = rows.map(w => {
+                let methodDetails = '';
+                if (w.payout_method === 'mobile_money') {
+                    const phone = w.payout_method_snapshot?.mobile_money_number || w.profiles?.mobile_money_number || 'N/A';
+                    const provider = w.payout_method_snapshot?.mobile_money_provider || w.profiles?.mobile_money_provider || 'N/A';
+                    methodDetails = `<div class="text-xs text-slate-500 mt-1 font-medium">Nmb: ${phone} <br>Prov: ${provider}</div>`;
+                } else if (w.payout_method === 'bank_transfer') {
+                    const accName = w.payout_method_snapshot?.bank_account_name || 'N/A';
+                    const accNmb = w.payout_method_snapshot?.bank_account_number || 'N/A';
+                    const bankName = w.payout_method_snapshot?.bank_name || 'N/A';
+                    methodDetails = `<div class="text-xs text-slate-500 mt-1 font-medium">Bank: ${bankName}<br>Name: ${accName} <br>Acc: ${accNmb}</div>`;
+                }
+
+                let actions = `<span class="text-slate-300 text-xs italic">No actions</span>`;
+                if (w.status === 'pending') {
+                    actions = `
+                        <button onclick="approveWithdrawal('${w.id}')" class="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-700 transition-all mr-2 mb-1">Approve</button>
+                        <button onclick="openRejectModal('withdrawal', '${w.id}')" class="px-3 py-1.5 bg-red-100 text-red-600 rounded-lg text-xs font-bold hover:bg-red-200 transition-all mb-1">Reject</button>
+                    `;
+                } else if (w.status === 'approved') {
+                    actions = `
+                        <button onclick="markProcessing('${w.id}')" class="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700 transition-all mb-1">Mark Processing</button>
+                    `;
+                } else if (w.status === 'processing') {
+                    actions = `
+                        <button onclick="markPaid('${w.id}')" class="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-700 transition-all mb-1">Mark Paid</button>
+                    `;
+                }
+
+                const avatarStr = w.profiles?.avatar_url ? `<img src="${w.profiles.avatar_url}" class="w-full h-full object-cover rounded-xl" />` : `${(w.profiles?.full_name || 'U')[0]}`;
+
+                return `
                 <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                     <td class="px-6 py-4">
                         <div class="flex items-center gap-3">
-                            <div class="w-9 h-9 rounded-xl bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 font-black text-sm">${(w.profiles?.full_name || 'U')[0]}</div>
-                            <div><p class="font-bold text-sm">${w.profiles?.full_name || 'Unknown'}</p><p class="text-xs text-slate-400">${w.profiles?.email || ''}</p></div>
+                            <div class="cursor-pointer hover:opacity-80 transition-opacity" onclick="window.open('/src/pages/instructor/instructor-profile-public/index.html?id=${w.instructor_id || ''}', '_blank')">
+                                <div class="w-9 h-9 rounded-xl bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 font-black text-sm overflow-hidden border border-indigo-200 dark:border-indigo-800">${avatarStr}</div>
+                            </div>
+                            <div>
+                                <p class="font-bold text-sm cursor-pointer hover:underline text-indigo-600" onclick="window.open('/src/pages/instructor/instructor-profile-public/index.html?id=${w.instructor_id || ''}', '_blank')">${w.profiles?.full_name || 'Unknown'}</p>
+                                <p class="text-xs text-slate-400">${w.profiles?.email || ''}</p>
+                            </div>
                         </div>
                     </td>
                     <td class="px-6 py-4 font-black text-lg">${fmtAmt(w.amount)}</td>
-                    <td class="px-6 py-4 text-sm uppercase font-semibold">${w.payout_method || 'N/A'}</td>
+                    <td class="px-6 py-4 text-sm font-semibold">
+                        <div class="uppercase">${w.payout_method ? w.payout_method.replace('_', ' ') : 'N/A'}</div>
+                        ${methodDetails}
+                    </td>
                     <td class="px-6 py-4">${statusBadge(w.status)}</td>
-                    <td class="px-6 py-4 text-slate-400 text-sm">${fmtDate(w.created_at)}</td>
+                    <td class="px-6 py-4 text-slate-400 text-sm">
+                        ${fmtDate(w.created_at)}
+                        ${w.reference_number ? `<div class="text-[10px] uppercase font-bold text-slate-500 mt-1">Ref: ${w.reference_number}</div>` : ''}
+                    </td>
                     <td class="px-6 py-4 text-right">
-                        ${w.status === 'pending' ? `
-                            <button onclick="approveWithdrawal('${w.id}')" class="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-700 transition-all mr-2">Approve</button>
-                            <button onclick="openRejectModal('withdrawal', '${w.id}')" class="px-3 py-1.5 bg-red-100 text-red-600 rounded-lg text-xs font-bold hover:bg-red-200 transition-all">Reject</button>
-                        ` : `<span class="text-slate-300 text-xs italic">No actions</span>`}
+                        ${actions}
                     </td>
                 </tr>
-            `).join('');
+                `;
+            }).join('');
         }
 
         function renderRefunds() {
@@ -364,16 +461,67 @@
             `).join('');
         }
 
+        async function renderFinanceReports() {
+            const grid = document.getElementById('reports-grid');
+            grid.innerHTML = '<div class="col-span-full text-center text-slate-400 italic py-8">Loading finance reports...</div>';
+            
+            const data = await financeSettingsService.getAdminAnalytics();
+            if (!data || data.error) {
+                grid.innerHTML = '<div class="col-span-full text-center text-red-400 py-8">Failed to load finance reports. Make sure the get_finance_analytics RPC is deployed.</div>';
+                return;
+            }
+
+            const cards = [
+                { label: 'Total Platform Revenue', value: fmtAmt(data.total_revenue), icon: 'trending_up', color: 'indigo' },
+                { label: 'Total Instructor Revenue', value: fmtAmt(data.instructor_payouts), icon: 'group', color: 'emerald' },
+                { label: 'Commission Collected', value: fmtAmt(data.platform_fees), icon: 'account_balance', color: 'purple' },
+                { label: 'Revenue This Month', value: fmtAmt(data.monthly_revenue), icon: 'calendar_month', color: 'blue' },
+                { label: 'Total Withdrawals (Paid)', value: fmtAmt(data.withdrawals_paid), icon: 'payments', color: 'emerald' },
+                { label: 'Pending Withdrawals', value: fmtAmt(data.withdrawals_pending), icon: 'hourglass_top', color: 'amber' },
+                { label: 'Refunded Amount', value: fmtAmt(data.refunds), icon: 'reply', color: 'red' },
+                { label: 'Revenue by Courses', value: fmtAmt(data.course_revenue), icon: 'school', color: 'sky' },
+                { label: 'Revenue by Mentorship', value: fmtAmt(data.mentorship_revenue), icon: 'people', color: 'violet' },
+            ];
+
+            const colorMap = {
+                indigo: { bg: 'bg-indigo-50 dark:bg-indigo-900/20', text: 'text-indigo-600 dark:text-indigo-400', icon: 'text-indigo-500' },
+                emerald: { bg: 'bg-emerald-50 dark:bg-emerald-900/20', text: 'text-emerald-600 dark:text-emerald-400', icon: 'text-emerald-500' },
+                purple: { bg: 'bg-purple-50 dark:bg-purple-900/20', text: 'text-purple-600 dark:text-purple-400', icon: 'text-purple-500' },
+                blue: { bg: 'bg-blue-50 dark:bg-blue-900/20', text: 'text-blue-600 dark:text-blue-400', icon: 'text-blue-500' },
+                amber: { bg: 'bg-amber-50 dark:bg-amber-900/20', text: 'text-amber-600 dark:text-amber-400', icon: 'text-amber-500' },
+                red: { bg: 'bg-red-50 dark:bg-red-900/20', text: 'text-red-600 dark:text-red-400', icon: 'text-red-500' },
+                sky: { bg: 'bg-sky-50 dark:bg-sky-900/20', text: 'text-sky-600 dark:text-sky-400', icon: 'text-sky-500' },
+                violet: { bg: 'bg-violet-50 dark:bg-violet-900/20', text: 'text-violet-600 dark:text-violet-400', icon: 'text-violet-500' },
+            };
+
+            grid.innerHTML = cards.map(c => {
+                const cm = colorMap[c.color];
+                return `
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-shadow">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-10 h-10 ${cm.bg} rounded-xl flex items-center justify-center">
+                            <span class="material-symbols-outlined ${cm.icon}">${c.icon}</span>
+                        </div>
+                    </div>
+                    <h4 class="text-2xl font-black ${cm.text}">${c.value}</h4>
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-2">${c.label}</p>
+                </div>`;
+            }).join('');
+        }
+
         // Tab switching
         window.switchTab = function(tab) {
             currentTab = tab;
             currentFilter = 'all';
-            ['withdrawals','refunds','finance-tickets'].forEach(t => {
+            ['withdrawals','refunds','finance-tickets', 'finance-reports', 'settings'].forEach(t => {
                 document.getElementById('content-' + t).classList.add('hidden');
                 document.getElementById('tab-' + t).classList.remove('active');
             });
             document.getElementById('content-' + tab).classList.remove('hidden');
             document.getElementById('tab-' + tab).classList.add('active');
+            
+            // Hide filter UI for settings and finance-reports tabs
+            document.getElementById('status-filter').classList.toggle('hidden', tab === 'settings' || tab === 'finance-reports');
             // Reset filter UI
             document.querySelectorAll('.filter-btn').forEach(b => {
                 b.classList.toggle('bg-indigo-600', b.dataset.status === 'all');
@@ -400,12 +548,28 @@
 
         // Actions
         window.approveWithdrawal = async function(id) {
-            if (!confirm('Approve this withdrawal?')) return;
+            if (!confirm('Approve this withdrawal? It will transition from pending to approved.')) return;
             try {
                 await WithdrawalService.approveWithdrawal(id, adminSession?.user?.id);
                 await loadAll();
             } catch (e) { alert('Error: ' + e.message); }
         };
+
+        window.markProcessing = async function(id) {
+            if (!confirm('Mark as processing? This indicates you are currently initiating the payment.')) return;
+            try {
+                await WithdrawalService.updateWithdrawalStatus(id, adminSession?.user?.id, 'processing');
+                await loadAll();
+            } catch (e) { alert('Error: ' + e.message); }
+        }
+
+        window.markPaid = async function(id) {
+            if (!confirm('Mark as Paid? This indicates the funds have left the platform.')) return;
+            try {
+                await WithdrawalService.updateWithdrawalStatus(id, adminSession?.user?.id, 'paid');
+                await loadAll();
+            } catch (e) { alert('Error: ' + e.message); }
+        }
 
         window.approveRefund = async function(id) {
             if (!confirm('Approve this refund?')) return;
@@ -450,7 +614,132 @@
 
         document.getElementById('refresh-btn').addEventListener('click', loadAll);
 
+        // Settings Logic
+        const commissionToggle = document.getElementById('setting-commission-enabled');
+        const splitContainer = document.getElementById('split-settings-container');
+        const instPctInput = document.getElementById('setting-instructor-pct');
+        const platPctInput = document.getElementById('setting-platform-pct');
+
+        commissionToggle.addEventListener('change', (e) => {
+            splitContainer.classList.toggle('opacity-50', !e.target.checked);
+            instPctInput.disabled = !e.target.checked;
+            platPctInput.disabled = !e.target.checked;
+        });
+
+        instPctInput.addEventListener('input', (e) => {
+            let val = parseInt(e.target.value) || 0;
+            if (val > 100) val = 100;
+            platPctInput.value = 100 - val;
+        });
+        platPctInput.addEventListener('input', (e) => {
+            let val = parseInt(e.target.value) || 0;
+            if (val > 100) val = 100;
+            instPctInput.value = 100 - val;
+        });
+
+        async function loadSettings() {
+            const settings = await financeSettingsService.getSettings();
+            commissionToggle.checked = settings.commission_enabled;
+            instPctInput.value = settings.instructor_percentage;
+            platPctInput.value = settings.platform_percentage;
+            document.getElementById('setting-min-withdrawal').value = settings.min_withdrawal_amount;
+            
+            splitContainer.classList.toggle('opacity-50', !settings.commission_enabled);
+            instPctInput.disabled = !settings.commission_enabled;
+            platPctInput.disabled = !settings.commission_enabled;
+        }
+
+        document.getElementById('settings-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('save-settings-btn');
+            const errorLabel = document.getElementById('split-error');
+            
+            const instPct = parseInt(instPctInput.value);
+            const platPct = parseInt(platPctInput.value);
+
+            if (instPct + platPct !== 100) {
+                errorLabel.classList.remove('hidden');
+                return;
+            }
+            errorLabel.classList.add('hidden');
+
+            const prevText = btn.innerHTML;
+            btn.innerHTML = 'Saving...';
+            btn.disabled = true;
+
+            const res = await financeSettingsService.updateSettings({
+                commission_enabled: commissionToggle.checked,
+                instructor_percentage: instPct,
+                platform_percentage: platPct,
+                min_withdrawal_amount: parseFloat(document.getElementById('setting-min-withdrawal').value) || 10
+            });
+
+            btn.disabled = false;
+            
+            if (res.success) {
+                const icon = '<span class="material-symbols-outlined text-[18px]">check</span>';
+                btn.innerHTML = icon + ' Saved Successfully!';
+                btn.classList.replace('bg-indigo-600', 'bg-emerald-600');
+                setTimeout(() => {
+                    btn.innerHTML = prevText;
+                    btn.classList.replace('bg-emerald-600', 'bg-indigo-600');
+                }, 2000);
+            } else {
+                alert('Error saving settings: ' + res.error);
+                btn.innerHTML = prevText;
+            }
+        });
+
+        async function loadAnalytics() {
+            try {
+                const { supabase } = await import('/src/services/supabaseClient.js');
+                const { data, error } = await supabase.rpc('get_finance_analytics');
+                if (error) throw error;
+                const stats = document.getElementById('finance-stats');
+                stats.innerHTML = `
+                    <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden">
+                        <div class="absolute -right-4 -top-4 w-24 h-24 bg-emerald-50 dark:bg-emerald-900/20 rounded-full transition-transform hover:scale-110"></div>
+                        <p class="text-xs font-bold text-slate-500 uppercase tracking-widest relative z-10">Total Revenue</p>
+                        <h3 class="text-3xl font-black text-slate-900 dark:text-white mt-2 relative z-10">${fmtAmt(data.total_revenue)}</h3>
+                        <p class="text-[10px] uppercase font-bold text-emerald-600 mt-2 relative z-10">${fmtAmt(data.monthly_revenue)} this month</p>
+                    </div>
+                    <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden">
+                        <div class="absolute -right-4 -top-4 w-24 h-24 bg-indigo-50 dark:bg-indigo-900/20 rounded-full transition-transform hover:scale-110"></div>
+                        <p class="text-xs font-bold text-slate-500 uppercase tracking-widest relative z-10">Net Platform Income</p>
+                        <h3 class="text-3xl font-black text-slate-900 dark:text-white mt-2 relative z-10">${fmtAmt(data.platform_fees)}</h3>
+                        <p class="text-[10px] uppercase font-bold text-indigo-600 mt-2 relative z-10">Platform share only</p>
+                    </div>
+                    <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden">
+                        <div class="absolute -right-4 -top-4 w-24 h-24 bg-blue-50 dark:bg-blue-900/20 rounded-full transition-transform hover:scale-110"></div>
+                        <p class="text-xs font-bold text-slate-500 uppercase tracking-widest relative z-10">Instructor Earnings</p>
+                        <h3 class="text-3xl font-black text-slate-900 dark:text-white mt-2 relative z-10">${fmtAmt(data.instructor_payouts)}</h3>
+                        <p class="text-[10px] uppercase font-bold text-slate-400 mt-2 relative z-10">Reserved for instructors</p>
+                    </div>
+                    <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden flex flex-col justify-between">
+                        <div class="absolute -right-4 -top-4 w-24 h-24 bg-rose-50 dark:bg-rose-900/20 rounded-full transition-transform hover:scale-110"></div>
+                        <div>
+                            <p class="text-xs font-bold text-slate-500 uppercase tracking-widest relative z-10">Withdrawals pending</p>
+                            <h3 class="text-xl font-black text-slate-900 dark:text-white mt-1 relative z-10">${fmtAmt(data.withdrawals_pending)}</h3>
+                        </div>
+                        <div class="mt-2 border-t border-slate-100 dark:border-slate-800 pt-2 pb-1 relative z-10 flex items-center justify-between">
+                            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Refunds</span>
+                            <span class="text-xs font-bold text-rose-600">${fmtAmt(data.refunds)}</span>
+                        </div>
+                    </div>
+                `;
+            } catch (e) {
+                console.error('Failed to load analytics', e);
+            }
+        }
+
+        document.getElementById('refresh-btn').addEventListener('click', () => {
+            loadAll();
+            loadAnalytics();
+        });
+
         loadAll();
+        loadAnalytics();
+        loadSettings();
     </script>
 </body>
 </html>

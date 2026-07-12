@@ -1330,7 +1330,12 @@
             if (discardBtnEl) {
                 discardBtnEl.addEventListener('click', async (e) => {
                     e.preventDefault();
-                    if (confirm('Are you sure you want to clear this tab data from the database?')) {
+                    window.showConfirmModal({
+                        title: "Discard Changes",
+                        message: "Are you sure you want to clear this tab data from the database?",
+                        confirmText: "Discard",
+                        variant: "danger"
+                    }, async () => {
                         const activeTab = document.querySelector('.profile-panel.block')?.id;
                         if (!activeTab || !window.currentSession) return;
 
@@ -1372,7 +1377,7 @@
                             discardBtnEl.disabled = false;
                             discardBtnEl.innerHTML = `Discard changes`;
                         }
-                    }
+                    });
                 });
             }
 

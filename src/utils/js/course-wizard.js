@@ -3,6 +3,7 @@
  */
 import { CourseService } from '/src/services/courseService.js';
 import { AuthService } from '/src/services/authService.js';
+import { financeSettingsService } from '/src/services/financeSettingsService.js';
 
 // Global state
 window.courseDraft = {
@@ -77,12 +78,18 @@ function hideSavingIndicator() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // 1. Load Categories
+    // 1. Load Categories and Finance Settings
     try {
-        window.categoriesList = await CourseService.getCategories();
+        const [categories, settings] = await Promise.all([
+            CourseService.getCategories(),
+            financeSettingsService.getSettings()
+        ]);
+        window.categoriesList = categories;
+        window.financeSettings = settings;
         renderCategories();
     } catch (e) {
-        console.error("Failed to load categories", e);
+        console.error("Failed to load initial data", e);
+        window.financeSettings = { is_monetization_enabled: false, instructor_percentage: 100 }; // Fallback
     }
 
     // 2. Check URL for existing course ID
@@ -317,29 +324,22 @@ async function performSave(silent = false) {
 
 
         console.log('Starting granular curriculum sync...');
-        const existingSectionIds = window.courseDraft.curriculum.map(s => s.id).filter(Boolean);
 
-        for (const [sIdx, section] of window.courseDraft.curriculum.entries()) {
+        await Promise.all(window.courseDraft.curriculum.map(async (section, sIdx) => {
             const savedSection = await CourseService.saveSection(savedCourse.id, {
                 ...section,
                 order_index: sIdx
             });
             section.id = savedSection.id;
 
-            const existingLessonIds = section.items.map(l => l.id).filter(Boolean);
-
-            for (const [lIdx, lesson] of section.items.entries()) {
+            await Promise.all(section.items.map(async (lesson, lIdx) => {
                 const savedLesson = await CourseService.saveLesson(savedSection.id, {
                     ...lesson,
                     order_index: lIdx
                 });
                 lesson.id = savedLesson.id;
-            }
-
-            // Delete removed lessons only if they exist in DB
-            // (Note: Currently deleteLesson would need to be called here if we tracked what was removed)
-            // For now, let's at least ensure we're not doing a full rebuild.
-        }
+            }));
+        }));
 
         // --- STEP 3: Save Coupons (optional array) ---
         if (window.courseDraft.id) {
@@ -630,10 +630,10 @@ function populateFields() {
 
 async function setupEventListeners() {
     // Nav Buttons
-    document.getElementById('btn-next')?.addEventListener('click', async () => {
-        // On the pricing step, always do a full DB save to persist price + coupons
+    document.getElementById('btn-next')?.addEventListener('click', () => {
+        // Trigger a background save
         const saveToDb = (window.currentStep === 3);
-        await saveCurrentStepData(saveToDb);
+        saveCurrentStepData(saveToDb);
         if (validateStep(window.currentStep)) goToStep(window.currentStep + 1);
     });
 
@@ -883,7 +883,12 @@ function renderCurriculum() {
                                                     </button>
                                                 ` : ''}
 
-                                                ${(item.resources || []).map(r => `<span class="flex items-center gap-1 text-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded"><span class="material-symbols-outlined text-[12px]">attachment</span> ${r.title}</span>`).join('')}
+                                                ${(item.resources && item.resources.length > 0) ? `
+                                                    <button onclick="wizardOpenModal('modal-add-resource', ${sIdx}, ${iIdx})" class="flex items-center gap-1 text-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition">
+                                                        <span class="material-symbols-outlined text-[12px]">attachment</span> 
+                                                        ${item.resources.length} Resource${item.resources.length !== 1 ? 's' : ''}
+                                                    </button>
+                                                ` : ''}
                                             </div>
                                         </div>
                                         
@@ -1156,12 +1161,10 @@ function toggleResourceForm(show) {
 }
 
 function deleteResource(sIdx, iIdx, rIdx) {
-    if (confirm('Remove this resource?')) {
-        window.courseDraft.curriculum[sIdx].items[iIdx].resources.splice(rIdx, 1);
-        renderResourceList(sIdx, iIdx);
-        renderCurriculum();
-        window.saveDraft(true);
-    }
+    window.courseDraft.curriculum[sIdx].items[iIdx].resources.splice(rIdx, 1);
+    renderResourceList(sIdx, iIdx);
+    renderCurriculum();
+    window.saveDraft(true);
 }
 
 function closeModal(modalId) {
@@ -1200,9 +1203,33 @@ async function wizardSaveModalVideo() {
 }
 
 async function saveModalResource() {
+    // Clear any lingering validation errors first
+    const clearError = (id) => {
+        const el = document.getElementById(id);
+        if (el) { el.classList.remove('border-red-500', 'ring-1', 'ring-red-400'); }
+    };
+    const showError = (id, msg) => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.classList.add('border-red-500', 'ring-1', 'ring-red-400');
+            el.focus?.();
+        }
+        // Show an inline error message below the field
+        const errId = `${id}-error`;
+        let errEl = document.getElementById(errId);
+        if (!errEl) {
+            errEl = document.createElement('p');
+            errEl.id = errId;
+            errEl.className = 'text-xs text-red-500 font-medium mt-1';
+            el?.parentElement?.appendChild(errEl);
+        }
+        errEl.textContent = msg;
+        setTimeout(() => { errEl.remove(); clearError(id); }, 3500);
+    };
+
     let title = document.getElementById('modal-resource-title-input')?.value || `New Resource`;
     const fileEl = document.getElementById('modal-resource-upload');
-    const externalUrl = document.getElementById('external-link')?.value;
+    const externalUrl = document.getElementById('external-link')?.value?.trim();
 
     let uploadedUrl = null;
     if (fileEl && fileEl.files && fileEl.files[0]) {
@@ -1210,13 +1237,19 @@ async function saveModalResource() {
             uploadedUrl = await CourseService.uploadLessonResource(window.courseDraft.id, fileEl.files[0]);
         } catch (e) { 
             console.error("Resource upload failed:", e);
-            alert('Resource upload failed: ' + e.message); 
+            showError('modal-resource-upload', 'Upload failed: ' + e.message);
             return; 
         }
     } else if (externalUrl) {
         uploadedUrl = externalUrl;
     } else {
-        alert('Please select a file to upload or provide an external link.');
+        // Highlight both the upload area and the external link input in red
+        const uploadArea = document.getElementById('video-upload-area-modal') || document.getElementById('modal-resource-upload')?.closest('.border-dashed');
+        if (uploadArea) {
+            uploadArea.classList.add('border-red-500');
+            setTimeout(() => uploadArea.classList.remove('border-red-500'), 3500);
+        }
+        showError('external-link', 'Please upload a file or paste an external link.');
         return;
     }
 
@@ -1547,31 +1580,32 @@ async function renderFinalPreview() {
             curriculum.forEach((sec, sIdx) => {
                 let lessonsHtml = '';
                 (sec.items || []).forEach((les, lIdx) => {
-                    let badge = '';
                     let icon = 'description';
-                    
                     const quizCount = (les.quiz && les.quiz.length > 0) ? les.quiz.length : 0;
                     const resourceCount = les.resources ? les.resources.length : 0;
-
-                    if (les.content_type === 'video' || les.video) {
-                        badge = `<span class="bg-blue-50 dark:bg-blue-900/30 text-blue-600 px-2 py-0.5 rounded text-[10px] font-bold">VIDEO</span>`;
-                        icon = 'play_circle';
-                    } else if (les.content_type === 'quiz' || quizCount > 0) {
-                        badge = `<span class="bg-amber-50 dark:bg-amber-900/30 text-amber-600 px-2 py-0.5 rounded text-[10px] font-bold">${quizCount} QUIZ${quizCount !== 1 ? 'ZES' : ''}</span>`;
-                        icon = 'quiz';
-                    }
                     
-                    const resBadge = resourceCount > 0 ? `<span class="bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 px-2 py-0.5 rounded text-[10px] font-bold">${resourceCount} RES</span>` : '';
+                    if (les.video) icon = 'play_circle';
+                    else if (quizCount > 0) icon = 'quiz';
+                    
+                    let badgesHtml = '';
+                    if (les.video || les.content_type === 'video') {
+                        badgesHtml += `<span class="bg-blue-50 dark:bg-blue-900/30 text-blue-600 px-2 py-0.5 rounded text-[10px] font-bold shrink-0">VIDEO</span>`;
+                    }
+                    if (quizCount > 0) {
+                        badgesHtml += `<span class="bg-amber-50 dark:bg-amber-900/30 text-amber-600 px-2 py-0.5 rounded text-[10px] font-bold shrink-0">${quizCount} QUIZ${quizCount !== 1 ? 'ZES' : ''}</span>`;
+                    }
+                    if (resourceCount > 0) {
+                        badgesHtml += `<span class="bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 px-2 py-0.5 rounded text-[10px] font-bold shrink-0">${resourceCount} RES</span>`;
+                    }
 
                     lessonsHtml += `
-                    <div class="flex items-center justify-between py-2 border-b border-slate-50 dark:border-slate-800 last:border-0 pl-4 overflow-x-auto flex-nowrap lesson-summary-row">
-                        <div class="flex items-center gap-3 shrink-0 mr-4">
+                    <div class="flex items-center justify-between py-2 border-b border-slate-50 dark:border-slate-800 last:border-0 pl-4 w-max min-w-full gap-8">
+                        <div class="flex items-center gap-3 shrink-0">
                             <span class="material-symbols-outlined text-slate-400 text-lg">${icon}</span>
                             <span class="text-sm text-slate-600 dark:text-slate-400 whitespace-nowrap">${les.title}</span>
                         </div>
-                        <div class="flex items-center gap-1">
-                            ${badge}
-                            ${resBadge}
+                        <div class="flex items-center gap-1 shrink-0 pr-2">
+                            ${badgesHtml}
                         </div>
                     </div>`;
                 });
@@ -1582,7 +1616,7 @@ async function renderFinalPreview() {
                         <span class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">Section ${sIdx + 1}: ${sec.title}</span>
                         <span class="text-xs text-slate-400 font-medium">${sec.items ? sec.items.length : 0} Lessons</span>
                     </div>
-                    <div class="p-2 space-y-1">
+                    <div class="p-2 space-y-1 overflow-x-auto overflow-y-hidden custom-scrollbar">
                         ${lessonsHtml || '<p class="text-xs text-slate-400 italic pl-4 py-2">No lessons in this section.</p>'}
                     </div>
                 </div>`;
@@ -1623,7 +1657,11 @@ function wizardCalculatePayout() {
     
     const isFree = window.courseDraft.pricing.type === 'free';
     const priceStr = isFree ? 'FREE' : `$${price.toFixed(2)}`;
-    const earnings = (price * 0.70).toFixed(2);
+    
+    // Dynamic Commission Logic
+    const settings = window.financeSettings || { is_monetization_enabled: false, instructor_percentage: 100 };
+    const instructorShare = settings.is_monetization_enabled ? settings.instructor_percentage : 100;
+    const earnings = (price * (instructorShare / 100)).toFixed(2);
 
     // 1. Update Final Price Preview (Step 4 Card)
     if (priceDisplay) priceDisplay.innerText = priceStr;
@@ -1634,7 +1672,7 @@ function wizardCalculatePayout() {
             payoutEl.innerHTML = `This course is currently <span class="font-bold text-accent">Free</span>. Switch to Paid to enable earnings estimation.`;
         } else {
             payoutEl.innerHTML = `
-                You receive <span class="font-bold text-accent">70%</span> of each sale. 
+                You receive <span class="font-bold text-accent">${instructorShare}%</span> of each sale. 
                 For a price of $${price.toFixed(2)}, your estimated earnings per sale will be 
                 <span class="font-bold text-slate-900 dark:text-white">$${earnings}</span>.
             `;
@@ -1645,12 +1683,21 @@ function wizardCalculatePayout() {
 // Consolidated version above
 
 async function publishCourse() {
+    const btnPublish = document.getElementById('btn-publish');
+    if (btnPublish) { btnPublish.disabled = true; btnPublish.textContent = 'Submitting...'; }
+
     try {
-        await window.saveDraft(true); // Always save before publish
+        // 1. Flush all draft data to DB first
+        await window.saveDraft(true);
         if (!window.courseDraft.id) throw new Error("Could not save the course draft. Please check your data.");
 
-        await CourseService.publishCourse(window.courseDraft.id);
+        // 2. Set status to pending_review so admin sees it
+        await CourseService.submitForReview(window.courseDraft.id);
 
+        // 3. Update local draft status
+        window.courseDraft.status = 'pending_review';
+
+        // 4. Show the Step 5 confirmation screen
         document.querySelectorAll('.wizard-step').forEach(el => {
             el.classList.add('hidden'); el.classList.remove('block');
         });
@@ -1658,7 +1705,8 @@ async function publishCourse() {
         document.getElementById('step-5-container')?.classList.add('flex');
         document.getElementById('bottom-nav')?.classList.add('hidden');
     } catch (e) {
-        alert("Failed to publish: " + e.message);
+        alert("Failed to submit for review: " + e.message);
+        if (btnPublish) { btnPublish.disabled = false; btnPublish.textContent = window.courseDraft.has_rejection_history ? 'Republish Course' : 'Publish Course'; }
     }
 }
 
@@ -1865,7 +1913,7 @@ async function saveDraftManual() {
     }
 
     try {
-        await saveCurrentStepData();
+        await saveCurrentStepData(true);
         showToast("Draft safely saved in Supabase.");
     } catch (e) {
         console.error("Manual save failed:", e);
@@ -1878,14 +1926,10 @@ async function saveDraftManual() {
     }
 }
 
-async function exitWizard() {
-    if (confirm('Are you sure you want to exit?\n\nYour current progress has been auto-saved as a draft. You can continue from where you left off!')) {
-        // Save current step data before exit so draft is complete
-        await saveCurrentStepData();
-        // Persist the current step so resume works
-        persistStep(window.courseDraft.id, window.currentStep);
-        window.location.href = '/src/pages/instructor/instructor-courses/index.html';
-    }
+function exitWizard() {
+    // Exit immediately without saving - any unsaved changes are discarded.
+    // Use "Save Draft" first if you want to keep your changes.
+    window.location.href = '/src/pages/instructor/instructor-courses/index.html';
 }
 
 function setupInputStability() {

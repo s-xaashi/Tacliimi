@@ -176,20 +176,50 @@
                         <p class="text-slate-400 text-xs leading-relaxed">Updated from current period</p>
                     </div>
                 </div>
-                <div
-                    class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-                    <div
-                        class="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                        <h3 class="font-semibold text-slate-900 dark:text-white">Recent Transactions</h3>
-                    </div>
-                    <div class="min-h-[400px] flex flex-col items-center justify-center text-center p-8">
-                        <div
-                            class="w-20 h-20 bg-slate-50 dark:bg-slate-800/50 rounded-full flex items-center justify-center mb-6">
-                            <span
-                                class="material-symbols-outlined text-slate-300 dark:text-slate-600 text-4xl">receipt_long</span>
+                <div class="flex flex-col lg:flex-row gap-6">
+                    <!-- Sidebar Tabs -->
+                    <div class="w-full lg:w-64 shrink-0">
+                        <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-2 space-y-1">
+                            <button id="tab-btn-transactions" onclick="switchEarningsTab('transactions')" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left text-sm font-medium bg-primary text-white transition-colors shadow-md">
+                                <span class="material-symbols-outlined text-[20px]">receipt_long</span>
+                                Recent Transactions
+                            </button>
+                            <button id="tab-btn-withdrawals" onclick="switchEarningsTab('withdrawals')" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                                <span class="material-symbols-outlined text-[20px]">payments</span>
+                                Withdrawal History
+                            </button>
                         </div>
-                        <h4 class="text-lg font-medium dark:text-white mb-2">No transactions found</h4>
-                        <p class="text-slate-500 max-w-xs">Start selling courses to see your earnings history here.</p>
+                    </div>
+
+                    <!-- Main Content Area -->
+                    <div class="flex-1">
+                        <!-- Transactions Panel -->
+                        <div id="panel-transactions" class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden block">
+                            <div class="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                                <h3 class="font-semibold text-slate-900 dark:text-white">Recent Transactions</h3>
+                            </div>
+                            <div id="transactions-container" class="min-h-[400px] flex flex-col items-center justify-center text-center p-8">
+                                <div class="w-20 h-20 bg-slate-50 dark:bg-slate-800/50 rounded-full flex items-center justify-center mb-6">
+                                    <span class="material-symbols-outlined text-slate-300 dark:text-slate-600 text-4xl">receipt_long</span>
+                                </div>
+                                <h4 class="text-lg font-medium dark:text-white mb-2">No transactions found</h4>
+                                <p class="text-slate-500 max-w-xs">Start selling courses to see your earnings history here.</p>
+                            </div>
+                        </div>
+
+                        <!-- Withdrawals Panel -->
+                        <div id="panel-withdrawals" class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden hidden">
+                            <div class="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                                <h3 class="font-semibold text-slate-900 dark:text-white">Withdrawal History</h3>
+                            </div>
+                            <div id="withdrawals-container" class="min-h-[400px] flex flex-col items-center justify-center text-center p-8">
+                                <div class="w-20 h-20 bg-slate-50 dark:bg-slate-800/50 rounded-full flex items-center justify-center mb-6">
+                                    <span class="material-symbols-outlined text-slate-300 dark:text-slate-600 text-4xl">payments</span>
+                                </div>
+                                <h4 class="text-lg font-medium dark:text-white mb-2">No withdrawals found</h4>
+                                <p class="text-slate-500 max-w-xs">Your withdrawal history will appear here once you make requests.</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <footer class="mt-16 py-8 border-t border-slate-200 dark:border-slate-800 text-center">
@@ -208,15 +238,125 @@
         </main>
     </div>
 
+    <!-- Request Withdrawal Modal -->
+    <div id="withdrawal-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm hidden">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md shadow-xl border border-slate-200 dark:border-slate-800 p-6">
+            <h3 class="text-xl font-bold dark:text-white mb-4">Request Withdrawal</h3>
+            <div class="space-y-4">
+                <div class="bg-slate-50 dark:bg-slate-800 p-4 rounded-xl">
+                    <p class="text-sm text-slate-500 mb-1">Available Balance</p>
+                    <p class="text-2xl font-black text-slate-900 dark:text-white" id="modal-available-balance">$0.00</p>
+                </div>
+                <div id="modal-payout-method-info" class="text-sm text-slate-600 dark:text-slate-400 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 p-3 rounded-xl">Loading payout method...</div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Withdrawal Amount ($)</label>
+                    <input type="number" id="withdrawal-amount-input" class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 dark:bg-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none" placeholder="Enter amount">
+                    <p class="text-[10px] text-red-500 mt-1 hidden" id="withdrawal-error"></p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3 mt-8">
+                <button onclick="closeWithdrawalModal()" class="flex-1 py-3 text-slate-600 dark:text-slate-300 font-bold hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-colors">Cancel</button>
+                <button id="confirm-withdrawal-btn" class="flex-1 py-3 bg-primary hover:bg-primary/90 text-white font-bold rounded-xl transition-colors">Submit Request</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transaction Detail Modal -->
+    <div id="transaction-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm hidden">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md shadow-xl border border-slate-200 dark:border-slate-800 p-6">
+            <h3 class="text-xl font-bold dark:text-white mb-4 border-b border-slate-100 dark:border-slate-800 pb-2">Transaction Details</h3>
+            <div class="space-y-3" id="transaction-details-content">
+                <!-- Content injected here -->
+            </div>
+            <div class="mt-6">
+                <button onclick="closeTransactionModal()" class="w-full py-3 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-bold hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors">Close</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Router Logic -->
     <script type="module" src="/src/utils/js/instructor-app.js"></script>
-    <script src="/src/pages/instructor/instructor-mentorship/mentorship.js"></script>
 
 
     <!-- Earnings Logic -->
     <script type="module">
         import { AuthService } from '/src/services/authService.js';
+        import { instructorEarningsService } from '/src/services/instructorEarningsService.js';
         import { PayoutService } from '/src/services/payoutService.js';
+
+        window.closeWithdrawalModal = () => document.getElementById('withdrawal-modal').classList.add('hidden');
+        window.closeTransactionModal = () => document.getElementById('transaction-modal').classList.add('hidden');
+
+        let g_availableBalance = 0;
+        let g_payoutMethod = null;
+        let g_userId = null;
+
+        window.openTransactionDetail = function(rawItemStr) {
+            const item = JSON.parse(decodeURIComponent(rawItemStr));
+            const content = document.getElementById('transaction-details-content');
+            
+            if (item.is_withdrawal) {
+                content.innerHTML = `
+                    <div class="flex justify-between items-center py-2 border-b border-slate-50 dark:border-slate-800/50">
+                        <span class="text-slate-500 text-sm">Type</span>
+                        <span class="font-medium text-slate-900 dark:text-white">Withdrawal</span>
+                    </div>
+                    <div class="flex justify-between items-center py-2 border-b border-slate-50 dark:border-slate-800/50">
+                        <span class="text-slate-500 text-sm">Reference Number</span>
+                        <span class="font-medium text-slate-900 dark:text-white uppercase">${item.reference_number || 'N/A'}</span>
+                    </div>
+                    <div class="flex justify-between items-center py-2 border-b border-slate-50 dark:border-slate-800/50">
+                        <span class="text-slate-500 text-sm">Amount</span>
+                        <span class="font-medium text-red-500">-$${parseFloat(item.amount).toFixed(2)}</span>
+                    </div>
+                    <div class="flex justify-between items-center py-2 border-b border-slate-50 dark:border-slate-800/50">
+                        <span class="text-slate-500 text-sm">Status</span>
+                        <span class="font-medium text-slate-900 dark:text-white capitalize">${item.status}</span>
+                    </div>
+                    <div class="flex justify-between items-center py-2 border-b border-slate-50 dark:border-slate-800/50">
+                        <span class="text-slate-500 text-sm">Payout Method</span>
+                        <span class="font-medium text-slate-900 dark:text-white uppercase">${item.payout_method || 'N/A'}</span>
+                    </div>
+                    <div class="flex justify-between items-center py-2 border-b border-slate-50 dark:border-slate-800/50">
+                        <span class="text-slate-500 text-sm">Date</span>
+                        <span class="font-medium text-slate-900 dark:text-white">${new Date(item.created_at).toLocaleString()}</span>
+                    </div>
+                    ${item.notes_to_instructor ? `<div class="mt-2 text-sm text-slate-500 bg-slate-50 dark:bg-slate-800 p-3 rounded-lg"><strong>Admin Note:</strong> ${item.notes_to_instructor}</div>` : ''}
+                `;
+            } else {
+                const desc = item.earning_type === 'mentorship' ? 'Mentorship Session' : 'Course Sale';
+                const itemName = item.earning_type === 'mentorship' ? 'Booking' : (item.courses?.title || 'Unknown');
+                content.innerHTML = `
+                    <div class="flex justify-between items-center py-2 border-b border-slate-50 dark:border-slate-800/50">
+                        <span class="text-slate-500 text-sm">Type</span>
+                        <span class="font-medium text-slate-900 dark:text-white">${desc}</span>
+                    </div>
+                    <div class="flex justify-between items-center py-2 border-b border-slate-50 dark:border-slate-800/50">
+                        <span class="text-slate-500 text-sm">Item</span>
+                        <span class="font-medium text-slate-900 dark:text-white break-words text-right max-w-[200px]">${itemName}</span>
+                    </div>
+                    <div class="flex justify-between items-center py-2 border-b border-slate-50 dark:border-slate-800/50">
+                        <span class="text-slate-500 text-sm">Gross Amount</span>
+                        <span class="font-medium text-slate-900 dark:text-white">$${parseFloat(item.gross_amount).toFixed(2)}</span>
+                    </div>
+                    <div class="flex justify-between items-center py-2 border-b border-slate-50 dark:border-slate-800/50">
+                        <span class="text-slate-500 text-sm">Platform Fee (${item.platform_percentage_snapshot}%)</span>
+                        <span class="font-medium text-rose-500">-$${parseFloat(item.platform_fee).toFixed(2)}</span>
+                    </div>
+                    <div class="flex justify-between items-center py-2 border-b border-slate-50 dark:border-slate-800/50">
+                        <span class="text-slate-500 text-sm">Your Share (${item.instructor_percentage_snapshot}%)</span>
+                        <span class="font-medium text-emerald-500">+$${parseFloat(item.instructor_share).toFixed(2)}</span>
+                    </div>
+                    <div class="flex justify-between items-center py-2 border-b border-slate-50 dark:border-slate-800/50">
+                        <span class="text-slate-500 text-sm">Date</span>
+                        <span class="font-medium text-slate-900 dark:text-white">${new Date(item.created_at).toLocaleString()}</span>
+                    </div>
+                `;
+            }
+
+            document.getElementById('transaction-modal').classList.remove('hidden');
+        }
 
         document.addEventListener('DOMContentLoaded', async () => {
             try {
@@ -224,45 +364,22 @@
                 if (!session) return;
 
                 const userId = session.user.id;
+                g_userId = userId;
 
-                // Fetch transactions and payouts
-                const transactions = await PayoutService.getTransactions(userId);
-                const payouts = await PayoutService.getPayoutHistory(userId);
+                // 1. Fetch Summary Data
+                const summary = await instructorEarningsService.getSummary(userId);
+                
+                // 2. Fetch Transaction History (Earnings)
+                const transactions = await instructorEarningsService.getTransactionHistory(userId);
+                
+                // 3. Fetch Withdrawal History
+                const withdrawals = await instructorEarningsService.getWithdrawalHistory(userId);
 
-                let totalEarnings = 0;
-                let monthEarnings = 0;
-                let totalWithdrawn = 0;
-
-                const now = new Date();
-                const thisMonth = now.getMonth();
-                const thisYear = now.getFullYear();
-
-                // Calculate Transactions (Earnings)
-                if (transactions && transactions.length > 0) {
-                    transactions.forEach(tx => {
-                        if (tx.status === 'completed') {
-                            const amt = parseFloat(tx.amount);
-                            totalEarnings += amt;
-
-                            const txDate = new Date(tx.created_at || tx.transaction_date);
-                            if (txDate.getMonth() === thisMonth && txDate.getFullYear() === thisYear) {
-                                monthEarnings += amt;
-                            }
-                        }
-                    });
-                }
-
-                // Calculate Withdrawn (Payouts)
-                if (payouts && payouts.length > 0) {
-                    payouts.forEach(po => {
-                        // Pending/processing/completed payouts shouldn't be available anymore
-                        if (po.status !== 'failed') {
-                            totalWithdrawn += parseFloat(po.amount);
-                        }
-                    });
-                }
-
-                const availableForWithdrawal = Math.max(0, totalEarnings - totalWithdrawn);
+                // Default Values
+                let totalEarnings = summary?.total_earned || 0;
+                let monthEarnings = summary?.monthly || 0;
+                let availableForWithdrawal = summary?.available_balance || 0;
+                g_availableBalance = availableForWithdrawal;
 
                 // Update Metric UI
                 const metrics = document.querySelectorAll('.text-3xl.font-bold');
@@ -272,74 +389,215 @@
                     metrics[2].innerText = `$${monthEarnings.toFixed(2)}`;
                 }
 
-                const withdrawBtn = document.querySelector('button:contains("Request Withdrawal")') || Array.from(document.querySelectorAll('button')).find(el => el.textContent.includes('Request Withdrawal'));
+                // Update Request Withdrawal Button
+                const withdrawBtn = Array.from(document.querySelectorAll('button')).find(el => el.textContent.includes('Request Withdrawal'));
 
-                if (withdrawBtn && availableForWithdrawal > 50) {
-                    withdrawBtn.classList.remove('cursor-not-allowed', 'text-slate-400', 'bg-slate-100', 'dark:bg-slate-800');
-                    withdrawBtn.classList.add('bg-primary', 'text-white', 'hover:bg-primary/90');
-                    withdrawBtn.disabled = false;
-                    withdrawBtn.addEventListener('click', () => {
-                        alert('Withdrawal request initiated via Supabase (Coming Soon UI mapping)');
-                    });
-                }
+                let minWithdrawalAmt = 10;
+                try {
+                    const { supabase } = await import('/src/services/supabaseClient.js');
+                    const { data: sets } = await supabase.rpc('get_platform_settings');
+                    if (sets) minWithdrawalAmt = sets.min_withdrawal_amount || 10;
+                } catch(e) {}
 
-                // Render Transactions Table if any
-                if (transactions.length > 0 || payouts.length > 0) {
-                    const container = document.querySelector('.min-h-\\[400px\\]');
-                    if (container) {
-                        container.className = "w-full overflow-x-auto";
-
-                        let rowsHtml = '';
-
-                        // Combine and sort arrays by date descending
-                        const allLedger = [];
-                        transactions.forEach(t => allLedger.push({ ...t, is_payout: false, dateLine: new Date(t.created_at || t.transaction_date) }));
-                        payouts.forEach(p => allLedger.push({ ...p, is_payout: true, dateLine: new Date(p.date) }));
-
-                        allLedger.sort((a, b) => b.dateLine - a.dateLine);
-
-                        allLedger.forEach(item => {
-                            const dateStr = item.dateLine.toLocaleDateString();
-                            if (item.is_payout) {
-                                rowsHtml += `
-                                 <tr class="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900 dark:text-white">${dateStr}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">Withdrawal - ${item.method_type}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-red-500 font-medium">-$${parseFloat(item.amount).toFixed(2)}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="px-2.5 py-1 text-xs font-medium rounded-full bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 capitalize">${item.status}</span>
-                                    </td>
-                                 </tr>`;
-                            } else {
-                                rowsHtml += `
-                                 <tr class="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900 dark:text-white">${dateStr}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">Course Sale</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-emerald-500 font-medium">+$${parseFloat(item.amount).toFixed(2)}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="px-2.5 py-1 text-xs font-medium rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 capitalize">${item.status}</span>
-                                    </td>
-                                 </tr>`;
+                if (withdrawBtn) {
+                    if (availableForWithdrawal >= minWithdrawalAmt) {
+                        withdrawBtn.classList.remove('cursor-not-allowed', 'text-slate-400', 'bg-slate-100', 'dark:bg-slate-800');
+                        withdrawBtn.classList.add('bg-primary', 'text-white', 'hover:bg-primary/90');
+                        withdrawBtn.disabled = false;
+                        
+                        withdrawBtn.addEventListener('click', async () => {
+                            // Check if configured payout method
+                            const method = await PayoutService.getMyPayoutMethod(userId);
+                            if (!method) {
+                                if (confirm('You must configure a payout method before withdrawing. Set one up now?')) {
+                                    window.location.href = '/src/pages/instructor/instructor-profile-settings/index.html#payout';
+                                }
+                                return;
                             }
-                        });
+                            g_payoutMethod = method;
 
-                        container.innerHTML = `
-                             <table class="w-full text-left border-collapse">
-                                <thead>
-                                    <tr class="bg-slate-50 dark:bg-slate-800/50 border-y border-slate-200 dark:border-slate-800">
-                                        <th class="px-6 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Date</th>
-                                        <th class="px-6 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Description</th>
-                                        <th class="px-6 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Amount</th>
-                                        <th class="px-6 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${rowsHtml}
-                                </tbody>
-                             </table>
-                         `;
+                            document.getElementById('modal-available-balance').innerText = `$${availableForWithdrawal.toFixed(2)}`;
+                            document.getElementById('withdrawal-amount-input').value = availableForWithdrawal.toFixed(2);
+                            
+                            const mi = document.getElementById('modal-payout-method-info');
+                            if (method.method_type === 'mobile_money') {
+                                mi.innerHTML = `<strong>Mobile Money:</strong> ${method.provider_name} - ${method.phone_mobile_money}`;
+                            } else if (method.method_type === 'cash_on_delivery') {
+                                mi.innerHTML = `<strong>Cash:</strong> Contact: ${method.phone_cash_on_delivery}`;
+                            } else {
+                                mi.innerHTML = `<strong>Bank Transfer:</strong> ${method.bank_name || 'N/A'}`;
+                            }
+
+                            document.getElementById('withdrawal-modal').classList.remove('hidden');
+                        });
+                    } else {
+                         withdrawBtn.innerHTML = `Min Withdrawal: $${minWithdrawalAmt}`;
                     }
                 }
+
+                window.switchEarningsTab = function(tabName) {
+                    const btnTransactions = document.getElementById('tab-btn-transactions');
+                    const btnWithdrawals = document.getElementById('tab-btn-withdrawals');
+                    
+                    const panelTransactions = document.getElementById('panel-transactions');
+                    const panelWithdrawals = document.getElementById('panel-withdrawals');
+
+                    if(tabName === 'transactions') {
+                        btnTransactions.className = "w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left text-sm font-medium bg-primary text-white transition-colors shadow-md";
+                        btnWithdrawals.className = "w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors";
+                        panelTransactions.classList.remove('hidden');
+                        panelTransactions.classList.add('block');
+                        panelWithdrawals.classList.remove('block');
+                        panelWithdrawals.classList.add('hidden');
+                    } else {
+                        btnWithdrawals.className = "w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left text-sm font-medium bg-primary text-white transition-colors shadow-md";
+                        btnTransactions.className = "w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors";
+                        panelWithdrawals.classList.remove('hidden');
+                        panelWithdrawals.classList.add('block');
+                        panelTransactions.classList.remove('block');
+                        panelTransactions.classList.add('hidden');
+                    }
+                };
+
+                // Render Transactions Table
+                const transactionsContainer = document.getElementById('transactions-container');
+                if (transactions.length > 0 && transactionsContainer) {
+                    transactionsContainer.className = "w-full overflow-x-auto";
+                    let transHtml = '';
+
+                    transactions.forEach(item => {
+                        const dateStr = new Date(item.created_at).toLocaleDateString();
+                        const rawItemStr = encodeURIComponent(JSON.stringify(item));
+                        const courseName = item.courses?.title || 'Unknown';
+                        const grossAmt = parseFloat(item.gross_amount);
+                        const feeAmt = parseFloat(item.platform_fee);
+                        const description = item.earning_type === 'mentorship' ? 'Mentorship Booking' : `Course Sale (${courseName})`;
+                        
+                        transHtml += `
+                            <tr class="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer" onclick="openTransactionDetail('${rawItemStr}')">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900 dark:text-white">${dateStr}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                                <div class="font-medium truncate max-w-[250px]">${description}</div>
+                                <div class="text-xs mt-0.5">Gross: $${grossAmt.toFixed(2)} | Fee: $${feeAmt.toFixed(2)}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-emerald-500 font-medium">+$${parseFloat(item.instructor_share).toFixed(2)}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2.5 py-1 text-xs font-medium rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 capitalize">completed</span>
+                            </td>
+                            </tr>`;
+                    });
+
+                    transactionsContainer.innerHTML = `
+                        <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 dark:bg-slate-800/50 border-y border-slate-200 dark:border-slate-800">
+                                <th class="px-6 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Date</th>
+                                <th class="px-6 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Description</th>
+                                <th class="px-6 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Your Share</th>
+                                <th class="px-6 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${transHtml}
+                        </tbody>
+                        </table>
+                    `;
+                }
+
+                // Render Withdrawals Table
+                const withdrawalsContainer = document.getElementById('withdrawals-container');
+                if (withdrawals.length > 0 && withdrawalsContainer) {
+                    withdrawalsContainer.className = "w-full overflow-x-auto";
+                    let widthHtml = '';
+
+                    withdrawals.forEach(item => {
+                        const reqDateStr = new Date(item.created_at).toLocaleDateString();
+                        const processedDateStr = (item.status === 'paid' || item.status === 'rejected') ? new Date(item.updated_at).toLocaleDateString() : 'Pending';
+                        const rawItemStr = encodeURIComponent(JSON.stringify({...item, is_withdrawal: true}));
+                        
+                        let statusClass = 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400';
+                        if (item.status === 'pending') statusClass = 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400';
+                        if (item.status === 'processing') statusClass = 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
+                        if (item.status === 'paid') statusClass = 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400';
+                        if (item.status === 'rejected') statusClass = 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
+
+                        let methodDetails = item.payout_method === 'mobile_money' ? 'Mobile Money' : (item.payout_method === 'bank_transfer' ? 'Bank' : 'Cash');
+
+                        widthHtml += `
+                            <tr class="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer" onclick="openTransactionDetail('${rawItemStr}')">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-slate-500 dark:text-slate-400">${item.reference_number || 'N/A'}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900 dark:text-white">$${parseFloat(item.amount).toFixed(2)}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">${methodDetails}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2.5 py-1 text-xs font-medium rounded-full ${statusClass} capitalize">${item.status}</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">${reqDateStr}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">${processedDateStr}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 truncate max-w-[150px]" title="${item.notes_to_instructor || ''}">${item.notes_to_instructor || '-'}</td>
+                            </tr>`;
+                    });
+
+                    withdrawalsContainer.innerHTML = `
+                        <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 dark:bg-slate-800/50 border-y border-slate-200 dark:border-slate-800">
+                                <th class="px-6 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Ref Number</th>
+                                <th class="px-6 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Amount</th>
+                                <th class="px-6 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Method</th>
+                                <th class="px-6 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
+                                <th class="px-6 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Requested</th>
+                                <th class="px-6 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Processed</th>
+                                <th class="px-6 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${widthHtml}
+                        </tbody>
+                        </table>
+                    `;
+                }
+
+                // Handle Submitting Withdrawal
+                document.getElementById('confirm-withdrawal-btn').addEventListener('click', async () => {
+                    const errorEl = document.getElementById('withdrawal-error');
+                    errorEl.classList.add('hidden');
+                    const amtStr = document.getElementById('withdrawal-amount-input').value;
+                    const amt = parseFloat(amtStr);
+
+                    if (isNaN(amt) || amt <= 0) {
+                        errorEl.innerText = 'Valid amount required';
+                        errorEl.classList.remove('hidden');
+                        return;
+                    }
+                    if (amt > g_availableBalance) {
+                        errorEl.innerText = 'You cannot withdraw more than your available balance.';
+                        errorEl.classList.remove('hidden');
+                        return;
+                    }
+
+                    const btn = document.getElementById('confirm-withdrawal-btn');
+                    btn.disabled = true;
+                    btn.innerHTML = 'Processing...';
+
+                    try {
+                        const res = await instructorEarningsService.requestWithdrawal(amt, g_payoutMethod.id);
+                        if (res.success) {
+                            window.showToast('Withdrawal Request Submitted Successfully!', 'success');
+                            setTimeout(() => window.location.reload(), 1500);
+                        } else {
+                            errorEl.innerText = res.error || 'Failed to submit withdrawal';
+                            errorEl.classList.remove('hidden');
+                            btn.disabled = false;
+                            btn.innerHTML = 'Submit Request';
+                        }
+                    } catch (e) {
+                         errorEl.innerText = e.message;
+                         errorEl.classList.remove('hidden');
+                         btn.disabled = false;
+                         btn.innerHTML = 'Submit Request';
+                    }
+                });
+
             } catch (err) {
                 console.error("Failed to load earnings data:", err);
             }

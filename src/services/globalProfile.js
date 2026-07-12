@@ -1,5 +1,6 @@
 import { AuthService } from './authService.js';
 import { supabase } from './supabaseClient.js';
+import './uiUtils.js';
 
 export const GlobalProfile = {
     async init() {

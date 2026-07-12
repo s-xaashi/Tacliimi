@@ -169,7 +169,7 @@ export const CourseService = {
         if (filters.categories && filters.categories.length > 0) {
             query = query.in('category_id', filters.categories);
         }
-        
+
         if (filters.levels && filters.levels.length > 0) {
             query = query.in('level', filters.levels);
         }
@@ -243,6 +243,31 @@ export const CourseService = {
         }
     },
 
+    /**
+     * Submit a draft or revision for admin review.
+     * Sets status to 'pending_review' — picked up by the admin review dashboard.
+     */
+    async submitForReview(courseId) {
+        const { error } = await supabase
+            .from('courses')
+            .update({ status: 'pending_review', version_status: 'pending_review' })
+            .eq('id', courseId);
+        if (error) throw error;
+    },
+
+    /**
+     * Acknowledge a course rejection and return it to draft status
+     * for the instructor to fix issues and resubmit.
+     */
+    async confirmRejection(courseId) {
+        const { error } = await supabase
+            .from('courses')
+            .update({ status: 'draft', version_status: 'draft' }) // Reset both just in case
+            .eq('id', courseId)
+            .eq('status', 'rejected'); // Safety guard
+        if (error) throw error;
+    },
+
     /** COUPON MANAGEMENT */
     async saveCoupon(courseId, code, discountPercent, expiresAt = null, startsAt = null) {
         const { data, error } = await supabase
@@ -289,17 +314,17 @@ export const CourseService = {
             p_course_id: courseId,
             p_code: code.trim()
         });
-            
+
         if (error) throw error;
-        
+
         // RPC returns { discount_percent, valid, message }
         // The endpoint may return an array of 1 element.
         const result = Array.isArray(data) ? data[0] : data;
-        
+
         if (!result || !result.valid) {
             throw new Error(result?.message || 'Invalid coupon code');
         }
-        
+
         return result;
     },
 
@@ -331,7 +356,7 @@ export const CourseService = {
      */
     async syncCurriculum(courseId, curriculumData) {
         console.log('CourseService.syncCurriculum initiated:', { courseId, count: curriculumData?.length });
-        
+
         if (!courseId) throw new Error("Course ID is required for sync");
         if (!Array.isArray(curriculumData)) throw new Error("Curriculum data must be an array of sections");
 
@@ -456,7 +481,7 @@ export const CourseService = {
             // Handle quizzes (Standardized JSON-Sync System - Supports Multiple Quizzes)
             if (lessonData.quiz && lessonData.quiz.length > 0) {
                 console.log(`Syncing ${lessonData.quiz.length} quizzes for lesson:`, savedLesson.id);
-                
+
                 // Track IDs of quizzes that should stay
                 const activeQuizIds = [];
 
@@ -484,11 +509,11 @@ export const CourseService = {
 
                     if (qz.questions && qz.questions.length > 0) {
                         const activeQuestionIds = [];
-                        
+
                         for (const [index, q] of qz.questions.entries()) {
                             // Normalize question text
                             const qText = q.text || q.question_text || 'Question?';
-                            
+
                             const { data: qnData, error: qnErr } = await supabase.from('quiz_questions').upsert({
                                 id: q.id || undefined,
                                 quiz_id: quizId,
@@ -500,11 +525,11 @@ export const CourseService = {
                             if (qnData) {
                                 q.id = qnData.id;
                                 activeQuestionIds.push(qnData.id);
-                                
+
                                 if (q.options && q.options.length > 0) {
                                     // Full wipe and rebuild of options for this question (cleanest for wizard)
                                     await supabase.from('quiz_options').delete().eq('question_id', qnData.id);
-                                    
+
                                     const optPayloads = q.options.map((op, oIdx) => ({
                                         question_id: qnData.id,
                                         option_text: op.text || op.option_text || `Option ${oIdx + 1}`,
@@ -579,7 +604,7 @@ export const CourseService = {
     async uploadLessonVideo(lessonId, file) {
         const fileName = `lessons/${lessonId ? lessonId : 'new'}/video_${Date.now()}`;
         const publicUrl = await this.uploadFile('course_videos', fileName, file);
-        
+
         // Register in media assets
         await supabase.from('course_media_assets').insert([{
             storage_provider: 'supabase',
@@ -587,7 +612,7 @@ export const CourseService = {
             public_url: publicUrl,
             file_size_bytes: file.size || null
         }]);
-        
+
         return publicUrl;
     },
 
@@ -751,12 +776,12 @@ export const CourseService = {
             .select()
             .single();
         if (error) throw error;
-        
+
         // 2. Create Payment Record if paymentData is provided
         let paymentSerialId = null;
         if (paymentData) {
             let finalAmount = paymentData.amount || 0;
-            
+
             // 🔥 APPLY COUPON DISCOUNT IF PROVIDED
             if (paymentData.couponCode) {
                 const coupon = await this.validateCoupon(courseId, paymentData.couponCode);
@@ -777,7 +802,7 @@ export const CourseService = {
                 }])
                 .select('serial_id')
                 .single();
-            
+
             if (!payError && payRecord) {
                 paymentSerialId = payRecord.serial_id;
             } else if (payError) {
@@ -787,7 +812,7 @@ export const CourseService = {
 
         // 3. Remove from wishlist
         await supabase.from('wishlist').delete().eq('course_id', courseId).eq('student_id', studentId);
-        
+
         return { enrollment, paymentSerialId };
     },
 
@@ -816,7 +841,7 @@ export const CourseService = {
         }
 
         const isWishlisted = await this.checkWishlist(courseId, studentId);
-        
+
         if (isWishlisted) {
             const { error } = await supabase
                 .from('wishlist')
@@ -895,36 +920,51 @@ export const CourseService = {
 
     async getInstructorStats(instructorId) {
         try {
-            // 1. Get Course IDs for this instructor first
-            const { data: courses, error: cErr } = await supabase
+            // 1. Get ALL Courses for this instructor
+            const { data: allCourses, error: cErr } = await supabase
                 .from('courses')
-                .select('id')
+                .select('id, status')
                 .eq('instructor_id', instructorId);
-            
+
             if (cErr) throw cErr;
-            
-            const courseIds = courses?.map(c => c.id) || [];
-            
-            // 2. If no courses, return zeroed stats immediately
-            if (courseIds.length === 0) {
-                return { totalCourses: 0, totalStudents: 0 };
+
+            const allCourseIds = allCourses?.map(c => c.id) || [];
+            const publishedCoursesCount = allCourses?.filter(c => c.status === 'published').length || 0;
+
+            // 2. Get student count from enrollments for ALL these courses
+            let studentCount = 0;
+            if (allCourseIds.length > 0) {
+                const { count, error: sErr } = await supabase
+                    .from('enrollments')
+                    .select('*', { count: 'exact', head: true })
+                    .in('course_id', allCourseIds);
+                if (!sErr && count) studentCount = count;
             }
 
-            // 3. Get student count from enrollments for these courses
-            const { count: studentCount, error: sErr } = await supabase
-                .from('enrollments')
-                .select('*', { count: 'exact', head: true })
-                .in('course_id', courseIds);
+            // 3. Get Mentor feedback rating
+            let avgRating = '0.0';
+            try {
+                const { data: reviews } = await supabase
+                    .from('mentorship_reviews')
+                    .select('rating')
+                    .eq('mentor_id', instructorId);
 
-            if (sErr) throw sErr;
+                if (reviews && reviews.length > 0) {
+                    const total = reviews.reduce((sum, r) => sum + (r.rating || 0), 0);
+                    avgRating = (total / reviews.length).toFixed(1);
+                }
+            } catch (err) {
+                console.warn("Could not fetch mentor rating for stats:", err);
+            }
 
             return {
-                totalCourses: courseIds.length,
-                totalStudents: studentCount || 0,
+                totalCourses: publishedCoursesCount,
+                totalStudents: studentCount,
+                avgRating: avgRating
             };
         } catch (e) {
             console.error('Error fetching instructor stats:', e);
-            return { totalCourses: 0, totalStudents: 0 };
+            return { totalCourses: 0, totalStudents: 0, avgRating: '0.0' };
         }
     },
 
@@ -1020,10 +1060,11 @@ export const CourseService = {
             .select(`
                 id, title, status, version_status, version_number, is_latest_published, 
                 root_course_id, created_at, rejection_reason, thumbnail_url, subtitle, 
-                price, price_type, is_public,
+                price, price_type, is_public, serial_id,
                 category:course_categories(name),
                 enrollments(count),
-                course_reviews(rating)
+                course_reviews(rating),
+                course_sections(course_lessons(id, quizzes(id), lesson_resources(id)))
             `)
             .eq('instructor_id', authId)
             .is('deleted_at', null)
@@ -1039,33 +1080,108 @@ export const CourseService = {
         }
         // Return one object per family with both the published version and any pending revision, computing family-wide metrics
         return Object.values(families).map(versions => {
-            const published = versions.find(v => v.is_latest_published) || versions[0];
-            const revision  = versions.find(v => !v.is_latest_published && v.version_status !== 'archived');
             
+            // Compute module counts directly for all versions returned
+            versions.forEach(course => {
+                let lessonsCount = 0;
+                let quizzesCount = 0;
+                let resourcesCount = 0;
+                if (course.course_sections) {
+                    for (const section of course.course_sections) {
+                        if (section.course_lessons) {
+                            lessonsCount += section.course_lessons.length;
+                            for (const lesson of section.course_lessons) {
+                                if (lesson.quizzes) quizzesCount += Array.isArray(lesson.quizzes) ? lesson.quizzes.length : (lesson.quizzes ? 1 : 0);
+                                if (lesson.lesson_resources) resourcesCount += Array.isArray(lesson.lesson_resources) ? lesson.lesson_resources.length : (lesson.lesson_resources ? 1 : 0);
+                            }
+                        }
+                    }
+                }
+                course.total_lessons = lessonsCount;
+                course.total_quizzes = quizzesCount;
+                course.total_resources = resourcesCount;
+                delete course.course_sections;
+            });
+
+            const published = versions.find(v => v.status === 'published') || versions.find(v => v.is_latest_published) || versions[0];
+            const revision = versions.find(v => v.id !== published.id && v.version_status !== 'archived');
+
             // Aggregate metrics across all versions in the family
             let familyEnrollCount = 0;
             let familyReviews = [];
-            
+
             for (const v of versions) {
                 familyEnrollCount += v.enrollments?.[0]?.count ?? 0;
                 if (v.course_reviews && v.course_reviews.length > 0) {
                     familyReviews.push(...v.course_reviews);
                 }
             }
-            
+
             const reviewCount = familyReviews.length;
             const avgRating = reviewCount > 0
                 ? familyReviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviewCount
                 : 0;
 
-            return { 
-                ...published, 
+            if (revision) {
+                // Ensure pending_edit maps correctly to 'draft' in our UI rendering layer if db returned pending_edit
+                if (revision.status === 'pending_edit' || revision.version_status === 'pending_edit') {
+                    revision.status = 'draft';
+                }
+            }
+
+            return {
+                ...published,
                 pendingRevision: revision || null,
                 enrolled_count: familyEnrollCount,
                 review_count: reviewCount,
                 avg_rating: avgRating > 0 ? avgRating.toFixed(1) : '0.0'
             };
         });
+    },
+
+    /**
+     * Unified Dashboard & My Courses Display Service
+     * Fetches grouped courses and explicitly unfolds revisions into separate physical entries
+     * ensuring proper lifecycle routing.
+     */
+    async getInstructorCoursesForDisplay(instructorId = null) {
+        const grouped = await this.getInstructorCoursesGrouped(instructorId);
+        const displayList = [];
+
+        for (const family of grouped) {
+            // 1. The base course
+            displayList.push(family);
+
+            // 2. The pending revision (if any)
+            if (family.pendingRevision) {
+                const rev = { ...family.pendingRevision };
+                
+                // Transfer view metrics to the revision row so analytics match root_course_id
+                rev.enrolled_count = family.enrolled_count;
+                rev.avg_rating = family.avg_rating;
+                rev.review_count = family.review_count;
+                rev.is_revision = true;
+                
+                // Add revision to the display list distinctly
+                displayList.push(rev);
+            }
+        }
+        
+        return displayList;
+    },
+
+    /** Withdraw a pending review back to a raw draft state */
+    async withdrawCourseReview(courseId) {
+        const { data, error } = await supabase
+            .from('courses')
+            .update({ status: 'draft' })
+            .eq('id', courseId)
+            .eq('status', 'pending_review')
+            .select()
+            .single();
+            
+        if (error) throw error;
+        return data;
     },
 
     /**

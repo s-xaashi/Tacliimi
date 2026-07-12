@@ -8,6 +8,7 @@
     <script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
         rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
         rel="stylesheet" />
     <script>
@@ -43,10 +44,12 @@
     </script>
 </head>
 
-<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 transition-colors duration-200">
+<body
+    class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 transition-colors duration-200">
 
     <!-- Sidebar -->
-    <aside class="fixed left-0 top-0 h-full w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 hidden lg:flex flex-col z-20">
+    <aside
+        class="fixed left-0 top-0 h-full w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 hidden lg:flex flex-col z-20">
         <div class="p-6 border-b border-slate-100 dark:border-slate-800">
             <div class="flex items-center gap-2 cursor-pointer" onclick="window.location.href='/index.html'">
                 <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
@@ -56,22 +59,28 @@
             </div>
         </div>
         <nav class="flex-1 p-4 space-y-1" id="instructor-sidebar-nav">
-            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-dashboard/">
+            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                href="/src/pages/instructor/instructor-dashboard/">
                 <span class="material-symbols-outlined">dashboard</span> Dashboard
             </a>
-            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-courses/">
+            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                href="/src/pages/instructor/instructor-courses/">
                 <span class="material-symbols-outlined">auto_stories</span> My Courses
             </a>
-            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-mentorship/">
+            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                href="/src/pages/instructor/instructor-mentorship/">
                 <span class="material-symbols-outlined">groups</span> Mentorship
             </a>
-            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-analytics/">
+            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                href="/src/pages/instructor/instructor-analytics/">
                 <span class="material-symbols-outlined">analytics</span> Analytics
             </a>
-            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-earnings/">
+            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                href="/src/pages/instructor/instructor-earnings/">
                 <span class="material-symbols-outlined">payments</span> Earnings
             </a>
-            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-communications/">
+            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                href="/src/pages/instructor/instructor-communications/">
                 <span class="material-symbols-outlined">message</span> Communications
             </a>
         </nav>
@@ -79,18 +88,23 @@
 
     <div class="lg:ml-64 min-h-screen flex flex-col">
         <!-- Header -->
-        <header class="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-8 sticky top-0 z-10 shrink-0">
+        <header
+            class="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-8 sticky top-0 z-10 shrink-0">
             <h1 class="text-lg font-semibold dark:text-white" id="header-page-title">My Courses</h1>
             <div class="flex items-center gap-4">
 
-                <button class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" onclick="document.documentElement.classList.toggle('dark')">
+                <button class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                    onclick="document.documentElement.classList.toggle('dark')">
                     <span class="material-symbols-outlined">dark_mode</span>
                 </button>
-                <div id="global-profile-header-container" class="flex items-center gap-3 pl-4 border-l border-slate-200 dark:border-slate-800 cursor-pointer hover:opacity-80 transition-opacity" onclick="window.location.href='/src/pages/instructor/instructor-profile/index.html'">
+                <div id="global-profile-header-container"
+                    class="flex items-center gap-3 pl-4 border-l border-slate-200 dark:border-slate-800 cursor-pointer hover:opacity-80 transition-opacity"
+                    onclick="window.location.href='/src/pages/instructor/instructor-profile/index.html'">
                     <div class="text-right hidden sm:block">
                         <p class="text-sm font-medium dark:text-white">Instructor account</p>
                     </div>
-                    <div class="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-slate-100 text-slate-400 dark:bg-slate-800 border-2 border-primary/20 hover:border-primary transition-colors">
+                    <div
+                        class="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-slate-100 text-slate-400 dark:bg-slate-800 border-2 border-primary/20 hover:border-primary transition-colors">
                         <span class="material-symbols-outlined text-2xl">account_circle</span>
                     </div>
                 </div>
@@ -104,12 +118,16 @@
                 <!-- Tabs -->
                 <div class="border-b border-slate-200 dark:border-slate-800 mb-12">
                     <nav class="flex gap-8 -mb-px" id="course-tabs">
-                        <a class="tab-btn py-4 px-1 text-sm border-b-2 font-bold cursor-pointer transition-all border-indigo-600 text-primary" data-status="published">Published (<span id="count-published">0</span>)</a>
-                        <a class="tab-btn py-4 px-1 text-sm border-b-2 font-medium cursor-pointer transition-all border-transparent text-slate-500" data-status="draft">Drafts (<span id="count-draft">0</span>)</a>
-                        <a class="tab-btn py-4 px-1 text-sm border-b-2 font-medium cursor-pointer transition-all border-transparent text-slate-500" data-status="rejected">Rejected (<span id="count-rejected">0</span>)</a>
-                        <a class="tab-btn py-4 px-1 text-sm border-b-2 font-medium cursor-pointer transition-all border-transparent text-slate-500" data-status="private">Private (<span id="count-private">0</span>)</a>
-                        <a class="tab-btn py-4 px-1 text-sm border-b-2 font-medium cursor-pointer transition-all border-transparent text-slate-500" data-status="review">In Review (<span id="count-review">0</span>)</a>
-                        <a class="tab-btn py-4 px-1 text-sm border-b-2 font-medium cursor-pointer transition-all border-transparent text-slate-500" data-status="revisions">In Revision (<span id="count-revisions">0</span>)</a>
+                        <a class="tab-btn py-4 px-1 text-sm border-b-2 font-bold cursor-pointer transition-all border-indigo-600 text-primary"
+                            data-status="published">Published (<span id="count-published">0</span>)</a>
+                        <a class="tab-btn py-4 px-1 text-sm border-b-2 font-medium cursor-pointer transition-all border-transparent text-slate-500"
+                            data-status="draft">Drafts (<span id="count-draft">0</span>)</a>
+                        <a class="tab-btn py-4 px-1 text-sm border-b-2 font-medium cursor-pointer transition-all border-transparent text-slate-500"
+                            data-status="rejected">Rejected (<span id="count-rejected">0</span>)</a>
+                        <a class="tab-btn py-4 px-1 text-sm border-b-2 font-medium cursor-pointer transition-all border-transparent text-slate-500"
+                            data-status="private">Private (<span id="count-private">0</span>)</a>
+                        <a class="tab-btn py-4 px-1 text-sm border-b-2 font-medium cursor-pointer transition-all border-transparent text-slate-500"
+                            data-status="review">In Review (<span id="count-review">0</span>)</a>
                     </nav>
                 </div>
 
@@ -119,15 +137,19 @@
                 <!-- Empty State -->
                 <div id="empty-state" class="mt-20 flex flex-col items-center justify-center text-center">
                     <div class="relative mb-8">
-                        <div class="w-40 h-40 bg-indigo-50 dark:bg-slate-800/50 rounded-full flex items-center justify-center">
-                            <span class="material-symbols-outlined text-primary/40 dark:text-primary/20 text-8xl">shelves</span>
+                        <div
+                            class="w-40 h-40 bg-indigo-50 dark:bg-slate-800/50 rounded-full flex items-center justify-center">
+                            <span
+                                class="material-symbols-outlined text-primary/40 dark:text-primary/20 text-8xl">shelves</span>
                         </div>
-                        <div class="absolute -bottom-2 -right-2 w-16 h-16 bg-white dark:bg-slate-900 rounded-full shadow-lg flex items-center justify-center border border-slate-100 dark:border-slate-800">
+                        <div
+                            class="absolute -bottom-2 -right-2 w-16 h-16 bg-white dark:bg-slate-900 rounded-full shadow-lg flex items-center justify-center border border-slate-100 dark:border-slate-800">
                             <span class="material-symbols-outlined text-primary text-3xl">auto_stories</span>
                         </div>
                     </div>
                     <h2 class="text-3xl font-bold dark:text-white mb-4">Your library is empty</h2>
-                    <p class="text-slate-500 dark:text-slate-400 text-lg max-w-md mb-10 leading-relaxed">Start sharing your knowledge today. Create your first course to build your library.</p>
+                    <p class="text-slate-500 dark:text-slate-400 text-lg max-w-md mb-10 leading-relaxed">Start sharing
+                        your knowledge today. Create your first course to build your library.</p>
                     <button onclick="window.location.href='/src/pages/instructor/instructor-courses/wizard.html'"
                         class="bg-primary hover:bg-indigo-700 text-white px-10 py-5 rounded-2xl flex items-center gap-3 font-bold text-lg transition-all shadow-2xl shadow-indigo-200 dark:shadow-none hover:scale-[1.02] active:scale-[0.98]">
                         <span class="material-symbols-outlined text-2xl">add_circle</span>
@@ -150,10 +172,13 @@
     </div>
 
     <!-- ═══ APPEAL MODAL ═══ -->
-    <div id="appeal-modal" class="fixed inset-0 z-[200] hidden items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm">
-        <div class="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+    <div id="appeal-modal"
+        class="fixed inset-0 z-[200] hidden items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm">
+        <div
+            class="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
             <div class="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center gap-4">
-                <div class="w-12 h-12 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center flex-shrink-0">
+                <div
+                    class="w-12 h-12 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center flex-shrink-0">
                     <span class="material-symbols-outlined text-primary text-2xl">campaign</span>
                 </div>
                 <div>
@@ -162,7 +187,8 @@
                 </div>
             </div>
             <div class="p-6 space-y-4">
-                <p class="text-sm text-slate-600 dark:text-slate-400">Provide a clear explanation for why this course should be reconsidered for publication.</p>
+                <p class="text-sm text-slate-600 dark:text-slate-400">Provide a clear explanation for why this course
+                    should be reconsidered for publication.</p>
                 <textarea id="appeal-reason" rows="4" placeholder="Your appeal message..."
                     class="w-full px-4 py-3 text-sm border border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 focus:ring-2 focus:ring-primary outline-none transition-all"></textarea>
             </div>
@@ -180,24 +206,30 @@
     </div>
 
     <!-- ═══ DELETE WARNING MODAL ═══ -->
-    <div id="delete-modal" class="fixed inset-0 z-[200] hidden items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm">
-        <div class="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+    <div id="delete-modal"
+        class="fixed inset-0 z-[200] hidden items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm">
+        <div
+            class="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
             <!-- Modal Header -->
             <div class="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center gap-4">
-                <div class="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0">
+                <div
+                    class="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0">
                     <span class="material-symbols-outlined text-red-600 text-2xl">warning</span>
                 </div>
                 <div>
                     <h3 class="text-lg font-bold text-slate-900 dark:text-white">Delete Course?</h3>
-                    <p class="text-xs text-red-500 font-semibold uppercase tracking-widest">This action cannot be undone</p>
+                    <p class="text-xs text-red-500 font-semibold uppercase tracking-widest">This action cannot be undone
+                    </p>
                 </div>
             </div>
             <!-- Modal Body -->
             <div class="p-6 space-y-4">
                 <p class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                    You are about to permanently delete <span id="delete-course-title" class="font-bold text-slate-900 dark:text-white"></span>.
+                    You are about to permanently delete <span id="delete-course-title"
+                        class="font-bold text-slate-900 dark:text-white"></span>.
                 </p>
-                <div class="p-4 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-900/30 rounded-xl space-y-2">
+                <div
+                    class="p-4 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-900/30 rounded-xl space-y-2">
                     <p class="text-xs font-bold text-red-600 uppercase tracking-widest flex items-center gap-1.5">
                         <span class="material-symbols-outlined text-sm">block</span>
                         Once deleted, the following will be permanently removed:
@@ -213,7 +245,8 @@
                 </div>
                 <!-- Confirmation type -->
                 <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-1.5">Type <span class="text-red-500 font-mono">DELETE</span> to confirm</label>
+                    <label class="block text-xs font-bold text-slate-500 mb-1.5">Type <span
+                            class="text-red-500 font-mono">DELETE</span> to confirm</label>
                     <input id="delete-confirm-input" type="text" placeholder="DELETE"
                         class="w-full px-4 py-2.5 text-sm border border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 focus:ring-2 focus:ring-red-400 outline-none transition-all font-mono tracking-widest" />
                 </div>
@@ -234,10 +267,13 @@
     </div>
 
     <!-- ═══ NOTIFY UPDATE MODAL ═══ -->
-    <div id="notify-update-modal" class="fixed inset-0 z-[200] hidden items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm">
-        <div class="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+    <div id="notify-update-modal"
+        class="fixed inset-0 z-[200] hidden items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm">
+        <div
+            class="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
             <div class="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center gap-4">
-                <div class="w-12 h-12 rounded-full bg-sky-100 dark:bg-sky-900/30 flex items-center justify-center flex-shrink-0">
+                <div
+                    class="w-12 h-12 rounded-full bg-sky-100 dark:bg-sky-900/30 flex items-center justify-center flex-shrink-0">
                     <span class="material-symbols-outlined text-sky-600 dark:text-sky-400 text-2xl">campaign</span>
                 </div>
                 <div>
@@ -246,11 +282,13 @@
                 </div>
             </div>
             <div class="p-6 space-y-4">
-                <p class="text-sm text-slate-600 dark:text-slate-400">Offer students from older versions a discount to upgrade to the latest published version of this course.</p>
-                
+                <p class="text-sm text-slate-600 dark:text-slate-400">Offer students from older versions a discount to
+                    upgrade to the latest published version of this course.</p>
+
                 <div class="space-y-1">
-                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest">Select Promotion 
-                        <span class="ml-1 text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-md lowercase">(optional)</span>
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest">Select Promotion
+                        <span
+                            class="ml-1 text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-md lowercase">(optional)</span>
                     </label>
                     <select id="notify-coupon-select"
                         class="w-full px-4 py-3 text-sm border border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 focus:ring-2 focus:ring-sky-400 outline-none transition-all appearance-none cursor-pointer">
@@ -281,15 +319,15 @@
             const grid = document.getElementById('courses-grid');
             const emptyState = document.getElementById('empty-state');
             const tabBtns = document.querySelectorAll('.tab-btn');
-            
+
             let allCourses = [];
             let currentFilter = 'published';
 
             async function fetchAndRender() {
                 try {
                     grid.classList.add('opacity-50');
-                    allCourses = await CourseService.getInstructorCoursesGrouped(null);
-                    
+                    allCourses = await CourseService.getInstructorCoursesForDisplay(null);
+
                     updateCounters(allCourses);
                     render(currentFilter);
                 } catch (e) {
@@ -303,10 +341,9 @@
                 const counts = {
                     published: courses.filter(c => c.status === 'published' && c.is_public !== false).length,
                     draft: courses.filter(c => c.status === 'draft').length,
-                    rejected: courses.filter(c => c.status === 'rejected' || c.status === 'appealed' || (c.status === 'pending_review' && c.has_rejection_history)).length,
+                    rejected: courses.filter(c => c.status === 'rejected' || c.status === 'appealed' || (c.status === 'pending_review' && c.rejection_reason)).length,
                     private: courses.filter(c => c.status === 'published' && c.is_public === false).length,
-                    review: courses.filter(c => c.status === 'pending_review').length,
-                    revisions: courses.filter(c => c.pendingRevision !== null && c.pendingRevision !== undefined).length
+                    review: courses.filter(c => c.status === 'pending_review' && !c.rejection_reason).length
                 };
 
                 document.getElementById('count-published').innerText = counts.published;
@@ -314,32 +351,88 @@
                 document.getElementById('count-rejected').innerText = counts.rejected;
                 document.getElementById('count-private').innerText = counts.private;
                 document.getElementById('count-review').innerText = counts.review;
-                document.getElementById('count-revisions').innerText = counts.revisions;
             }
 
             function render(filter) {
                 const filtered = allCourses.filter(c => {
-                    if (filter === 'published') return c.status === 'published' && c.is_public !== false;
-                    if (filter === 'draft') return c.status === 'draft';
-                    if (filter === 'rejected') return c.status === 'rejected' || c.status === 'appealed' || (c.status === 'pending_review' && c.has_rejection_history);
-                    // Private tab: only fully approved private courses (published + is_public=false)
-                    if (filter === 'private') return c.status === 'published' && c.is_public === false;
-                    if (filter === 'review') return c.status === 'pending_review';
-                    // Revisions tab: published courses that have an active pending revision
-                    if (filter === 'revisions') return !!(c.pendingRevision);
+                    const status = c.status === 'approved' ? 'published' : c.status;
+                    if (filter === 'published') return status === 'published' && c.is_public !== false;
+                    if (filter === 'draft') return status === 'draft';
+                    if (filter === 'rejected') return status === 'rejected' || status === 'appealed' || (status === 'pending_review' && c.rejection_reason);
+                    if (filter === 'private') return status === 'published' && c.is_public === false;
+                    if (filter === 'review') return status === 'pending_review' && !c.rejection_reason;
                     return false;
                 });
 
                 if (filtered.length === 0) {
                     grid.classList.add('hidden');
+
+                    // Dynamic empty state content based on filter
+                    let emptyIcon = 'menu_book';
+                    let emptyHeader = '';
+                    let emptyText = '';
+
+                    switch (filter) {
+                        case 'published':
+                            emptyIcon = 'public';
+                            emptyHeader = "No published courses yet";
+                            emptyText = "You don't have any live public courses. Finish drafting and submit a course for review to get it published.";
+                            break;
+                        case 'draft':
+                            emptyIcon = 'edit_note';
+                            emptyHeader = "No drafts found";
+                            emptyText = "You don't have any in-progress drafts. Start building a new course today.";
+                            break;
+                        case 'rejected':
+                            emptyIcon = 'gpp_bad';
+                            emptyHeader = "No rejected courses";
+                            emptyText = "You don't have any rejected or appealed courses. Great job maintaining quality guidelines!";
+                            break;
+                        case 'private':
+                            emptyIcon = 'lock';
+                            emptyHeader = "No private courses";
+                            emptyText = "Private courses require direct link sharing. You don't have any active private courses.";
+                            break;
+                        case 'review':
+                            emptyIcon = 'pending_actions';
+                            emptyHeader = "No courses in review";
+                            emptyText = "You don't have any courses currently waiting for admin approval.";
+                            break;
+                        default:
+                            emptyHeader = "You haven't created any courses yet";
+                            emptyText = "Your journey as an educator starts here. Create your first course and reach thousands of students worldwide.";
+                    }
+
+                    // Default generic zero-state for new instructors
+                    if (allCourses.length === 0) {
+                        emptyIcon = 'menu_book';
+                        emptyHeader = "You haven't created any courses yet";
+                        emptyText = "Your journey as an educator starts here. Create your first course and reach thousands of students worldwide.";
+                    }
+
+                    emptyState.innerHTML = `
+                        <div class="p-5 flex items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-full mb-6 w-24 h-24 shadow-inner mx-auto">
+                            <span class="material-symbols-outlined text-5xl text-slate-400 opacity-50">${emptyIcon}</span>
+                        </div>
+                        <h2 class="text-3xl font-black mb-4 dark:text-white tracking-tight">${emptyHeader}</h2>
+                        <p class="text-slate-500 dark:text-slate-400 text-lg max-w-md mb-10 leading-relaxed">${emptyText}</p>
+                        ${allCourses.length === 0 ? `
+                        <button onclick="window.location.href='/src/pages/instructor/instructor-courses/wizard.html'"
+                            class="bg-primary hover:bg-indigo-700 text-white px-10 py-5 rounded-2xl flex items-center gap-3 font-bold text-lg transition-all shadow-2xl shadow-indigo-200 dark:shadow-none hover:scale-[1.02] active:scale-[0.98] mx-auto">
+                            <span class="material-symbols-outlined text-2xl">add_circle</span>
+                            Create Your First Course
+                        </button>` : ''}
+                    `;
+
                     emptyState.classList.remove('hidden');
                 } else {
                     grid.classList.remove('hidden');
                     emptyState.classList.add('hidden');
-                    
+
                     grid.innerHTML = filtered.map(course => {
                         const isPrivate = course.is_public === false;
-                        const pendRev = course.pendingRevision;
+                        const displayStatus = course.status === 'approved' ? 'published' : course.status;
+
                         const statusColors = {
                             published: isPrivate ? 'bg-violet-100 text-violet-700' : 'bg-emerald-100 text-emerald-700',
                             draft: 'bg-slate-100 text-slate-700',
@@ -347,11 +440,14 @@
                             rejected: 'bg-rose-100 text-rose-700',
                             appealed: 'bg-indigo-100 text-indigo-700'
                         };
-                        const color = statusColors[course.status] || 'bg-slate-100';
-                        let formattedStatus = isPrivate ? 'PRIVATE' : course.status.replace('_', ' ').toUpperCase();
-                        
+                        const color = statusColors[displayStatus] || 'bg-slate-100';
+                        let formattedStatus = (isPrivate && displayStatus === 'published') ? 'PRIVATE' : displayStatus.replace('_', ' ').toUpperCase();
+
                         const isResubmitted = filter === 'rejected' && course.status === 'pending_review';
                         if (isResubmitted) formattedStatus = 'RESUBMITTED';
+
+                        // If this object represents a draft explicitly, we can add a Revision Draft indicator
+                        const isDraftRevision = course.is_revision && course.status === 'draft';
 
                         const copyLinkBtn = (filter === 'private') ? `
                             <button onclick="copyPrivateLink('${course.id}', this)"
@@ -361,44 +457,30 @@
                                 Copy Link
                             </button>` : '';
 
-                        // Revision status badge (shown alongside the main status badge)
-                        let revisionBadge = '';
-                        if (pendRev) {
-                            if (pendRev.version_status === 'pending_review') {
-                                revisionBadge = `<div class="px-3 py-1 rounded-full text-[10px] font-black bg-amber-100 text-amber-700 shadow-sm backdrop-blur-md flex items-center gap-1.5">
-                                    <span class="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></span>REVISION PENDING
-                                </div>`;
-                            } else if (pendRev.version_status === 'rejected') {
-                                revisionBadge = `<div class="px-3 py-1 rounded-full text-[10px] font-black bg-rose-100 text-rose-700 shadow-sm backdrop-blur-md flex items-center gap-1.5">
-                                    <span class="material-symbols-outlined text-xs">cancel</span>REVISION REJECTED
-                                </div>`;
-                            } else if (pendRev.version_status === 'draft') {
-                                revisionBadge = `<div class="px-3 py-1 rounded-full text-[10px] font-black bg-slate-100 text-slate-600 shadow-sm backdrop-blur-md">DRAFT IN PROGRESS</div>`;
-                            }
+                        const isPublished = course.status === 'published';
+                        
+                        let editBtn = '';
+                        if (course.status === 'pending_review') {
+                            editBtn = `<button onclick="withdrawReview('${course.id}')"
+                                title="Withdraw submission to edit"
+                                class="p-2 bg-amber-50 dark:bg-amber-900/20 rounded-lg text-amber-500 hover:text-amber-700 transition-colors">
+                                <span class="material-symbols-outlined text-xl">move_up</span>
+                            </button>`;
+                        } else if (isPublished) {
+                            editBtn = `<button onclick="editPublishedCourse('${course.id}')"
+                                title="Edit published course (creates a revision)"
+                                class="p-2 bg-slate-50 dark:bg-slate-800 rounded-lg text-slate-400 hover:text-primary transition-colors">
+                                <span class="material-symbols-outlined text-xl">edit_note</span>
+                            </button>`;
+                        } else {
+                            // Raw drafts, rejected, appealed
+                            editBtn = `<button onclick="window.location.href='/src/pages/instructor/instructor-courses/wizard.html?id=${course.id}'"
+                                title="Edit course"
+                                class="p-2 bg-slate-50 dark:bg-slate-800 rounded-lg text-slate-400 hover:text-primary transition-colors">
+                                <span class="material-symbols-outlined text-xl">edit_note</span>
+                            </button>`;
                         }
 
-                        // Edit: for published courses, use revision flow.
-                        // If a pendingRevision already exists, go directly to that draft.
-                        const isPublished = course.status === 'published';
-                        const editBtn = isPublished
-                            ? (pendRev
-                                ? `<button onclick="window.location.href='/src/pages/instructor/instructor-courses/wizard.html?id=${pendRev.id}&revision=true'"
-                                        title="Continue editing draft revision"
-                                        class="p-2 bg-amber-50 dark:bg-amber-900/20 rounded-lg text-amber-500 hover:text-amber-700 transition-colors">
-                                        <span class="material-symbols-outlined text-xl">edit_note</span>
-                                    </button>`
-                                : `<button onclick="editPublishedCourse('${course.id}')"
-                                        title="Edit published course (creates a revision)"
-                                        class="p-2 bg-slate-50 dark:bg-slate-800 rounded-lg text-slate-400 hover:text-primary transition-colors">
-                                        <span class="material-symbols-outlined text-xl">edit_note</span>
-                                    </button>`)
-                            : `<button onclick="window.location.href='/src/pages/instructor/instructor-courses/wizard.html?id=${course.id}'"
-                                    title="Edit course"
-                                    class="p-2 bg-slate-50 dark:bg-slate-800 rounded-lg text-slate-400 hover:text-primary transition-colors">
-                                    <span class="material-symbols-outlined text-xl">edit_note</span>
-                                </button>`;
-
-                        // Notify Update button (only when published)
                         const notifyBtn = isPublished ? `
                             <button onclick="openNotifyUpdateModal('${course.root_course_id || course.id}', '${course.id}')"
                                 title="Notify enrolled students of the latest version"
@@ -407,84 +489,133 @@
                                 Notify Update
                             </button>` : '';
 
-                        // Pending revision sub-banner: shows details of the in-progress edit
-                        const revisionBanner = pendRev ? (() => {
-                            const revStatusMap = {
-                                draft: { color: 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700', icon: 'edit_document', iconColor: 'text-slate-500', label: 'Draft in Progress', hint: 'Continue editing to submit for review.' },
-                                pending_review: { color: 'bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800', icon: 'pending', iconColor: 'text-amber-500', label: 'Revision Under Review', hint: 'Admin is reviewing your edits.' },
-                                rejected: { color: 'bg-rose-50 dark:bg-rose-900/10 border-rose-200 dark:border-rose-800', icon: 'cancel', iconColor: 'text-rose-500', label: 'Revision Rejected', hint: pendRev.rejection_reason ? `"${pendRev.rejection_reason.substring(0,60)}..."` : 'Open the wizard to fix and resubmit.' }
-                            };
-                            const s = revStatusMap[pendRev.version_status] || revStatusMap['draft'];
-                            return `<div class="mt-3 p-3 rounded-xl border ${s.color} flex items-start gap-3">
-                                <span class="material-symbols-outlined text-lg ${s.iconColor} mt-0.5 flex-shrink-0">${s.icon}</span>
-                                <div class="flex-1 min-w-0">
-                                    <p class="text-xs font-black uppercase tracking-widest ${s.iconColor}">${s.label}</p>
-                                    <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">${s.hint}</p>
-                                </div>
-                                <a href="/src/pages/instructor/instructor-courses/wizard.html?id=${pendRev.id}&revision=true"
-                                    class="ml-auto flex-shrink-0 text-[10px] font-bold text-primary hover:underline whitespace-nowrap">Open Draft →</a>
-                            </div>`;
-                        })() : '';
-
                         return `
-                            <div class="bg-white dark:bg-slate-900 rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-800 group hover:shadow-xl transition-all flex flex-col">
-                                <div class="relative aspect-video overflow-hidden">
-                                    <img src="${course.thumbnail_url || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80'}" 
-                                        class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="${course.title}">
+                            <div class="bg-white dark:bg-slate-900 rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 group border border-slate-200/60 dark:border-slate-800 flex flex-col h-full relative cursor-default">
+                                
+                                <!-- Thumbnail Section -->
+                                <div class="relative overflow-hidden shrink-0 aspect-[16/10]">
+                                    <img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                                        src="${course.thumbnail_url || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80'}" alt="${course.title}">
+                                    
                                     <div class="absolute top-4 right-4 flex flex-col items-end gap-2">
                                         <div class="px-3 py-1 rounded-full text-[10px] font-black ${isResubmitted ? 'bg-emerald-500 text-white shadow-lg' : color} shadow-sm backdrop-blur-md flex items-center gap-1.5">
                                             ${isResubmitted ? '<span class="w-2 h-2 bg-white rounded-full animate-pulse"></span>' : ''}
                                             ${formattedStatus}
                                         </div>
-                                        ${revisionBadge}
+                                        ${course.is_revision && course.status === 'draft' ? `
+                                        <div class="px-2.5 py-1 rounded-full text-[9px] font-black bg-blue-500/90 text-white shadow-md backdrop-blur-md flex items-center gap-1">
+                                            <span class="material-symbols-outlined text-[11px]">edit_note</span>
+                                            Revision Draft
+                                        </div>` : ''}
                                     </div>
                                 </div>
-                                <div class="p-6 flex-1 flex flex-col">
-                                    <p class="text-xs font-bold text-primary uppercase tracking-widest mb-2">${course.category?.name || 'Uncategorized'}</p>
-                                    <h3 class="font-bold text-lg dark:text-white mb-2 line-clamp-1">${course.title}</h3>
-                                    <p class="text-sm text-slate-500 dark:text-slate-400 mb-1 line-clamp-1">${course.subtitle || 'Learn something new today with this comprehensive course.'}</p>
-                                    ${revisionBanner}
+
+                                <!-- Content Section -->
+                                <div class="p-5 flex-1 flex flex-col">
+                                    <!-- Category & Level -->
+                                    <div class="flex items-center justify-between mb-3">
+                                        <span class="text-[10px] font-bold uppercase tracking-widest text-primary/80 dark:text-primary/90">${course.category?.name || 'Uncategorized'}</span>
+                                        ${course.level === 'Beginner' ? `
+                                            <span class="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                                                <span class="material-symbols-outlined text-[12px]">signal_cellular_alt_1_bar</span>Beg</span>` :
+                                course.level === 'Intermediate' ? `
+                                            <span class="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
+                                                <span class="material-symbols-outlined text-[12px]">signal_cellular_alt_2_bar</span>Int</span>` :
+                                    course.level === 'Expert' ? `
+                                            <span class="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400">
+                                                <span class="material-symbols-outlined text-[12px]">signal_cellular_alt</span>Exp</span>` :
+                                        `<span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">${course.level || 'All'}</span>`
+                            }
+                                    </div>
+
+                                    <h3 class="font-bold text-slate-900 dark:text-white mb-4 line-clamp-2 leading-tight text-lg group-hover:text-primary transition-colors">
+                                        ${course.title || 'Untitled Course'}</h3>
+
+                                    <!-- Metadata Bar -->
+                                    <div class="flex items-center justify-between py-2.5 px-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800/80 mb-6 mt-auto">
+                                        <div class="flex items-center gap-1.5 min-w-0">
+                                            <span class="material-symbols-outlined text-blue-500 text-sm shrink-0">menu_book</span>
+                                            <span class="text-[11px] font-semibold text-slate-700 dark:text-slate-300 truncate">${course.total_lessons ?? 0} Les.</span>
+                                        </div>
+                                        
+                                        <span class="text-slate-200 dark:text-slate-700 mx-1 flex items-center">
+                                            <span class="material-symbols-outlined text-[10px]">chevron_right</span>
+                                        </span>
+
+                                        <div class="flex items-center gap-1.5 min-w-0">
+                                            <span class="material-symbols-outlined text-amber-500 text-sm shrink-0">quiz</span>
+                                            <span class="text-[11px] font-semibold text-slate-700 dark:text-slate-300 truncate">${course.total_quizzes ?? 0} Quiz</span>
+                                        </div>
+
+                                        <span class="text-slate-200 dark:text-slate-700 mx-1 flex items-center">
+                                            <span class="material-symbols-outlined text-[10px]">chevron_right</span>
+                                        </span>
+
+                                        <div class="flex items-center gap-1.5 min-w-0">
+                                            <span class="material-symbols-outlined text-emerald-500 text-sm shrink-0">attachment</span>
+                                            <span class="text-[11px] font-semibold text-slate-700 dark:text-slate-300 truncate">${course.total_resources ?? 0} Res.</span>
+                                        </div>
+                                    </div>
                                     
+                                    <!-- Rejection reason if any -->
                                     ${course.rejection_reason && filter === 'rejected' ? `
-                                        <div class="mb-6 p-4 rounded-xl bg-rose-50 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-900/30">
+                                        <div class="mb-4 p-4 rounded-xl bg-rose-50 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-900/30">
                                             <p class="text-[10px] font-black text-rose-500 uppercase tracking-widest mb-1 flex items-center gap-1.5">
                                                 <span class="material-symbols-outlined text-sm">info</span>
-                                                Previous Rejection Reason
+                                                Rejection Reason
                                             </p>
                                             <p class="text-xs text-rose-700 dark:text-rose-400 font-medium italic">"${course.rejection_reason.length > 80 ? course.rejection_reason.substring(0, 80) + '...' : course.rejection_reason}"</p>
                                         </div>
                                     ` : ''}
-                                    
-                                    <div class="mt-auto flex items-center justify-between pt-4 border-t border-slate-50 dark:border-slate-800">
-                                        <div class="flex items-center gap-2">
-                                            <span class="text-sm font-bold dark:text-white">${course.price ? '$' + course.price : 'Free'}</span>
-                                            ${course.enrolled_students_count > 0 ? `
-                                                <span class="flex items-center gap-1 text-[10px] font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 dark:text-slate-400 px-2 py-1 rounded-full">
-                                                    <span class="material-symbols-outlined text-[12px]">group</span>
-                                                    ${course.enrolled_students_count}
-                                                </span>
-                                            ` : ''}
+
+                                    <!-- Actions / Price footer -->
+                                    <div class="pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-4">
+                                        <div class="flex items-center justify-between">
+                                            <!-- Stars block -->
+                                            <div class="flex items-center gap-1.5">
+                                                <div class="flex text-amber-400 text-[10px]">
+                                                    ${(() => {
+                                const rating = parseFloat(course.avg_rating || 0);
+                                let starsHtml = '';
+                                const fullStars = Math.floor(rating);
+                                const hasHalfStar = rating % 1 >= 0.5;
+                                for (let i = 1; i <= 5; i++) {
+                                    if (i <= fullStars) starsHtml += '<span class="material-symbols-outlined text-xs">star</span>';
+                                    else if (i === fullStars + 1 && hasHalfStar) starsHtml += '<span class="material-symbols-outlined text-xs">star_half</span>';
+                                    else starsHtml += '<span class="material-symbols-outlined text-xs text-slate-200 dark:text-slate-700">star</span>';
+                                }
+                                return starsHtml;
+                            })()}
+                                                </div>
+                                                <span class="text-[11px] font-bold text-slate-900 dark:text-slate-100">${parseFloat(course.avg_rating || 0).toFixed(1)}</span>
+                                            </div>
+                                            <!-- Price -->
+                                            <span class="text-lg font-black text-slate-900 dark:text-white leading-none">
+                                                ${course.price ? '$' + course.price : 'Free'}
+                                            </span>
                                         </div>
-                                        <div class="flex items-center gap-2">
+
+                                        <!-- Instructor action buttons -->
+                                        <div class="flex flex-wrap items-center gap-2 justify-end">
                                             ${copyLinkBtn}
                                             
                                             ${course.status === 'rejected' ? `
                                                 <button onclick="confirmRejection('${course.id}')"
                                                     title="Accept rejection and fix"
-                                                    class="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-lg text-xs font-bold hover:bg-emerald-100 transition-colors">
+                                                    class="flex border border-emerald-500/20 items-center gap-1.5 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-lg text-xs font-bold hover:bg-emerald-100 transition-colors">
                                                     <span class="material-symbols-outlined text-base">check_circle</span>
                                                     FIX
                                                 </button>
                                                 <button onclick="openAppealModal('${course.id}')"
                                                     title="Appeal decision"
-                                                    class="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-lg text-xs font-bold hover:bg-indigo-100 transition-colors">
+                                                    class="flex border border-indigo-500/20 items-center gap-1.5 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-lg text-xs font-bold hover:bg-indigo-100 transition-colors">
                                                     <span class="material-symbols-outlined text-base">campaign</span>
                                                     APPEAL
                                                 </button>
                                             ` : ''}
 
                                             ${course.status === 'appealed' ? `
-                                                <div class="px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-lg text-[10px] font-black uppercase tracking-widest">
+                                                <div class="px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-lg text-[10px] font-black uppercase tracking-widest">
                                                     Appeal Pending
                                                 </div>
                                             ` : ''}
@@ -494,7 +625,7 @@
                                             <!-- Delete button -->
                                             <button onclick="openDeleteModal('${course.id}', \`${course.title.replace(/`/g, "'")}\`)"
                                                 title="Delete course"
-                                                class="p-2 bg-slate-50 dark:bg-slate-800 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                                                class="p-2 bg-slate-50 border border-slate-200 dark:border-slate-800 dark:bg-slate-800/50 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 hover:border-red-500/20 dark:hover:bg-red-900/20 dark:hover:border-red-500/20 transition-colors">
                                                 <span class="material-symbols-outlined text-xl">delete</span>
                                             </button>
                                         </div>
@@ -506,8 +637,59 @@
                 }
             }
 
+            window.editPublishedCourse = async (courseId) => {
+                const btn = event ? event.currentTarget : null;
+                const originalHtml = btn ? btn.innerHTML : '';
+                if (btn) {
+                    btn.innerHTML = '<span class="material-symbols-outlined text-xl animate-spin">autorenew</span>';
+                    btn.disabled = true;
+                }
+
+                try {
+                    const revisionId = await CourseService.getOrCreateCourseRevision(courseId);
+                    window.location.href = `/src/pages/instructor/instructor-courses/wizard.html?id=${revisionId}&revision=true`;
+                } catch (error) {
+                    console.error("Failed to edit course:", error);
+                    window.showToast("Failed to start editing. Please try again.", "error");
+                    if (btn) {
+                        btn.innerHTML = originalHtml;
+                        btn.disabled = false;
+                    }
+                }
+            };
+
+            window.withdrawReview = (courseId) => {
+                const btn = event ? event.currentTarget : null;
+                const originalHtml = btn ? btn.innerHTML : '';
+                
+                window.showConfirmModal({
+                    title: "Withdraw Course",
+                    message: "Are you sure you want to withdraw this course from review? It will be returned to Draft status.",
+                    confirmText: "Withdraw",
+                    variant: "danger"
+                }, async () => {
+                    if (btn) {
+                        btn.innerHTML = '<span class="material-symbols-outlined text-xl animate-spin">autorenew</span>';
+                        btn.disabled = true;
+                    }
+
+                    try {
+                        await CourseService.withdrawCourseReview(courseId);
+                        await initInstructorCourses(); // re-fetch the flat list
+                        window.showToast("Course withdrawn successfully.", "success");
+                    } catch (error) {
+                        console.error("Failed to withdraw review:", error);
+                        window.showToast("Failed to withdraw submission. Please try again.", "error");
+                        if (btn) {
+                            btn.innerHTML = originalHtml;
+                            btn.disabled = false;
+                        }
+                    }
+                });
+            };
+
             // Copy private course link to clipboard
-            window.copyPrivateLink = function(courseId, btn) {
+            window.copyPrivateLink = function (courseId, btn) {
                 const link = `${window.location.origin}/src/pages/marketplace/course-details/index.html?id=${courseId}`;
                 navigator.clipboard.writeText(link).then(() => {
                     const original = btn.innerHTML;
@@ -525,7 +707,7 @@
             };
 
             // Delete modal handlers
-            window.openDeleteModal = function(courseId, courseTitle) {
+            window.openDeleteModal = function (courseId, courseTitle) {
                 courseToDelete = courseId;
                 document.getElementById('delete-course-title').textContent = `"${courseTitle}"`;
                 document.getElementById('delete-confirm-input').value = '';
@@ -538,7 +720,7 @@
                 setTimeout(() => document.getElementById('delete-confirm-input').focus(), 100);
             };
 
-            window.closeDeleteModal = function() {
+            window.closeDeleteModal = function () {
                 const modal = document.getElementById('delete-modal');
                 modal.classList.add('hidden');
                 modal.classList.remove('flex');
@@ -557,41 +739,41 @@
                 }
             });
 
-            window.confirmDeleteCourse = async function() {
+            window.confirmDeleteCourse = async function () {
                 if (!courseToDelete) return;
-                
+
                 const deleteId = courseToDelete; // Capture ID
-                
+
                 // 1. Close modal and update UI instantly
                 window.closeDeleteModal();
-                
+
                 // 2. Optimistic update: Remove from local array immediately
                 allCourses = allCourses.filter(c => c.id !== deleteId);
                 render(currentFilter);
                 updateCounters(allCourses);
-                
+
                 try {
                     // 3. Perform actual deletion in background
                     await CourseService.deleteCourse(deleteId);
-                    
+
                     // 4. Minimal background fetch to keep in sync
                     const freshData = await CourseService.getInstructorCoursesGrouped(null);
                     allCourses = freshData;
                     // No need to re-render if it matches our optimistic state, 
                     // but we update counters just in case stats changed
                     updateCounters(allCourses);
-                    
+
                 } catch (error) {
                     console.error('Background delete failed:', error);
                     showToast('Failed to delete course. Restoring list...', 'error');
-                    fetchAndRender(); 
+                    fetchAndRender();
                 }
             };
 
             // Appeal Handlers
             let courseToAppeal = null;
 
-            window.openAppealModal = function(courseId) {
+            window.openAppealModal = function (courseId) {
                 courseToAppeal = courseId;
                 document.getElementById('appeal-reason').value = '';
                 const modal = document.getElementById('appeal-modal');
@@ -599,25 +781,25 @@
                 modal.classList.add('flex');
             };
 
-            window.closeAppealModal = function() {
+            window.closeAppealModal = function () {
                 const modal = document.getElementById('appeal-modal');
                 modal.classList.add('hidden');
                 modal.classList.remove('flex');
                 courseToAppeal = null;
             };
 
-            window.submitAppeal = async function() {
+            window.submitAppeal = async function () {
                 const reason = document.getElementById('appeal-reason').value.trim();
                 if (!reason) return showToast('Please provide a reason for your appeal.', 'warning');
 
                 const btn = document.getElementById('appeal-submit-btn');
                 const originalText = btn.innerText;
-                
+
                 try {
                     btn.disabled = true;
                     btn.innerText = 'Submitting...';
                     await CourseService.appealCourse(courseToAppeal, reason);
-                    
+
                     showToast('Appeal submitted successfully! Our team will review it shortly.', 'success');
                     window.closeAppealModal();
                     await fetchAndRender();
@@ -630,19 +812,25 @@
                 }
             };
 
-            window.confirmRejection = async function(courseId) {
-                if (!confirm('Are you sure? This will move the course to Drafts for you to edit and resubmit.')) return;
-                try {
-                    await CourseService.confirmRejection(courseId);
-                    await fetchAndRender();
-                } catch (e) {
-                    console.error('Confirm rejection failed:', e);
-                    alert('Failed to process confirmation.');
-                }
+            window.confirmRejection = async function (courseId) {
+                window.showConfirmModal({
+                    title: "Acknowledge Rejection",
+                    message: "Are you sure? This will move the course to Drafts for you to edit and resubmit.",
+                    confirmText: "Move to Drafts"
+                }, async () => {
+                    try {
+                        await CourseService.confirmRejection(courseId);
+                        await fetchAndRender();
+                        window.showToast("Course moved to Drafts.", "success");
+                    } catch (e) {
+                        console.error('Confirm rejection failed:', e);
+                        window.showToast('Failed to process confirmation.', 'error');
+                    }
+                });
             };
 
             /** Edit published course — create/return revision draft, go to wizard */
-            window.editPublishedCourse = async function(courseId) {
+            window.editPublishedCourse = async function (courseId) {
                 const btn = event.currentTarget;
                 btn.disabled = true;
                 btn.innerHTML = '<span class="material-symbols-outlined text-xl animate-spin">progress_activity</span>';
@@ -659,11 +847,11 @@
 
             /** Notify Update modal — let instructor send upgrade offers */
             let notifyUpdateState = { rootCourseId: null, toVersionId: null };
-            window.openNotifyUpdateModal = async function(rootCourseId, toVersionId) {
+            window.openNotifyUpdateModal = async function (rootCourseId, toVersionId) {
                 notifyUpdateState = { rootCourseId, toVersionId };
                 document.getElementById('notify-update-modal').classList.remove('hidden');
                 document.getElementById('notify-update-modal').classList.add('flex');
-                
+
                 const select = document.getElementById('notify-coupon-select');
                 select.innerHTML = '<option value="">Loading coupons...</option>';
                 select.disabled = true;
@@ -671,7 +859,7 @@
                 try {
                     const coupons = await CourseService.getCourseCoupons(toVersionId);
                     const updateCoupons = coupons.filter(c => c.coupon_type === 'update_migration' || c.coupon_type === 'general');
-                    
+
                     let options = ['<option value="">No coupon (Full price upgrade)</option>'];
                     if (updateCoupons.length > 0) {
                         options = options.concat(updateCoupons.map(c => `<option value="${c.id}">${c.code} (${c.discount_percent}% off${c.coupon_type === 'update_migration' ? ' - Update Only' : ''})</option>`));
@@ -684,14 +872,14 @@
                     select.disabled = false;
                 }
             };
-            window.closeNotifyUpdateModal = function() {
+            window.closeNotifyUpdateModal = function () {
                 document.getElementById('notify-update-modal').classList.add('hidden');
                 document.getElementById('notify-update-modal').classList.remove('flex');
             };
-            window.submitNotifyUpdate = async function() {
+            window.submitNotifyUpdate = async function () {
                 const btn = document.getElementById('notify-update-submit-btn');
                 const couponId = document.getElementById('notify-coupon-select').value || null;
-                
+
                 btn.disabled = true;
                 btn.innerHTML = '<span class="material-symbols-outlined text-[18px] animate-spin">progress_activity</span> Sending...';
                 try {
