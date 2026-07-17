@@ -453,6 +453,7 @@ async function confirmBooking() {
             const [endH, endM] = selectedSlot.end_time.split(':').map(Number);
             const durationMinutes = (endH * 60 + endM) - (startH * 60 + startM);
 
+            const isMonthly = duration === 'monthly';
             const sessionData = {
                 studentId: session.user.id,
                 mentorId: currentMentor.instructor_id,
@@ -463,6 +464,9 @@ async function confirmBooking() {
                 studentPhone: studentPhone,
                 durationMinutes: durationMinutes,
                 notes: `Type: ${duration}`,
+                mentorshipType: isMonthly ? 'program' : 'single',
+                durationDays: isMonthly ? 30 : null,
+                totalSessions: isMonthly ? 30 : 1
             };
 
             // Step 1: Create the session record
@@ -471,8 +475,8 @@ async function confirmBooking() {
         }
 
         // Step 2: Calculate the price to charge
-        const isMonthly = duration === 'monthly';
-        const baseAmount = isMonthly
+        const isMonthlyForPrice = duration === 'monthly';
+        const baseAmount = isMonthlyForPrice
             ? (currentMentor.monthly_rate || currentMentor.hourly_rate * 20)
             : (currentMentor.hourly_rate || 0);
 

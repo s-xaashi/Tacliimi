@@ -2,6 +2,27 @@ import { supabase } from '/src/services/supabaseClient.js';
 import { AuthService } from '/src/services/authService.js';
 import { MentorService } from '/src/services/mentorService.js';
 import { showToast, showConfirmModal, showAlertModal } from '/src/services/uiUtils.js';
+import { buildProgramProgressHtml, getProgramMeetingStatus, openMentorshipRescheduleModal } from '/src/utils/js/mentorshipUI.js';
+
+window.triggerAdminReschedule = function(sessionId, currentScheduledAt, currentDurationStr, studentNameStr) {
+    openMentorshipRescheduleModal(
+        sessionId, currentScheduledAt, currentDurationStr, studentNameStr, 'admin',
+        async (id, newDateObj, newDur, note) => {
+            const session = await AuthService.getSession();
+            if (!session || !session.user) throw new Error("Not logged in");
+
+            const { error } = await supabase.rpc('admin_reschedule_session', {
+                p_admin_id: session.user.id,
+                p_session_id: id,
+                p_new_scheduled_at: newDateObj.toISOString(),
+                p_new_duration_minutes: newDur,
+                p_note: note || null
+            });
+            if (error) throw error;
+            if (typeof window.location.reload === 'function') setTimeout(() => window.location.reload(), 500);
+        }
+    );
+};
 
 document.addEventListener('DOMContentLoaded', async () => {
     const overviewList = document.getElementById('overview-list');
@@ -15,6 +36,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let allSessions = [];
     let currentTab = 'overview';
     let selectedStatus = 'all';
+    let selectedType = 'all';
     let startDate = null;
     let endDate = null;
 
@@ -118,13 +140,28 @@ document.addEventListener('DOMContentLoaded', async () => {
             const status = (session.booking_status || session.status || 'pending').toLowerCase();
             const start = new Date(session.scheduled_at);
             const duration = session.duration_minutes || 60;
-            const end = new Date(start.getTime() + duration * 60000);
+            let end = new Date(start.getTime() + duration * 60000);
+            if (session.mentorship_type === 'program' && session.end_date) {
+                end = new Date(session.end_date);
+                end.setHours(23, 59, 59, 999);
+            }
             
+            // For program mentorships, override: if within end_date, it is still active
+            // regardless of whether booking_status was prematurely set to 'completed'
+            const isProgramStillActive = session.mentorship_type === 'program' 
+                && session.end_date 
+                && now < end 
+                && status !== 'cancelled';
+
             // Exclude sessions that should be in the "Completed" tab
             const isAutoCompleted = status === 'confirmed' && now >= end;
-            const matchesActiveTab = status !== 'cancelled' && status !== 'rejected' && status !== 'completed' && !isAutoCompleted;
+            const matchesActiveTab = isProgramStillActive || (
+                status !== 'cancelled' && status !== 'rejected' && status !== 'completed' && !isAutoCompleted
+            );
             
             let matchesStatusFilter = selectedStatus === 'all' || status === selectedStatus;
+            // For programs still active despite 'completed' status in DB, match 'confirmed' filter too
+            if (isProgramStillActive && selectedStatus === 'confirmed') matchesStatusFilter = true;
             
             // Special handling for legacy "Started" filter
             const isStarted = now >= start && now < end;
@@ -132,7 +169,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 matchesStatusFilter = isStarted;
             }
             
-            return matchesActiveTab && matchesStatusFilter;
+            let matchesTypeFilter = selectedType === 'all' || (session.mentorship_type || 'single') === selectedType;
+            
+            return matchesActiveTab && matchesStatusFilter && matchesTypeFilter;
         });
 
         const overviewPane = document.getElementById('overview-pane');
@@ -163,13 +202,26 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             const start = new Date(session.scheduled_at);
             const duration = session.duration_minutes || 60;
-            const end = new Date(start.getTime() + duration * 60000);
-            
-            const isStarted = now >= start && now < end;
+            // Meeting slot end — always duration-based for badge logic
+            const meetingSlotEnd = new Date(start.getTime() + duration * 60000);
+            // program lifecycle end (for health/filter use only)
+            let progEnd = meetingSlotEnd;
+            if (session.mentorship_type === 'program' && session.end_date) {
+                progEnd = new Date(session.end_date);
+                progEnd.setHours(23, 59, 59, 999);
+            }
+
+            // isMeetingLive: only true during the actual meeting slot
+            const isMeetingLive = now >= start && now < meetingSlotEnd;
+            // For program: after slot ends, compute next meeting
+            const progStatus = session.mentorship_type === 'program' ? getProgramMeetingStatus(session) : null;
+            const isStarted = progStatus ? progStatus.isMeetingLive : isMeetingLive;
+            const showNextMeeting = progStatus && !progStatus.isMeetingLive && progStatus.nextMeetingLabel && now >= progStatus.meetingSlotEnd;
 
             const dateStr = start.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
             const timeStr = start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-            const endStr = end.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+            // Display end time is always the meeting slot, not program end
+            const endStr = meetingSlotEnd.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
             
             let statusColor = "bg-slate-100 text-slate-600";
             let statusLabel = (session.booking_status || '').replace(/_/g, ' ');
@@ -177,6 +229,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (isStarted) {
                 statusColor = "bg-amber-400 text-white animate-pulse shadow-lg shadow-amber-400/20";
                 statusLabel = "Session Started";
+            } else if (showNextMeeting) {
+                statusColor = "bg-indigo-100 text-indigo-600 border border-indigo-200";
+                statusLabel = `Next: ${progStatus.nextMeetingLabel}`;
             } else {
                 if (session.booking_status === 'confirmed') statusColor = "bg-emerald-100 text-emerald-600";
                 if (session.booking_status === 'pending_review') statusColor = "bg-amber-100 text-amber-600";
@@ -187,10 +242,55 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const studentAvatar = student.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.full_name)}&background=6366f1&color=fff`;
             const mentorAvatar = mentor.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(mentor.full_name)}&background=7c3aed&color=fff`;
+            
+            let healthHtml = '';
+            if (session.mentorship_type === 'program') {
+                const dbStartDateStr = session.program_start_date || session.scheduled_at;
+                const dbStartDate = new Date(dbStartDateStr);
+                const dbDuration = session.duration_days || 30;
+                
+                const hasStarted = (session.booking_status === 'confirmed' || session.booking_status === 'completed');
+                
+                let healthColor = 'text-slate-500 bg-slate-100 dark:bg-slate-800';
+                let healthIcon = 'schedule';
+                let healthLabel = 'Inactive';
+                
+                if (hasStarted) {
+                    const daysElapsed = Math.floor((now.getTime() - dbStartDate.getTime()) / (1000 * 60 * 60 * 24));
+                    const progressPct = Math.min(100, Math.round((daysElapsed / dbDuration) * 100));
+                    const completedSessions = session.completed_sessions_count || 0;
+                    const daysRemaining = Math.max(0, dbDuration - daysElapsed);
+                    
+                    // Health is time-based: on track if program is progressing normally
+                    if (progressPct < 100) {
+                        healthColor = 'text-emerald-700 bg-emerald-100 border-emerald-300 dark:bg-emerald-900/40 dark:border-emerald-800';
+                        healthIcon = 'vital_signs';
+                        healthLabel = `On Track · ${daysRemaining}d left`;
+                    } else {
+                        healthColor = 'text-blue-700 bg-blue-100 border-blue-300 dark:bg-blue-900/40 dark:border-blue-800';
+                        healthIcon = 'done_all';
+                        healthLabel = 'Duration Complete';
+                    }
+                }
+
+                healthHtml = `
+                    <div class="flex items-center gap-1 ${healthColor} px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider mt-1.5 border shadow-sm" title="Program Health Indicator">
+                        <span class="material-symbols-outlined text-[10px]">${healthIcon}</span> ${healthLabel}
+                    </div>
+                `;
+            }
+
+            const programHtml = buildProgramProgressHtml(session);
+
+            let cardClasses = "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-indigo-700";
+            if (session.mentorship_type === 'program') {
+                cardClasses = "bg-amber-50/20 dark:bg-amber-900/10 border-2 border-amber-200 dark:border-amber-900/30 shadow-md shadow-amber-500/5 hover:border-amber-400 dark:hover:border-amber-700";
+            }
 
             return `
-                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 hover:shadow-xl hover:border-indigo-300 dark:hover:border-indigo-700 transition-all duration-300 group relative session-card" data-session-id="${session.id}">
-                    <div class="flex flex-col lg:flex-row items-center justify-between gap-8">
+                <div class="${cardClasses} rounded-3xl p-6 hover:shadow-xl transition-all duration-300 group relative session-card" data-session-id="${session.id}">
+                    ${session.mentorship_type === 'program' ? `<div class="absolute -top-3 right-8 z-10"><div class="px-3 py-1 bg-gradient-to-r from-amber-200 to-yellow-400 text-amber-900 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-1 shadow-lg shadow-amber-500/20"><span class="material-symbols-outlined text-[14px]">workspace_premium</span> Program Mentorship</div></div>` : ''}
+                    <div class="flex flex-col lg:flex-row items-center justify-between gap-8 mt-2 lg:mt-0">
                         
                         <!-- Connection Flow Container -->
                         <div class="flex items-center justify-between gap-4 md:gap-8 flex-1 w-full max-w-4xl">
@@ -217,9 +317,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                                     <div class="w-8 md:w-16 h-0.5 bg-gradient-to-r from-indigo-100 to-indigo-400 dark:from-indigo-900/50 dark:to-indigo-500 rounded-full"></div>
                                     <span class="material-symbols-outlined text-indigo-500 text-base -ml-2">chevron_right</span>
                                 </div>
-                                <span class="px-2 py-0.5 ${statusColor} rounded-full text-[9px] font-black uppercase tracking-tighter whitespace-nowrap border border-current opacity-80">
+                                <span class="px-2 py-0.5 ${statusColor} rounded-full text-[9px] font-black uppercase tracking-tighter whitespace-nowrap border border-current opacity-80 mt-1">
                                     ${statusLabel}
                                 </span>
+                                ${healthHtml}
                             </div>
 
                             <!-- Mentor -->
@@ -251,11 +352,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                                      <span class="text-[11px] text-slate-500 font-medium">${timeStr} — ${endStr}</span>
                                  </div>
                              </div>
-                             <div class="w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 group-hover:bg-indigo-50 dark:group-hover:bg-indigo-900/30 group-hover:text-indigo-600 transition-all">
-                                 <span class="material-symbols-outlined">launch</span>
+                             <div class="flex items-center gap-2">
+                                 <button onclick="event.stopPropagation(); window.openRescheduleModal('${session.id}', '${session.scheduled_at}', '${duration}', '${(student.full_name || 'Student').replace(/'/g, "\\'")}', 'admin')" class="w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 transition-all z-10 relative">
+                                     <span class="material-symbols-outlined text-[18px]">edit_calendar</span>
+                                 </button>
+                                 <div class="w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 group-hover:bg-indigo-50 dark:group-hover:bg-indigo-900/30 group-hover:text-indigo-600 transition-all">
+                                     <span class="material-symbols-outlined">launch</span>
+                                 </div>
                              </div>
                         </div>
                     </div>
+                    ${programHtml}
                 </div>
             `;
         }).join('');
@@ -279,7 +386,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             const status = s.booking_status || s.status;
             const start = new Date(s.scheduled_at);
             const duration = s.duration_minutes || 60;
-            const end = new Date(start.getTime() + duration * 60000);
+            let end = new Date(start.getTime() + duration * 60000);
+            if (s.mentorship_type === 'program' && s.end_date) {
+                end = new Date(s.end_date);
+                end.setHours(23, 59, 59, 999);
+            }
+
+            // If this is a program still within its end_date, it belongs in Active, not Completed
+            const isProgramStillActive = s.mentorship_type === 'program'
+                && s.end_date
+                && now < end
+                && status !== 'cancelled';
+            if (isProgramStillActive) return false;
             
             const isCompleted = ['completed', 'cancelled'].includes(status) || (status === 'confirmed' && now >= end);
             
@@ -312,7 +430,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             const mentor = session.mentor || { full_name: 'Unknown' };
             const start = new Date(session.scheduled_at);
             const duration = session.duration_minutes || 60;
-            const end = new Date(start.getTime() + duration * 60000);
+            let end = new Date(start.getTime() + duration * 60000);
+            if (session.mentorship_type === 'program' && session.end_date) {
+                end = new Date(session.end_date);
+                end.setHours(23, 59, 59, 999);
+            }
 
             const dateStr = start.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
             const timeStr = start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
@@ -525,6 +647,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
     }
 
+    // Type Filter Logic
+    const typeFilter = document.getElementById('type-filter');
+    if (typeFilter) {
+        typeFilter.onchange = (e) => {
+            selectedType = e.target.value;
+            renderOverview();
+        };
+    }
+
     // Date Filter Listeners
     const startDateInput = document.getElementById('start-date');
     const endDateInput = document.getElementById('end-date');
@@ -668,3 +799,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Initial Load
     fetchData();
 });
+

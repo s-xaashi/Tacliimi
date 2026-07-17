@@ -1,6 +1,7 @@
 import { supabase } from '/src/services/supabaseClient.js';
 import { AuthService } from '/src/services/authService.js';
 import { MentorService } from '/src/services/mentorService.js';
+import { buildProgramProgressHtml, getProgramMeetingStatus } from '/src/utils/js/mentorshipUI.js';
 
 let currentUserSession = null;
 let currentProfile = null;
@@ -487,16 +488,33 @@ async function loadMentors(forceRefresh = false) {
 
         const upcomingSessions = sessions.filter(s => {
             const status = s.booking_status || s.status;
-            const start = new Date(s.scheduled_at);
-            const duration = s.duration_minutes || 60;
-            const end = new Date(start.getTime() + duration * 60000);
-            return (status === 'confirmed' || status === 'upcoming') && now < end;
+            let end;
+            if (s.mentorship_type === 'program' && s.end_date) {
+                end = new Date(s.end_date);
+                end.setHours(23, 59, 59, 999);
+            } else {
+                const start = new Date(s.scheduled_at);
+                const duration = s.duration_minutes || 60;
+                end = new Date(start.getTime() + duration * 60000);
+            }
+            // Programs still within end_date stay in Upcoming even if DB status was prematurely set
+            const isProgramStillActive = s.mentorship_type === 'program' && s.end_date && now < end && status !== 'cancelled';
+            return isProgramStillActive || ((status === 'confirmed' || status === 'upcoming') && now < end);
         });
         const historySessions = sessions.filter(s => {
             const status = s.booking_status || s.status;
-            const start = new Date(s.scheduled_at);
-            const duration = s.duration_minutes || 60;
-            const end = new Date(start.getTime() + duration * 60000);
+            let end;
+            if (s.mentorship_type === 'program' && s.end_date) {
+                end = new Date(s.end_date);
+                end.setHours(23, 59, 59, 999);
+            } else {
+                const start = new Date(s.scheduled_at);
+                const duration = s.duration_minutes || 60;
+                end = new Date(start.getTime() + duration * 60000);
+            }
+            // Don't put a program in history if it's still within its end_date
+            const isProgramStillActive = s.mentorship_type === 'program' && s.end_date && now < end && status !== 'cancelled';
+            if (isProgramStillActive) return false;
             return ['completed', 'cancelled'].includes(status) || ((status === 'confirmed' || status === 'upcoming') && now >= end);
         });
 
@@ -508,11 +526,14 @@ async function loadMentors(forceRefresh = false) {
         const renderSessionCard = (session, isHistory = false) => {
             const date = new Date(session.scheduled_at);
             const duration = session.duration_minutes || 60;
-            const endDate = new Date(date.getTime() + duration * 60000);
-            const isCompleted = now >= endDate;
+            // Meeting slot end — always duration-based, never program end_date
+            const meetingSlotEnd = new Date(date.getTime() + duration * 60000);
+            // Legacy endDate for rendering time range only
+            const endDate = meetingSlotEnd;
+            const isCompleted = now >= meetingSlotEnd;
             const dateStr = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
             const startTimeStr = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-            const endTimeStr = endDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+            const endTimeStr = meetingSlotEnd.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
             
             const mentor = session.mentor || {};
             const bookingStatus = session.booking_status || session.status || 'pending_review';
@@ -521,6 +542,10 @@ async function loadMentors(forceRefresh = false) {
             let statusColor = "bg-amber-100 dark:bg-amber-900/30 text-amber-600";
             let actionHtml = '';
             let cardBg = "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800";
+            // For programs: use isMeetingLive from shared helper; for single sessions: use slot times
+            const progStatus = session.mentorship_type === 'program' ? getProgramMeetingStatus(session) : null;
+            const isStarted = progStatus ? progStatus.isMeetingLive : (now >= date && now < meetingSlotEnd);
+            const showNextMeeting = progStatus && !progStatus.isMeetingLive && progStatus.nextMeetingLabel && now >= progStatus.meetingSlotEnd;
 
             if (bookingStatus === 'pending_payment') {
                 statusLabel = "Awaiting Payment";
@@ -545,12 +570,14 @@ async function loadMentors(forceRefresh = false) {
                 statusColor = "bg-purple-100 dark:bg-purple-900/30 text-purple-600";
                 statusLabel = "Negotiating Location";
             } else if (bookingStatus === 'confirmed' || bookingStatus === 'upcoming') {
-                const isStarted = now >= date && now < endDate;
 
                 if (isStarted) {
                     statusColor = "bg-emerald-500 text-white animate-pulse shadow-lg shadow-emerald-500/20";
                     statusLabel = "Session Started";
-                } else if (isCompleted) {
+                } else if (showNextMeeting) {
+                    statusColor = "bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600";
+                    statusLabel = `Next: ${progStatus.nextMeetingLabel}`;
+                } else if (isCompleted && !progStatus) {
                     statusColor = "bg-slate-100 dark:bg-slate-800 text-slate-500";
                     statusLabel = "Completed";
                 } else {
@@ -590,21 +617,28 @@ async function loadMentors(forceRefresh = false) {
                     </div>
                 </div>` : '';
 
+            const isProgram = session.mentorship_type === 'program';
+            if (isProgram) {
+                cardBg = "bg-amber-50/20 dark:bg-amber-900/10 border-amber-200 dark:border-amber-900/30 shadow-md shadow-amber-500/5";
+            }
+            const programHtml = buildProgramProgressHtml(session);
+
             return `
-                <div class="${cardBg} border rounded-2xl p-6 hover:shadow-lg transition-all group ${isHistory && bookingStatus !== 'cancelled' ? 'opacity-80 grayscale-[0.3] hover:grayscale-0' : ''} anim-fade-in">
-                    <div class="flex flex-col md:flex-row gap-8 items-center">
+                <div class="${cardBg} border rounded-2xl p-6 hover:shadow-lg transition-all group ${isHistory && bookingStatus !== 'cancelled' ? 'opacity-80 grayscale-[0.3] hover:grayscale-0' : ''} anim-fade-in relative">
+                    ${isProgram ? `<div class="absolute top-4 right-4 z-10"><div class="px-2.5 py-1 bg-gradient-to-r from-amber-200 to-yellow-400 text-amber-900 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1 shadow-sm"><span class="material-symbols-outlined text-[14px]">workspace_premium</span> Program Mentorship</div></div>` : ''}
+                    <div class="flex flex-col md:flex-row gap-8 items-center relative z-0 mt-3 md:mt-0">
                         <div class="flex items-center gap-4 w-full md:w-72 shrink-0">
                             <a href="/src/pages/instructor/public-profile/index.html?id=${session.mentor_id}" class="w-16 h-16 rounded-2xl overflow-hidden border-2 border-primary/20 shrink-0 shadow-sm transition-transform hover:scale-110 block" title="View Public Profile">
                                 <img src="${mentor.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(mentor.full_name || 'M')}&background=random&color=fff`}" class="w-full h-full object-cover" />
                             </a>
                             <div class="flex-1 min-w-0">
                                 <a href="/src/pages/instructor/public-profile/index.html?id=${session.mentor_id}" class="block group/name" title="View Public Profile">
-                                    <h4 class="font-bold text-lg text-slate-900 dark:text-white group-hover/name:text-primary transition-colors truncate">${mentor.full_name || 'Mentor'}</h4>
+                                    <h4 class="font-bold text-lg text-slate-900 dark:text-white group-hover/name:text-primary transition-colors truncate pr-8 md:pr-0">${mentor.full_name || 'Mentor'}</h4>
                                 </a>
                                 <div class="flex flex-wrap items-center gap-2 mt-1">
                                     <span class="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded text-[10px] font-bold text-slate-500 uppercase tracking-wider">${session.meeting_type}</span>
                                     <span class="px-2 py-0.5 ${statusColor} rounded text-[10px] font-bold uppercase tracking-wider">${statusLabel}</span>
-                                    ${session.serial_id ? `<span class="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest bg-slate-50 dark:bg-slate-800/10 text-slate-400 border border-slate-200 dark:border-slate-700 font-mono">SES-${session.serial_id}</span>` : ''}
+                                    ${session.reschedule_requested_by ? `<span class="px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-500 rounded text-[10px] font-bold uppercase tracking-wider flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">edit_calendar</span> Rescheduled</span>` : ''}
                                 </div>
                             </div>
                         </div>
@@ -630,7 +664,7 @@ async function loadMentors(forceRefresh = false) {
                             </div>
                         </div>
 
-                        <div class="w-full md:w-fit flex flex-col sm:flex-row md:flex-col gap-2 pt-4 md:pt-0 border-t md:border-t-0 border-slate-100 dark:border-slate-800">
+                        <div class="w-full md:w-fit flex flex-col sm:flex-row md:flex-col gap-2 pt-4 md:pt-0 border-t md:border-t-0 border-slate-100 dark:border-slate-800 shrink-0">
                             ${actionHtml}
                             <div class="flex gap-2">
                                 ${bookingStatus !== 'cancelled' ? `
@@ -650,6 +684,7 @@ async function loadMentors(forceRefresh = false) {
                             </div>
                         </div>
                     </div>
+                    ${programHtml}
                 </div>
             `;
         };
@@ -869,7 +904,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const userId = session?.user?.id;
             
             if (!userId) {
-                alert('You must be logged in to submit a review.');
+                window.showToast('You must be logged in to submit a review.', 'error');
                 return;
             }
             
@@ -877,10 +912,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 submitReviewBtn.disabled = true;
                 submitReviewBtn.innerText = 'Submitting...';
                 await MentorService.submitReview(currentReviewMentorId, userId, currentRating, comment);
-                alert('Thank you for your feedback!');
+                window.showToast('Thank you for your feedback!', 'success');
                 document.getElementById('mentorship-review-modal').classList.add('hidden');
             } catch (err) {
-                alert('Failed to submit review: ' + err.message);
+                window.showToast('Failed to submit review: ' + err.message, 'error');
             } finally {
                 submitReviewBtn.disabled = false;
                 submitReviewBtn.innerText = 'Submit Review';

@@ -648,6 +648,17 @@ export const MentorService = {
             throw new Error("Your account is blocked. Access denied.");
         }
 
+        // Compute end_date for program mentorships
+        const mentorshipType = sessionData.mentorshipType || 'single';
+        const durationDays = mentorshipType === 'program' ? (sessionData.durationDays || 30) : 1;
+        const totalSessions = mentorshipType === 'program' ? (sessionData.totalSessions || durationDays) : 1;
+
+        // program_start_date may be set explicitly or default to scheduled_at
+        const programStartDate = sessionData.programStartDate || (mentorshipType === 'program' ? sessionData.scheduledAt : null);
+        const endDate = programStartDate
+            ? new Date(new Date(programStartDate).getTime() + durationDays * 24 * 60 * 60 * 1000).toISOString()
+            : null;
+
         const { data, error } = await supabase
             .from('mentorship_sessions')
             .insert({
@@ -661,7 +672,14 @@ export const MentorService = {
                 meeting_type: sessionData.meetingType,
                 meeting_location: sessionData.meetingLocation,
                 student_phone: sessionData.studentPhone,
-                duration_minutes: sessionData.durationMinutes || 60
+                duration_minutes: sessionData.durationMinutes || 60,
+                // Program Mentorship fields
+                mentorship_type: mentorshipType,
+                total_sessions: totalSessions,
+                completed_sessions_count: 0,
+                duration_days: durationDays,
+                program_start_date: programStartDate,
+                end_date: endDate
             })
             .select()
             .single();
@@ -679,6 +697,12 @@ export const MentorService = {
             .from('mentorship_sessions')
             .select(`
                 *,
+                mentorship_type,
+                total_sessions,
+                completed_sessions_count,
+                duration_days,
+                program_start_date,
+                end_date,
                 mentor:profiles!mentorship_sessions_mentor_id_fkey (
                     full_name,
                     avatar_url,
@@ -775,6 +799,25 @@ export const MentorService = {
     },
 
     /**
+     * Reschedule a session as a mentor
+     */
+    async rescheduleSession(sessionId, newScheduledAt, newDurationMinutes, note) {
+        const { data: { user }, error: authErr } = await supabase.auth.getUser();
+        if (authErr || !user) throw new Error("Unauthorized: Could not verify mentor identity.");
+        
+        const { error } = await supabase.rpc('mentor_reschedule_session', {
+            p_mentor_id: user.id,
+            p_session_id: sessionId,
+            p_new_scheduled_at: newScheduledAt,
+            p_new_duration_minutes: newDurationMinutes,
+            p_note: note || null
+        });
+
+        if (error) throw error;
+        return true;
+    },
+
+    /**
      * Delete a mentorship session
      */
     async deleteSession(sessionId) {
@@ -785,6 +828,62 @@ export const MentorService = {
 
         if (error) throw error;
         return true;
+    },
+
+    /**
+     * Increment completed_sessions_count for a program mentorship.
+     * SOURCE OF TRUTH: Only the mentor explicitly calls this action.
+     * Ensures count never auto-increments and is always authoritative.
+     */
+    async markProgramSessionComplete(sessionId) {
+        // First fetch current count
+        const { data: current, error: fetchErr } = await supabase
+            .from('mentorship_sessions')
+            .select('completed_sessions_count, mentorship_type')
+            .eq('id', sessionId)
+            .single();
+
+        if (fetchErr) throw fetchErr;
+        if (current.mentorship_type !== 'program') {
+            throw new Error('markProgramSessionComplete can only be called on program mentorship sessions.');
+        }
+
+        // Increment count only. Never auto-complete the program from session count.
+        // Program completion is lifecycle-driven (end_date) or explicitly triggered by mentor/admin.
+        const newCount = (current.completed_sessions_count || 0) + 1;
+
+        const { error: updateErr } = await supabase
+            .from('mentorship_sessions')
+            .update({ completed_sessions_count: newCount })
+            .eq('id', sessionId);
+
+        if (updateErr) throw updateErr;
+        return { newCount };
+    },
+
+    /**
+     * Set program_start_date and compute end_date for a program mentorship.
+     * Called when mentor confirms meeting setup (Action Required -> Active).
+     */
+    async setProgramStartDate(sessionId, startDate) {
+        const { data: current, error: fetchErr } = await supabase
+            .from('mentorship_sessions')
+            .select('duration_days')
+            .eq('id', sessionId)
+            .single();
+
+        if (fetchErr) throw fetchErr;
+
+        const durationDays = current.duration_days || 30;
+        const endDate = new Date(new Date(startDate).getTime() + durationDays * 24 * 60 * 60 * 1000).toISOString();
+
+        const { error } = await supabase
+            .from('mentorship_sessions')
+            .update({ program_start_date: startDate, end_date: endDate })
+            .eq('id', sessionId);
+
+        if (error) throw error;
+        return { startDate, endDate };
     },
 
     /**

@@ -192,9 +192,14 @@
                         <h3 class="text-lg font-bold text-slate-900 dark:text-white">Active Connections</h3>
                         <p class="text-xs text-slate-500">Manage and monitor ongoing mentorship sessions</p>
                     </div>
-                    <div class="flex items-center gap-3 w-full sm:w-auto">
-                        <span class="text-xs font-black text-slate-400 uppercase tracking-widest hidden md:block">Filter By:</span>
-                        <select id="status-filter" class="flex-1 sm:flex-none bg-slate-50 dark:bg-slate-800 border-none rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 transition-all cursor-pointer">
+                    <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto justify-end">
+                        <span class="text-xs font-black text-slate-400 uppercase tracking-widest hidden lg:block">Filter By:</span>
+                        <select id="type-filter" class="w-full sm:w-auto bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400 border-none rounded-xl px-4 py-2.5 text-sm font-bold focus:ring-2 focus:ring-indigo-500 transition-all cursor-pointer">
+                            <option value="all">All Types</option>
+                            <option value="single">Single Session</option>
+                            <option value="program">Monthly Program</option>
+                        </select>
+                        <select id="status-filter" class="w-full sm:w-auto bg-slate-50 dark:bg-slate-800 border-none rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 transition-all cursor-pointer">
                             <option value="all">All Active Statuses</option>
                             <option value="started">Started</option>
                             <option value="confirmed">Confirmed</option>

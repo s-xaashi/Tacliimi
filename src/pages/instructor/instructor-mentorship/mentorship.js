@@ -1,6 +1,18 @@
 import { MentorService } from '../../../services/mentorService.js';
 import { supabase } from '../../../services/supabaseClient.js';
 import { AuthService } from '../../../services/authService.js';
+import { buildProgramProgressHtml, buildMonthlyBadgeHtml, getProgramMeetingStatus, openMentorshipRescheduleModal } from '../../../utils/js/mentorshipUI.js';
+
+window.triggerMentorReschedule = function(sessionId, currentScheduledAt, currentDurationStr, studentNameStr) {
+    openMentorshipRescheduleModal(
+        sessionId, currentScheduledAt, currentDurationStr, studentNameStr, 'mentor',
+        async (id, newDateObj, newDur, note) => {
+            await MentorService.rescheduleSession(id, newDateObj.toISOString(), newDur, note);
+            window.showToast("Meeting rescheduled successfully.", "success");
+            if(window.loadMentors) window.loadMentors(true);
+        }
+    );
+};
 
 // ── Topic Modal ───────────────────────────────────────────────
 window.openTopicModal = function(studentName, topic) {
@@ -708,6 +720,39 @@ async function bindPrivacyInteractions(container, userId) {
         });
     }
 }
+
+
+/** Gold card wrapper classes for program mentorship */
+const GOLD_CARD_STYLE = 'border-2 rounded-2xl overflow-hidden transition-all group p-6 hover:shadow-xl'
+    + ' bg-gradient-to-br from-amber-50/60 to-white dark:from-amber-900/10 dark:to-slate-900'
+    + ' border-yellow-400/60 dark:border-yellow-500/30';
+
+const DEFAULT_CARD_STYLE = 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden hover:shadow-lg transition-all group p-6';
+
+// Type filter state shared across render functions on requests tab
+let _requestsTypeFilter = 'all';
+let _upcomingTypeFilter = 'all';
+let _completedTypeFilter = 'all';
+
+/** Build filter chips HTML */
+function buildTypeFilterChips(filterState, containerId) {
+    const opts = [{ v: 'all', l: 'All' }, { v: 'single', l: 'Single Sessions' }, { v: 'program', l: '⭐ Monthly' }];
+    return `
+        <div id="${containerId}" class="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-800/50 rounded-xl w-fit mt-4 mb-0">
+            ${opts.map(o => `
+                <button class="type-filter-chip px-3 py-1.5 rounded-lg text-xs font-bold transition-all
+                    ${filterState === o.v ? '!bg-white dark:!bg-slate-900 shadow-sm !text-primary' : 'text-slate-500 hover:text-slate-700'}"
+                    data-type="${o.v}">${o.l}</button>
+            `).join('')}
+        </div>`;
+}
+
+/** Apply type filter to a list of sessions */
+function applyTypeFilter(sessions, typeFilter) {
+    if (typeFilter === 'single') return sessions.filter(s => (s.mentorship_type || 'single') === 'single');
+    if (typeFilter === 'program') return sessions.filter(s => s.mentorship_type === 'program');
+    return sessions;
+}
 async function bindRequestsInteractions(container, userId) {
     const listContainer = container.querySelector('#mentorship-requests-list');
     const emptyState = container.querySelector('#mentorship-requests-empty');
@@ -722,7 +767,7 @@ async function bindRequestsInteractions(container, userId) {
                 </div>
             `;
             
-            const [pending, paidWaiting, awaiting, negotiating, rejectedReview] = await Promise.all([
+        const [pending, paidWaiting, awaiting, negotiating, rejectedReview] = await Promise.all([
                 MentorService.getMentorSessions(userId, 'pending_review'),
                 MentorService.getMentorSessions(userId, 'paid_waiting_review'),
                 MentorService.getMentorSessions(userId, 'awaiting_meeting_link'),
@@ -734,11 +779,13 @@ async function bindRequestsInteractions(container, userId) {
 
             // Helper to determine filter
             const filterBtns = container.querySelectorAll('.request-filter-btn');
-            const activeFilter = Array.from(filterBtns).find(b => b.classList.contains('bg-white'))?.dataset.status || 'pending_review';
+            const activeFilter = Array.from(filterBtns).find(b => b.classList.contains('bg-white'))&&Array.from(filterBtns).find(b => b.classList.contains('bg-white'))?.dataset.status || 'pending_review';
 
             let filtered = allRequests;
             if (activeFilter === 'pending_review') filtered = [...pending, ...paidWaiting, ...rejectedReview];
             if (activeFilter === 'action_required') filtered = [...awaiting, ...negotiating];
+
+            filtered = applyTypeFilter(filtered, _requestsTypeFilter);
 
             if (filtered.length === 0) {
                 listContainer.innerHTML = '';
@@ -867,8 +914,10 @@ async function bindRequestsInteractions(container, userId) {
                         </div>
                     </div>` : '';
 
+                const isProgram = session.mentorship_type === 'program';
                 return `
-                    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden hover:shadow-lg transition-all group p-6" data-session-id="${session.id}">
+                    <div class="${isProgram ? GOLD_CARD_STYLE : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden hover:shadow-lg transition-all group p-6'}" data-session-id="${session.id}">
+                        ${isProgram ? `<div class="flex items-center gap-2 mb-3">${buildMonthlyBadgeHtml()}<span class="text-[10px] font-bold text-amber-600/70">${session.duration_days || 30}-Day Program · ${session.total_sessions || 4} sessions</span></div>` : ''}
                         <div class="flex flex-col md:flex-row gap-8 items-center">
                             <!-- Student Info: Fixed width -->
                             <div class="flex items-center gap-4 w-full md:w-64 shrink-0">
@@ -911,6 +960,7 @@ async function bindRequestsInteractions(container, userId) {
                                 ${actionsHtml}
                             </div>
                         </div>
+                        ${isProgram ? buildMonthlyProgressHtml(session) : ''}
                     </div>
                 `;
             }).join('');
@@ -1072,7 +1122,7 @@ async function bindRequestsInteractions(container, userId) {
         modal.classList.remove('hidden');
     }
 
-    // Filter Tabs Interaction
+    // Filter Tabs Interaction (Status)
     const filterBtns = container.querySelectorAll('.request-filter-btn');
     filterBtns.forEach(btn => {
         btn.addEventListener('click', () => {
@@ -1085,6 +1135,25 @@ async function bindRequestsInteractions(container, userId) {
             renderRequests();
         });
     });
+
+    // Inject Type Filter chips below existing status filters
+    const filterRow = container.querySelector('.flex.items-center.gap-2.p-1.bg-slate-100');
+    if (filterRow) {
+        filterRow.insertAdjacentHTML('afterend', buildTypeFilterChips(_requestsTypeFilter, 'requests-type-chips'));
+        container.querySelectorAll('#requests-type-chips .type-filter-chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                _requestsTypeFilter = chip.dataset.type;
+                container.querySelectorAll('#requests-type-chips .type-filter-chip').forEach(c => {
+                    c.classList.toggle('!bg-white', c === chip);
+                    c.classList.toggle('dark:!bg-slate-900', c === chip);
+                    c.classList.toggle('shadow-sm', c === chip);
+                    c.classList.toggle('!text-primary', c === chip);
+                    c.classList.toggle('text-slate-500', c !== chip);
+                });
+                renderRequests();
+            });
+        });
+    }
 
     renderRequests();
 }
@@ -1106,21 +1175,32 @@ async function bindUpcomingInteractions(container, userId) {
                 const status = s.booking_status || s.status;
                 const start = new Date(s.scheduled_at);
                 const duration = s.duration_minutes || 60;
-                const end = new Date(start.getTime() + duration * 60000);
+                let end;
+                if (s.mentorship_type === 'program' && s.end_date) {
+                    end = new Date(s.end_date);
+                    end.setHours(23, 59, 59, 999);
+                } else {
+                    end = new Date(start.getTime() + duration * 60000);
+                }
                 
+                // Programs still within end_date stay active regardless of DB status
+                const isProgramStillActive = s.mentorship_type === 'program' && s.end_date && now < end && status !== 'cancelled';
                 const isActive = ['confirmed', 'awaiting_meeting_link', 'cancelled', 'pending_rejection_review'].includes(status);
                 // Upcoming includes sessions that haven't ended yet
-                return isActive && now < end;
+                return isProgramStillActive || (isActive && now < end);
             });
+
+            // Apply type filter
+            const typeFiltered = applyTypeFilter(activeSessions, _upcomingTypeFilter);
             
-            if (activeSessions.length === 0) {
+            if (typeFiltered.length === 0) {
                 listContainer.innerHTML = '';
                 emptyState.classList.remove('hidden');
                 return;
             }
 
             emptyState.classList.add('hidden');
-            listContainer.innerHTML = activeSessions.map(session => {
+            listContainer.innerHTML = typeFiltered.map(session => {
                 const date = new Date(session.scheduled_at);
                 const duration = session.duration_minutes || 60;
                 const endDate = new Date(date.getTime() + duration * 60000);
@@ -1128,15 +1208,24 @@ async function bindUpcomingInteractions(container, userId) {
                 const dateStr = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
                 const timeStr = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
                 const endTimeStr = endDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-                
-                const isStarted = now >= date && now < endDate;
+
+                // For program sessions, use the shared helper for accurate live status
+                const progStatus = session.mentorship_type === 'program' ? getProgramMeetingStatus(session) : null;
+                const isStarted = progStatus ? progStatus.isMeetingLive : (now >= date && now < endDate);
+                // Show "Next meeting" badge only when the current daily slot has fully ended (not while live or before it starts)
+                const showNextMeeting = progStatus && !progStatus.isMeetingLive && progStatus.nextMeetingLabel && now >= progStatus.meetingSlotEnd;
                 const student = session.student || { full_name: 'Unknown Student', avatar_url: '', email: '' };
                 const studentAvatar = student.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.full_name || 'S')}&background=random&color=fff`;
 
                 const isCancelled = session.booking_status === 'cancelled';
                 const isPendingRejection = session.booking_status === 'pending_rejection_review';
+                const isProgram = session.mentorship_type === 'program';
+                
+                const programHtml = buildProgramProgressHtml(session);
+
                 const cardClass = isCancelled 
                     ? "bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-900/30 rounded-2xl overflow-hidden shadow-sm group p-6 border-2" 
+                    : isProgram ? GOLD_CARD_STYLE
                     : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden hover:shadow-lg transition-all group p-6";
 
                 let actionHtml = '';
@@ -1154,6 +1243,7 @@ async function bindUpcomingInteractions(container, userId) {
 
                 return `
                     <div class="${cardClass}" data-session-id="${session.id}">
+                        ${isProgram && !isCancelled ? `<div class="absolute top-4 right-4 z-10">${buildMonthlyBadgeHtml()}</div>` : ''}
                         <div class="flex flex-col md:flex-row gap-8 items-center">
                             <!-- Student Info: Fixed width -->
                             <div class="flex items-center gap-4 w-full md:w-64 shrink-0">
@@ -1162,8 +1252,8 @@ async function bindUpcomingInteractions(container, userId) {
                                 </div>
                                 <div class="flex-1 min-w-0">
                                     <h4 class="font-bold ${isCancelled ? 'text-red-700 dark:text-red-400' : 'text-slate-900 dark:text-white group-hover:text-primary'} transition-colors truncate cursor-pointer" onclick='window.openStudentProfile(${JSON.stringify(student).replace(/'/g, "&#39;")})'>${student.full_name || 'Unknown Student'}</h4>
-                                    <div class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${isStarted ? 'bg-emerald-500 text-white animate-pulse' : (session.booking_status === 'cancelled' ? 'bg-red-500 text-white' : 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600')}">
-                                        ${isStarted ? 'Session Started' : (session.booking_status === 'cancelled' ? 'Cancelled' : 'Confirmed')}
+                                    <div class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${isStarted ? 'bg-emerald-500 text-white animate-pulse' : showNextMeeting ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600' : (session.booking_status === 'cancelled' ? 'bg-red-500 text-white' : 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600')}">
+                                        ${isStarted ? 'Session Started' : showNextMeeting ? `Next: ${progStatus.nextMeetingLabel}` : (session.booking_status === 'cancelled' ? 'Cancelled' : 'Confirmed')}
                                     </div>
                                 </div>
                             </div>
@@ -1205,17 +1295,26 @@ async function bindUpcomingInteractions(container, userId) {
                             <div class="w-full md:w-fit flex flex-row md:flex-col gap-2 justify-center border-t md:border-t-0 ${isCancelled ? 'border-red-100 dark:border-red-900/20' : 'border-slate-100 dark:border-slate-800'} pt-4 md:pt-0">
                                 ${actionHtml}
                                 ${!isCancelled ? `
+                                <button class="reschedule-session-btn px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-bold rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-all text-sm flex items-center justify-center gap-2 whitespace-nowrap" data-id="${session.id}" data-date="${session.scheduled_at}" data-duration="${duration}" data-name="${(student.full_name || 'Student').replace(/"/g, '&quot;')}">
+                                    <span class="material-symbols-outlined text-[18px]">edit_calendar</span> Reschedule
+                                </button>
                                 <button class="message-btn px-4 py-2.5 bg-slate-100 dark:bg-slate-800 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex items-center justify-center" data-id="${session.id}" data-name="${student.full_name || 'Student'}">
                                     <span class="material-symbols-outlined text-[18px]">forum</span>
-                                </button>` : ''}
+                                </button>
+                                ` : ''}
                             </div>
                         </div>
+                        ${programHtml}
                     </div>
                 `;
             }).join('');
 
             listContainer.querySelectorAll('.message-btn').forEach(btn => {
                 btn.addEventListener('click', () => openMessagingModal(btn.dataset.id, btn.dataset.name));
+            });
+            
+            listContainer.querySelectorAll('.reschedule-session-btn').forEach(btn => {
+                btn.addEventListener('click', () => window.triggerMentorReschedule(btn.dataset.id, btn.dataset.date, btn.dataset.duration, btn.dataset.name));
             });
 
             listContainer.querySelectorAll('.delete-session-btn').forEach(btn => {
@@ -1249,6 +1348,27 @@ async function bindUpcomingInteractions(container, userId) {
     };
 
     renderUpcoming();
+
+    // Inject type filter chips for upcoming
+    setTimeout(() => {
+        const heading = container.querySelector('#mentorship-upcoming-list');
+        if (heading) {
+            heading.insertAdjacentHTML('beforebegin', buildTypeFilterChips(_upcomingTypeFilter, 'upcoming-type-chips'));
+            container.querySelectorAll('#upcoming-type-chips .type-filter-chip').forEach(chip => {
+                chip.addEventListener('click', () => {
+                    _upcomingTypeFilter = chip.dataset.type;
+                    container.querySelectorAll('#upcoming-type-chips .type-filter-chip').forEach(c => {
+                        c.classList.toggle('!bg-white', c === chip);
+                        c.classList.toggle('dark:!bg-slate-900', c === chip);
+                        c.classList.toggle('shadow-sm', c === chip);
+                        c.classList.toggle('!text-primary', c === chip);
+                        c.classList.toggle('text-slate-500', c !== chip);
+                    });
+                    renderUpcoming();
+                });
+            });
+        }
+    }, 300);
 }
 
 async function bindCompletedInteractions(container, userId) {
@@ -1270,13 +1390,24 @@ async function bindCompletedInteractions(container, userId) {
             
             // Historical sessions: date is in the past or status is completed
             const now = new Date();
-            const historical = all.filter(s => {
+            let historical = all.filter(s => {
                 const start = new Date(s.scheduled_at);
                 const duration = s.duration_minutes || 60;
-                const end = new Date(start.getTime() + duration * 60000);
+                let end;
+                if (s.mentorship_type === 'program' && s.end_date) {
+                    end = new Date(s.end_date);
+                    end.setHours(23, 59, 59, 999);
+                } else {
+                    end = new Date(start.getTime() + duration * 60000);
+                }
+                // Don't show programs in history if they are still within end_date
+                const isProgramStillActive = s.mentorship_type === 'program' && s.end_date && now < end && (s.booking_status || s.status) !== 'cancelled';
+                if (isProgramStillActive) return false;
                 return (s.booking_status || s.status) === 'completed' || now >= end;
             }).sort((a,b) => new Date(b.scheduled_at) - new Date(a.scheduled_at)); // Latest first
             
+            historical = applyTypeFilter(historical, _completedTypeFilter);
+
             if (historical.length === 0) {
                 listContainer.innerHTML = '';
                 emptyState.classList.remove('hidden');
@@ -1290,8 +1421,10 @@ async function bindCompletedInteractions(container, userId) {
                 const student = session.student || { full_name: 'Unknown Student', avatar_url: '', email: '' };
                 const studentAvatar = student.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.full_name || 'S')}&background=random&color=fff`;
 
+                const isProgram = session.mentorship_type === 'program';
                 return `
-                    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden hover:shadow-lg transition-all group p-6 opacity-80 hover:opacity-100" data-session-id="${session.id}">
+                    <div class="${isProgram ? GOLD_CARD_STYLE : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden hover:shadow-lg transition-all group p-6'} opacity-80 hover:opacity-100" data-session-id="${session.id}">
+                        ${isProgram ? `<div class="flex items-center gap-2 mb-3">${buildMonthlyBadgeHtml()}<span class="text-[10px] font-bold text-amber-600/70">Program Completed</span></div>` : ''}
                         <div class="flex flex-col md:flex-row gap-8 items-center">
                             <!-- Student Info: Fixed width -->
                             <div class="flex items-center gap-4 w-full md:w-64 shrink-0">
@@ -1343,6 +1476,27 @@ async function bindCompletedInteractions(container, userId) {
     };
 
     renderCompleted();
+
+    // Inject type filter chips for completed
+    setTimeout(() => {
+        const heading = container.querySelector('#mentorship-completed-list');
+        if (heading) {
+            heading.insertAdjacentHTML('beforebegin', buildTypeFilterChips(_completedTypeFilter, 'completed-type-chips'));
+            container.querySelectorAll('#completed-type-chips .type-filter-chip').forEach(chip => {
+                chip.addEventListener('click', () => {
+                    _completedTypeFilter = chip.dataset.type;
+                    container.querySelectorAll('#completed-type-chips .type-filter-chip').forEach(c => {
+                        c.classList.toggle('!bg-white', c === chip);
+                        c.classList.toggle('dark:!bg-slate-900', c === chip);
+                        c.classList.toggle('shadow-sm', c === chip);
+                        c.classList.toggle('!text-primary', c === chip);
+                        c.classList.toggle('text-slate-500', c !== chip);
+                    });
+                    renderCompleted();
+                });
+            });
+        }
+    }, 300);
 }
 
 /** MESSAGING MODAL LOGIC **/
@@ -1451,10 +1605,9 @@ window.deleteSession = async function(sessionId) {
     }, async () => {
         try {
             await MentorService.deleteSession(sessionId);
-            window.location.reload();
+            loadMentors(true);
         } catch (err) {
-            console.error("Error deleting session:", err);
-            window.showToast("Failed to remove session: " + err.message, "error");
+            window.showToast("Failed to delete", "error");
         }
     });
 };
