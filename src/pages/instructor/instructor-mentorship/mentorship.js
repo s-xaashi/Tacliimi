@@ -54,32 +54,10 @@ window.openStudentProfile = function(studentJson) {
         const links = student.social_links;
         socialLinksContainer.innerHTML = '';
         
-        const platforms = [
-            { key: 'github', icon: 'github' },
-            { key: 'linkedin', icon: 'linkedin' },
-            { key: 'twitter', icon: 'twitter' },
-            { key: 'facebook', icon: 'facebook' },
-            { key: 'website', icon: 'linktree' }
-        ];
-
-        let html = '';
         const isDark = document.documentElement.classList.contains('dark');
         const iconColor = isDark ? 'ffffff' : '475569'; // White in dark, slate-600 in light
 
-        if (links && typeof links === 'object') {
-            platforms.forEach(p => {
-                const url = links[p.key];
-                if (url && url.trim() !== '') {
-                    const fullUrl = url.startsWith('http') ? url : `https://${url}`;
-                    const iconUrl = `https://cdn.simpleicons.org/${p.icon}?color=${iconColor}`;
-                    html += `
-                        <a href="${fullUrl}" target="_blank" class="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center hover:bg-slate-700 transition-all group" onclick="event.stopPropagation()">
-                            <img src="${iconUrl}" class="w-5 h-5 opacity-80 group-hover:opacity-100" alt="${p.key}">
-                        </a>
-                    `;
-                }
-            });
-        }
+        const html = window.renderSocialIconsHtml ? window.renderSocialIconsHtml(links, iconColor) : '';
 
         if (html) {
             socialLinksContainer.innerHTML = html;

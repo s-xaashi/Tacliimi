@@ -234,3 +234,36 @@ export function showAlertModal({ title, message, type = 'success' }) {
 
 window.showConfirmModal = showConfirmModal;
 window.showAlertModal = showAlertModal;
+window.renderSocialIconsHtml = renderSocialIconsHtml;
+
+/**
+ * ── Shared Social Icons Helper ──
+ * Renders social icons from simpleicons.org
+ */
+export function renderSocialIconsHtml(links, iconColor = 'ffffff', iconClasses = 'w-5 h-5') {
+    if (!links || typeof links !== 'object') return '';
+    
+    const platforms = [
+        { key: 'github', icon: 'github' },
+        { key: 'linkedin', icon: 'linkedin' },
+        { key: 'twitter', icon: 'twitter' },
+        { key: 'facebook', icon: 'facebook' },
+        { key: 'website', icon: 'linktree' }
+    ];
+
+    let html = '';
+    platforms.forEach(p => {
+        const url = links[p.key];
+        if (url && url.trim() !== '') {
+            const fullUrl = url.startsWith('http') ? url : `https://${url}`;
+            const iconUrl = `https://cdn.simpleicons.org/${p.icon}/${iconColor}`;
+            html += `
+                <a href="${fullUrl}" target="_blank" class="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center hover:bg-slate-700 transition-all group" onclick="event.stopPropagation()">
+                    <img src="${iconUrl}" class="${iconClasses} opacity-80 group-hover:opacity-100" alt="${p.key}">
+                </a>
+            `;
+        }
+    });
+
+    return html;
+}

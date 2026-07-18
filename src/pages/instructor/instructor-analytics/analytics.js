@@ -3,6 +3,7 @@ import { supabase } from '../../../services/supabaseClient.js';
 
 let performanceChartInstance = null;
 let revenueChartInstance = null;
+let demographicsChartInstance = null;
 let currentInstructorId = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -64,6 +65,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 tableBody.innerHTML = '<tr><td colspan="5" class="p-8 text-center text-slate-500">No course data available yet. Your performance metrics will appear here once you publish courses and students interact with them.</td></tr>';
             }
         }
+
+        // Load student demographics (country breakdown)
+        await loadStudentDemographics();
 
         // Setup filter listener
         const periodFilter = document.getElementById('chartPeriodFilter');
@@ -160,4 +164,140 @@ function initCharts(data) {
     }
 }
 
+async function loadStudentDemographics() {
+    if (!currentInstructorId) return;
+
+    try {
+        const { data, error } = await supabase
+            .rpc('get_instructor_student_demographics', { p_instructor_id: currentInstructorId });
+
+        const container = document.getElementById('demographics-chart-wrap');
+        if (!container) return;
+
+        if (error || !data || data.length === 0) {
+            container.innerHTML = `
+                <div class="flex flex-col items-center justify-center h-full gap-3 opacity-50">
+                    <span class="material-symbols-outlined text-4xl text-slate-400">public_off</span>
+                    <p class="text-xs text-slate-400 uppercase tracking-widest font-semibold">No student location data</p>
+                </div>`;
+            return;
+        }
+
+        container.innerHTML = `
+            <div class="flex flex-col items-center justify-center h-full gap-3 opacity-50" id="map-loading-state">
+                <span class="material-symbols-outlined text-4xl text-primary animate-spin" style="animation-duration:2s">refresh</span>
+                <p class="text-xs text-slate-400 uppercase tracking-widest font-semibold">Loading Map...</p>
+            </div>
+            <div id="demographicsMap" class="w-full h-full hidden"></div>
+        `;
+
+        // Check if map is already registered in echarts globally
+        if (!echarts.getMap('world')) {
+            const mapRes = await fetch('https://cdn.jsdelivr.net/gh/johan/world.geo.json@master/countries.geo.json');
+            const mapGeoJson = await mapRes.json();
+            echarts.registerMap('world', mapGeoJson);
+        }
+
+        const loader = document.getElementById('map-loading-state');
+        if (loader) loader.remove();
+        
+        const mapDom = document.getElementById('demographicsMap');
+        mapDom.classList.remove('hidden');
+
+        // Destroy previous chart.js or echarts instance if it exists
+        if (demographicsChartInstance) {
+            if (typeof demographicsChartInstance.destroy === 'function') {
+                demographicsChartInstance.destroy(); // Chart.js
+            } else if (typeof demographicsChartInstance.dispose === 'function') {
+                demographicsChartInstance.dispose(); // ECharts
+            }
+        }
+
+        demographicsChartInstance = echarts.init(mapDom);
+
+        // Map data to match ECharts expectation (name, value)
+        const mapData = data.map(d => {
+            // Capitalize first letter of each word to match ECharts world map labels (e.g. "somaliland" -> "Somaliland")
+            const countryName = (d.country || 'Unknown')
+                .split(' ')
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                .join(' ');
+            return { name: countryName, value: Number(d.count) };
+        });
+
+        console.log("=== MAP DEMOGRAPHICS DEBUG ===");
+        console.log("Original RPC Data:", data);
+        console.log("ECharts Mapped Data:", mapData);
+        console.log("Max Count:", Math.max(...mapData.map(d => d.value), 1));
+        
+        // Add max value for visualMap calculation
+        const maxCount = Math.max(...mapData.map(d => d.value), 1);
+
+        const isDarkMode = document.documentElement.classList.contains('dark');
+        const defaultAreaColor = isDarkMode ? '#1e293b' : '#f1f5f9';
+        const borderColor = isDarkMode ? '#334155' : 'rgba(255,255,255,0.7)';
+        const textColor = isDarkMode ? '#f8fafc' : '#0f172a';
+        
+        const option = {
+            backgroundColor: 'transparent',
+            tooltip: {
+                trigger: 'item',
+                backgroundColor: isDarkMode ? '#1e293b' : '#ffffff',
+                textStyle: { color: textColor },
+                borderColor: isDarkMode ? '#334155' : '#e2e8f0',
+                formatter: function (params) {
+                    const val = params.value || 0;
+                    if (isNaN(val)) return `<strong>${params.name}</strong><br/>0 Students`;
+                    return `<strong>${params.name}</strong><br/>${val} Student${val !== 1 ? 's' : ''}`;
+                }
+            },
+            visualMap: {
+                min: 0,
+                max: maxCount,
+                text: ['High', 'Low'],
+                realtime: false,
+                calculable: true,
+                inRange: {
+                    color: ['#e0e7ff', '#4F46E5'] // From light to primary blue (indigo)
+                },
+                show: false // Hide the legend for cleaner look
+            },
+            series: [
+                {
+                    name: 'Students',
+                    type: 'map',
+                    map: 'world',
+                    roam: true, // Enable zooming and dragging
+                    zoom: 1.2,
+                    itemStyle: {
+                        borderColor: borderColor,
+                        borderWidth: 0.5,
+                        areaColor: defaultAreaColor 
+                    },
+                    emphasis: {
+                        itemStyle: {
+                            areaColor: '#6366f1' // Hover blue
+                        },
+                        label: {
+                            show: false
+                        }
+                    },
+                    data: mapData
+                }
+            ]
+        };
+
+        demographicsChartInstance.setOption(option);
+        
+        // Ensure map resizes with window
+        window.addEventListener('resize', () => {
+            if (demographicsChartInstance && typeof demographicsChartInstance.resize === 'function') {
+                demographicsChartInstance.resize();
+            }
+        });
+
+    } catch (err) {
+        console.error('Failed to load student demographics map:', err);
+    }
+}
 

@@ -234,7 +234,7 @@
                     </button>
                 </div>
 
-                <div class="space-y-6">
+                    <div class="space-y-6">
                     <div>
                         <h3 id="student-modal-name" class="text-2xl font-bold text-slate-900 dark:text-white">Student Name</h3>
                         <p id="student-modal-title" class="text-slate-500 font-medium">Aspiring Learner</p>
@@ -267,6 +267,14 @@
                         <div class="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
                             <div id="student-interests-list" class="flex flex-wrap gap-2 mb-3"></div>
                             <p id="student-modal-bio" class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed italic">"No bio shared yet."</p>
+                        </div>
+                    </div>
+
+                    <!-- Enrolled Courses Section -->
+                    <div>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Enrolled Courses</p>
+                        <div id="student-enrolled-courses" class="space-y-2">
+                            <div class="flex items-center gap-2 text-slate-400 text-xs"><span class="material-symbols-outlined text-sm animate-spin" style="animation-duration:2s">refresh</span> Loading courses…</div>
                         </div>
                     </div>
                 </div>
@@ -568,32 +576,10 @@
                 const links = student.social_links;
                 socialLinksContainer.innerHTML = '';
                 
-                const platforms = [
-                    { key: 'github', icon: 'github' },
-                    { key: 'linkedin', icon: 'linkedin' },
-                    { key: 'twitter', icon: 'twitter' },
-                    { key: 'facebook', icon: 'facebook' },
-                    { key: 'website', icon: 'linktree' }
-                ];
-
-                let html = '';
                 const isDark = document.documentElement.classList.contains('dark');
                 const iconColor = isDark ? 'ffffff' : '475569'; // White in dark, slate-600 in light
 
-                if (links && typeof links === 'object') {
-                    platforms.forEach(p => {
-                        const url = links[p.key];
-                        if (url && url.trim() !== '') {
-                            const fullUrl = url.startsWith('http') ? url : `https://${url}`;
-                            const iconUrl = `https://cdn.simpleicons.org/${p.icon}?color=${iconColor}`;
-                            html += `
-                                <a href="${fullUrl}" target="_blank" class="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center hover:bg-slate-700 transition-all group" onclick="event.stopPropagation()">
-                                    <img src="${iconUrl}" class="w-5 h-5 opacity-80 group-hover:opacity-100" alt="${p.key}">
-                                </a>
-                            `;
-                        }
-                    });
-                }
+                const html = window.renderSocialIconsHtml ? window.renderSocialIconsHtml(links, iconColor) : '';
 
                 if (html) {
                     socialLinksContainer.innerHTML = html;
@@ -619,6 +605,9 @@
             modal.classList.remove('hidden');
             modal.classList.add('flex');
             document.body.style.overflow = 'hidden';
+
+            // Load enrolled courses asynchronously
+            loadStudentEnrolledCourses(student.user_id);
         };
 
         window.closeStudentModal = function() {
@@ -629,6 +618,53 @@
             }
             document.body.style.overflow = '';
         };
+
+        // ─── Load Enrolled Courses for Student Modal ──────────────────────────────────
+        async function loadStudentEnrolledCourses(studentId) {
+            const container = document.getElementById('student-enrolled-courses');
+            if (!container) return;
+
+            container.innerHTML = '<div class="flex items-center gap-2 text-slate-400 text-xs"><span class="material-symbols-outlined text-sm animate-spin" style="animation-duration:2s">refresh</span> Loading courses…</div>';
+
+            try {
+                const { data, error } = await supabase.rpc('admin_get_student_enrollments', {
+                    p_admin_id: adminId,
+                    p_student_id: studentId
+                });
+
+                if (error) throw error;
+
+                if (!data || data.length === 0) {
+                    container.innerHTML = '<p class="text-xs text-slate-400 italic">No courses enrolled yet.</p>';
+                    return;
+                }
+
+                container.innerHTML = data.map(row => {
+                    const thumb = row.thumbnail_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(row.title)}&background=4F46E5&color=fff&size=64`;
+                    const enrolledOn = row.enrolled_at ? new Date(row.enrolled_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
+                    const progress = row.progress_percentage ?? 0;
+                    return `
+                        <div class="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
+                            <img src="${thumb}" class="w-12 h-12 rounded-lg object-cover shrink-0" />
+                            <div class="min-w-0 flex-1">
+                                <p class="text-sm font-bold text-slate-800 dark:text-slate-200 truncate">${row.title}</p>
+                                <p class="text-[10px] text-indigo-400 font-mono uppercase tracking-widest">CRS-${row.serial_id || '—'}</p>
+                                <div class="flex items-center gap-2 mt-1">
+                                    <div class="flex-1 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                                        <div class="h-full bg-indigo-500 rounded-full" style="width:${progress}%"></div>
+                                    </div>
+                                    <span class="text-[10px] text-slate-400 whitespace-nowrap">${progress}%</span>
+                                </div>
+                            </div>
+                            <span class="text-[10px] text-slate-400 whitespace-nowrap hidden sm:block">${enrolledOn}</span>
+                        </div>
+                    `;
+                }).join('');
+            } catch (err) {
+                console.error('Failed to load enrolled courses:', err);
+                container.innerHTML = '<p class="text-xs text-red-400">Failed to load courses.</p>';
+            }
+        }
 
         // Close on Escape or Backdrop
         document.addEventListener('keydown', (e) => {

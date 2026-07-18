@@ -160,7 +160,8 @@ async function loadInstructorCourses() {
             .from('courses')
             .select('*')
             .eq('instructor_id', instructorId)
-            .eq('status', 'published');
+            .eq('status', 'published')
+            .eq('is_latest_published', true);
 
         if (error) throw error;
 

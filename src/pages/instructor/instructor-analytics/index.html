@@ -46,6 +46,7 @@
         }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
     <script type="module" src="/src/services/globalProfile.js"></script>
     <script>
         // Removed synchronous Auth check
@@ -204,13 +205,12 @@
 </div>
 
 </div>
-<div class="p-8 h-64 flex flex-col items-center justify-center">
-<div class="w-32 h-32 rounded-full border-8 border-dashed border-slate-100 dark:border-slate-800 flex items-center justify-center relative">
-<div class="w-16 h-16 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center">
-<span class="material-symbols-outlined text-slate-300 dark:text-slate-600 text-2xl">public</span>
-</div>
-</div>
-<p class="mt-4 text-xs text-slate-400 uppercase tracking-widest font-semibold">Geographic Data Placeholder</p>
+<div id="demographics-chart-wrap" class="p-4 h-64 flex flex-col items-center justify-center">
+    <!-- Demographics donut chart injected by analytics.js -->
+    <div class="flex flex-col items-center justify-center h-full gap-3 opacity-50">
+        <span class="material-symbols-outlined text-4xl text-slate-400 animate-spin" style="animation-duration:2s">refresh</span>
+        <p class="text-xs text-slate-400 uppercase tracking-widest font-semibold">Loading...</p>
+    </div>
 </div>
 </div>
 <div class="lg:col-span-2 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
