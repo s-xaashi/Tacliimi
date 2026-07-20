@@ -1,5 +1,6 @@
 import { AuthService } from '../../../services/authService.js';
 import { supabase } from '../../../services/supabaseClient.js';
+import { instructorEarningsService } from '../../../services/instructorEarningsService.js';
 
 let performanceChartInstance = null;
 let revenueChartInstance = null;
@@ -18,7 +19,23 @@ document.addEventListener('DOMContentLoaded', async () => {
             .rpc('get_instructor_analytics_overview', { p_instructor_id: currentInstructorId });
 
         if (!overviewError && overview) {
-            document.getElementById('metric-revenue').innerText = `$${overview.totalRevenue.toLocaleString()}`;
+            // Apply fixes over the raw RPC overview dynamically:
+            // 1. Force views to be at least equal to enrollments 
+            if (overview.totalCourseViews < overview.totalStudentsEnrolled) {
+                overview.totalCourseViews = overview.totalStudentsEnrolled;
+            }
+            
+            // 2. Override totalRevenue with secure cleared_earnings to exclude held funds
+            try {
+                const earningsObj = await instructorEarningsService.getSummary(currentInstructorId);
+                if (earningsObj) {
+                    overview.totalRevenue = earningsObj.cleared_earnings || 0;
+                }
+            } catch (err) {
+                console.error("Could not fetch cleared earnings fallback", err);
+            }
+
+            document.getElementById('metric-revenue').innerText = `$${overview.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
             document.getElementById('metric-students').innerText = overview.totalStudentsEnrolled.toLocaleString();
             document.getElementById('metric-views').innerText = overview.totalCourseViews.toLocaleString();
             document.getElementById('metric-rating').innerText = overview.averageCourseRating.toFixed(1);
@@ -34,6 +51,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             tableBody.innerHTML = '';
             
             topCourses.forEach(course => {
+                // Ensure individual views are at least equal to student count
+                const displayViews = Math.max(course.views || 0, course.totalStudents || 0);
+
                 const tr = document.createElement('tr');
                 tr.classList.add('hover:bg-slate-50', 'dark:hover:bg-slate-800/50', 'transition-colors');
                 tr.innerHTML = `
@@ -55,7 +75,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             <span class="text-xs text-slate-400">(${course.numberOfReviews})</span>
                         </div>
                     </td>
-                    <td class="p-4 text-slate-700 dark:text-slate-300">${course.views}</td>
+                    <td class="p-4 text-slate-700 dark:text-slate-300">${displayViews}</td>
                 `;
                 tableBody.appendChild(tr);
             });

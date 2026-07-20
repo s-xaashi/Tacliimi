@@ -398,7 +398,7 @@
 
                     // 2. Populate Metrics
                     updateMetrics({
-                        earnings: earnings?.total_earned || 0,
+                        earnings: earnings?.cleared_earnings || 0,
                         courses: allCourses.length,
                         students: stats.totalStudents || 0,
                         sessions: sessions.filter(s => s.booking_status === 'pending_review').length

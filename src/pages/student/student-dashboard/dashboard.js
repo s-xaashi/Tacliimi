@@ -274,6 +274,7 @@ window.openUpdateModal = function(offerId) {
         </div>
     ` : `<p class="text-slate-400 italic text-sm">The instructor has updated the course content. Enroll to access the latest version.</p>`;
 
+    const noCouponText = price === 'Free' ? 'This version is free — no payment needed.' : 'No coupon needed — this version is available at the standard price.';
     const couponHtml = coupon ? `
         <div class="flex items-center gap-3 p-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl">
             <span class="material-symbols-outlined text-emerald-500">local_offer</span>
@@ -284,8 +285,8 @@ window.openUpdateModal = function(offerId) {
             </div>
         </div>
     ` : `<div class="flex items-center gap-3 p-3 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-xl">
-        <span class="material-symbols-outlined text-indigo-500">card_giftcard</span>
-        <p class="text-sm font-bold text-indigo-600">No coupon needed — this version is available at the standard price.</p>
+        <span class="material-symbols-outlined text-indigo-500">${price === 'Free' ? 'check_circle' : 'card_giftcard'}</span>
+        <p class="text-sm font-bold text-indigo-600">${noCouponText}</p>
     </div>`;
 
     document.getElementById('modal-update-version').textContent = versionLabel;

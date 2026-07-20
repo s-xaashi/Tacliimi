@@ -3,14 +3,29 @@ import { supabase } from '../../../services/supabaseClient.js';
 import { AuthService } from '../../../services/authService.js';
 import { buildProgramProgressHtml, buildMonthlyBadgeHtml, getProgramMeetingStatus, openMentorshipRescheduleModal } from '../../../utils/js/mentorshipUI.js';
 
-window.triggerMentorReschedule = function(sessionId, currentScheduledAt, currentDurationStr, studentNameStr) {
+// XSS safety helper
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+
+window.triggerMentorReschedule = function(sessionId, currentScheduledAt, currentDurationStr, studentNameStr, historyJson) {
+    let history = [];
+    try { history = historyJson ? JSON.parse(historyJson) : []; } catch(e) { history = []; }
     openMentorshipRescheduleModal(
         sessionId, currentScheduledAt, currentDurationStr, studentNameStr, 'mentor',
         async (id, newDateObj, newDur, note) => {
             await MentorService.rescheduleSession(id, newDateObj.toISOString(), newDur, note);
             window.showToast("Meeting rescheduled successfully.", "success");
             if(window.loadMentors) window.loadMentors(true);
-        }
+        },
+        history
     );
 };
 
@@ -872,7 +887,7 @@ async function bindRequestsInteractions(container, userId) {
                         <div class="min-w-0">
                             <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Location</p>
                             <div class="flex items-center gap-2">
-                                <p class="font-bold text-slate-900 dark:text-white text-sm truncate" title="${session.meeting_location.replace(/"/g, '&quot;')}">${session.meeting_location}</p>
+                                <p class="font-bold text-slate-900 dark:text-white text-sm truncate" title="${session.meeting_location.replace(/"/g, '&quot;')}">${escapeHtml(session.meeting_location || "")}</p>
                                 <button onclick="window.openTopicModal('Meeting Location', '${session.meeting_location.replace(/'/g, "\\'").replace(/"/g, '&quot;')}')" class="text-primary hover:text-primary/70 transition-colors">
                                     <span class="material-symbols-outlined text-sm">open_in_full</span>
                                 </button>
@@ -927,7 +942,7 @@ async function bindRequestsInteractions(container, userId) {
                                 <div class="flex-1 min-w-[180px]">
                                     <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Topic</p>
                                     <div class="flex items-center justify-between gap-3 mt-1">
-                                        <p class="font-medium text-slate-700 dark:text-slate-300 text-sm line-clamp-1 flex-1" title="${(session.topic || 'No topic provided').replace(/"/g, '&quot;')}">${session.topic || 'No topic provided'}</p>
+                                        <p class="font-medium text-slate-700 dark:text-slate-300 text-sm line-clamp-1 flex-1" title="${escapeHtml(session.topic) || 'No topic provided'}">${escapeHtml(session.topic) || 'No topic provided'}</p>
                                         ${session.topic ? `<button onclick="window.openTopicModal('${studentName.replace(/'/g, "\\'")}', this.dataset.topic)" data-topic="${(session.topic || '').replace(/"/g, '&quot;')}" class="shrink-0 px-3 py-1 bg-primary/10 text-primary hover:bg-primary hover:text-white rounded-lg text-[11px] font-bold transition-all whitespace-nowrap flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">open_in_full</span> View</button>` : ''}
                                     </div>
                                 </div>
@@ -1229,7 +1244,7 @@ async function bindUpcomingInteractions(container, userId) {
                                     <img src="${studentAvatar}" class="w-full h-full object-cover ${isCancelled ? 'grayscale' : ''}" />
                                 </div>
                                 <div class="flex-1 min-w-0">
-                                    <h4 class="font-bold ${isCancelled ? 'text-red-700 dark:text-red-400' : 'text-slate-900 dark:text-white group-hover:text-primary'} transition-colors truncate cursor-pointer" onclick='window.openStudentProfile(${JSON.stringify(student).replace(/'/g, "&#39;")})'>${student.full_name || 'Unknown Student'}</h4>
+                                    <h4 class="font-bold ${isCancelled ? 'text-red-700 dark:text-red-400' : 'text-slate-900 dark:text-white group-hover:text-primary'} transition-colors truncate cursor-pointer" onclick='window.openStudentProfile(${JSON.stringify(student).replace(/'/g, "&#39;")})'>${escapeHtml(student.full_name) || 'Unknown Student'}</h4>
                                     <div class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${isStarted ? 'bg-emerald-500 text-white animate-pulse' : showNextMeeting ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600' : (session.booking_status === 'cancelled' ? 'bg-red-500 text-white' : 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600')}">
                                         ${isStarted ? 'Session Started' : showNextMeeting ? `Next: ${progStatus.nextMeetingLabel}` : (session.booking_status === 'cancelled' ? 'Cancelled' : 'Confirmed')}
                                     </div>
@@ -1257,13 +1272,13 @@ async function bindUpcomingInteractions(container, userId) {
                                         </div>
                                         <div class="min-w-0">
                                             <p class="${isCancelled ? 'text-red-400' : 'text-slate-400'} text-[10px] font-bold uppercase tracking-widest">Location</p>
-                                            <p class="font-bold ${isCancelled ? 'text-red-800 dark:text-red-300' : 'text-slate-900 dark:text-white'} text-sm truncate" title="${session.meeting_location}">${session.meeting_location}</p>
+                                            <p class="font-bold ${isCancelled ? 'text-red-800 dark:text-red-300' : 'text-slate-900 dark:text-white'} text-sm truncate" title="${session.meeting_location}">${escapeHtml(session.meeting_location || "")}</p>
                                         </div>
                                     </div>` : ''}
                                 <div class="flex-1 min-w-[180px]">
                                     <p class="${isCancelled ? 'text-red-400' : 'text-slate-400'} text-[10px] font-bold uppercase tracking-widest">Topic</p>
                                     <div class="flex items-center justify-between gap-3 mt-1">
-                                        <p class="font-medium ${isCancelled ? 'text-red-700 dark:text-red-400' : 'text-slate-700 dark:text-slate-300'} text-sm line-clamp-1 flex-1" title="${(session.topic || 'No topic provided').replace(/"/g, '&quot;')}">${session.topic || 'No topic provided'}</p>
+                                        <p class="font-medium ${isCancelled ? 'text-red-700 dark:text-red-400' : 'text-slate-700 dark:text-slate-300'} text-sm line-clamp-1 flex-1" title="${escapeHtml(session.topic) || 'No topic provided'}">${escapeHtml(session.topic) || 'No topic provided'}</p>
                                         ${session.topic ? `<button onclick="window.openTopicModal('${(student.full_name || 'Student').replace(/'/g, "\\'")}', this.dataset.topic)" data-topic="${(session.topic || '').replace(/"/g, '&quot;')}" class="shrink-0 px-3 py-1 ${isCancelled ? 'bg-red-200 text-red-700' : 'bg-primary/10 text-primary hover:bg-primary hover:text-white'} rounded-lg text-[11px] font-bold transition-all whitespace-nowrap flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">open_in_full</span> View</button>` : ''}
                                     </div>
                                 </div>
@@ -1273,7 +1288,7 @@ async function bindUpcomingInteractions(container, userId) {
                             <div class="w-full md:w-fit flex flex-row md:flex-col gap-2 justify-center border-t md:border-t-0 ${isCancelled ? 'border-red-100 dark:border-red-900/20' : 'border-slate-100 dark:border-slate-800'} pt-4 md:pt-0">
                                 ${actionHtml}
                                 ${!isCancelled ? `
-                                <button class="reschedule-session-btn px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-bold rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-all text-sm flex items-center justify-center gap-2 whitespace-nowrap" data-id="${session.id}" data-date="${session.scheduled_at}" data-duration="${duration}" data-name="${(student.full_name || 'Student').replace(/"/g, '&quot;')}">
+                                <button class="reschedule-session-btn px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-bold rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-all text-sm flex items-center justify-center gap-2 whitespace-nowrap" data-id="${session.id}" data-date="${progStatus && progStatus.nextMeeting ? progStatus.nextMeeting.toISOString() : session.scheduled_at}" data-duration="${duration}" data-name="${(student.full_name || 'Student').replace(/"/g, '&quot;')}" data-history="${JSON.stringify(session.reschedule_history || []).replace(/"/g, '&quot;')}">
                                     <span class="material-symbols-outlined text-[18px]">edit_calendar</span> Reschedule
                                 </button>
                                 <button class="message-btn px-4 py-2.5 bg-slate-100 dark:bg-slate-800 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex items-center justify-center" data-id="${session.id}" data-name="${student.full_name || 'Student'}">
@@ -1292,7 +1307,7 @@ async function bindUpcomingInteractions(container, userId) {
             });
             
             listContainer.querySelectorAll('.reschedule-session-btn').forEach(btn => {
-                btn.addEventListener('click', () => window.triggerMentorReschedule(btn.dataset.id, btn.dataset.date, btn.dataset.duration, btn.dataset.name));
+                btn.addEventListener('click', () => window.triggerMentorReschedule(btn.dataset.id, btn.dataset.date, btn.dataset.duration, btn.dataset.name, btn.dataset.history));
             });
 
             listContainer.querySelectorAll('.delete-session-btn').forEach(btn => {
@@ -1410,7 +1425,7 @@ async function bindCompletedInteractions(container, userId) {
                                     <img src="${studentAvatar}" class="w-full h-full object-cover" />
                                 </div>
                                 <div class="flex-1 min-w-0">
-                                    <h4 class="font-bold text-slate-900 dark:text-white truncate cursor-pointer" onclick='window.openStudentProfile(${JSON.stringify(student).replace(/'/g, "&#39;")})'>${student.full_name || 'Unknown Student'}</h4>
+                                    <h4 class="font-bold text-slate-900 dark:text-white truncate cursor-pointer" onclick='window.openStudentProfile(${JSON.stringify(student).replace(/'/g, "&#39;")})'>${escapeHtml(student.full_name) || 'Unknown Student'}</h4>
                                     <span class="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded text-[10px] font-bold text-slate-500 uppercase tracking-wider">${session.meeting_type}</span>
                                 </div>
                             </div>
@@ -1428,7 +1443,7 @@ async function bindCompletedInteractions(container, userId) {
                                 </div>
                                 <div class="flex-1 min-w-[180px]">
                                     <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Topic</p>
-                                    <p class="font-medium text-slate-500 dark:text-slate-500 text-sm line-clamp-1" title="${(session.topic || 'Mentorship Session').replace(/"/g, '&quot;')}">${session.topic || 'Mentorship Session'}</p>
+                                    <p class="font-medium text-slate-500 dark:text-slate-500 text-sm line-clamp-1" title="${escapeHtml(session.topic) || 'Mentorship Session'}">${escapeHtml(session.topic) || 'Mentorship Session'}</p>
                                 </div>
                             </div>
 

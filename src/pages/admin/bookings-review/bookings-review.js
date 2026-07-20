@@ -4,7 +4,21 @@ import { MentorService } from '/src/services/mentorService.js';
 import { showToast, showConfirmModal, showAlertModal } from '/src/services/uiUtils.js';
 import { buildProgramProgressHtml, getProgramMeetingStatus, openMentorshipRescheduleModal } from '/src/utils/js/mentorshipUI.js';
 
-window.triggerAdminReschedule = function(sessionId, currentScheduledAt, currentDurationStr, studentNameStr) {
+// XSS safety helper
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+
+window.triggerAdminReschedule = function(sessionId, currentScheduledAt, currentDurationStr, studentNameStr, historyJson) {
+    let history = [];
+    try { history = historyJson ? JSON.parse(historyJson) : []; } catch(e) { history = []; }
     openMentorshipRescheduleModal(
         sessionId, currentScheduledAt, currentDurationStr, studentNameStr, 'admin',
         async (id, newDateObj, newDur, note) => {
@@ -20,7 +34,8 @@ window.triggerAdminReschedule = function(sessionId, currentScheduledAt, currentD
             });
             if (error) throw error;
             if (typeof window.location.reload === 'function') setTimeout(() => window.location.reload(), 500);
-        }
+        },
+        history
     );
 };
 
@@ -303,7 +318,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 </div>
                                 <div class="min-w-0">
                                     <p class="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-0.5">Student</p>
-                                    <p class="font-bold text-slate-900 dark:text-white truncate block group-hover/profile:text-indigo-600 transition-colors">${student.full_name}</p>
+                                    <p class="font-bold text-slate-900 dark:text-white truncate block group-hover/profile:text-indigo-600 transition-colors">${escapeHtml(student.full_name || "")}</p>
                                     <div class="flex items-center gap-1.5 mt-1">
                                         <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                                         <p class="text-[10px] text-slate-500 truncate lowercase">${student.email || 'no email'}</p>
@@ -329,7 +344,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                     <p class="text-[9px] font-black text-purple-500 uppercase tracking-widest mb-0.5">Mentor</p>
                                     <a href="${mentorProfileBase}?id=${session.mentor_id}"
                                        class="profile-link font-bold text-slate-900 dark:text-white truncate block hover:text-purple-600 transition-colors"
-                                       onclick="event.stopPropagation()">${mentor.full_name}</a>
+                                       onclick="event.stopPropagation()">${escapeHtml(mentor.full_name || "")}</a>
                                     <div class="flex items-center gap-1.5 mt-1 justify-end">
                                         <p class="text-[10px] text-slate-500 truncate lowercase">${mentor.email || 'no email'}</p>
                                         <span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span>
@@ -353,7 +368,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                  </div>
                              </div>
                              <div class="flex items-center gap-2">
-                                 <button onclick="event.stopPropagation(); window.openRescheduleModal('${session.id}', '${session.scheduled_at}', '${duration}', '${(student.full_name || 'Student').replace(/'/g, "\\'")}', 'admin')" class="w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 transition-all z-10 relative">
+                                 <button onclick="event.stopPropagation(); window.triggerAdminReschedule('${session.id}', '${progStatus && progStatus.nextMeeting ? progStatus.nextMeeting.toISOString() : session.scheduled_at}', '${duration}', '${(student.full_name || 'Student').replace(/'/g, "\\'").replace(/"/g, '&quot;')}', this.dataset.history)" data-history="${JSON.stringify(session.reschedule_history || []).replace(/"/g, '&quot;')}" class="w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 transition-all z-10 relative">
                                      <span class="material-symbols-outlined text-[18px]">edit_calendar</span>
                                  </button>
                                  <div class="w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 group-hover:bg-indigo-50 dark:group-hover:bg-indigo-900/30 group-hover:text-indigo-600 transition-all">
@@ -453,7 +468,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 <span class="material-symbols-outlined">history</span>
                             </div>
                             <div>
-                                <h4 class="font-bold text-slate-900 dark:text-white">${student.full_name} <span class="text-slate-400 font-medium">with</span> ${mentor.full_name}</h4>
+                                <h4 class="font-bold text-slate-900 dark:text-white">${escapeHtml(student.full_name || "")} <span class="text-slate-400 font-medium">with</span> ${escapeHtml(mentor.full_name || "")}</h4>
                                 <div class="flex items-center gap-3 mt-1">
                                     <span class="text-xs text-slate-500 flex items-center gap-1">
                                         <span class="material-symbols-outlined text-sm">calendar_today</span> ${dateStr}
@@ -517,13 +532,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <div class="grid grid-cols-2 gap-4">
                         <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50">
                             <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Mentor Contact</p>
-                            <p class="font-bold text-sm truncate">${mentor.full_name}</p>
+                            <p class="font-bold text-sm truncate">${escapeHtml(mentor.full_name || "")}</p>
                             <p class="text-[11px] text-slate-500 truncate">${mentor.email || 'N/A'}</p>
                             <p class="text-[11px] text-slate-500">${mentor.phone_number || 'N/A'}</p>
                         </div>
                         <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50">
                             <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Student Contact</p>
-                            <p class="font-bold text-sm truncate">${student.full_name}</p>
+                            <p class="font-bold text-sm truncate">${escapeHtml(student.full_name || "")}</p>
                             <p class="text-[11px] text-slate-500 truncate">${student.email || 'N/A'}</p>
                         </div>
                     </div>

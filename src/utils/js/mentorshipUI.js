@@ -1,3 +1,13 @@
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 /**
  * getProgramMeetingStatus(session)
  * Shared helper — call once per card render, use results everywhere.
@@ -147,7 +157,7 @@ export function buildProgramProgressHtml(session) {
                     <span class="material-symbols-outlined text-amber-500 text-2xl">flag</span>
                     <div class="min-w-0">
                         <p class="text-[10px] font-bold text-amber-600/70 uppercase tracking-widest">Program Goal</p>
-                        <p class="font-bold text-slate-800 dark:text-slate-200 text-sm truncate" title="${programGoal.replace(/"/g, '&quot;')}">${programGoal}</p>
+                        <p class="font-bold text-slate-800 dark:text-slate-200 text-sm truncate" title="${escapeHtml(programGoal)}">${escapeHtml(programGoal)}</p>
                     </div>
                 </div>
             </div>
@@ -187,23 +197,37 @@ export function buildMonthlyBadgeHtml() {
 /**
  * SHARED MODAL: openMentorshipRescheduleModal
  * Inject and open a standalone reschedule modal on any dashboard.
- * Separates UI logic from backend RPC dependencies by taking an onConfirm handler.
+ * @param {string} sessionId
+ * @param {string} currentScheduledAt - ISO timestamp
+ * @param {string|number} currentDurationStr - duration in minutes
+ * @param {string} studentName
+ * @param {string} triggerRole - 'admin' or 'mentor'
+ * @param {Function} onConfirmCallback - async (sessionId, newDateObj, dur, note) => void
+ * @param {Array} [rescheduleHistory] - array of previous reschedule log entries from DB
  */
-export function openMentorshipRescheduleModal(sessionId, currentScheduledAt, currentDurationStr, studentName, triggerRole, onConfirmCallback) {
+export function openMentorshipRescheduleModal(sessionId, currentScheduledAt, currentDurationStr, studentName, triggerRole, onConfirmCallback, rescheduleHistory) {
     let rescheduleModal = document.getElementById('reschedule-modal');
     if (!rescheduleModal) {
         const modalHtml = `
         <div id="reschedule-modal" class="fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-300">
-            <div class="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-md shadow-2xl overflow-hidden shadow-slate-900/20 border border-slate-200 dark:border-slate-700 transform scale-95 transition-transform duration-300">
-                <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <div class="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-md shadow-2xl shadow-slate-900/20 border border-slate-200 dark:border-slate-700 transform scale-95 transition-transform duration-300 flex flex-col max-h-[90vh]">
+                <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">
                     <h3 id="res-modal-title" class="font-bold text-lg text-slate-900 dark:text-white">Reschedule Meeting</h3>
                     <button type="button" class="close-reschedule-btn w-8 h-8 flex items-center justify-center bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded-full transition-colors">
                         <span class="material-symbols-outlined text-[20px]">close</span>
                     </button>
                 </div>
-                <div class="p-6">
-                    <p class="text-sm text-slate-500 mb-6">You are rescheduling a meeting for student <strong id="res-student-name" class="text-slate-700 dark:text-slate-300">Student</strong>.</p>
-                    
+                <div class="p-6 overflow-y-auto flex-1">
+                    <p class="text-sm text-slate-500 mb-4">You are rescheduling a meeting for student <strong id="res-student-name" class="text-slate-700 dark:text-slate-300">Student</strong>.</p>
+
+                    <div id="res-history-panel" class="hidden mb-5">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="material-symbols-outlined text-[16px] text-slate-400">history</span>
+                            <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Reschedule History</p>
+                        </div>
+                        <div id="res-history-list" class="space-y-2 max-h-40 overflow-y-auto pr-1"></div>
+                    </div>
+
                     <div class="space-y-4">
                         <div>
                             <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">New Date</label>
@@ -244,6 +268,48 @@ export function openMentorshipRescheduleModal(sessionId, currentScheduledAt, cur
                 setTimeout(() => rescheduleModal.classList.add('hidden'), 300);
             });
         });
+    }
+
+    // Render reschedule history panel
+    const historyPanel = document.getElementById('res-history-panel');
+    const historyList = document.getElementById('res-history-list');
+    if (historyPanel && historyList) {
+        const history = Array.isArray(rescheduleHistory) ? rescheduleHistory : [];
+        if (history.length > 0) {
+            historyPanel.classList.remove('hidden');
+            historyList.innerHTML = history.slice().reverse().map(entry => {
+                const prevDate = entry.previous_scheduled_at ? new Date(entry.previous_scheduled_at) : null;
+                const dateStr = prevDate
+                    ? prevDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+                    : 'Unknown date';
+                const timeStr = prevDate
+                    ? prevDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+                    : '';
+                const dur = entry.previous_duration ? `${entry.previous_duration} min` : '';
+                const isAdmin = entry.requested_by === 'admin';
+                const actor = isAdmin
+                    ? `<span class="inline-flex items-center gap-1 px-1.5 py-0.5 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 rounded text-[9px] font-bold uppercase tracking-wider"><span class="material-symbols-outlined text-[10px]">admin_panel_settings</span>Admin</span>`
+                    : `<span class="inline-flex items-center gap-1 px-1.5 py-0.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 rounded text-[9px] font-bold uppercase tracking-wider"><span class="material-symbols-outlined text-[10px]">school</span>Instructor</span>`;
+                const noteHtml = entry.note
+                    ? `<p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 italic">&ldquo;${escapeHtml(entry.note)}&rdquo;</p>`
+                    : '';
+                return `
+                    <div class="p-3 bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700 rounded-xl">
+                        <div class="flex items-center justify-between gap-2 flex-wrap">
+                            <div class="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
+                                <span class="material-symbols-outlined text-[13px] text-slate-400">event</span>
+                                <span class="text-xs font-semibold">${dateStr}${timeStr ? ' @ ' + timeStr : ''}${dur ? ' &bull; ' + dur : ''}</span>
+                            </div>
+                            ${actor}
+                        </div>
+                        ${noteHtml}
+                    </div>
+                `;
+            }).join('');
+        } else {
+            historyPanel.classList.add('hidden');
+            historyList.innerHTML = '';
+        }
     }
 
     // Role specific templating

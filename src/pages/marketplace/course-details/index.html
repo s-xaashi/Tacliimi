@@ -904,7 +904,8 @@
                                 window._pendingOfferRedemption = null; // Clear it to prevent double-calls if something weird happens
                             }
 
-                            showSuccessModal(courseData.serial_id, result.paymentSerialId);
+                            showModal();
+                            showResult(true, 'Enrollment Successful! 🎉', 'You now have full access to this course.');
                         } catch (e) {
                             alert('Failed to enroll: ' + e.message);
                             enrollBtn.disabled = false;
