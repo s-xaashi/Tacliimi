@@ -126,7 +126,7 @@
                     <input id="entity-payment" type="text" class="form-input" placeholder="PAY-1001" />
                 </div>
                 <!-- Refund Request Toggle -->
-                <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/30 rounded-2xl p-5">
+                <div id="refund-request-container" class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/30 rounded-2xl p-5">
                     <div class="flex items-start gap-4">
                         <div class="mt-0.5">
                             <input type="checkbox" id="request-refund-toggle" class="w-5 h-5 rounded-lg text-primary border-slate-300 cursor-pointer" />
@@ -199,6 +199,10 @@
                     <p class="text-xs text-slate-400 mt-1">PNG, JPG, GIF up to 5MB</p>
                 </div>
                 <input type="file" id="screenshot-input" accept="image/*" class="hidden" onchange="handleFileSelect(event)" />
+                <div id="upload-error" class="hidden mt-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl flex items-center justify-between gap-3">
+                    <p class="text-xs text-red-600 dark:text-red-400 font-semibold" id="upload-error-text">Upload failed.</p>
+                    <button onclick="clearFile()" class="text-xs font-bold text-red-600 hover:text-red-700 underline whitespace-nowrap">Remove & continue without it</button>
+                </div>
                 <div id="file-preview" class="hidden mt-3 flex items-center gap-3 bg-slate-50 dark:bg-slate-800 rounded-xl p-3">
                     <span class="material-symbols-outlined text-emerald-500">check_circle</span>
                     <span id="file-name" class="text-sm font-medium text-slate-700 dark:text-slate-300 flex-1 truncate"></span>
@@ -251,12 +255,20 @@
     import { RefundService } from '/src/services/refundService.js';
     import { AuthService } from '/src/services/authService.js';
     import { ThemeService } from '/src/services/themeService.js';
+    import { financeSettingsService } from '/src/services/financeSettingsService.js';
 
     ThemeService.init();
 
     // Guard auth
     AuthService.getSession().then(session => {
         if (!session) window.location.href = '/src/pages/auth/login/index.html';
+    });
+
+    // Handle platform settings
+    financeSettingsService.getSettings().then(settings => {
+        if (settings && settings.show_refund_request === false) {
+            document.getElementById('refund-request-container').classList.add('hidden');
+        }
     });
 
     let selectedCategory = null;
@@ -297,6 +309,8 @@
         document.getElementById('screenshot-input').value = '';
         document.getElementById('file-preview').classList.add('hidden');
         document.getElementById('upload-zone').classList.remove('hidden');
+        const uploadErrorEl = document.getElementById('upload-error');
+        if (uploadErrorEl) uploadErrorEl.classList.add('hidden');
     };
 
     window.resetForm = function() {
@@ -355,12 +369,20 @@
 
             const wantsRefund = selectedCategory === 'finance' && document.getElementById('request-refund-toggle').checked;
 
-            // Upload screenshot
-            let attachmentUrls = [];
+            // Upload screenshot (throws on failure — bucket must exist)
+            let attachmentPaths = [];
             if (selectedFile) {
-                // Use a temp ticket id placeholder; supportService will upload before inserting attachments
-                const url = await SupportService.uploadScreenshot(selectedFile, 'temp-' + Date.now());
-                if (url) attachmentUrls = [url];
+                const uploadErrorEl = document.getElementById('upload-error');
+                const uploadErrorText = document.getElementById('upload-error-text');
+                try {
+                    const path = await SupportService.uploadScreenshot(selectedFile, 'pending-' + Date.now());
+                    if (path) attachmentPaths = [path];
+                } catch (uploadErr) {
+                    // Surface error — let user remove the file and re-submit without it
+                    uploadErrorText.textContent = uploadErr.message || 'Screenshot upload failed.';
+                    uploadErrorEl.classList.remove('hidden');
+                    throw new Error('Please remove the screenshot (using the link above) and try again, or contact support if the issue persists.');
+                }
             }
 
             // Create ticket
@@ -371,28 +393,27 @@
                 subject: document.getElementById('ticket-subject').value.trim() || null,
                 description,
                 refundRequested: wantsRefund
-            }, attachmentUrls);
+            }, attachmentPaths);
 
-            // Create refund request if requested
+            // Create refund request linked to this ticket
             let successMsg = 'Your support ticket has been submitted. We\'ll get back to you within 24 hours.';
             if (wantsRefund) {
                 const refundAmount = parseFloat(document.getElementById('refund-amount').value) || 0;
-                const refundType = document.getElementById('refund-type').value;
-                const paymentRef = entityId || 'UNKNOWN';
 
                 try {
                     await RefundService.submitRefundRequest({
-                        paymentId: ticket.id, // Use ticket id as placeholder since no actual payment UUID from string ref
+                        ticketId: ticket.id,   // link refund → ticket (no real payment UUID needed)
                         amount: refundAmount,
                         reason: description,
-                        requestType: refundType
+                        requestType: 'general_refund'
                     });
                     successMsg = 'Your ticket and refund request have been submitted. Our finance team will review your refund within 3–5 business days.';
                 } catch (refundErr) {
                     if (refundErr.message.includes('pending')) {
-                        successMsg = 'Your ticket was submitted. Note: A refund request for this payment is already pending review.';
+                        successMsg = 'Your ticket was submitted. Note: A refund request for this ticket is already pending review.';
                     } else {
-                        console.warn('Refund creation failed (ticket still saved):', refundErr.message);
+                        // Ticket saved — refund failed, still show partial success
+                        successMsg = 'Your ticket was submitted. However, the refund request could not be created: ' + refundErr.message;
                     }
                 }
             }

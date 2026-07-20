@@ -137,19 +137,24 @@
 
 
             <div class="px-8 pb-8 pt-2 max-w-7xl mx-auto">
-                <div class="mb-8">
-                    <h2 class="text-3xl font-bold dark:text-white">Earnings</h2>
-                    <p class="text-slate-500 mt-2">Monitor your revenue and transaction history.</p>
+                <div class="mb-8 flex items-center gap-4">
+                    <div class="flex size-12 shadow-sm border border-slate-200 dark:border-slate-700 items-center justify-center rounded-xl bg-white dark:bg-slate-800 text-primary">
+                        <span class="material-symbols-outlined text-2xl">account_balance_wallet</span>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-900 dark:text-white">Financial Hub</h2>
+                        <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Manage your earnings, pending clearances, and payout requests.</p>
+                    </div>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
                     <div
                         class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
                         <div class="flex items-center justify-between mb-4">
                             <h3 class="font-medium text-slate-600 dark:text-slate-400">Total Earnings</h3>
                             <span class="material-symbols-outlined text-slate-400">account_balance_wallet</span>
                         </div>
-                        <div class="text-3xl font-bold dark:text-white mb-2">$0.00</div>
-                        <p class="text-slate-400 text-xs leading-relaxed">Earnings will appear after course sales</p>
+                        <div class="text-3xl font-bold dark:text-white mb-2" id="metric-total">$0.00</div>
+                        <p class="text-slate-400 text-xs leading-relaxed">Cleared, withdrawable lifetime revenue</p>
                     </div>
                     <div
                         class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
@@ -158,7 +163,7 @@
                                 <h3 class="font-medium text-slate-600 dark:text-slate-400">Available for Withdrawal</h3>
                                 <span class="material-symbols-outlined text-slate-400">payments</span>
                             </div>
-                            <div class="text-3xl font-bold dark:text-white mb-4">$0.00</div>
+                            <div class="text-3xl font-bold dark:text-white mb-4" id="metric-available">$0.00</div>
                         </div>
                         <button
                             class="w-full bg-slate-100 dark:bg-slate-800 text-slate-400 py-2.5 rounded-lg font-medium cursor-not-allowed"
@@ -169,10 +174,19 @@
                     <div
                         class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
                         <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-medium text-slate-600 dark:text-slate-400">Funds Held</h3>
+                            <span class="material-symbols-outlined text-slate-400">lock_clock</span>
+                        </div>
+                        <div class="text-3xl font-bold dark:text-white mb-2" id="metric-held">$0.00</div>
+                        <p class="text-slate-400 text-xs leading-relaxed">Pending clearance period</p>
+                    </div>
+                    <div
+                        class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                        <div class="flex items-center justify-between mb-4">
                             <h3 class="font-medium text-slate-600 dark:text-slate-400">Earnings This Month</h3>
                             <span class="material-symbols-outlined text-slate-400">calendar_month</span>
                         </div>
-                        <div class="text-3xl font-bold dark:text-white mb-2">$0.00</div>
+                        <div class="text-3xl font-bold dark:text-white mb-2" id="metric-monthly">$0.00</div>
                         <p class="text-slate-400 text-xs leading-relaxed">Updated from current period</p>
                     </div>
                 </div>
@@ -327,7 +341,32 @@
             } else {
                 const desc = item.earning_type === 'mentorship' ? 'Mentorship Session' : 'Course Sale';
                 const itemName = item.earning_type === 'mentorship' ? 'Booking' : (item.courses?.title || 'Unknown');
+                const pDetails = item.paymentDetails || {};
+                const hInfo = item.holdInfo || { held: false, clearsAt: null };
+                
+                const receiptStr = pDetails.serial_id ? `PAY-${pDetails.serial_id.toString().padStart(4, '0')}` : 'N/A';
+                const studentName = pDetails.student_full_name || 'Unknown Student';
+                const studentAvatar = pDetails.student_avatar_url || 'https://ui-avatars.com/api/?name=St&background=random';
+                
+                let clearanceStr = '';
+                if (hInfo.held && hInfo.clearsAt) {
+                    clearanceStr = `
+                    <div class="flex justify-between items-center py-2 border-b border-slate-50 dark:border-slate-800/50">
+                        <span class="text-slate-500 text-sm">Clearance Date</span>
+                        <span class="font-medium text-amber-500">${new Date(hInfo.clearsAt).toLocaleDateString()}</span>
+                    </div>`;
+                }
+
                 content.innerHTML = `
+                    <div class="flex justify-between items-center py-2 mt-2 mb-4 border-b border-slate-50 dark:border-slate-800/50">
+                        <div class="flex items-center gap-3">
+                            <img src="${studentAvatar}" class="w-10 h-10 rounded-full object-cover border border-slate-200 dark:border-slate-700" alt="Student">
+                            <div>
+                                <p class="text-sm font-medium text-slate-900 dark:text-white">${studentName}</p>
+                                <p class="text-xs text-slate-500">Student</p>
+                            </div>
+                        </div>
+                    </div>
                     <div class="flex justify-between items-center py-2 border-b border-slate-50 dark:border-slate-800/50">
                         <span class="text-slate-500 text-sm">Type</span>
                         <span class="font-medium text-slate-900 dark:text-white">${desc}</span>
@@ -336,6 +375,11 @@
                         <span class="text-slate-500 text-sm">Item</span>
                         <span class="font-medium text-slate-900 dark:text-white break-words text-right max-w-[200px]">${itemName}</span>
                     </div>
+                    <div class="flex justify-between items-center py-2 border-b border-slate-50 dark:border-slate-800/50">
+                        <span class="text-slate-500 text-sm">Receipt ID</span>
+                        <span class="font-medium text-indigo-600 dark:text-indigo-400 uppercase font-mono">${receiptStr}</span>
+                    </div>
+                    ${clearanceStr}
                     <div class="flex justify-between items-center py-2 border-b border-slate-50 dark:border-slate-800/50">
                         <span class="text-slate-500 text-sm">Gross Amount</span>
                         <span class="font-medium text-slate-900 dark:text-white">$${parseFloat(item.gross_amount).toFixed(2)}</span>
@@ -369,38 +413,46 @@
                 // 1. Fetch Summary Data
                 const summary = await instructorEarningsService.getSummary(userId);
                 
-                // 2. Fetch Transaction History (Earnings)
-                const transactions = await instructorEarningsService.getTransactionHistory(userId);
-                
-                // 3. Fetch Withdrawal History
-                const withdrawals = await instructorEarningsService.getWithdrawalHistory(userId);
+                // 2. Fetch Transaction History & Payment Details
+                const [transactions, paymentDetailsMap, withdrawals] = await Promise.all([
+                    instructorEarningsService.getTransactionHistory(userId),
+                    instructorEarningsService.getPaymentDetails(),
+                    instructorEarningsService.getWithdrawalHistory(userId)
+                ]);
 
                 // Default Values
-                let totalEarnings = summary?.total_earned || 0;
+                let totalEarnings = summary?.cleared_earnings || 0;
                 let monthEarnings = summary?.monthly || 0;
                 let availableForWithdrawal = summary?.available_balance || 0;
-                g_availableBalance = availableForWithdrawal;
+                let heldBalance = summary?.held_balance || 0;
+                let withdrawableAmount = summary?.withdrawable_amount || 0;
+                let minWithdrawalAmt = summary?.min_withdrawal_amount || 10;
+                let reserveAmount = summary?.reserve_amount || 5;
 
-                // Update Metric UI
-                const metrics = document.querySelectorAll('.text-3xl.font-bold');
-                if (metrics.length >= 3) {
-                    metrics[0].innerText = `$${totalEarnings.toFixed(2)}`;
-                    metrics[1].innerText = `$${availableForWithdrawal.toFixed(2)}`;
-                    metrics[2].innerText = `$${monthEarnings.toFixed(2)}`;
-                }
+                g_availableBalance = withdrawableAmount;
+
+                // Update Metric UI by IDs
+                document.getElementById('metric-total').innerText = `$${totalEarnings.toFixed(2)}`;
+                document.getElementById('metric-available').innerText = `$${withdrawableAmount.toFixed(2)}`;
+                document.getElementById('metric-held').innerText = `$${heldBalance.toFixed(2)}`;
+                document.getElementById('metric-monthly').innerText = `$${monthEarnings.toFixed(2)}`;
 
                 // Update Request Withdrawal Button
                 const withdrawBtn = Array.from(document.querySelectorAll('button')).find(el => el.textContent.includes('Request Withdrawal'));
 
-                let minWithdrawalAmt = 10;
-                try {
-                    const { supabase } = await import('/src/services/supabaseClient.js');
-                    const { data: sets } = await supabase.rpc('get_platform_settings');
-                    if (sets) minWithdrawalAmt = sets.min_withdrawal_amount || 10;
-                } catch(e) {}
-
                 if (withdrawBtn) {
-                    if (availableForWithdrawal >= minWithdrawalAmt) {
+                    if (withdrawableAmount < minWithdrawalAmt) {
+                        withdrawBtn.classList.add('cursor-not-allowed', 'text-slate-400', 'bg-slate-100', 'dark:bg-slate-800');
+                        withdrawBtn.classList.remove('bg-primary', 'text-white', 'hover:bg-primary/90');
+                        withdrawBtn.disabled = true;
+                        
+                        if (availableForWithdrawal >= minWithdrawalAmt) {
+                             const needed = (minWithdrawalAmt + reserveAmount - availableForWithdrawal).toFixed(2);
+                             withdrawBtn.innerHTML = `<span class="text-[11px] leading-tight flex flex-col"><span>Need $${needed} more cleared</span><span>before you can withdraw</span></span>`;
+                        } else {
+                             withdrawBtn.innerHTML = `Min Withdrawal: $${minWithdrawalAmt}`;
+                        }
+                    } else {
                         withdrawBtn.classList.remove('cursor-not-allowed', 'text-slate-400', 'bg-slate-100', 'dark:bg-slate-800');
                         withdrawBtn.classList.add('bg-primary', 'text-white', 'hover:bg-primary/90');
                         withdrawBtn.disabled = false;
@@ -410,14 +462,42 @@
                             const method = await PayoutService.getMyPayoutMethod(userId);
                             if (!method) {
                                 if (confirm('You must configure a payout method before withdrawing. Set one up now?')) {
-                                    window.location.href = '/src/pages/instructor/instructor-profile-settings/index.html#payout';
+                                    window.location.href = '/src/pages/instructor/instructor-profile/index.html';
                                 }
                                 return;
                             }
                             g_payoutMethod = method;
 
-                            document.getElementById('modal-available-balance').innerText = `$${availableForWithdrawal.toFixed(2)}`;
-                            document.getElementById('withdrawal-amount-input').value = availableForWithdrawal.toFixed(2);
+                            document.getElementById('modal-available-balance').innerText = `$${withdrawableAmount.toFixed(2)}`;
+                            const amtInput = document.getElementById('withdrawal-amount-input');
+                            const confirmBtn = document.getElementById('confirm-withdrawal-btn');
+                            const errorEl = document.getElementById('withdrawal-error');
+                            
+                            amtInput.value = withdrawableAmount.toFixed(2);
+                            errorEl.classList.add('hidden');
+                            confirmBtn.disabled = false;
+                            confirmBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                            
+                            amtInput.oninput = () => {
+                                 const reqAmt = parseFloat(amtInput.value || 0);
+                                 errorEl.classList.add('hidden');
+                                 
+                                 if (reqAmt < minWithdrawalAmt) {
+                                     confirmBtn.disabled = true;
+                                     confirmBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                                     errorEl.innerHTML = `<span class="text-red-500 font-medium">Minimum withdrawal is $${minWithdrawalAmt}</span>`;
+                                     errorEl.classList.remove('hidden');
+                                 } else if (reqAmt > withdrawableAmount) {
+                                     confirmBtn.disabled = true;
+                                     confirmBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                                     const reserve = availableForWithdrawal - withdrawableAmount;
+                                     errorEl.innerHTML = `<span class="text-red-500 font-medium text-xs">Insufficient balance. Only $${withdrawableAmount.toFixed(2)} is permitted to leave the $${reserve.toFixed(2)} reserve intact.</span>`;
+                                     errorEl.classList.remove('hidden');
+                                 } else {
+                                     confirmBtn.disabled = false;
+                                     confirmBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                                 }
+                            };
                             
                             const mi = document.getElementById('modal-payout-method-info');
                             if (method.method_type === 'mobile_money') {
@@ -430,8 +510,6 @@
 
                             document.getElementById('withdrawal-modal').classList.remove('hidden');
                         });
-                    } else {
-                         withdrawBtn.innerHTML = `Min Withdrawal: $${minWithdrawalAmt}`;
                     }
                 }
 
@@ -466,6 +544,9 @@
                     let transHtml = '';
 
                     transactions.forEach(item => {
+                        item.paymentDetails = paymentDetailsMap.get(item.id);
+                        item.holdInfo = instructorEarningsService.getHoldInfo(item);
+                        
                         const dateStr = new Date(item.created_at).toLocaleDateString();
                         const rawItemStr = encodeURIComponent(JSON.stringify(item));
                         const courseName = item.courses?.title || 'Unknown';
@@ -473,16 +554,38 @@
                         const feeAmt = parseFloat(item.platform_fee);
                         const description = item.earning_type === 'mentorship' ? 'Mentorship Booking' : `Course Sale (${courseName})`;
                         
+                        let pDetails = item.paymentDetails || {};
+                        let refundStatusHtml = '';
+                        if (pDetails.refund_status === 'pending') {
+                            refundStatusHtml = `<div class="text-xs text-orange-500 font-medium mt-1">Refund is pending for this payment</div>`;
+                        } else if (pDetails.refund_status === 'approved') {
+                            refundStatusHtml = `<div class="text-xs text-red-500 font-medium mt-1">Refunded</div>`;
+                        } else {
+                            refundStatusHtml = `<div class="text-xs text-slate-400 mt-1">There is no refund</div>`;
+                        }
+
+                        let statusBadgeHtml = '';
+                        if (item.holdInfo.held) {
+                            statusBadgeHtml = `<span class="px-2.5 py-1 text-xs font-medium rounded-full bg-amber-100/50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 capitalize">Held</span>
+                                               <div class="text-[10px] text-slate-400 mt-1.5 font-medium tracking-wide">Clears ${new Date(item.holdInfo.clearsAt).toLocaleDateString()}</div>`;
+                        } else {
+                            statusBadgeHtml = `<span class="px-2.5 py-1 text-xs font-medium rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 capitalize">completed</span>`;
+                        }
+                        
+                        const receiptStr = pDetails.serial_id ? 'PAY-' + pDetails.serial_id.toString().padStart(4, '0') : 'N/A';
+                        
                         transHtml += `
                             <tr class="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer" onclick="openTransactionDetail('${rawItemStr}')">
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900 dark:text-white">${dateStr}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                                <div class="font-medium truncate max-w-[250px]">${description}</div>
+                                <div class="font-medium truncate max-w-[250px] mb-1 font-slate-900 dark:font-white">${description}</div>
+                                <div class="text-xs font-mono text-indigo-500 dark:text-indigo-400 font-medium tracking-wider mb-1">${receiptStr}</div>
                                 <div class="text-xs mt-0.5">Gross: $${grossAmt.toFixed(2)} | Fee: $${feeAmt.toFixed(2)}</div>
+                                ${refundStatusHtml}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-emerald-500 font-medium">+$${parseFloat(item.instructor_share).toFixed(2)}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="px-2.5 py-1 text-xs font-medium rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 capitalize">completed</span>
+                            <td class="px-6 py-4 whitespace-nowrap text-left">
+                                ${statusBadgeHtml}
                             </td>
                             </tr>`;
                     });

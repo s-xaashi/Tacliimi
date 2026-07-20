@@ -216,7 +216,7 @@ async function loadStudentDemographics() {
         demographicsChartInstance = echarts.init(mapDom);
 
         // Map data to match ECharts expectation (name, value)
-        const mapData = data.map(d => {
+        let mapData = data.map(d => {
             // Capitalize first letter of each word to match ECharts world map labels (e.g. "somaliland" -> "Somaliland")
             const countryName = (d.country || 'Unknown')
                 .split(' ')
@@ -224,6 +224,14 @@ async function loadStudentDemographics() {
                 .join(' ');
             return { name: countryName, value: Number(d.count) };
         });
+
+        // Ensure Somalia and Somaliland are always defined for distinct tooltips
+        if (!mapData.some(d => d.name === 'Somalia')) {
+            mapData.push({ name: 'Somalia', value: 0 });
+        }
+        if (!mapData.some(d => d.name === 'Somaliland')) {
+            mapData.push({ name: 'Somaliland', value: 0 });
+        }
 
         console.log("=== MAP DEMOGRAPHICS DEBUG ===");
         console.log("Original RPC Data:", data);

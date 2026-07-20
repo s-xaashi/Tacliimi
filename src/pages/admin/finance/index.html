@@ -211,6 +211,17 @@
                             </label>
                         </div>
 
+                        <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-800">
+                            <div>
+                                <h4 class="font-bold">Enable Refund Requests</h4>
+                                <p class="text-xs text-slate-500 mt-1">If enabled, students will be able to initiate a refund request from the Help Center.</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="setting-refund-requests-enabled" class="sr-only peer">
+                                <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                            </label>
+                        </div>
+
                         <div class="grid grid-cols-2 gap-6 p-4 border border-slate-200 dark:border-slate-800 rounded-xl opacity-50 transition-opacity" id="split-settings-container">
                             <div>
                                 <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Instructor Percentage (%)</label>
@@ -331,11 +342,11 @@
             `;
         }
 
-        function renderCurrentTab() {
+        async function renderCurrentTab() {
             if (currentTab === 'withdrawals') renderWithdrawals();
             else if (currentTab === 'refunds') renderRefunds();
             else if (currentTab === 'finance-reports') renderFinanceReports();
-            else renderFinanceTickets();
+            else await renderFinanceTickets();
         }
 
         function filtered(arr) {
@@ -413,16 +424,32 @@
             const rows = filtered(allRefunds);
             const tbody = document.getElementById('refunds-body');
             if (!rows.length) { tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-10 text-center text-slate-400 italic">No refunds found</td></tr>`; return; }
-            tbody.innerHTML = rows.map(r => `
+            tbody.innerHTML = rows.map(r => {
+                const studentId = r.student_id || '';
+                const linkedTicket = r.support_tickets;
+
+                return `
                 <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                     <td class="px-6 py-4">
                         <div class="flex items-center gap-3">
                             <div class="w-9 h-9 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 font-black text-sm">${(r.profiles?.full_name || 'U')[0]}</div>
-                            <div><p class="font-bold text-sm">${r.profiles?.full_name || 'Unknown'}</p><p class="text-xs text-slate-400">${r.profiles?.email || ''}</p></div>
+                            <div>
+                                <p class="font-bold text-sm cursor-pointer hover:text-indigo-600 hover:underline transition-colors"
+                                   onclick="window.open('/src/pages/admin/users/index.html', '_blank')" title="View student in Admin Panel">
+                                    ${r.profiles?.full_name || 'Unknown'}
+                                </p>
+                                <p class="text-xs text-slate-400">${r.profiles?.email || ''}</p>
+                                ${linkedTicket ? `
+                                    <button onclick="switchTab('finance-tickets')" class="mt-1 inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-full text-[9px] font-black uppercase tracking-wider hover:bg-indigo-100 hover:text-indigo-600 transition-all">
+                                        <span class="material-symbols-outlined text-[10px]">receipt_long</span>
+                                        View Ticket · ${linkedTicket.entity_id || 'Finance Issue'}
+                                    </button>
+                                ` : ''}
+                            </div>
                         </div>
                     </td>
                     <td class="px-6 py-4 font-black text-lg">${fmtAmt(r.amount)}</td>
-                    <td class="px-6 py-4"><span class="text-xs font-bold text-slate-500 uppercase">${(r.request_type || 'course_refund').replace('_', ' ')}</span></td>
+                    <td class="px-6 py-4"><span class="text-xs font-bold text-slate-500 uppercase">${(r.request_type || 'general_refund').replace(/_/g, ' ')}</span></td>
                     <td class="px-6 py-4">${statusBadge(r.status)}</td>
                     <td class="px-6 py-4 text-slate-400 text-sm">${fmtDate(r.created_at)}</td>
                     <td class="px-6 py-4 text-right">
@@ -434,14 +461,46 @@
                         `}
                     </td>
                 </tr>
-            `).join('');
+            `}).join('');
         }
 
-        function renderFinanceTickets() {
+        async function renderFinanceTickets() {
             const rows = filtered(allFinanceTickets);
             const tbody = document.getElementById('finance-tickets-body');
             if (!rows.length) { tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-10 text-center text-slate-400 italic">No finance tickets found</td></tr>`; return; }
-            tbody.innerHTML = rows.map(t => `
+
+            // Pre-fetch signed URLs for all attachments in parallel
+            const { SupportService } = await import('/src/services/supportService.js');
+            const allAttachments = rows.flatMap(t => t.support_ticket_attachments || []);
+            const signedUrlMap = {};
+            await Promise.all(allAttachments.map(async (att) => {
+                if (att.file_url) {
+                    signedUrlMap[att.id] = await SupportService.getSignedUrl(att.file_url);
+                }
+            }));
+
+            tbody.innerHTML = rows.map(t => {
+                const attachments = t.support_ticket_attachments || [];
+                const screenshotsHtml = attachments.length > 0
+                    ? `<div class="flex gap-1.5 mt-2 flex-wrap">${
+                        attachments.map(a => signedUrlMap[a.id]
+                            ? `<a href="${signedUrlMap[a.id]}" target="_blank" title="View screenshot" class="block">
+                                <img src="${signedUrlMap[a.id]}" class="w-12 h-12 rounded-xl object-cover border-2 border-slate-200 dark:border-slate-700 hover:border-indigo-400 hover:opacity-90 transition-all shadow-sm cursor-pointer" />
+                               </a>`
+                            : ''
+                        ).join('')
+                      }</div>`
+                    : '';
+
+                const linkedRefunds = t.refund_requests || [];
+                const refundBadge = linkedRefunds.length > 0
+                    ? `<button onclick="switchTab('refunds')" class="mt-1.5 inline-flex items-center gap-1 px-2 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 rounded-full text-[9px] font-black uppercase tracking-wider hover:bg-purple-200 dark:hover:bg-purple-900/60 transition-all border border-purple-200 dark:border-purple-800">
+                        <span class="material-symbols-outlined text-[10px]">reply</span>
+                        Refund Requested · ${fmtAmt(linkedRefunds[0].amount)}
+                      </button>`
+                    : '';
+
+                return `
                 <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                     <td class="px-6 py-4">
                         <p class="font-bold text-sm">${t.profiles?.full_name || 'Unknown'}</p>
@@ -449,6 +508,8 @@
                     <td class="px-6 py-4 font-mono text-xs text-slate-500">${t.entity_id || '—'}</td>
                     <td class="px-6 py-4 max-w-xs">
                         <p class="text-sm text-slate-600 dark:text-slate-400 truncate">${t.description}</p>
+                        ${screenshotsHtml}
+                        ${refundBadge}
                     </td>
                     <td class="px-6 py-4">${statusBadge(t.status)}</td>
                     <td class="px-6 py-4 text-slate-400 text-sm">${fmtDate(t.created_at)}</td>
@@ -457,8 +518,8 @@
                             <button onclick="resolveTicket('${t.id}')" class="px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-bold hover:bg-indigo-700 transition-all">Mark Resolved</button>
                         ` : `<span class="text-slate-300 text-xs italic">Done</span>`}
                     </td>
-                </tr>
-            `).join('');
+                </tr>`;
+            }).join('');
         }
 
         async function renderFinanceReports() {
@@ -581,7 +642,6 @@
 
         window.resolveTicket = async function(id) {
             try {
-                const { SupportService } = await import('/src/services/supportService.js');
                 await SupportService.updateTicketStatus(id, 'resolved');
                 await loadAll();
             } catch (e) { alert('Error: ' + e.message); }
@@ -640,6 +700,7 @@
         async function loadSettings() {
             const settings = await financeSettingsService.getSettings();
             commissionToggle.checked = settings.commission_enabled;
+            document.getElementById('setting-refund-requests-enabled').checked = settings.show_refund_request !== false;
             instPctInput.value = settings.instructor_percentage;
             platPctInput.value = settings.platform_percentage;
             document.getElementById('setting-min-withdrawal').value = settings.min_withdrawal_amount;
@@ -671,6 +732,7 @@
                 commission_enabled: commissionToggle.checked,
                 instructor_percentage: instPct,
                 platform_percentage: platPct,
+                show_refund_request: document.getElementById('setting-refund-requests-enabled').checked,
                 min_withdrawal_amount: parseFloat(document.getElementById('setting-min-withdrawal').value) || 10
             });
 

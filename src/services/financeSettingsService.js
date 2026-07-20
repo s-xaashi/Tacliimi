@@ -17,7 +17,8 @@ export const financeSettingsService = {
                     commission_enabled: false,
                     instructor_percentage: 100,
                     platform_percentage: 0,
-                    min_withdrawal_amount: 10
+                    min_withdrawal_amount: 10,
+                    show_refund_request: true
                 };
             }
             
@@ -29,7 +30,8 @@ export const financeSettingsService = {
                 commission_enabled: false,
                 instructor_percentage: 100,
                 platform_percentage: 0,
-                min_withdrawal_amount: 10
+                min_withdrawal_amount: 10,
+                show_refund_request: true
             };
         }
     },
@@ -53,6 +55,7 @@ export const financeSettingsService = {
                     instructor_percentage: settings.instructor_percentage,
                     platform_percentage: settings.platform_percentage,
                     min_withdrawal_amount: settings.min_withdrawal_amount,
+                    show_refund_request: settings.show_refund_request,
                     updated_by: user.user.id,
                     updated_at: new Date().toISOString()
                 })

@@ -41,6 +41,11 @@ async function initConfirmation() {
                         .single();
                     if (directData) session.serial_id = directData.serial_id;
                 }
+
+                // Map payment_serial_id from RPC into the payments array format
+                if (raw.payment_serial_id) {
+                    session.payments = [{ serial_id: raw.payment_serial_id }];
+                }
             }
         } else {
             // Student/Mentor: Use direct query (honors RLS)
