@@ -8,6 +8,7 @@
     <script type="module" src="/src/services/globalProfile.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap"
         rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&amp;display=swap" rel="stylesheet" />
     <link
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
         rel="stylesheet" />
@@ -18,11 +19,13 @@
                 extend: {
                     colors: {
                         primary: "#4F46E5",
-                        "background-light": "#F9FAFB",
-                        "background-dark": "#111827",
+                        "background-light": "#FAF9F6",
+                        "background-dark": "#0B0E1A",
+                        "accent-gold": "#C9A227",
                     },
                     fontFamily: {
                         display: ["Inter", "sans-serif"],
+                        serif: ["Fraunces", "serif"],
                     },
                     borderRadius: {
                         DEFAULT: "0.5rem",
@@ -49,7 +52,7 @@
                 <span class="font-medium text-sm">Back to Dashboard</span>
             </a>
             <div class="h-6 w-px bg-slate-200 dark:bg-slate-800"></div>
-            <h1 id="li-course-title" class="text-sm font-semibold truncate max-w-[300px] lg:max-w-md">Course Title Here
+            <h1 id="li-course-title" class="text-sm font-semibold font-serif truncate max-w-[300px] lg:max-w-md">Course Title Here
             </h1>
         </div>
         <div class="flex items-center gap-2 md:gap-4" id="li-header-profile-placeholder">
@@ -58,10 +61,12 @@
     </header>
     <main class="flex-1 flex flex-col md:flex-row overflow-hidden">
         <section class="flex-1 overflow-y-auto no-scrollbar">
-            <div class="w-full aspect-video bg-black relative group">
-                <video id="main-video-player" class="w-full h-full object-contain" controls controlsList="nodownload" oncontextmenu="return false;">
-                    Your browser does not support the video tag.
-                </video>
+            <div class="w-full aspect-video bg-black md:bg-transparent md:p-6 lg:p-8 relative group">
+                <div class="w-full h-full bg-black relative md:rounded-2xl md:shadow-2xl md:ring-1 md:ring-slate-200 dark:md:ring-white/10 md:overflow-hidden">
+                    <video id="main-video-player" class="w-full h-full object-contain" controls controlsList="nodownload" oncontextmenu="return false;">
+                        Your browser does not support the video tag.
+                    </video>
+                </div>
             </div>
             <div class="p-8 max-w-5xl mx-auto">
                 <div class="border-b border-slate-200 dark:border-slate-800 mb-6">
@@ -78,7 +83,7 @@
                     </nav>
                 </div>
                 <div class="prose dark:prose-invert max-w-none">
-                    <h2 id="li-lesson-title" class="text-2xl font-bold mb-4">Loading Lesson...</h2>
+                    <h2 id="li-lesson-title" class="text-2xl font-bold font-serif mb-4">Loading Lesson...</h2>
 
                     <div id="tab-content-quiz" class="tab-content">
                         <p class="text-slate-600 dark:text-slate-400">No quizzes for this lesson.</p>
@@ -94,7 +99,10 @@
             </div>
         </section>
         <aside
-            class="w-full md:w-80 lg:w-96 border-l border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col h-full">
+            class="w-full md:w-80 lg:w-96 border-l border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col h-full relative">
+            <div class="absolute left-[-1px] top-0 bottom-0 w-1 bg-slate-200/50 dark:bg-slate-800/50 pointer-events-none z-10 hidden md:block">
+                <div id="li-progress-ribbon" class="w-full bg-accent-gold transition-all duration-1000" style="height: 0%;"></div>
+            </div>
             <div class="p-6 border-b border-slate-200 dark:border-slate-800">
                 <div class="flex justify-between items-center mb-2">
                     <h3 class="font-bold text-slate-900 dark:text-white">Course Content</h3>
@@ -106,13 +114,6 @@
             </div>
             <div id="li-sidebar-curriculum" class="flex-1 overflow-y-auto">
                 <!-- Curriculum populated dynamically -->
-            </div>
-            <div class="p-6 border-t border-slate-200 dark:border-slate-800">
-                <button
-                    class="w-full py-3 bg-primary text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2">
-                    Next Lesson
-                    <span class="material-symbols-outlined">chevron_right</span>
-                </button>
             </div>
         </aside>
     </main>

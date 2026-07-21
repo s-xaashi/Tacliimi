@@ -127,8 +127,8 @@ async function loadMyCourses() {
             return dateB - dateA;
         });
 
-        const activeEnrollments = enrollments.filter(e => (e.progress_percentage || 0) < 100);
-        const completedEnrollments = enrollments.filter(e => (e.progress_percentage || 0) === 100);
+        const activeEnrollments = enrollments.filter(e => e.status !== 'superseded' && (e.progress_percentage || 0) < 100);
+        const completedEnrollments = enrollments.filter(e => e.status !== 'superseded' && (e.progress_percentage || 0) === 100);
         
         if (welcomeMsg) {
             if (activeEnrollments.length > 0) {
@@ -241,7 +241,8 @@ window.openUpdateModal = function(offerId) {
     const oldCourse = offer.from_version;
     const versionLabel = newCourse?.version_number ? `V${newCourse.version_number}` : 'New Version';
     const coupon = offer.coupon;
-    const price = newCourse?.price_type === 'free' ? 'Free' : `$${parseFloat(newCourse?.price || 0).toFixed(2)}`;
+    const isFree = newCourse?.price_type === 'free' || parseFloat(newCourse?.price || 0) === 0;
+    const priceDisplay = isFree ? 'Free' : `$${parseFloat(newCourse?.price || 0).toFixed(2)}`;
 
     // Compute changelog diff (sections/lessons added or removed)
     const oldLessons = new Set();
@@ -274,7 +275,7 @@ window.openUpdateModal = function(offerId) {
         </div>
     ` : `<p class="text-slate-400 italic text-sm">The instructor has updated the course content. Enroll to access the latest version.</p>`;
 
-    const noCouponText = price === 'Free' ? 'This version is free — no payment needed.' : 'No coupon needed — this version is available at the standard price.';
+    const noCouponText = isFree ? 'This version is free — no payment needed.' : 'No coupon needed — this version is available at the standard price.';
     const couponHtml = coupon ? `
         <div class="flex items-center gap-3 p-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl">
             <span class="material-symbols-outlined text-emerald-500">local_offer</span>
@@ -285,14 +286,14 @@ window.openUpdateModal = function(offerId) {
             </div>
         </div>
     ` : `<div class="flex items-center gap-3 p-3 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-xl">
-        <span class="material-symbols-outlined text-indigo-500">${price === 'Free' ? 'check_circle' : 'card_giftcard'}</span>
+        <span class="material-symbols-outlined text-indigo-500">${isFree ? 'check_circle' : 'card_giftcard'}</span>
         <p class="text-sm font-bold text-indigo-600">${noCouponText}</p>
     </div>`;
 
     document.getElementById('modal-update-version').textContent = versionLabel;
     document.getElementById('modal-update-title').textContent = newCourse?.title || 'Updated Course';
     document.getElementById('modal-update-thumbnail').src = newCourse?.thumbnail_url || 'https://placehold.co/600x400';
-    document.getElementById('modal-update-price').textContent = price;
+    document.getElementById('modal-update-price').textContent = priceDisplay;
     document.getElementById('modal-update-changelog').innerHTML = changelogHtml;
     document.getElementById('modal-update-coupon').innerHTML = couponHtml;
 

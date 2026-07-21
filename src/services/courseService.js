@@ -1222,6 +1222,35 @@ export const CourseService = {
      * Mark a course update offer as redeemed (called after successful re-enrollment).
      */
     async markOfferRedeemed(offerId) {
+        // Fetch the offer to get root_course_id, to_version_id, and student_id
+        const { data: offer, error: getErr } = await supabase
+            .from('course_update_offers')
+            .select('student_id, root_course_id, to_version_id')
+            .eq('id', offerId)
+            .single();
+
+        if (offer && offer.root_course_id) {
+            // Find all courses with the same root_course_id
+            const { data: coursesInFamily } = await supabase
+                .from('courses')
+                .select('id')
+                .eq('root_course_id', offer.root_course_id);
+
+            if (coursesInFamily) {
+                // Preserve the new version, supersede the rest
+                const oldCourseIds = coursesInFamily.map(c => c.id).filter(id => id !== offer.to_version_id);
+                if (oldCourseIds.length > 0) {
+                    const { error: updErr } = await supabase
+                        .from('enrollments')
+                        .update({ status: 'superseded' })
+                        .eq('student_id', offer.student_id)
+                        .in('course_id', oldCourseIds);
+                    
+                    if (updErr) console.warn("Could not archive old enrollments:", updErr);
+                }
+            }
+        }
+
         const { error } = await supabase
             .from('course_update_offers')
             .update({ redeemed_at: new Date().toISOString() })

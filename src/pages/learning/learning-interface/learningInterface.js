@@ -443,8 +443,8 @@ function updateSidebarCheckmarks(lessonId) {
             if (lesson.id === lessonId) {
                 const btn = document.getElementById(`sidebar-btn-s${sIdx}-l${lIdx}`);
                 if (btn) {
-                    const oldDot = btn.querySelector('.w-6');
-                    if (oldDot) oldDot.outerHTML = `<span class="material-symbols-outlined text-emerald-500 text-[18px] shrink-0">check_circle</span>`;
+                    const numeralSpan = btn.querySelector('.li-lesson-numeral');
+                    if (numeralSpan) numeralSpan.outerHTML = `<span class="li-lesson-numeral material-symbols-outlined text-emerald-500 text-[20px]">check_circle</span>`;
                     const titleEl = btn.querySelector('p');
                     if (titleEl) { titleEl.classList.remove('text-slate-700', 'dark:text-slate-300'); titleEl.classList.add('text-emerald-600', 'dark:text-emerald-400'); }
                 }
@@ -482,6 +482,7 @@ async function syncCourseProgress() {
 function updateProgressUI() {
     const progressText = document.getElementById('li-progress-text');
     const progressBar = document.getElementById('li-progress-bar');
+    const progressRibbon = document.getElementById('li-progress-ribbon');
     if (totalLessonCount === 0) return;
     const courseLessonIds = new Set();
     if (currentCourseData?.course_sections) currentCourseData.course_sections.forEach(s => (s.course_lessons || []).forEach(l => courseLessonIds.add(l.id)));
@@ -490,6 +491,7 @@ function updateProgressUI() {
     const percentage = Math.min(100, Math.round((count / totalLessonCount) * 100));
     if (progressText) progressText.textContent = `${percentage}% Complete`;
     if (progressBar) progressBar.style.width = `${percentage}%`;
+    if (progressRibbon) progressRibbon.style.height = `${percentage}%`;
     if (percentage === 100 && progressText) {
         progressText.classList.remove('bg-primary/10', 'text-primary');
         progressText.classList.add('bg-emerald-100', 'text-emerald-700');
@@ -675,7 +677,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (lastAccessedLessonId && lesson.id === lastAccessedLessonId) { resumeSIdx = sIdx; resumeLIdx = lIdx; }
 
                     const isCompleted = completedLessonIds.has(lesson.id);
-                    const titleStr = `${itemIndex}. ${lesson.title || 'Untitled Lesson'}`;
+                    const titleStr = `${lesson.title || 'Untitled Lesson'}`;
+                    const paddedIdx = String(itemIndex).padStart(2, '0');
 
                     let metaIconsHtml = '';
                     if (lesson.video_url) metaIconsHtml += `<div class="flex items-center gap-1 font-semibold text-primary"><span class="material-symbols-outlined text-[15px]">play_circle</span></div>`;
@@ -683,15 +686,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (lesson.lesson_resources?.length) metaIconsHtml += `<div class="flex items-center gap-1 font-bold text-emerald-500"><span class="material-symbols-outlined text-[15px]">attachment</span><span class="text-[10px] bg-emerald-100 dark:bg-emerald-900/40 px-1.5 rounded-full">${lesson.lesson_resources.length}</span></div>`;
 
                     const completedHtml = isCompleted
-                        ? `<span class="material-symbols-outlined text-emerald-500 text-[18px] shrink-0">check_circle</span>`
-                        : `<div class="w-6 h-6 mt-0.5 rounded-full border-2 border-slate-200 dark:border-slate-700 shrink-0 flex items-center justify-center bg-white dark:bg-slate-900 group-hover:border-primary transition-colors"><div class="lesson-active-dot w-2.5 h-2.5 bg-transparent rounded-full transition-colors"></div></div>`;
+                        ? `<div class="shrink-0 flex items-center justify-center w-6 h-6 relative"><span class="li-lesson-numeral material-symbols-outlined text-emerald-500 text-[20px]">check_circle</span><div class="lesson-active-dot absolute left-[-16px] top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-transparent transition-colors"></div></div>`
+                        : `<div class="shrink-0 flex items-center justify-center w-6 h-6 relative"><span class="li-lesson-numeral font-serif text-slate-300 dark:text-slate-600 text-[15px] italic group-hover:text-primary transition-colors">${paddedIdx}</span><div class="lesson-active-dot absolute left-[-16px] top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-transparent transition-colors"></div></div>`;
 
                     html += `
                     <button id="sidebar-btn-s${sIdx}-l${lIdx}" onclick="window.playLesson(${sIdx}, ${lIdx})"
                         class="sidebar-lesson-btn w-full flex items-start gap-4 px-6 py-5 hover:bg-white dark:hover:bg-slate-800/80 text-left group transition-all border-l-4 border-transparent">
                         ${completedHtml}
                         <div class="flex-1">
-                            <p class="text-[13px] font-bold ${isCompleted ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-700 dark:text-slate-300'} mb-2 leading-snug group-hover:text-primary transition-colors">${titleStr}</p>
+                            <p class="text-[14px] font-bold ${isCompleted ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-700 dark:text-slate-300'} mb-2 leading-snug group-hover:text-primary transition-colors font-serif">${titleStr}</p>
                             <div class="flex items-center gap-3">${metaIconsHtml}</div>
                         </div>
                     </button>`;
