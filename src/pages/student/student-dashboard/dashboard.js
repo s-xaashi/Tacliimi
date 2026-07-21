@@ -9,6 +9,86 @@ let allMentorshipSessions = null;
 let lastMentorshipFetch = 0;
 const MENTORSHIP_CACHE_TTL = 60000; // 1 minute
 
+window.userActiveEnrollments = [];
+window.currentActiveCourseIndex = 0;
+
+window.renderActiveCourseBanner = function(step = 0) {
+    if (!window.userActiveEnrollments || window.userActiveEnrollments.length === 0) return;
+    
+    window.currentActiveCourseIndex += step;
+    
+    if (window.currentActiveCourseIndex < 0) {
+        window.currentActiveCourseIndex = window.userActiveEnrollments.length - 1;
+    } else if (window.currentActiveCourseIndex >= window.userActiveEnrollments.length) {
+        window.currentActiveCourseIndex = 0;
+    }
+    
+    const enr = window.userActiveEnrollments[window.currentActiveCourseIndex];
+    const course = enr.courses;
+    if (!course) return;
+
+    const continueSection = document.getElementById('continue-learning-section');
+    if (!continueSection) return;
+
+    const hasMultiple = window.userActiveEnrollments.length > 1;
+    const arrowLeft = hasMultiple ? `
+        <button onclick="event.stopPropagation(); window.renderActiveCourseBanner(-1)" class="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 w-8 h-8 md:w-10 md:h-10 rounded-full bg-black/20 hover:bg-black/40 text-white flex items-center justify-center backdrop-blur-md transition-all z-20 opacity-60 hover:opacity-100">
+            <span class="material-symbols-outlined">chevron_left</span>
+        </button>
+    ` : '';
+    const arrowRight = hasMultiple ? `
+        <button onclick="event.stopPropagation(); window.renderActiveCourseBanner(1)" class="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 w-8 h-8 md:w-10 md:h-10 rounded-full bg-black/20 hover:bg-black/40 text-white flex items-center justify-center backdrop-blur-md transition-all z-20 opacity-60 hover:opacity-100">
+            <span class="material-symbols-outlined">chevron_right</span>
+        </button>
+    ` : '';
+    let dotsHtml = '';
+    if (hasMultiple) {
+         dotsHtml = `<div class="absolute bottom-2 md:bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 z-20">`;
+         window.userActiveEnrollments.forEach((_, i) => {
+             dotsHtml += `<div class="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full transition-all ${i === window.currentActiveCourseIndex ? 'bg-white scale-125' : 'bg-white/40'}"></div>`;
+         });
+         dotsHtml += `</div>`;
+    }
+
+    continueSection.innerHTML = `
+        <div class="bg-gradient-to-r from-indigo-600 to-primary rounded-3xl p-6 md:p-8 text-white shadow-xl shadow-primary/20 relative overflow-hidden group cursor-pointer w-full anim-fade-in" onclick="window.location.href='/src/pages/learning/learning-interface/index.html?course=${course.id}'">
+            <div class="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32 blur-3xl group-hover:scale-110 transition-transform duration-700 pointer-events-none z-0"></div>
+            ${arrowLeft}
+            ${arrowRight}
+            ${dotsHtml}
+            <div class="relative z-10 flex flex-col md:flex-row items-center gap-6 md:gap-8 h-full ${hasMultiple ? 'px-6 md:px-12' : ''}">
+                <div class="w-full md:w-1/3 aspect-video rounded-2xl overflow-hidden shadow-2xl shrink-0 bg-black/10">
+                    <img src="${course.thumbnail_url || 'https://placehold.co/600x400'}" alt="${course.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                </div>
+                <div class="flex-1 flex flex-col justify-center text-center md:text-left min-w-0 h-full w-full">
+                    <div>
+                        <div class="flex items-center justify-center md:justify-start gap-2 mb-4 shrink-0">
+                            <span class="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-bold uppercase tracking-widest shrink-0">Resume Learning</span>
+                            <span class="px-3 py-1 bg-amber-400/20 backdrop-blur-md rounded-full text-[10px] font-bold uppercase tracking-widest text-amber-200 shrink-0">Active</span>
+                        </div>
+                        <h2 class="text-2xl md:text-3xl font-extrabold mb-4 tracking-tight line-clamp-2 shrink-0">${course.title}</h2>
+                    </div>
+                    <div class="flex flex-col sm:flex-row items-center gap-6 mt-4 shrink-0 w-full md:mb-0 ${hasMultiple ? 'mb-4' : ''}">
+                        <div class="w-full sm:flex-1">
+                            <div class="flex justify-between text-[11px] mb-2 text-indigo-100 font-bold uppercase tracking-wider">
+                                <span>Progress</span>
+                                <span>${enr.progress_percentage || 0}%</span>
+                            </div>
+                            <div class="w-full bg-white/20 rounded-full h-2 overflow-hidden backdrop-blur-sm">
+                                <div class="bg-white h-full rounded-full transition-all duration-1000" style="width: ${enr.progress_percentage || 0}%"></div>
+                            </div>
+                        </div>
+                        <button class="w-full sm:w-auto px-6 py-3 bg-white text-indigo-600 rounded-xl font-bold hover:bg-slate-50 transition-all flex items-center justify-center gap-2 shadow-lg shadow-black/10 group-hover:translate-x-1 shrink-0">
+                            Continue <span class="material-symbols-outlined font-bold">play_arrow</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    continueSection.classList.remove('hidden');
+}
+
 async function ensureSession() {
     if (!currentUserSession) {
         currentUserSession = await AuthService.getSession();
@@ -134,43 +214,11 @@ async function loadMyCourses() {
             if (activeEnrollments.length > 0) {
                 welcomeMsg.textContent = `Welcome back! You're making great progress in ${activeEnrollments.length} courses.`;
                 
-                // Populate Continue Learning Section with the most recent course
-                const latest = activeEnrollments[0];
-                const course = latest.courses;
-                if (course) {
-                    continueSection.innerHTML = `
-                    <div class="bg-gradient-to-r from-indigo-600 to-primary rounded-3xl p-6 md:p-8 text-white shadow-xl shadow-primary/20 relative overflow-hidden group cursor-pointer" onclick="window.location.href='/src/pages/learning/learning-interface/index.html?course=${course.id}'">
-                        <div class="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32 blur-3xl group-hover:scale-110 transition-transform duration-700"></div>
-                        <div class="relative z-10 flex flex-col md:flex-row items-center gap-6 md:gap-8">
-                            <div class="w-full md:w-1/3 aspect-video rounded-2xl overflow-hidden shadow-2xl shrink-0">
-                                <img src="${course.thumbnail_url || 'https://placehold.co/600x400'}" alt="${course.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
-                            </div>
-                            <div class="flex-1 text-center md:text-left">
-                                <div class="flex items-center justify-center md:justify-start gap-2 mb-4">
-                                    <span class="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-bold uppercase tracking-widest">Resume Learning</span>
-                                    <span class="px-3 py-1 bg-amber-400/20 backdrop-blur-md rounded-full text-[10px] font-bold uppercase tracking-widest text-amber-200">Active</span>
-                                </div>
-                                <h2 class="text-2xl md:text-3xl font-extrabold mb-4 tracking-tight line-clamp-2">${course.title}</h2>
-                                <div class="flex flex-col sm:flex-row items-center gap-6 mt-6">
-                                    <div class="w-full sm:w-48">
-                                        <div class="flex justify-between text-[11px] mb-2 text-indigo-100 font-bold uppercase tracking-wider">
-                                            <span>Progress</span>
-                                            <span>${latest.progress_percentage || 0}%</span>
-                                        </div>
-                                        <div class="w-full bg-white/20 rounded-full h-2 overflow-hidden backdrop-blur-sm">
-                                            <div class="bg-white h-full rounded-full transition-all duration-1000" style="width: ${latest.progress_percentage || 0}%"></div>
-                                        </div>
-                                    </div>
-                                    <button class="px-6 py-3 bg-white text-indigo-600 rounded-xl font-bold hover:bg-slate-50 transition-all flex items-center gap-2 shadow-lg shadow-black/10 group-hover:translate-x-1">
-                                        Continue <span class="material-symbols-outlined font-bold">play_arrow</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    `;
-                    continueSection.classList.remove('hidden');
-                }
+                
+                // Populate Continue Learning Section with active courses
+                window.userActiveEnrollments = activeEnrollments;
+                window.currentActiveCourseIndex = 0;
+                window.renderActiveCourseBanner(0);
             } else {
                 welcomeMsg.textContent = `Congratulations! You've completed all your enrolled courses. Ready for something new?`;
                 continueSection.classList.add('hidden');

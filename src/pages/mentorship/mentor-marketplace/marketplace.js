@@ -275,7 +275,7 @@ function applyFilters() {
 }
 
 function formatResponseTime(hours) {
-    if (!hours || hours === 0) return 'Instant';
+    if (!hours || hours === 0) return '0h 0m';
     
     const h = Math.floor(hours);
     const m = Math.round((hours - h) * 60);
