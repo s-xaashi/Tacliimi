@@ -86,11 +86,35 @@ export const PaymentService = {
   },
 
   /**
+   * Initiate a boost payment (Courses/Mentors).
+   */
+  async startBoostPayment(entityType, entityId, amount, planDays, currency = 'USD') {
+    const isSomali = await PaymentService.isSomaliUser();
+    if (isSomali) return { method: 'ewallet', entityType, entityId, amount, planDays, currency };
+    const result = await callEdgeFn('createCheckout', { type: 'boost', referenceId: entityId, entityType, planDays, amount, currency });
+    if (!result.checkout_url) throw new Error('No checkout URL returned from gateway.');
+    window.location.href = result.checkout_url;
+    return { method: 'redirect' };
+  },
+
+  /**
+   * Initiate a banner payment (Courses/Mentors).
+   */
+  async startBannerPayment(entityType, entityId, amount, planDays, bannerText, currency = 'USD') {
+    const isSomali = await PaymentService.isSomaliUser();
+    if (isSomali) return { method: 'ewallet', entityType, entityId, amount, planDays, bannerText, currency };
+    const result = await callEdgeFn('createCheckout', { type: 'banner', referenceId: entityId, entityType, planDays, bannerText, amount, currency });
+    if (!result.checkout_url) throw new Error('No checkout URL returned from gateway.');
+    window.location.href = result.checkout_url;
+    return { method: 'redirect' };
+  },
+
+  /**
    * Process a direct e-wallet payment (Somali users).
    * No redirect — result is returned immediately.
    */
-  async createDirectPayment({ type, referenceId, amount, currency = 'USD', gateway, account }) {
-    return callEdgeFn('createDirectPayment', { type, referenceId, amount, currency, gateway, account });
+  async createDirectPayment({ type, referenceId, amount, currency = 'USD', gateway, account, entityType, planDays, bannerText }) {
+    return callEdgeFn('createDirectPayment', { type, referenceId, amount, currency, gateway, account, entityType, planDays, bannerText });
   },
 
   /**

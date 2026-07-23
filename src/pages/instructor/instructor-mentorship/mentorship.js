@@ -1,7 +1,12 @@
 import { MentorService } from '../../../services/mentorService.js';
 import { supabase } from '../../../services/supabaseClient.js';
 import { AuthService } from '../../../services/authService.js';
+import { PaymentService } from '../../../services/paymentService.js';
 import { buildProgramProgressHtml, buildMonthlyBadgeHtml, getProgramMeetingStatus, openMentorshipRescheduleModal } from '../../../utils/js/mentorshipUI.js';
+import { injectSecureWalletModal } from '../../../utils/js/paymentUI.js';
+
+// Inject global Sifalo checkout widget
+injectSecureWalletModal();
 
 // XSS safety helper
 function escapeHtml(str) {
@@ -137,7 +142,6 @@ async function initMentorship() {
 
     // Default tab: Show setup if profile is missing OR if it hasn't been "applied" yet (missing key application fields)
     const isIncomplete = !mentoProfile || !mentoProfile.mentorship_email || !mentoProfile.mentorship_phone;
-    
     // Check for hash-based routing (e.g. #requests)
     const hash = window.location.hash.replace('#', '');
     const validTabs = ['upcoming', 'requests', 'completed', 'availability', 'pricing', 'setup', 'privacy'];
@@ -177,6 +181,8 @@ async function initMentorship() {
                     bindSetupInteractions(container, user.id);
                 } else if (tabName === 'privacy') {
                     bindPrivacyInteractions(container, user.id);
+                } else if (tabName === 'boost') {
+                    bindBoostInteractions(container, user.id);
                 } else if (tabName === 'upcoming') {
                     // Refresh stats in cards if on upcoming
                     refreshDashboardStats(user.id);
@@ -714,6 +720,288 @@ async function bindPrivacyInteractions(container, userId) {
     }
 }
 
+async function bindBoostInteractions(container, userId) {
+    const contentArea = container.querySelector('#boost-content-area');
+    if (!contentArea) return;
+    
+    // Check active boosts
+    try {
+        const { BoostService } = await import('../../../services/boostService.js');
+        const activeBoosts = await BoostService.getMyBoosts('mentor');
+        const settings = await BoostService.getBoostSettings();
+        
+        let hasActiveBoost = false;
+        let activeRecord = null;
+        let isBannerAddonActive = false;
+        
+        if (activeBoosts && activeBoosts.length > 0) {
+            hasActiveBoost = true;
+            activeRecord = activeBoosts[0];
+            // Check if there is an active banner too (we'd need an RPC for my banners, or just we know it if we queried it, but for our simple UI let's just rely on getting my boosts. Actually, let's just show boost status).
+            // A true UI would query promo_banners too.
+        }
+        
+        if (hasActiveBoost) {
+            const ends = new Date(activeRecord.ends_at);
+            const daysLeft = Math.ceil((ends - new Date()) / (1000 * 60 * 60 * 24));
+            
+            contentArea.innerHTML = `
+                <div class="bg-gradient-to-br from-amber-50 to-white dark:from-amber-900/20 dark:to-slate-900 border-2 border-amber-400 dark:border-amber-500/50 rounded-2xl p-8 relative overflow-hidden">
+                    <div class="absolute top-4 right-4 bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 border border-green-200 dark:border-green-500/30">
+                        <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                        ACTIVE
+                    </div>
+                    
+                    <h4 class="text-2xl font-black text-slate-900 dark:text-white mb-2">Mentor Profile Boosted</h4>
+                    <p class="text-slate-600 dark:text-slate-400 font-medium">Your profile is currently featured in the mentor marketplace rotation.</p>
+                    
+                    <div class="grid grid-cols-2 gap-4 mt-8 bg-white/60 dark:bg-slate-800/60 p-4 rounded-xl border border-amber-200 dark:border-amber-500/20">
+                        <div>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Time Remaining</p>
+                            <p class="text-lg font-bold text-slate-900 dark:text-white">${daysLeft} Days</p>
+                            <p class="text-xs text-slate-500 mt-0.5">Ends ${ends.toLocaleDateString()}</p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Receipt ID</p>
+                            <p class="text-sm font-medium text-slate-700 dark:text-slate-300 font-mono mt-1">${activeRecord.boost_id.substring(0,8).toUpperCase()}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6 flex justify-end">
+                        <button id="cancel-boost-btn" class="px-4 py-2 border-2 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-red-500 hover:border-red-200 dark:hover:border-red-500/50 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl font-bold text-sm transition-all flex items-center gap-2">
+                            <span class="material-symbols-outlined text-lg">cancel</span>
+                            Cancel Boost Early
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            const cancelBtn = contentArea.querySelector('#cancel-boost-btn');
+            cancelBtn.addEventListener('click', () => {
+                window.showConfirmModal({
+                    title: "Cancel Mentor Boost",
+                    message: "Are you sure you want to cancel your profile boost? You will lose priority placement immediately. This action cannot be reversed and is non-refundable.",
+                    confirmText: "Yes, Cancel Boost",
+                    variant: "danger"
+                }, async () => {
+                    cancelBtn.innerHTML = '<span class="animate-spin">⌛</span> Cancelling...';
+                    cancelBtn.disabled = true;
+                    try {
+                        await BoostService.cancelBoost(activeRecord.boost_id);
+                        window.showToast("Boost cancelled. It has been deactivated immediately.", "success");
+                        bindBoostInteractions(container, userId);
+                    } catch (err) {
+                        console.error(err);
+                        window.showToast("Failed to cancel boost. Please try again.", "error");
+                        cancelBtn.innerHTML = '<span class="material-symbols-outlined text-lg">cancel</span> Cancel Boost Early';
+                        cancelBtn.disabled = false;
+                    }
+                });
+            });
+            
+        } else {
+            // Purchase Form
+            contentArea.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="md:col-span-2 space-y-8">
+                        <div>
+                            <h4 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-widest mb-4">1. Select Duration</h4>
+                            <div class="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-2xl border border-slate-200 dark:border-slate-700">
+                                <div class="flex items-center justify-between mb-4">
+                                    <label class="text-slate-700 dark:text-slate-300 font-bold">Days to run</label>
+                                    <div class="flex items-center bg-white dark:bg-slate-900 rounded-lg p-1 border border-slate-200 dark:border-slate-700 shadow-sm">
+                                        <button class="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-brand-purple hover:bg-slate-50 dark:hover:bg-slate-800 rounded-md transition-all active:scale-95" id="boost-minus"><span class="material-symbols-outlined text-[20px]">remove</span></button>
+                                        <input type="number" id="boost-days" value="${settings.boost_min_days}" min="${settings.boost_min_days}" max="${settings.boost_max_days}" class="w-12 text-center bg-transparent border-none text-sm font-bold text-slate-900 dark:text-white focus:ring-0 p-0" />
+                                        <button class="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-brand-purple hover:bg-slate-50 dark:hover:bg-slate-800 rounded-md transition-all active:scale-95" id="boost-plus"><span class="material-symbols-outlined text-[20px]">add</span></button>
+                                    </div>
+                                </div>
+                                <input type="range" id="boost-days-slider" min="${settings.boost_min_days}" max="${settings.boost_max_days}" value="${settings.boost_min_days}" class="w-full accent-amber-500 h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer">
+                                <div class="flex justify-between text-[10px] text-slate-400 font-bold mt-2 px-1">
+                                    <span>${settings.boost_min_days} Day</span>
+                                    <span>${settings.boost_max_days} Days</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h4 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-widest mb-4">2. Banner Add-on (Optional)</h4>
+                            <label class="flex items-start gap-4 p-5 rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 cursor-pointer hover:border-amber-400 dark:hover:border-amber-500/50 transition-all has-[:checked]:border-amber-500 has-[:checked]:bg-amber-50/30 dark:has-[:checked]:bg-amber-900/10" id="banner-addon-card">
+                                <div class="pt-0.5">
+                                    <input type="checkbox" id="banner-checkbox" class="w-5 h-5 rounded border-slate-300 text-amber-500 focus:ring-amber-500 bg-white dark:bg-slate-800" />
+                                </div>
+                                <div class="flex-1">
+                                    <div class="flex items-center justify-between">
+                                        <p class="font-bold text-slate-900 dark:text-white">Promotional Banner</p>
+                                        <div class="bg-amber-100 text-amber-700 text-xs font-bold px-2 py-0.5 rounded-md border border-amber-200">+$${settings.mentor_banner_price_per_day}/day</div>
+                                    </div>
+                                    <p class="text-sm text-slate-500 mt-1 mb-3">Add a custom message highlight to the bottom of your mentor card.</p>
+                                    
+                                    <div id="banner-text-container" class="hidden animate-in fade-in slide-in-from-top-2 duration-300">
+                                        <input type="text" id="banner-text" placeholder="e.g., Taking new students! Use code SAVE20 for 20% off." class="w-full px-4 py-3 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-xl focus:border-amber-500 focus:ring-amber-500/20 text-sm transition-all placeholder:text-slate-400" maxlength="80" />
+                                        <div class="flex justify-between mt-1 px-1">
+                                            <span class="text-[10px] text-slate-400">Will be shown on your profile card</span>
+                                            <span class="text-[10px] text-slate-400" id="banner-text-count">0/80</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <div class="bg-white dark:bg-slate-900 rounded-2xl border-2 border-slate-100 dark:border-slate-800 shadow-sm sticky top-24">
+                            <div class="p-6 border-b border-slate-100 dark:border-slate-800">
+                                <h4 class="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-slate-400">receipt_long</span>
+                                    Order Summary
+                                </h4>
+                            </div>
+                            
+                            <div class="p-6 space-y-4">
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-slate-500 font-medium flex items-center gap-1.5"><span class="w-1.5 h-1.5 bg-brand-purple rounded-full"></span> Profile Boost</span>
+                                    <span class="font-bold text-slate-900 dark:text-white" id="summary-boost-total">$0.00</span>
+                                </div>
+                                <div class="flex justify-between text-sm hidden" id="summary-banner-row">
+                                    <span class="text-slate-500 font-medium flex items-center gap-1.5"><span class="w-1.5 h-1.5 bg-amber-500 rounded-full"></span> Banner Add-on</span>
+                                    <span class="font-bold text-slate-900 dark:text-white" id="summary-banner-total">$0.00</span>
+                                </div>
+                                
+                                <div class="pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-between items-end">
+                                    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Total</span>
+                                    <span class="text-3xl font-black text-slate-900 dark:text-white" id="summary-grand-total">$0.00</span>
+                                </div>
+                                
+                                <p class="text-[10px] text-slate-400 text-center uppercase tracking-widest font-bold mt-2" id="summary-duration-text">0 Days Total</p>
+                            </div>
+                            
+                            <div class="p-6 pt-0">
+                                <button id="purchase-boost-btn" class="w-full py-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl font-bold shadow-lg shadow-amber-500/30 transition-all flex justify-center items-center gap-2 active:scale-95 group">
+                                    <span>Complete Purchase</span>
+                                    <span class="material-symbols-outlined text-[20px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                                </button>
+                                <p class="text-[10px] text-slate-400 text-center mt-3">By purchasing, you agree to the non-refundable boost policy.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Logic
+            const daysInput = contentArea.querySelector('#boost-days');
+            const slider = contentArea.querySelector('#boost-days-slider');
+            const minusBtn = contentArea.querySelector('#boost-minus');
+            const plusBtn = contentArea.querySelector('#boost-plus');
+            const bannerCheck = contentArea.querySelector('#banner-checkbox');
+            const bannerContainer = contentArea.querySelector('#banner-text-container');
+            const bannerRowId = contentArea.querySelector('#summary-banner-row');
+            const bannerInput = contentArea.querySelector('#banner-text');
+            const bannerCount = contentArea.querySelector('#banner-text-count');
+            
+            const boostTotalEl = contentArea.querySelector('#summary-boost-total');
+            const bannerTotalEl = contentArea.querySelector('#summary-banner-total');
+            const grandTotalEl = contentArea.querySelector('#summary-grand-total');
+            const durationTextEl = contentArea.querySelector('#summary-duration-text');
+            const purchaseBtn = contentArea.querySelector('#purchase-boost-btn');
+            
+            const updateCalculation = () => {
+                let days = parseInt(daysInput.value) || settings.boost_min_days;
+                if (days < settings.boost_min_days) days = settings.boost_min_days;
+                if (days > settings.boost_max_days) days = settings.boost_max_days;
+                
+                slider.value = days;
+                
+                const boostCost = days * settings.mentor_boost_price_per_day;
+                let bannerCost = 0;
+                
+                if (bannerCheck.checked) {
+                    bannerCost = days * settings.mentor_banner_price_per_day;
+                    bannerRowId.classList.remove('hidden');
+                    bannerContainer.classList.remove('hidden');
+                } else {
+                    bannerRowId.classList.add('hidden');
+                    bannerContainer.classList.add('hidden');
+                }
+                
+                const grandTotal = boostCost + bannerCost;
+                
+                boostTotalEl.textContent = `$${boostCost.toFixed(2)}`;
+                bannerTotalEl.textContent = `$${bannerCost.toFixed(2)}`;
+                grandTotalEl.textContent = `$${grandTotal.toFixed(2)}`;
+                durationTextEl.textContent = `${days} Days Total`;
+            };
+            
+            daysInput.addEventListener('input', () => { updateCalculation(); });
+            slider.addEventListener('input', (e) => {
+                daysInput.value = e.target.value;
+                updateCalculation();
+            });
+            minusBtn.addEventListener('click', () => {
+                daysInput.value = Math.max(settings.boost_min_days, parseInt(daysInput.value) - 1);
+                updateCalculation();
+            });
+            plusBtn.addEventListener('click', () => {
+                daysInput.value = Math.min(settings.boost_max_days, parseInt(daysInput.value) + 1);
+                updateCalculation();
+            });
+            bannerCheck.addEventListener('change', updateCalculation);
+            
+            bannerInput.addEventListener('input', (e) => {
+                bannerCount.textContent = `${e.target.value.length}/80`;
+            });
+            
+            updateCalculation();
+            
+            purchaseBtn.addEventListener('click', async () => {
+                const days = parseInt(daysInput.value);
+                const wantsBanner = bannerCheck.checked;
+                const bannerText = bannerInput.value.trim();
+                
+                if (wantsBanner && bannerText.length < 5) {
+                    return window.showToast("Banner text must be at least 5 characters long.", "error");
+                }
+                
+                purchaseBtn.disabled = true;
+                purchaseBtn.innerHTML = '<span class="animate-spin text-white">⌛</span> Processing...';
+                
+                try {
+                    let paymentRes;
+                    const amountPaid = parseFloat(grandTotalEl.textContent.replace('$', ''));
+                    
+                    if (wantsBanner) {
+                        paymentRes = await PaymentService.startBannerPayment('mentor', userId, amountPaid, days, bannerText);
+                    } else {
+                        paymentRes = await PaymentService.startBoostPayment('mentor', userId, amountPaid, days);
+                    }
+                    
+                    if (paymentRes.method === 'ewallet') {
+                         const oldModal = document.getElementById('boost-modal');
+                         if(oldModal) oldModal.remove();
+                         const container = document.getElementById('boost-modal-container');
+                         if(container) container.remove();
+
+                         // Show exact global wallet modal for mentor boost
+                         showPaymentModal(paymentRes.amount, paymentRes.currency, {
+                             type: wantsBanner ? 'banner' : 'boost',
+                             referenceId: paymentRes.entityId,
+                             entityType: paymentRes.entityType,
+                             planDays: paymentRes.planDays,
+                             bannerText: paymentRes.bannerText
+                         });
+                    }
+                } catch (err) {
+                    console.error("Purchase failed:", err);
+                    window.showToast("Payment failed. Please try again.", "error");
+                    purchaseBtn.disabled = false;
+                    purchaseBtn.innerHTML = '<span>Complete Purchase</span><span class="material-symbols-outlined text-[20px] group-hover:translate-x-1 transition-transform">arrow_forward</span>';
+                }
+            });
+        }
+    } catch (err) {
+        console.error("Error loading boost settings", err);
+        contentArea.innerHTML = '<p class="text-red-500 p-4">Error loading boosting details. Try again.</p>';
+    }
+}
 
 /** Gold card wrapper classes for program mentorship */
 const GOLD_CARD_STYLE = 'border-2 rounded-2xl overflow-hidden transition-all group p-6 hover:shadow-xl'

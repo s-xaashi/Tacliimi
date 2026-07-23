@@ -18,7 +18,14 @@ export const financeSettingsService = {
                     instructor_percentage: 100,
                     platform_percentage: 0,
                     min_withdrawal_amount: 10,
-                    show_refund_request: true
+                    show_refund_request: true,
+                    course_boost_price_per_day: 5,
+                    mentor_boost_price_per_day: 5,
+                    course_banner_price_per_day: 3,
+                    mentor_banner_price_per_day: 3,
+                    boost_min_days: 1,
+                    boost_max_days: 90,
+                    boost_rotation_window_minutes: 3
                 };
             }
             
@@ -31,7 +38,14 @@ export const financeSettingsService = {
                 instructor_percentage: 100,
                 platform_percentage: 0,
                 min_withdrawal_amount: 10,
-                show_refund_request: true
+                show_refund_request: true,
+                course_boost_price_per_day: 5,
+                mentor_boost_price_per_day: 5,
+                course_banner_price_per_day: 3,
+                mentor_banner_price_per_day: 3,
+                boost_min_days: 1,
+                boost_max_days: 90,
+                boost_rotation_window_minutes: 3
             };
         }
     },
@@ -56,6 +70,13 @@ export const financeSettingsService = {
                     platform_percentage: settings.platform_percentage,
                     min_withdrawal_amount: settings.min_withdrawal_amount,
                     show_refund_request: settings.show_refund_request,
+                    course_boost_price_per_day: settings.course_boost_price_per_day,
+                    mentor_boost_price_per_day: settings.mentor_boost_price_per_day,
+                    course_banner_price_per_day: settings.course_banner_price_per_day,
+                    mentor_banner_price_per_day: settings.mentor_banner_price_per_day,
+                    boost_min_days: settings.boost_min_days,
+                    boost_max_days: settings.boost_max_days,
+                    boost_rotation_window_minutes: settings.boost_rotation_window_minutes,
                     updated_by: user.user.id,
                     updated_at: new Date().toISOString()
                 })

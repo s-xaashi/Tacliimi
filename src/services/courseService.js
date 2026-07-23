@@ -206,6 +206,40 @@ export const CourseService = {
 
         const { data, error } = await query;
         if (error) throw error;
+        
+        try {
+            const { BoostService } = await import('./boostService.js');
+            const [boostedIds, banners] = await Promise.all([
+                BoostService.getBoostedEntityIds('course'),
+                BoostService.getActivePromoBanners('course')
+            ]);
+            
+            if (boostedIds.length > 0 || banners.length > 0) {
+                // Attach banner text
+                const bannerMap = {};
+                banners.forEach(b => bannerMap[b.entity_id] = b.banner_text);
+                
+                // Stable sort fallback by preserving original order using index if same level
+                data.forEach((course, i) => {
+                    const matchId = course.root_course_id || course.id;
+                    if (bannerMap[matchId]) course.banner_text = bannerMap[matchId];
+                    const bIdx = boostedIds.indexOf(matchId);
+                    course._boost_order = bIdx !== -1 ? bIdx : 999999;
+                    course._original_idx = i;
+                });
+                
+                // Sort
+                data.sort((a, b) => {
+                    if (a._boost_order !== b._boost_order) {
+                        return a._boost_order - b._boost_order;
+                    }
+                    return a._original_idx - b._original_idx;
+                });
+            }
+        } catch (err) {
+            console.warn("Boost/banner fetch failed:", err);
+        }
+
         return data;
     },
 

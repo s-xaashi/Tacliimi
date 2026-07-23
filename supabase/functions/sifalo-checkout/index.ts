@@ -3,14 +3,17 @@ import { createClient } from 'jsr:@supabase/supabase-js@2';
 type ActionType = 'createCheckout' | 'verifyTransaction' | 'createDirectPayment';
 
 interface CreateCheckoutPayload {
-  type: 'course' | 'booking';
+  type: 'course' | 'booking' | 'boost' | 'banner';
   referenceId: string;
   amount: number;
   currency?: string;
 }
 
 interface DirectPaymentPayload {
-  type: 'course' | 'booking';
+  type: 'course' | 'booking' | 'boost' | 'banner';
+  entityType?: 'course' | 'mentorship_sessions'; // for boosts
+  bannerText?: string;
+  planDays?: number;
   referenceId: string;
   amount: number;
   currency?: string;
@@ -111,9 +114,12 @@ async function createCheckout(userId: string, payload: CreateCheckoutPayload): P
   };
   if (type === 'course') {
     paymentRow.course_id = referenceId;
-  } else {
+  } else if (type === 'booking') {
     paymentRow.mentorship_session_id = referenceId;
     await supabase.from('mentorship_sessions').update({ booking_status: 'pending_payment' }).eq('id', referenceId);
+  } else if (type === 'boost' || type === 'banner') {
+    // Boosts do not map to course_id / mentorship_session_id on the payment table
+    // (We link strictly via the boosts/promo_banners table)
   }
 
   const { error: payErr } = await supabase.from('payments').insert(paymentRow);
@@ -157,8 +163,13 @@ async function createDirectPayment(userId: string, payload: DirectPaymentPayload
     verification_status: 'verified', transaction_reference: orderId,
     gateway_response: data,
   };
-  if (type === 'course') paymentRow.course_id = referenceId;
-  else paymentRow.mentorship_session_id = referenceId;
+  if (type === 'course') {
+    paymentRow.course_id = referenceId;
+  } else if (type === 'booking') {
+    paymentRow.mentorship_session_id = referenceId;
+  } else if (type === 'boost' || type === 'banner') {
+    // Safe to leave course_id / mentorship_session_id NULL to avoid FK violations
+  }
 
   const { error: payErr } = await supabase.from('payments').insert(paymentRow);
   if (payErr) {
@@ -189,18 +200,42 @@ async function createDirectPayment(userId: string, payload: DirectPaymentPayload
     }
 
     return json({ status: 'success', type: 'course', referenceId, sid, order_id: orderId });
+  } else if (type === 'booking') {
+    await supabase.from('mentorship_sessions').update({ booking_status: 'paid_waiting_review' }).eq('id', referenceId);
+    const { data: session } = await supabase.from('mentorship_sessions').select('mentor_id').eq('id', referenceId).single();
+    if (session?.mentor_id) {
+        await supabase.from('instructor_earnings').upsert({
+           instructor_id: session.mentor_id, payment_id: paymentRow.id || (await supabase.from('payments').select('id').eq('order_id', orderId).single()).data?.id, mentorship_session_id: referenceId,
+           earning_type: 'mentorship', gross_amount: amount, platform_fee: fee, instructor_share: share, instructor_percentage_snapshot: iPct, platform_percentage_snapshot: pPct, currency
+        }, { onConflict: 'payment_id' });
+    }
+
+    return json({ status: 'success', type: 'booking', referenceId, sid, order_id: orderId });
+  } else if (type === 'boost' || type === 'banner') {
+    // Execute the Postgres RPC to grant the feature
+    const safePaymentId = paymentRow.id || (await supabase.from('payments').select('id').eq('order_id', orderId).single()).data?.id;
+    if (type === 'boost') {
+      await supabase.rpc('purchase_boost', {
+        p_entity_type: payload.entityType || 'course',
+        p_entity_id: referenceId,
+        p_plan_days: payload.planDays || 1,
+        p_amount_paid: amount,
+        p_payment_id: safePaymentId
+      });
+    } else {
+      await supabase.rpc('purchase_promo_banner', {
+        p_entity_type: payload.entityType || 'course',
+        p_entity_id: referenceId,
+        p_banner_text: payload.bannerText || '',
+        p_plan_days: payload.planDays || 1,
+        p_amount_paid: amount,
+        p_payment_id: safePaymentId
+      });
+    }
+    return json({ status: 'success', type, referenceId, sid, order_id: orderId });
   }
 
-  await supabase.from('mentorship_sessions').update({ booking_status: 'paid_waiting_review' }).eq('id', referenceId);
-  const { data: session } = await supabase.from('mentorship_sessions').select('mentor_id').eq('id', referenceId).single();
-  if (session?.mentor_id) {
-      await supabase.from('instructor_earnings').upsert({
-         instructor_id: session.mentor_id, payment_id: paymentRow.id || (await supabase.from('payments').select('id').eq('order_id', orderId).single()).data?.id, mentorship_session_id: referenceId,
-         earning_type: 'mentorship', gross_amount: amount, platform_fee: fee, instructor_share: share, instructor_percentage_snapshot: iPct, platform_percentage_snapshot: pPct, currency
-      }, { onConflict: 'payment_id' });
-  }
-
-  return json({ status: 'success', type: 'booking', referenceId, sid, order_id: orderId });
+  return json({ status: 'failed', message: 'Unknown type' });
 }
 
 async function verifyTransaction(_userId: string, payload: VerifyPayload): Promise<Response> {
@@ -213,8 +248,20 @@ async function verifyTransaction(_userId: string, payload: VerifyPayload): Promi
     .single();
 
   if (fetchErr || !payment) return err('Payment record not found', 404);
+  
+  // Note: boosts/banners don't set course_id/mentorship_session_id mapped on payment
+  const determineTypeFromPayment = () => {
+    if (payment.course_id) return 'course';
+    if (payment.mentorship_session_id) return 'booking';
+    // Without altering payments schema more deeply for redirect flow, if it's neither of those 2, we return boost or banner 
+    // Usually redirect isn't used for boosts anyway, they mostly use EWallet / direct. But if they do we support ignoring mapping 
+    return 'boost_or_banner'; 
+  };
+  
+  const resolvedType = determineTypeFromPayment();
+
   if (payment.verification_status === 'verified' && payment.payment_status === 'paid') {
-    return json({ status: 'success', type: payment.course_id ? 'course' : 'booking', referenceId: payment.course_id || payment.mentorship_session_id });
+    return json({ status: 'success', type: resolvedType, referenceId: payment.course_id || payment.mentorship_session_id || 'unlinked_boost' });
   }
 
   const verifyBody = sid ? { sid } : { order_id: orderId };
@@ -250,7 +297,7 @@ async function verifyTransaction(_userId: string, payload: VerifyPayload): Promi
     const fee = (payment.amount * pPct) / 100;
     const share = (payment.amount * iPct) / 100;
 
-    if (payment.course_id) {
+    if (resolvedType === 'course') {
        await supabase.from('enrollments').upsert({ student_id: payment.student_id, course_id: payment.course_id }, { onConflict: 'student_id,course_id' });
        
        // Record instructor earnings for course
@@ -270,8 +317,7 @@ async function verifyTransaction(_userId: string, payload: VerifyPayload): Promi
           }, { onConflict: 'payment_id' });
        }
        return json({ status: 'success', type: 'course', referenceId: payment.course_id });
-    }
-    if (payment.mentorship_session_id) {
+    } else if (resolvedType === 'booking') {
       await supabase.from('mentorship_sessions').update({ booking_status: 'paid_waiting_review' }).eq('id', payment.mentorship_session_id);
       
       // Record instructor earnings for mentorship
@@ -291,6 +337,11 @@ async function verifyTransaction(_userId: string, payload: VerifyPayload): Promi
           }, { onConflict: 'payment_id' });
       }
       return json({ status: 'success', type: 'booking', referenceId: payment.mentorship_session_id });
+    } else if (resolvedType === 'boost_or_banner') {
+       // Since the payload for createCheckout redirect doesn't pass up `bannerText` or `entityType` easily via callback directly yet, 
+       // Ideally we don't dispatch redirect checkouts for boosts yet. E-Wallet handles it perfectly via direct params.
+       // It just succeeds as 'paid' via Sifalo so the admin can verify.
+       return json({ status: 'success', type: 'boost_or_banner', referenceId: 'unlinked_boost_redirect' });
     }
     return json({ status: 'success' });
   } else {

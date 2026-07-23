@@ -27,6 +27,31 @@ async function initMarketplace() {
 
         allMentors = await MentorService.getActiveMentors();
         
+        try {
+            const { BoostService } = await import('../../../services/boostService.js');
+            const [boostedIds, banners] = await Promise.all([
+                BoostService.getBoostedEntityIds('mentor'),
+                BoostService.getActivePromoBanners('mentor')
+            ]);
+            
+            const bannerMap = {};
+            banners.forEach(b => bannerMap[b.entity_id] = b.banner_text);
+            
+            allMentors.forEach((m, i) => {
+                if (bannerMap[m.instructor_id]) m.banner_text = bannerMap[m.instructor_id];
+                const bIdx = boostedIds.indexOf(m.instructor_id);
+                m._boost_order = bIdx !== -1 ? bIdx : 999999;
+                m._original_idx = i;
+            });
+            
+            allMentors.sort((a, b) => {
+                if (a._boost_order !== b._boost_order) return a._boost_order - b._boost_order;
+                return a._original_idx - b._original_idx;
+            });
+        } catch(e) {
+            console.warn("Could not load mentor boosts in marketplace:", e);
+        }
+        
         if (allMentors.length === 0) {
             renderEmptyState(grid);
             return;
@@ -298,8 +323,23 @@ function renderMentors(mentors) {
     grid.innerHTML = '';
     mentors.forEach(mentor => {
         const card = document.createElement('div');
-        // Added flex flex-col h-full for alignment
-        card.className = 'group bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-5 hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-none transition-all duration-300 flex flex-col h-full';
+        const isBoosted = mentor._boost_order !== undefined && mentor._boost_order !== 999999;
+        const boostRing = isBoosted ? 'boosted-card' : '';
+        
+        const roleBadge = isBoosted 
+            ? `<div class="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 text-[10px] font-black uppercase tracking-widest flex items-center gap-1 border border-amber-200 dark:border-amber-500/30"><span class="material-symbols-outlined text-[10px]">stars</span> Sponsored</div>`
+            : `<div class="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-widest border border-slate-200 dark:border-slate-700">Top Mentor</div>`;
+
+        let bannerHtml = '';
+        if (mentor.banner_text) {
+            bannerHtml = `<div class="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/30 dark:to-orange-900/30 border-t border-amber-200/50 dark:border-amber-700/50 px-4 py-2 mt-auto mb-4 flex gap-2 items-center mx-[-20px]"><span class="material-symbols-outlined text-amber-500 text-[14px] shrink-0">campaign</span><p class="text-[10px] font-bold text-amber-900 dark:text-amber-100 line-clamp-1 leading-tight">${mentor.banner_text}</p></div>`;
+        } else {
+            bannerHtml = `<div class="mt-auto mb-4"></div>`;
+        }
+
+        // Added flex flex-col h-full and boost ring
+        card.className = `group bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-5 hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-none transition-all duration-300 flex flex-col h-full cursor-pointer ${boostRing}`;
+        card.onclick = () => window.location.href = `/src/pages/mentorship/mentor-profile/index.html?id=${mentor.instructor_id}`;
         
         const expertiseTags = mentor.expertise?.slice(0, 2).map(exp => 
             `<span class="px-2.5 py-1 rounded-lg bg-primary/5 text-primary text-[10px] font-bold uppercase tracking-wider">${exp}</span>`
@@ -307,10 +347,11 @@ function renderMentors(mentors) {
 
         card.innerHTML = `
             <div class="flex items-start justify-between mb-4">
-                <div class="relative cursor-pointer" onclick="window.location.href='/src/pages/mentorship/mentor-profile/index.html?id=${mentor.instructor_id}'">
+                <div class="relative cursor-pointer">
+                    <div class="absolute -top-3 -left-3">${roleBadge}</div>
                     <img src="${mentor.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(mentor.full_name) + '&background=random&color=fff'}" 
                          alt="${mentor.full_name}" 
-                         class="w-16 h-16 rounded-2xl object-cover ring-4 ring-slate-50 dark:ring-slate-800 text-[10px] italic">
+                         class="w-16 h-16 rounded-2xl object-cover ring-4 ring-slate-50 dark:ring-slate-800 text-[10px] italic mt-3">
                     <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 border-4 border-white dark:border-slate-900 rounded-full"></div>
                 </div>
                 <div class="flex flex-col items-end">
@@ -364,6 +405,8 @@ function renderMentors(mentors) {
                     </div>
                 </div>
             </div>
+
+            ${bannerHtml}
 
             <a href="/src/pages/mentorship/mentor-profile/index.html?id=${mentor.instructor_id}" 
                class="mt-auto block w-full py-3 rounded-xl bg-slate-900 dark:bg-primary text-white text-center text-sm font-bold hover:bg-primary dark:hover:bg-primary/90 transition-all shadow-lg shadow-slate-200 dark:shadow-none">

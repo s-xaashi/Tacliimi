@@ -71,7 +71,7 @@
                 </button>
                 <div>
                     <h2 class="text-xl font-black tracking-tight">Finance Dashboard</h2>
-                    <p class="text-xs text-slate-400 font-medium tracking-wide uppercase">Withdrawals · Refunds · Finance Tickets</p>
+                    <p class="text-xs text-slate-400 font-medium tracking-wide uppercase">Withdrawals · Refunds · Finance Tickets · Boosts</p>
                 </div>
             </div>
             <div class="flex items-center gap-4">
@@ -115,6 +115,9 @@
                         </button>
                         <button class="tab-btn" id="tab-settings" onclick="switchTab('settings')">
                             <span class="material-symbols-outlined text-base">settings</span> Settings
+                        </button>
+                        <button class="tab-btn" id="tab-boosts" onclick="switchTab('boosts')">
+                            <span class="material-symbols-outlined text-base">stars</span> Boosts
                         </button>
                     </div>
                     <button id="refresh-btn" class="my-4 w-9 h-9 flex items-center justify-center bg-slate-50 dark:bg-slate-800 rounded-xl hover:bg-indigo-50 transition-all" title="Refresh">
@@ -197,7 +200,7 @@
                     </div>
                 </div>
 
-                <div id="content-settings" class="hidden p-8 max-w-2xl text-sm">
+                <div id="content-settings" class="hidden p-8 max-w-3xl text-sm">
                     <h3 class="text-xl font-black mb-6">Platform Monetization</h3>
                     <form id="settings-form" class="space-y-6">
                         <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-800">
@@ -243,12 +246,100 @@
                             </div>
                         </div>
 
+                        <!-- Boost Pricing Settings -->
+                        <div class="mt-8">
+                            <h3 class="text-xl font-black mb-2">Boost Pricing</h3>
+                            <p class="text-xs text-slate-500 mb-6">Set per-day rates for instructor-purchased visibility boosts and promo banners.</p>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="p-4 border border-slate-200 dark:border-slate-800 rounded-xl">
+                                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Course Boost ($/day)</label>
+                                    <input type="number" id="setting-course-boost-price" min="0" step="0.01" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white" value="5">
+                                </div>
+                                <div class="p-4 border border-slate-200 dark:border-slate-800 rounded-xl">
+                                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Mentor Boost ($/day)</label>
+                                    <input type="number" id="setting-mentor-boost-price" min="0" step="0.01" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white" value="5">
+                                </div>
+                                <div class="p-4 border border-slate-200 dark:border-slate-800 rounded-xl">
+                                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Course Banner ($/day)</label>
+                                    <input type="number" id="setting-course-banner-price" min="0" step="0.01" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white" value="3">
+                                </div>
+                                <div class="p-4 border border-slate-200 dark:border-slate-800 rounded-xl">
+                                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Mentor Banner ($/day)</label>
+                                    <input type="number" id="setting-mentor-banner-price" min="0" step="0.01" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white" value="3">
+                                </div>
+                                <div class="p-4 border border-slate-200 dark:border-slate-800 rounded-xl">
+                                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Min Days</label>
+                                    <input type="number" id="setting-boost-min-days" min="1" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white" value="1">
+                                </div>
+                                <div class="p-4 border border-slate-200 dark:border-slate-800 rounded-xl">
+                                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Max Days</label>
+                                    <input type="number" id="setting-boost-max-days" min="1" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white" value="90">
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="pt-6 border-t border-slate-200 dark:border-slate-800 flex justify-end">
                             <button type="submit" id="save-settings-btn" class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-all shadow-md flex items-center gap-2">
                                 <span class="material-symbols-outlined text-[18px]">save</span> Save Settings
                             </button>
                         </div>
                     </form>
+                </div>
+
+                <!-- Boosts Tab -->
+                <div id="content-boosts" class="hidden p-8 space-y-6">
+                    <!-- Summary Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="boost-summary-cards">
+                        <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-5 rounded-2xl">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-amber-600 text-xl">bolt</span>
+                                </div>
+                                <p class="text-xs font-black uppercase tracking-widest text-amber-700 dark:text-amber-400">Boost Revenue</p>
+                            </div>
+                            <h3 class="text-2xl font-black text-amber-700 dark:text-amber-300" id="boost-total-revenue">—</h3>
+                            <p class="text-[11px] text-amber-600/70 dark:text-amber-500/70 mt-1" id="boost-active-count">Loading...</p>
+                        </div>
+                        <div class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 p-5 rounded-2xl">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="w-9 h-9 rounded-xl bg-purple-100 dark:bg-purple-900/40 flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-purple-600 text-xl">campaign</span>
+                                </div>
+                                <p class="text-xs font-black uppercase tracking-widest text-purple-700 dark:text-purple-400">Banner Revenue</p>
+                            </div>
+                            <h3 class="text-2xl font-black text-purple-700 dark:text-purple-300" id="boost-banner-revenue">—</h3>
+                            <p class="text-[11px] text-purple-600/70 dark:text-purple-500/70 mt-1" id="boost-banner-count">Loading...</p>
+                        </div>
+                        <div class="bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 p-5 rounded-2xl">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="w-9 h-9 rounded-xl bg-rose-100 dark:bg-rose-900/40 flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-rose-600 text-xl">cancel</span>
+                                </div>
+                                <p class="text-xs font-black uppercase tracking-widest text-rose-700 dark:text-rose-400">Cancelled</p>
+                            </div>
+                            <h3 class="text-2xl font-black text-rose-700 dark:text-rose-300" id="boost-cancel-count">—</h3>
+                            <p class="text-[11px] text-rose-600/70 dark:text-rose-500/70 mt-1">Early stops (non-refundable)</p>
+                        </div>
+                    </div>
+
+                    <!-- Boosts Table -->
+                    <div class="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800">
+                        <table class="w-full text-left">
+                            <thead>
+                                <tr class="bg-slate-50 dark:bg-slate-800/50 text-[10px] uppercase tracking-widest text-slate-400">
+                                    <th class="px-6 py-4 font-black">Instructor</th>
+                                    <th class="px-6 py-4 font-black">Type</th>
+                                    <th class="px-6 py-4 font-black">Amount</th>
+                                    <th class="px-6 py-4 font-black">Period</th>
+                                    <th class="px-6 py-4 font-black">Status</th>
+                                    <th class="px-6 py-4 font-black">Cancelled On</th>
+                                </tr>
+                            </thead>
+                            <tbody id="boosts-body" class="divide-y divide-slate-100 dark:divide-slate-800">
+                                <tr><td colspan="6" class="px-6 py-8 text-center text-slate-400 italic">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -346,6 +437,7 @@
             if (currentTab === 'withdrawals') renderWithdrawals();
             else if (currentTab === 'refunds') renderRefunds();
             else if (currentTab === 'finance-reports') renderFinanceReports();
+            else if (currentTab === 'boosts') await renderBoostsTab();
             else await renderFinanceTickets();
         }
 
@@ -542,6 +634,7 @@
                 { label: 'Refunded Amount', value: fmtAmt(data.refunds), icon: 'reply', color: 'red' },
                 { label: 'Revenue by Courses', value: fmtAmt(data.course_revenue), icon: 'school', color: 'sky' },
                 { label: 'Revenue by Mentorship', value: fmtAmt(data.mentorship_revenue), icon: 'people', color: 'violet' },
+                { label: 'Boost Revenue', value: fmtAmt(data.boost_revenue), icon: 'stars', color: 'amber' },
             ];
 
             const colorMap = {
@@ -574,15 +667,17 @@
         window.switchTab = function(tab) {
             currentTab = tab;
             currentFilter = 'all';
-            ['withdrawals','refunds','finance-tickets', 'finance-reports', 'settings'].forEach(t => {
-                document.getElementById('content-' + t).classList.add('hidden');
-                document.getElementById('tab-' + t).classList.remove('active');
+            ['withdrawals','refunds','finance-tickets', 'finance-reports', 'settings', 'boosts'].forEach(t => {
+                const contentEl = document.getElementById('content-' + t);
+                if (contentEl) contentEl.classList.add('hidden');
+                const tabEl = document.getElementById('tab-' + t);
+                if (tabEl) tabEl.classList.remove('active');
             });
             document.getElementById('content-' + tab).classList.remove('hidden');
             document.getElementById('tab-' + tab).classList.add('active');
             
-            // Hide filter UI for settings and finance-reports tabs
-            document.getElementById('status-filter').classList.toggle('hidden', tab === 'settings' || tab === 'finance-reports');
+            // Hide filter UI for settings, finance-reports, and boosts tabs
+            document.getElementById('status-filter').classList.toggle('hidden', tab === 'settings' || tab === 'finance-reports' || tab === 'boosts');
             // Reset filter UI
             document.querySelectorAll('.filter-btn').forEach(b => {
                 b.classList.toggle('bg-indigo-600', b.dataset.status === 'all');
@@ -704,6 +799,14 @@
             instPctInput.value = settings.instructor_percentage;
             platPctInput.value = settings.platform_percentage;
             document.getElementById('setting-min-withdrawal').value = settings.min_withdrawal_amount;
+
+            // Boost pricing fields
+            document.getElementById('setting-course-boost-price').value = settings.course_boost_price_per_day ?? 5;
+            document.getElementById('setting-mentor-boost-price').value = settings.mentor_boost_price_per_day ?? 5;
+            document.getElementById('setting-course-banner-price').value = settings.course_banner_price_per_day ?? 3;
+            document.getElementById('setting-mentor-banner-price').value = settings.mentor_banner_price_per_day ?? 3;
+            document.getElementById('setting-boost-min-days').value = settings.boost_min_days ?? 1;
+            document.getElementById('setting-boost-max-days').value = settings.boost_max_days ?? 90;
             
             splitContainer.classList.toggle('opacity-50', !settings.commission_enabled);
             instPctInput.disabled = !settings.commission_enabled;
@@ -733,7 +836,13 @@
                 instructor_percentage: instPct,
                 platform_percentage: platPct,
                 show_refund_request: document.getElementById('setting-refund-requests-enabled').checked,
-                min_withdrawal_amount: parseFloat(document.getElementById('setting-min-withdrawal').value) || 10
+                min_withdrawal_amount: parseFloat(document.getElementById('setting-min-withdrawal').value) || 10,
+                course_boost_price_per_day: parseFloat(document.getElementById('setting-course-boost-price').value) || 5,
+                mentor_boost_price_per_day: parseFloat(document.getElementById('setting-mentor-boost-price').value) || 5,
+                course_banner_price_per_day: parseFloat(document.getElementById('setting-course-banner-price').value) || 3,
+                mentor_banner_price_per_day: parseFloat(document.getElementById('setting-mentor-banner-price').value) || 3,
+                boost_min_days: parseInt(document.getElementById('setting-boost-min-days').value) || 1,
+                boost_max_days: parseInt(document.getElementById('setting-boost-max-days').value) || 90
             });
 
             btn.disabled = false;
@@ -802,6 +911,112 @@
         loadAll();
         loadAnalytics();
         loadSettings();
+
+        // Boosts tab rendering
+        async function renderBoostsTab() {
+            const tbody = document.getElementById('boosts-body');
+            const totalRevEl = document.getElementById('boost-total-revenue');
+            const activeCountEl = document.getElementById('boost-active-count');
+            const bannerRevEl = document.getElementById('boost-banner-revenue');
+            const bannerCountEl = document.getElementById('boost-banner-count');
+            const cancelCountEl = document.getElementById('boost-cancel-count');
+            if (!tbody) return;
+
+            tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center text-slate-400 italic">Loading...</td></tr>';
+
+            try {
+                const { BoostService } = await import('/src/services/boostService.js');
+                const allBoosts = await BoostService.getAllBoostsAdmin();
+                
+                // Revenue stats
+                const now = new Date();
+                const activeBoosts = allBoosts.filter(b => b.entity_type !== 'banner' && new Date(b.ends_at) > now && !b.cancelled_at);
+                const activeBanners = allBoosts.filter(b => b.entity_type === 'banner' && new Date(b.ends_at) > now && !b.cancelled_at);
+                const cancelledBoosts = allBoosts.filter(b => b.cancelled_at);
+                const boostRevTotal = allBoosts.filter(b => b.entity_type !== 'banner').reduce((s, b) => s + Number(b.amount_paid || 0), 0);
+                const bannerRevTotal = allBoosts.filter(b => b.entity_type === 'banner').reduce((s, b) => s + Number(b.amount_paid || 0), 0);
+
+                totalRevEl.textContent = fmtAmt(boostRevTotal);
+                activeCountEl.textContent = `${activeBoosts.length} active boost${activeBoosts.length !== 1 ? 's' : ''}`;
+                bannerRevEl.textContent = fmtAmt(bannerRevTotal);
+                bannerCountEl.textContent = `${activeBanners.length} active banner${activeBanners.length !== 1 ? 's' : ''}`;
+                cancelCountEl.textContent = cancelledBoosts.length;
+
+                if (!allBoosts.length) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-10 text-center text-slate-400 italic">No boosts yet</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = allBoosts.map(b => {
+                    const isActive = !b.cancelled_at && new Date(b.ends_at) > now;
+                    const isCancelled = !!b.cancelled_at;
+                    const statusHtml = isCancelled
+                        ? '<span class="status-badge bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">Cancelled</span>'
+                        : isActive
+                        ? '<span class="status-badge bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">Active</span>'
+                        : '<span class="status-badge bg-slate-100 text-slate-500">Expired</span>';
+                    
+                    const isBanner = b.entity_type === 'banner';
+                    const typeHtml = `<div class="flex flex-col gap-1">
+                        <span class="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-200">${b.entity_type || 'course'} boost</span>
+                        ${isBanner ? '<span class="px-2 py-0.5 rounded-full bg-purple-100 text-purple-600 text-[10px] font-black inline-block w-fit">+ Banner</span>' : ''}
+                    </div>`;
+
+                    const cancellationHtml = isCancelled
+                        ? `<span class="text-xs text-rose-500 font-semibold">${fmtDate(b.cancelled_at)}</span>`
+                        : isActive
+                        ? `<button onclick="window.confirmAdminCancel('${b.id}', '${b.entity_type === 'banner' ? 'banner' : 'boost'}')" class="text-xs font-bold text-red-500 hover:text-red-700 bg-red-50 dark:bg-red-900/20 px-3 py-1 rounded transition-colors">Force Cancel</button>`
+                        : '<span class="text-slate-400 text-xs italic">—</span>';
+                    
+                    const avatar = b.instructor_avatar
+                        ? `<img src="${b.instructor_avatar}" class="w-full h-full object-cover rounded-xl" />`
+                        : `${(b.instructor_name || 'I')[0]}`;
+
+                    return `<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 font-black text-sm overflow-hidden border border-amber-200 dark:border-amber-800">${avatar}</div>
+                                <div>
+                                    <p class="font-bold text-sm">${b.instructor_name || 'Unknown'}</p>
+                                    <p class="text-[10px] text-slate-400 font-mono truncate max-w-[120px]">${b.entity_id?.substring(0,8) || ''}…</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">${typeHtml}</td>
+                        <td class="px-6 py-4 font-black text-lg">${fmtAmt(b.amount_paid)}</td>
+                        <td class="px-6 py-4 text-xs text-slate-500">
+                            <p>${fmtDate(b.starts_at)} →</p>
+                            <p class="font-bold text-slate-700 dark:text-slate-300">${fmtDate(b.ends_at)}</p>
+                        </td>
+                        <td class="px-6 py-4">${statusHtml}</td>
+                        <td class="px-6 py-4">${cancellationHtml}</td>
+                    </tr>`;
+                }).join('');
+
+            } catch (err) {
+                console.error('Boosts tab error:', err);
+                tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-10 text-center text-red-500 italic">Error loading boosts: ${err.message}</td></tr>`;
+                if (totalRevEl) totalRevEl.textContent = 'Error';
+            }
+        }
+            window.confirmAdminCancel = function(id, type) {
+            if (confirm("Are you sure you want to forcibly stop this boost? It will prevent it from displaying further. Admin actions should generally only be used for TOS violations.")) {
+                window.processAdminCancel(id, type);
+            }
+        };
+
+        window.processAdminCancel = async function(id, type) {
+            try {
+                if (type === 'banner') await (await import('/src/services/boostService.js')).boostService.adminCancelBanner(id, "Admin manual force cancel");
+                else await (await import('/src/services/boostService.js')).boostService.adminCancelBoost(id, "Admin manual force cancel");
+                window.showToast("Boost forcibly cancelled.", "success");
+                fetchAndRender();
+            } catch (e) {
+                console.error("Failed to admin cancel:", e);
+                window.showToast("Failed to cancel boost. Check permissions.", "error");
+            }
+        };
+
     </script>
 </body>
 </html>
