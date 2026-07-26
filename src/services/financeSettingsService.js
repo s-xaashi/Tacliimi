@@ -25,7 +25,11 @@ export const financeSettingsService = {
                     mentor_banner_price_per_day: 3,
                     boost_min_days: 1,
                     boost_max_days: 90,
-                    boost_rotation_window_minutes: 3
+                    boost_rotation_window_minutes: 3,
+                    course_boost_enabled: true,
+                    course_banner_enabled: true,
+                    mentor_boost_enabled: true,
+                    mentor_banner_enabled: true
                 };
             }
             
@@ -45,7 +49,11 @@ export const financeSettingsService = {
                 mentor_banner_price_per_day: 3,
                 boost_min_days: 1,
                 boost_max_days: 90,
-                boost_rotation_window_minutes: 3
+                boost_rotation_window_minutes: 3,
+                course_boost_enabled: true,
+                course_banner_enabled: true,
+                mentor_boost_enabled: true,
+                mentor_banner_enabled: true
             };
         }
     },
@@ -77,6 +85,10 @@ export const financeSettingsService = {
                     boost_min_days: settings.boost_min_days,
                     boost_max_days: settings.boost_max_days,
                     boost_rotation_window_minutes: settings.boost_rotation_window_minutes,
+                    course_boost_enabled: settings.course_boost_enabled,
+                    course_banner_enabled: settings.course_banner_enabled,
+                    mentor_boost_enabled: settings.mentor_boost_enabled,
+                    mentor_banner_enabled: settings.mentor_banner_enabled,
                     updated_by: user.user.id,
                     updated_at: new Date().toISOString()
                 })

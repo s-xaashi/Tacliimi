@@ -724,80 +724,144 @@ async function bindBoostInteractions(container, userId) {
     const contentArea = container.querySelector('#boost-content-area');
     if (!contentArea) return;
     
-    // Check active boosts
+    // Check active boosts and banners
     try {
         const { BoostService } = await import('../../../services/boostService.js');
-        const activeBoosts = await BoostService.getMyBoosts('mentor');
+        const activeBoosts = await BoostService.getMyBoosts(userId);
+        const activeBanners = typeof BoostService.getMyBanners === 'function' ? await BoostService.getMyBanners(userId) : [];
         const settings = await BoostService.getBoostSettings();
         
-        let hasActiveBoost = false;
-        let activeRecord = null;
-        let isBannerAddonActive = false;
+        const activeBoost = activeBoosts && activeBoosts.length > 0 ? activeBoosts[0] : null;
+        const activeBanner = activeBanners && activeBanners.length > 0 ? activeBanners[0] : null;
         
-        if (activeBoosts && activeBoosts.length > 0) {
-            hasActiveBoost = true;
-            activeRecord = activeBoosts[0];
-            // Check if there is an active banner too (we'd need an RPC for my banners, or just we know it if we queried it, but for our simple UI let's just rely on getting my boosts. Actually, let's just show boost status).
-            // A true UI would query promo_banners too.
-        }
-        
-        if (hasActiveBoost) {
-            const ends = new Date(activeRecord.ends_at);
-            const daysLeft = Math.ceil((ends - new Date()) / (1000 * 60 * 60 * 24));
+        if (activeBoost || activeBanner) {
+            let statusHTML = '';
             
+            if (activeBoost) {
+                const ends = new Date(activeBoost.ends_at);
+                const daysLeft = Math.ceil((ends - new Date()) / (1000 * 60 * 60 * 24));
+                statusHTML += `
+                    <div class="grid grid-cols-2 gap-4 mt-6 bg-white/60 dark:bg-slate-800/60 p-4 rounded-xl border border-amber-200 dark:border-amber-500/20 shadow-sm relative group overflow-hidden">
+                        <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 dark:via-white/5 to-transparent translate-x-[-100%] group-hover:animate-[shimmer_2s_infinite]"></div>
+                        <div>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1"><span class="material-symbols-outlined text-xs">rocket_launch</span> Boost Active</p>
+                            <p class="text-lg font-bold text-slate-900 dark:text-white">${daysLeft} Days <span class="text-xs font-normal text-slate-500">Left</span></p>
+                            <p class="text-[10px] text-slate-400 mt-1">Receipt ID: ${activeBoost.id.substring(0,8).toUpperCase()}</p>
+                        </div>
+                        <div class="flex flex-col justify-between items-end text-right">
+                            <span class="text-xs text-slate-500 font-medium">Ends ${ends.toLocaleDateString()}</span>
+                            <button class="cancel-boost-btn mt-2 px-3 py-1.5 border border-slate-200 dark:border-slate-700 text-slate-400 hover:text-red-500 hover:border-red-200 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg font-bold text-xs transition-colors" data-id="${activeBoost.id}">Cancel</button>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            if (activeBanner) {
+                const ends = new Date(activeBanner.ends_at);
+                const daysLeft = Math.ceil((ends - new Date()) / (1000 * 60 * 60 * 24));
+                statusHTML += `
+                    <div class="mt-4 bg-white/60 dark:bg-slate-800/60 p-4 rounded-xl border border-amber-200 dark:border-amber-500/20 shadow-sm">
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1"><span class="material-symbols-outlined text-xs">campaign</span> Promotional Banner</p>
+                                <p class="text-sm font-bold text-slate-900 dark:text-white">${daysLeft} Days <span class="text-xs font-normal text-slate-500 border-r border-slate-300 dark:border-slate-600 pr-2 mr-2">Left</span><span class="text-[10px] text-slate-400 font-normal">Ends ${ends.toLocaleDateString()}</span></p>
+                            </div>
+                            <button class="cancel-banner-btn px-3 py-1 border border-slate-200 dark:border-slate-700 text-slate-400 hover:text-red-500 hover:border-red-200 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg font-bold text-[10px] transition-colors" data-id="${activeBanner.id}">Cancel Banner</button>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Banner Message</label>
+                            <div class="flex gap-2">
+                                <input type="text" id="edit-banner-text-${activeBanner.id}" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm px-3 py-2 text-slate-900 dark:text-white focus:border-amber-500 focus:ring-amber-500 transition-all font-medium" value="${activeBanner.banner_text || ''}" maxlength="80">
+                                <button class="update-banner-btn bg-amber-500 hover:bg-amber-600 text-white rounded-lg px-4 text-xs font-bold transition-all shadow-md active:scale-95" data-id="${activeBanner.id}">Save</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
             contentArea.innerHTML = `
-                <div class="bg-gradient-to-br from-amber-50 to-white dark:from-amber-900/20 dark:to-slate-900 border-2 border-amber-400 dark:border-amber-500/50 rounded-2xl p-8 relative overflow-hidden">
-                    <div class="absolute top-4 right-4 bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 border border-green-200 dark:border-green-500/30">
+                <div class="bg-gradient-to-br from-amber-50 to-white dark:from-amber-900/10 dark:to-slate-900 border-2 border-amber-400/50 dark:border-amber-500/30 rounded-2xl p-6 md:p-8 relative overflow-hidden max-w-2xl mx-auto shadow-xl">
+                    <div class="absolute top-4 right-4 bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400 px-3 py-1 rounded-full text-[10px] sm:text-xs font-black tracking-widest uppercase flex items-center gap-1 border border-green-200 dark:border-green-500/30">
                         <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-                        ACTIVE
+                        Status Active
                     </div>
                     
-                    <h4 class="text-2xl font-black text-slate-900 dark:text-white mb-2">Mentor Profile Boosted</h4>
-                    <p class="text-slate-600 dark:text-slate-400 font-medium">Your profile is currently featured in the mentor marketplace rotation.</p>
+                    <h4 class="text-xl md:text-2xl font-black text-slate-900 dark:text-white mb-2 tracking-tight">Promotional Active</h4>
+                    <p class="text-slate-500 dark:text-slate-400 text-sm md:text-base font-medium mb-6">Your profile is currently featured with prioritized visibility.</p>
                     
-                    <div class="grid grid-cols-2 gap-4 mt-8 bg-white/60 dark:bg-slate-800/60 p-4 rounded-xl border border-amber-200 dark:border-amber-500/20">
-                        <div>
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Time Remaining</p>
-                            <p class="text-lg font-bold text-slate-900 dark:text-white">${daysLeft} Days</p>
-                            <p class="text-xs text-slate-500 mt-0.5">Ends ${ends.toLocaleDateString()}</p>
-                        </div>
-                        <div>
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Receipt ID</p>
-                            <p class="text-sm font-medium text-slate-700 dark:text-slate-300 font-mono mt-1">${activeRecord.boost_id.substring(0,8).toUpperCase()}</p>
-                        </div>
-                    </div>
-                    
-                    <div class="mt-6 flex justify-end">
-                        <button id="cancel-boost-btn" class="px-4 py-2 border-2 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-red-500 hover:border-red-200 dark:hover:border-red-500/50 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl font-bold text-sm transition-all flex items-center gap-2">
-                            <span class="material-symbols-outlined text-lg">cancel</span>
-                            Cancel Boost Early
-                        </button>
-                    </div>
+                    ${statusHTML}
                 </div>
             `;
             
-            const cancelBtn = contentArea.querySelector('#cancel-boost-btn');
-            cancelBtn.addEventListener('click', () => {
+            // Re-bind listeners for cancel / save
+            const cancelBoostBtns = contentArea.querySelectorAll('.cancel-boost-btn');
+            cancelBoostBtns.forEach(btn => btn.addEventListener('click', () => {
+                const boostId = btn.dataset.id;
                 window.showConfirmModal({
-                    title: "Cancel Mentor Boost",
+                    title: "Cancel Profile Boost",
                     message: "Are you sure you want to cancel your profile boost? You will lose priority placement immediately. This action cannot be reversed and is non-refundable.",
                     confirmText: "Yes, Cancel Boost",
                     variant: "danger"
                 }, async () => {
-                    cancelBtn.innerHTML = '<span class="animate-spin">⌛</span> Cancelling...';
-                    cancelBtn.disabled = true;
+                    btn.innerHTML = '<span class="animate-spin text-xs">⌛</span>';
+                    btn.disabled = true;
                     try {
-                        await BoostService.cancelBoost(activeRecord.boost_id);
-                        window.showToast("Boost cancelled. It has been deactivated immediately.", "success");
+                        await BoostService.cancelBoost(boostId);
+                        window.showToast("Boost cancelled successfully.", "success");
                         bindBoostInteractions(container, userId);
                     } catch (err) {
                         console.error(err);
                         window.showToast("Failed to cancel boost. Please try again.", "error");
-                        cancelBtn.innerHTML = '<span class="material-symbols-outlined text-lg">cancel</span> Cancel Boost Early';
-                        cancelBtn.disabled = false;
+                        btn.innerHTML = 'Cancel';
+                        btn.disabled = false;
                     }
                 });
-            });
+            }));
+
+            const cancelBannerBtns = contentArea.querySelectorAll('.cancel-banner-btn');
+            cancelBannerBtns.forEach(btn => btn.addEventListener('click', () => {
+                const bannerId = btn.dataset.id;
+                window.showConfirmModal({
+                    title: "Cancel Promotional Banner",
+                    message: "Are you sure you want to cancel your promotional banner? Your custom message will be removed immediately. Non-refundable.",
+                    confirmText: "Yes, Cancel Banner",
+                    variant: "danger"
+                }, async () => {
+                    btn.innerHTML = 'Wait...';
+                    btn.disabled = true;
+                    try {
+                        await BoostService.cancelBanner(bannerId);
+                        window.showToast("Banner cancelled successfully.", "success");
+                        bindBoostInteractions(container, userId);
+                    } catch (err) {
+                        console.error(err);
+                        window.showToast("Failed to cancel banner.", "error");
+                        btn.innerHTML = 'Cancel Banner';
+                        btn.disabled = false;
+                    }
+                });
+            }));
+
+            const updateBannerBtns = contentArea.querySelectorAll('.update-banner-btn');
+            updateBannerBtns.forEach(btn => btn.addEventListener('click', async () => {
+                const bannerId = btn.dataset.id;
+                const newText = document.getElementById('edit-banner-text-' + bannerId).value.trim();
+                if (newText.length < 5) return window.showToast("Banner text must be at least 5 characters.", "error");
+                
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '...';
+                btn.disabled = true;
+                try {
+                    await BoostService.updatePromoBanner(bannerId, newText);
+                    window.showToast("Banner message updated!", "success");
+                } catch (err) {
+                    console.error(err);
+                    window.showToast("Failed to update banner text.", "error");
+                } finally {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+            }));
             
         } else {
             // Purchase Form
@@ -805,6 +869,7 @@ async function bindBoostInteractions(container, userId) {
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                     <div class="md:col-span-2 space-y-8">
                         <div>
+                            ${settings.mentor_boost_enabled !== false ? `
                             <h4 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-widest mb-4">1. Select Duration</h4>
                             <div class="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-2xl border border-slate-200 dark:border-slate-700">
                                 <div class="flex items-center justify-between mb-4">
@@ -821,9 +886,22 @@ async function bindBoostInteractions(container, userId) {
                                     <span>${settings.boost_max_days} Days</span>
                                 </div>
                             </div>
+                            ` : `
+                            <div class="flex gap-4 p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 opacity-70">
+                                <div class="mt-1 flex-shrink-0 text-slate-400 w-5 h-5 flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-base">block</span>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-slate-900 dark:text-white flex items-center gap-2">Standard Boost</h4>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400 mb-2">Purchasing new Standard Boosts is temporarily unavailable.</p>
+                                </div>
+                            </div>
+                            <input type="hidden" id="boost-days" value="${settings.boost_min_days}" />
+                            `}
                         </div>
                         
                         <div>
+                            ${settings.mentor_banner_enabled !== false ? `
                             <h4 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-widest mb-4">2. Banner Add-on (Optional)</h4>
                             <label class="flex items-start gap-4 p-5 rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 cursor-pointer hover:border-amber-400 dark:hover:border-amber-500/50 transition-all has-[:checked]:border-amber-500 has-[:checked]:bg-amber-50/30 dark:has-[:checked]:bg-amber-900/10" id="banner-addon-card">
                                 <div class="pt-0.5">
@@ -845,6 +923,17 @@ async function bindBoostInteractions(container, userId) {
                                     </div>
                                 </div>
                             </label>
+                            ` : `
+                            <div class="flex gap-4 p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 opacity-70">
+                                <div class="mt-1 flex-shrink-0 text-slate-400 w-5 h-5 flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-base">block</span>
+                                </div>
+                                <div class="w-full">
+                                    <h4 class="font-bold text-slate-900 dark:text-white flex items-center gap-2">Promotional Banner Add-on</h4>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400 mb-2">Purchasing new Promotional Banners is temporarily unavailable.</p>
+                                </div>
+                            </div>
+                            `}
                         </div>
                     </div>
                     
@@ -905,49 +994,60 @@ async function bindBoostInteractions(container, userId) {
             const purchaseBtn = contentArea.querySelector('#purchase-boost-btn');
             
             const updateCalculation = () => {
-                let days = parseInt(daysInput.value) || settings.boost_min_days;
+                let days = parseInt(daysInput?.value) || settings.boost_min_days;
                 if (days < settings.boost_min_days) days = settings.boost_min_days;
                 if (days > settings.boost_max_days) days = settings.boost_max_days;
                 
-                slider.value = days;
+                if (slider) slider.value = days;
                 
-                const boostCost = days * settings.mentor_boost_price_per_day;
+                const boostCost = (settings.mentor_boost_enabled !== false) ? days * settings.mentor_boost_price_per_day : 0;
                 let bannerCost = 0;
                 
-                if (bannerCheck.checked) {
+                if (bannerCheck?.checked && settings.mentor_banner_enabled !== false) {
                     bannerCost = days * settings.mentor_banner_price_per_day;
-                    bannerRowId.classList.remove('hidden');
-                    bannerContainer.classList.remove('hidden');
+                    bannerRowId?.classList.remove('hidden');
+                    bannerContainer?.classList.remove('hidden');
                 } else {
-                    bannerRowId.classList.add('hidden');
-                    bannerContainer.classList.add('hidden');
+                    bannerRowId?.classList.add('hidden');
+                    bannerContainer?.classList.add('hidden');
                 }
                 
                 const grandTotal = boostCost + bannerCost;
                 
-                boostTotalEl.textContent = `$${boostCost.toFixed(2)}`;
-                bannerTotalEl.textContent = `$${bannerCost.toFixed(2)}`;
-                grandTotalEl.textContent = `$${grandTotal.toFixed(2)}`;
-                durationTextEl.textContent = `${days} Days Total`;
+                if (boostTotalEl) boostTotalEl.textContent = `$${boostCost.toFixed(2)}`;
+                if (bannerTotalEl) bannerTotalEl.textContent = `$${bannerCost.toFixed(2)}`;
+                if (grandTotalEl) grandTotalEl.textContent = `$${grandTotal.toFixed(2)}`;
+                if (durationTextEl) durationTextEl.textContent = `${days} Days Total`;
+
+                if (purchaseBtn) {
+                    purchaseBtn.disabled = grandTotal <= 0;
+                    if (grandTotal <= 0) {
+                        purchaseBtn.classList.add('opacity-50', 'cursor-not-allowed', 'grayscale');
+                        purchaseBtn.innerHTML = 'Unavailable';
+                    } else {
+                        purchaseBtn.classList.remove('opacity-50', 'cursor-not-allowed', 'grayscale');
+                        purchaseBtn.innerHTML = '<span>Complete Purchase</span><span class="material-symbols-outlined text-[20px] group-hover:translate-x-1 transition-transform">arrow_forward</span>';
+                    }
+                }
             };
             
-            daysInput.addEventListener('input', () => { updateCalculation(); });
-            slider.addEventListener('input', (e) => {
-                daysInput.value = e.target.value;
+            daysInput?.addEventListener('input', () => { updateCalculation(); });
+            slider?.addEventListener('input', (e) => {
+                if(daysInput) daysInput.value = e.target.value;
                 updateCalculation();
             });
-            minusBtn.addEventListener('click', () => {
-                daysInput.value = Math.max(settings.boost_min_days, parseInt(daysInput.value) - 1);
+            minusBtn?.addEventListener('click', () => {
+                if(daysInput) daysInput.value = Math.max(settings.boost_min_days, parseInt(daysInput.value) - 1);
                 updateCalculation();
             });
-            plusBtn.addEventListener('click', () => {
-                daysInput.value = Math.min(settings.boost_max_days, parseInt(daysInput.value) + 1);
+            plusBtn?.addEventListener('click', () => {
+                if(daysInput) daysInput.value = Math.min(settings.boost_max_days, parseInt(daysInput.value) + 1);
                 updateCalculation();
             });
-            bannerCheck.addEventListener('change', updateCalculation);
+            bannerCheck?.addEventListener('change', updateCalculation);
             
-            bannerInput.addEventListener('input', (e) => {
-                bannerCount.textContent = `${e.target.value.length}/80`;
+            bannerInput?.addEventListener('input', (e) => {
+                if(bannerCount) bannerCount.textContent = `${e.target.value.length}/80`;
             });
             
             updateCalculation();
@@ -1239,6 +1339,9 @@ async function bindRequestsInteractions(container, userId) {
                             <!-- Actions: Fixed width -->
                             <div class="w-full md:w-fit flex flex-col gap-2 justify-center border-t md:border-t-0 border-slate-100 dark:border-slate-800 pt-4 md:pt-0">
                                 ${actionsHtml}
+                                <a href="/src/pages/mentorship/mentor-booking/confirmation.html?sessionId=${session.id}" class="px-4 py-2.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 font-bold rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-all text-sm flex items-center gap-2 justify-center border border-indigo-100 dark:border-indigo-800">
+                                    <span class="material-symbols-outlined text-[18px]">receipt_long</span> Details
+                                </a>
                             </div>
                         </div>
                         ${isProgram ? buildMonthlyProgressHtml(session) : ''}
@@ -1583,6 +1686,9 @@ async function bindUpcomingInteractions(container, userId) {
                                     <span class="material-symbols-outlined text-[18px]">forum</span>
                                 </button>
                                 ` : ''}
+                                <a href="/src/pages/mentorship/mentor-booking/confirmation.html?sessionId=${session.id}" class="px-4 py-2.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 font-bold rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-all text-sm flex items-center gap-2 justify-center border border-indigo-100 dark:border-indigo-800">
+                                    <span class="material-symbols-outlined text-[18px]">receipt_long</span> Details
+                                </a>
                             </div>
                         </div>
                         ${programHtml}
@@ -1740,6 +1846,9 @@ async function bindCompletedInteractions(container, userId) {
                                 <button class="message-btn px-4 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all text-sm flex items-center gap-2" data-id="${session.id}" data-name="${(student.full_name || 'Student').replace(/'/g, "\\'")}">
                                     <span class="material-symbols-outlined text-[18px]">forum</span> Review Chat
                                 </button>
+                                <a href="/src/pages/mentorship/mentor-booking/confirmation.html?sessionId=${session.id}" class="px-4 py-2.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 font-bold rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-all text-sm flex items-center gap-2 justify-center border border-indigo-100 dark:border-indigo-800">
+                                    <span class="material-symbols-outlined text-[18px]">receipt_long</span> Details
+                                </a>
                             </div>
                         </div>
                     </div>

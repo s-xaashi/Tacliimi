@@ -21,7 +21,8 @@ async function initPage() {
     try {
         await Promise.all([
             loadInstructorProfile(),
-            loadInstructorCourses()
+            loadInstructorCourses(),
+            loadStudentEnrollments()
         ]);
     } catch (err) {
         console.error("Error loading public profile:", err);
@@ -209,5 +210,106 @@ async function loadInstructorCourses() {
         document.getElementById('courses-grid').innerHTML = '<p class="text-red-500">Failed to load courses.</p>';
     }
 }
+
+async function loadStudentEnrollments() {
+    try {
+        const { data: enrollments, error } = await supabase
+            .from('enrollments')
+            .select('*, courses(*)')
+            .eq('student_id', instructorId);
+            
+        if (error) throw error;
+        
+        const section = document.getElementById('enrolled-courses-section');
+        const grid = document.getElementById('enrolled-courses-grid');
+        const countEl = document.getElementById('enrolled-courses-count');
+        
+        if (!enrollments || enrollments.length === 0) {
+            section.classList.add('hidden');
+            return;
+        }
+        
+        section.classList.remove('hidden');
+        countEl.textContent = `${enrollments.length} Course${enrollments.length === 1 ? '' : 's'}`;
+        
+        // Fetch matching payments for these enrollments
+        const { data: paymentsInfo } = await supabase
+            .from('payments')
+            .select('*')
+            .eq('student_id', instructorId)
+            .in('payment_status', ['paid', 'SUCCESS'])
+            .not('course_id', 'is', null);
+
+        const paymentMap = {};
+        if (paymentsInfo) {
+            paymentsInfo.forEach(p => {
+                if (p.course_id && p.serial_id) {
+                    paymentMap[p.course_id] = p;
+                }
+            });
+        }
+        
+        window._studentPayments = paymentMap;
+
+        grid.innerHTML = enrollments.map(enr => {
+            const course = enr.courses;
+            if (!course) return '';
+            const payData = paymentMap[course.id];
+            
+            return `
+            <div onclick="window.showPaymentReceipt('${course.id}')" 
+                 class="group bg-white dark:bg-slate-900 rounded-3xl border border-indigo-100 dark:border-indigo-900/50 shadow-sm overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer">
+                <div class="aspect-video relative overflow-hidden">
+                    <img src="${course.thumbnail_url || 'https://images.unsplash.com/photo-1542744094-24638eff58bb?w=800'}" 
+                         class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                    <div class="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span class="material-symbols-outlined text-white text-5xl mb-2">receipt_long</span>
+                        <span class="text-white text-xs font-bold uppercase tracking-wider">View Payment Receipt</span>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <div class="flex items-center flex-wrap gap-2 mb-3">
+                        <span class="px-2 py-0.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 text-[10px] font-black uppercase rounded font-mono">CRS-${course.serial_id || '---'}</span>
+                        ${payData ? `<span class="px-2 py-0.5 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 text-[10px] font-black uppercase rounded font-mono">PAY-${payData.serial_id}</span>` : ''}
+                    </div>
+                    <h3 class="font-bold text-slate-900 dark:text-white line-clamp-2">${course.title}</h3>
+                </div>
+            </div>
+            `;
+        }).join('');
+        
+        // Check URL for direct receipt trigger
+        const urlParams = new URLSearchParams(window.location.search);
+        const payIdParam = urlParams.get('pay_id');
+        const courseIdParam = urlParams.get('course_id');
+        if (payIdParam && courseIdParam) {
+            setTimeout(() => window.showPaymentReceipt(courseIdParam), 500);
+        }
+
+    } catch (err) {
+        console.error("Error loading enrollments:", err);
+    }
+}
+
+window.showPaymentReceipt = function(courseId) {
+    if (!window._studentPayments || !window._studentPayments[courseId]) {
+        console.warn("No payment data found for course", courseId);
+        return;
+    }
+    
+    const payData = window._studentPayments[courseId];
+    const studentName = document.getElementById('instructor-name').textContent || 'Student';
+    
+    document.getElementById('receipt-date').textContent = new Date(payData.created_at).toLocaleString();
+    document.getElementById('receipt-pay-id').textContent = `PAY-${payData.serial_id}`;
+    document.getElementById('receipt-amount').textContent = `$${payData.amount ? payData.amount.toFixed(2) : '0.00'}`;
+    document.getElementById('receipt-student').textContent = studentName;
+    
+    // Find course title
+    const courseEl = document.querySelector(`div[onclick="window.showPaymentReceipt('${courseId}')"] h3`);
+    document.getElementById('receipt-item-name').textContent = courseEl ? courseEl.textContent : 'Course Enrollment';
+    
+    document.getElementById('payment-receipt-modal').classList.remove('hidden');
+};
 
 document.addEventListener('DOMContentLoaded', initPage);

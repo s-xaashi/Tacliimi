@@ -231,21 +231,22 @@ window.playLesson = function (sIdx, lIdx) {
 
     // Video — detect embed URLs (YouTube/Vimeo) and render as iframe
     const videoPlayer = document.getElementById('main-video-player');
-    const videoContainer = videoPlayer.parentElement;
+    const videoContainer = videoPlayer.parentElement.parentElement; // outer aspect-video wrapper
     if (lesson.video_url) {
         const embedSrc = getEmbedUrl(lesson.video_url);
+        const innerVideoDiv = videoPlayer.parentElement; // the actual black wrapper
         if (embedSrc) {
             // External embed: replace <video> with an <iframe>
             videoPlayer.style.display = 'none';
-            let iframe = videoContainer.querySelector('#embed-iframe');
+            let iframe = innerVideoDiv.querySelector('#embed-iframe');
             if (!iframe) {
                 iframe = document.createElement('iframe');
                 iframe.id = 'embed-iframe';
-                iframe.className = 'w-full h-full';
+                iframe.className = 'w-full h-full object-contain bg-black';
                 iframe.setAttribute('frameborder', '0');
                 iframe.setAttribute('allowfullscreen', '');
                 iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture');
-                videoContainer.appendChild(iframe);
+                innerVideoDiv.appendChild(iframe);
             }
             iframe.src = embedSrc;
             iframe.style.display = 'block';
@@ -257,7 +258,7 @@ window.playLesson = function (sIdx, lIdx) {
             }, 5000);
         } else {
             // Direct video file
-            const existingIframe = videoContainer.querySelector('#embed-iframe');
+            const existingIframe = innerVideoDiv.querySelector('#embed-iframe');
             if (existingIframe) existingIframe.style.display = 'none';
             videoPlayer.style.display = 'block';
             videoPlayer.src = lesson.video_url;

@@ -8,7 +8,7 @@ export const boostService = {
         try {
             const { data, error } = await supabase
                 .from('platform_settings')
-                .select('course_boost_price_per_day, mentor_boost_price_per_day, course_banner_price_per_day, mentor_banner_price_per_day, boost_min_days, boost_max_days, boost_rotation_window_minutes')
+                .select('course_boost_price_per_day, mentor_boost_price_per_day, course_banner_price_per_day, mentor_banner_price_per_day, boost_min_days, boost_max_days, boost_rotation_window_minutes, course_boost_enabled, course_banner_enabled, mentor_boost_enabled, mentor_banner_enabled')
                 .single();
             if (error) {
                 // Return defaults
@@ -19,7 +19,11 @@ export const boostService = {
                     mentor_banner_price_per_day: 3,
                     boost_min_days: 1,
                     boost_max_days: 90,
-                    boost_rotation_window_minutes: 3
+                    boost_rotation_window_minutes: 3,
+                    course_boost_enabled: true,
+                    course_banner_enabled: true,
+                    mentor_boost_enabled: true,
+                    mentor_banner_enabled: true
                 };
             }
             return data;
@@ -52,6 +56,30 @@ export const boostService = {
             return [];
         }
         return data; // returns array of { entity_id, banner_text }
+    },
+
+    updatePromoBanner: async (bannerId, bannerText) => {
+        const { error } = await supabase.rpc('update_promo_banner', { 
+            p_banner_id: bannerId, 
+            p_banner_text: bannerText 
+        });
+        if (error) throw error;
+        return true;
+    },
+
+    getMyBanners: async (entityId) => {
+        const { data: banners, error: bError } = await supabase
+            .from('promo_banners')
+            .select('*')
+            .eq('entity_id', entityId)
+            .order('created_at', { ascending: false });
+        if (bError) {
+            console.error('Error fetching my banners:', bError);
+            return [];
+        }
+        // Filter out expired and cancelled banners client-side
+        const now = new Date();
+        return banners.filter(b => !b.cancelled_at && new Date(b.ends_at) > now);
     },
 
     /**

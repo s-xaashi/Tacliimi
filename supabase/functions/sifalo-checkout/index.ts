@@ -4,6 +4,7 @@ type ActionType = 'createCheckout' | 'verifyTransaction' | 'createDirectPayment'
 
 interface CreateCheckoutPayload {
   type: 'course' | 'booking' | 'boost' | 'banner';
+  entityType?: 'course' | 'mentorship_sessions';
   referenceId: string;
   amount: number;
   currency?: string;
@@ -85,6 +86,19 @@ async function createCheckout(userId: string, payload: CreateCheckoutPayload): P
   if (!RETURN_URL_BASE) return err('Server misconfiguration: RETURN_URL_BASE not set', 500);
 
   const supabase = adminClient();
+  
+  if (type === 'boost' || type === 'banner') {
+    const { data: settings } = await supabase.rpc('get_platform_settings');
+    const isCourse = (payload.entityType || 'course') === 'course';
+    if (type === 'boost') {
+        if (isCourse && settings?.course_boost_enabled === false) return err('Course boosting is currently disabled', 403);
+        if (!isCourse && settings?.mentor_boost_enabled === false) return err('Mentor boosting is currently disabled', 403);
+    } else {
+        if (isCourse && settings?.course_banner_enabled === false) return err('Course banners are currently disabled', 403);
+        if (!isCourse && settings?.mentor_banner_enabled === false) return err('Mentor banners are currently disabled', 403);
+    }
+  }
+
   const orderId  = generateOrderId();
   const returnUrl = `${RETURN_URL_BASE}/src/pages/payment/return/index.html?order_id=${orderId}`;
 
@@ -138,6 +152,19 @@ async function createDirectPayment(userId: string, payload: DirectPaymentPayload
   }
 
   const supabase = adminClient();
+
+  if (type === 'boost' || type === 'banner') {
+    const { data: settings } = await supabase.rpc('get_platform_settings');
+    const isCourse = (payload.entityType || 'course') === 'course';
+    if (type === 'boost') {
+        if (isCourse && settings?.course_boost_enabled === false) return err('Course boosting is currently disabled', 403);
+        if (!isCourse && settings?.mentor_boost_enabled === false) return err('Mentor boosting is currently disabled', 403);
+    } else {
+        if (isCourse && settings?.course_banner_enabled === false) return err('Course banners are currently disabled', 403);
+        if (!isCourse && settings?.mentor_banner_enabled === false) return err('Mentor banners are currently disabled', 403);
+    }
+  }
+
   const orderId  = generateOrderId();
 
   let result: Awaited<ReturnType<typeof sifaloPost>>;
@@ -215,22 +242,26 @@ async function createDirectPayment(userId: string, payload: DirectPaymentPayload
     // Execute the Postgres RPC to grant the feature
     const safePaymentId = paymentRow.id || (await supabase.from('payments').select('id').eq('order_id', orderId).single()).data?.id;
     if (type === 'boost') {
-      await supabase.rpc('purchase_boost', {
+      const { error: boostErr } = await supabase.rpc('purchase_boost', {
         p_entity_type: payload.entityType || 'course',
         p_entity_id: referenceId,
+        p_instructor_id: userId,
         p_plan_days: payload.planDays || 1,
         p_amount_paid: amount,
         p_payment_id: safePaymentId
       });
+      if (boostErr) console.error('Failed to create boost record:', boostErr);
     } else {
-      await supabase.rpc('purchase_promo_banner', {
+      const { error: bannerErr } = await supabase.rpc('purchase_promo_banner', {
         p_entity_type: payload.entityType || 'course',
         p_entity_id: referenceId,
+        p_instructor_id: userId,
         p_banner_text: payload.bannerText || '',
         p_plan_days: payload.planDays || 1,
         p_amount_paid: amount,
         p_payment_id: safePaymentId
       });
+      if (bannerErr) console.error('Failed to create banner record:', bannerErr);
     }
     return json({ status: 'success', type, referenceId, sid, order_id: orderId });
   }

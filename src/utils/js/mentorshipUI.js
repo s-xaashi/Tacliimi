@@ -57,7 +57,7 @@ export function getProgramMeetingStatus(session) {
 
     // effectiveCompleted: use whichever is higher — DB value or auto-computed elapsed slots.
     // This ensures progress moves correctly even if DB completed_sessions_count hasn't been updated yet.
-    const effectiveCompleted = Math.max(completedCount, meetingsHeld);
+    const effectiveCompleted = completedCount + meetingsHeld;
     const daysRemaining = Math.max(0, totalCount - effectiveCompleted);
     const isFullyCompletedFinal = isFullyCompleted || (totalCount > 0 && effectiveCompleted >= totalCount);
 

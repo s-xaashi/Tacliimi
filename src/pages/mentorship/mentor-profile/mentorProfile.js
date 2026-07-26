@@ -23,6 +23,27 @@ async function initMentorProfile() {
             return;
         }
 
+        // Animated Promo Banner
+        try {
+            const { boostService } = await import('../../../services/boostService.js');
+            const banners = await boostService.getActivePromoBanners('mentor');
+            const banner = banners.find(b => b.entity_id === mentorId);
+            
+            if (banner) {
+                const container = document.getElementById('mentor-promo-banner-container');
+                const textEl = document.getElementById('mentor-promo-text');
+                textEl.textContent = banner.banner_text;
+                
+                container.classList.remove('hidden');
+                setTimeout(() => {
+                    container.classList.remove('-translate-y-full', 'rotate-x-90', 'max-h-0', 'opacity-0');
+                    container.classList.add('max-h-24', 'opacity-100', 'translate-y-0', 'rotate-x-0');
+                }, 50);
+            }
+        } catch (err) {
+            console.warn("Failed to fetch promo banner for mentor profile:", err);
+        }
+
         console.log("Successfully fetched mentor:", mentor.full_name, "with instructor_id:", mentor.instructor_id);
         console.log("Mentor introduction video URL:", mentor.introduction_video);
         renderProfile(mentor);

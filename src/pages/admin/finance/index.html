@@ -246,9 +246,53 @@
                             </div>
                         </div>
 
-                        <!-- Boost Pricing Settings -->
+                        <!-- Boost Settings & Pricing -->
                         <div class="mt-8">
-                            <h3 class="text-xl font-black mb-2">Boost Pricing</h3>
+                            <h3 class="text-xl font-black mb-4">Boost Settings</h3>
+                            <div class="space-y-4 mb-6">
+                                <div class="flex items-center justify-between p-4 border border-slate-200 dark:border-slate-800 rounded-xl bg-indigo-50/20 dark:bg-indigo-900/10">
+                                    <div>
+                                        <h4 class="font-bold text-slate-900 dark:text-white">Course Boosting Enabled</h4>
+                                        <p class="text-xs text-slate-500 mt-1">Allow instructors to purchase visibility boosts for courses. Doesn't affect active boosts.</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" id="setting-course-boost-enabled" class="sr-only peer">
+                                        <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                    </label>
+                                </div>
+                                <div class="flex items-center justify-between p-4 border border-slate-200 dark:border-slate-800 rounded-xl bg-indigo-50/20 dark:bg-indigo-900/10">
+                                    <div>
+                                        <h4 class="font-bold text-slate-900 dark:text-white">Course Banners Enabled</h4>
+                                        <p class="text-xs text-slate-500 mt-1">Allow instructors to purchase promotional banner ads for courses.</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" id="setting-course-banner-enabled" class="sr-only peer">
+                                        <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                    </label>
+                                </div>
+                                <div class="flex items-center justify-between p-4 border border-slate-200 dark:border-slate-800 rounded-xl bg-indigo-50/20 dark:bg-indigo-900/10">
+                                    <div>
+                                        <h4 class="font-bold text-slate-900 dark:text-white">Mentor Boosting Enabled</h4>
+                                        <p class="text-xs text-slate-500 mt-1">Allow mentors to purchase visibility boosts for their profiles.</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" id="setting-mentor-boost-enabled" class="sr-only peer">
+                                        <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                    </label>
+                                </div>
+                                <div class="flex items-center justify-between p-4 border border-slate-200 dark:border-slate-800 rounded-xl bg-indigo-50/20 dark:bg-indigo-900/10">
+                                    <div>
+                                        <h4 class="font-bold text-slate-900 dark:text-white">Mentor Banners Enabled</h4>
+                                        <p class="text-xs text-slate-500 mt-1">Allow mentors to purchase promotional banner ads.</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" id="setting-mentor-banner-enabled" class="sr-only peer">
+                                        <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <h3 class="text-xl font-black mb-2 mt-8">Boost Pricing</h3>
                             <p class="text-xs text-slate-500 mb-6">Set per-day rates for instructor-purchased visibility boosts and promo banners.</p>
                             <div class="grid grid-cols-2 gap-4">
                                 <div class="p-4 border border-slate-200 dark:border-slate-800 rounded-xl">
@@ -595,9 +639,16 @@
                 return `
                 <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                     <td class="px-6 py-4">
-                        <p class="font-bold text-sm">${t.profiles?.full_name || 'Unknown'}</p>
+                        <button onclick="window.openFinanceStudentProfile('${t.student_id}')" class="text-primary hover:underline font-bold text-sm cursor-pointer text-left" title="View Student Profile">${t.profiles?.full_name || 'Unknown'}</button>
                     </td>
-                    <td class="px-6 py-4 font-mono text-xs text-slate-500">${t.entity_id || '—'}</td>
+                    <td class="px-6 py-4 font-mono text-xs">
+                        ${t.entity_id?.toString().startsWith('PAY-') ? `
+                            <button onclick="window.routePaymentReference('${t.entity_id}', '${t.student_id}')" class="text-primary hover:underline flex items-center gap-1 font-bold" title="Trace Payment Origin">
+                                ${t.entity_id}
+                                <span class="material-symbols-outlined text-[12px]">open_in_new</span>
+                            </button>
+                        ` : `<span class="text-slate-500">${t.entity_id || '—'}</span>`}
+                    </td>
                     <td class="px-6 py-4 max-w-xs">
                         <p class="text-sm text-slate-600 dark:text-slate-400 truncate">${t.description}</p>
                         ${screenshotsHtml}
@@ -615,16 +666,68 @@
         }
 
         async function renderFinanceReports() {
-            const grid = document.getElementById('reports-grid');
-            grid.innerHTML = '<div class="col-span-full text-center text-slate-400 italic py-8">Loading finance reports...</div>';
+            const container = document.getElementById('reports-grid').parentElement;
+            document.getElementById('reports-grid').innerHTML = '<div class="col-span-full text-center text-slate-400 italic py-8">Loading finance reports...</div>';
             
-            const data = await financeSettingsService.getAdminAnalytics();
-            if (!data || data.error) {
-                grid.innerHTML = '<div class="col-span-full text-center text-red-400 py-8">Failed to load finance reports. Make sure the get_finance_analytics RPC is deployed.</div>';
+            const [analyticsData, boostsResult, bannersResult] = await Promise.all([
+                financeSettingsService.getAdminAnalytics(),
+                supabase.from('boosts').select('entity_type, amount_paid').not('amount_paid', 'is', null),
+                supabase.from('promo_banners').select('entity_type, amount_paid').not('amount_paid', 'is', null)
+            ]);
+
+            const data = analyticsData;
+            if (!data) {
+                document.getElementById('reports-grid').innerHTML = '<div class="col-span-full text-center text-red-400 py-8">Failed to load finance reports.</div>';
                 return;
             }
 
-            const cards = [
+            const boosts = boostsResult.data || [];
+            const banners = bannersResult.data || [];
+
+            const sum = (arr) => arr.reduce((s, r) => s + Number(r.amount_paid || 0), 0);
+
+            const courseBoostRev   = sum(boosts.filter(b => b.entity_type === 'course'));
+            const mentorBoostRev   = sum(boosts.filter(b => b.entity_type === 'mentor'));
+            const courseBannerRev  = sum(banners.filter(b => b.entity_type === 'course'));
+            const mentorBannerRev  = sum(banners.filter(b => b.entity_type === 'mentor'));
+            const courseTotal      = courseBoostRev + courseBannerRev;
+            const mentorTotal      = mentorBoostRev + mentorBannerRev;
+
+            const colorMap = {
+                indigo: { bg: 'bg-indigo-50 dark:bg-indigo-900/20', text: 'text-indigo-600 dark:text-indigo-400', icon: 'text-indigo-500', border: 'border-indigo-100 dark:border-indigo-800' },
+                emerald: { bg: 'bg-emerald-50 dark:bg-emerald-900/20', text: 'text-emerald-600 dark:text-emerald-400', icon: 'text-emerald-500', border: 'border-emerald-100 dark:border-emerald-800' },
+                purple: { bg: 'bg-purple-50 dark:bg-purple-900/20', text: 'text-purple-600 dark:text-purple-400', icon: 'text-purple-500', border: 'border-purple-100 dark:border-purple-800' },
+                blue: { bg: 'bg-blue-50 dark:bg-blue-900/20', text: 'text-blue-600 dark:text-blue-400', icon: 'text-blue-500', border: 'border-blue-100 dark:border-blue-800' },
+                amber: { bg: 'bg-amber-50 dark:bg-amber-900/20', text: 'text-amber-600 dark:text-amber-400', icon: 'text-amber-500', border: 'border-amber-100 dark:border-amber-800' },
+                red: { bg: 'bg-red-50 dark:bg-red-900/20', text: 'text-red-600 dark:text-red-400', icon: 'text-red-500', border: 'border-red-100 dark:border-red-800' },
+                sky: { bg: 'bg-sky-50 dark:bg-sky-900/20', text: 'text-sky-600 dark:text-sky-400', icon: 'text-sky-500', border: 'border-sky-100 dark:border-sky-800' },
+                violet: { bg: 'bg-violet-50 dark:bg-violet-900/20', text: 'text-violet-600 dark:text-violet-400', icon: 'text-violet-500', border: 'border-violet-100 dark:border-violet-800' },
+                orange: { bg: 'bg-orange-50 dark:bg-orange-900/20', text: 'text-orange-600 dark:text-orange-400', icon: 'text-orange-500', border: 'border-orange-100 dark:border-orange-800' },
+            };
+
+            const card = (label, value, icon, color, sub = '') => {
+                const cm = colorMap[color];
+                return `
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-shadow">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-10 h-10 ${cm.bg} rounded-xl flex items-center justify-center">
+                            <span class="material-symbols-outlined ${cm.icon}">${icon}</span>
+                        </div>
+                    </div>
+                    <h4 class="text-2xl font-black ${cm.text}">${value}</h4>
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-2">${label}</p>
+                    ${sub ? `<p class="text-[10px] text-slate-400 mt-1">${sub}</p>` : ''}
+                </div>`;
+            };
+
+            const sectionHeader = (title, icon) => `
+                <div class="col-span-full flex items-center gap-3 mt-4 mb-1">
+                    <span class="material-symbols-outlined text-slate-400">${icon}</span>
+                    <h3 class="text-sm font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">${title}</h3>
+                    <div class="flex-1 h-px bg-slate-200 dark:bg-slate-700"></div>
+                </div>`;
+
+            const mainCards = [
                 { label: 'Total Platform Revenue', value: fmtAmt(data.total_revenue), icon: 'trending_up', color: 'indigo' },
                 { label: 'Total Instructor Revenue', value: fmtAmt(data.instructor_payouts), icon: 'group', color: 'emerald' },
                 { label: 'Commission Collected', value: fmtAmt(data.platform_fees), icon: 'account_balance', color: 'purple' },
@@ -634,34 +737,22 @@
                 { label: 'Refunded Amount', value: fmtAmt(data.refunds), icon: 'reply', color: 'red' },
                 { label: 'Revenue by Courses', value: fmtAmt(data.course_revenue), icon: 'school', color: 'sky' },
                 { label: 'Revenue by Mentorship', value: fmtAmt(data.mentorship_revenue), icon: 'people', color: 'violet' },
-                { label: 'Boost Revenue', value: fmtAmt(data.boost_revenue), icon: 'stars', color: 'amber' },
             ];
 
-            const colorMap = {
-                indigo: { bg: 'bg-indigo-50 dark:bg-indigo-900/20', text: 'text-indigo-600 dark:text-indigo-400', icon: 'text-indigo-500' },
-                emerald: { bg: 'bg-emerald-50 dark:bg-emerald-900/20', text: 'text-emerald-600 dark:text-emerald-400', icon: 'text-emerald-500' },
-                purple: { bg: 'bg-purple-50 dark:bg-purple-900/20', text: 'text-purple-600 dark:text-purple-400', icon: 'text-purple-500' },
-                blue: { bg: 'bg-blue-50 dark:bg-blue-900/20', text: 'text-blue-600 dark:text-blue-400', icon: 'text-blue-500' },
-                amber: { bg: 'bg-amber-50 dark:bg-amber-900/20', text: 'text-amber-600 dark:text-amber-400', icon: 'text-amber-500' },
-                red: { bg: 'bg-red-50 dark:bg-red-900/20', text: 'text-red-600 dark:text-red-400', icon: 'text-red-500' },
-                sky: { bg: 'bg-sky-50 dark:bg-sky-900/20', text: 'text-sky-600 dark:text-sky-400', icon: 'text-sky-500' },
-                violet: { bg: 'bg-violet-50 dark:bg-violet-900/20', text: 'text-violet-600 dark:text-violet-400', icon: 'text-violet-500' },
-            };
+            document.getElementById('reports-grid').innerHTML =
+                mainCards.map(c => card(c.label, c.value, c.icon, c.color)).join('') +
 
-            grid.innerHTML = cards.map(c => {
-                const cm = colorMap[c.color];
-                return `
-                <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-shadow">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="w-10 h-10 ${cm.bg} rounded-xl flex items-center justify-center">
-                            <span class="material-symbols-outlined ${cm.icon}">${c.icon}</span>
-                        </div>
-                    </div>
-                    <h4 class="text-2xl font-black ${cm.text}">${c.value}</h4>
-                    <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-2">${c.label}</p>
-                </div>`;
-            }).join('');
+                sectionHeader('Course Promotions', 'school') +
+                card('Course Visibility Boost', fmtAmt(courseBoostRev), 'rocket_launch', 'sky', 'Paid for course priority placement') +
+                card('Course Banner', fmtAmt(courseBannerRev), 'campaign', 'amber', 'Custom text banner on course card') +
+                card('Course Boost + Banner Combined', fmtAmt(courseTotal), 'stars', 'orange', 'Total across all course promotions') +
+
+                sectionHeader('Mentor Promotions', 'person_pin') +
+                card('Mentor Profile Boost', fmtAmt(mentorBoostRev), 'rocket_launch', 'violet', 'Paid for mentor marketplace priority') +
+                card('Mentor Banner', fmtAmt(mentorBannerRev), 'campaign', 'purple', 'Custom text banner on mentor card') +
+                card('Mentor Boost + Banner Combined', fmtAmt(mentorTotal), 'stars', 'indigo', 'Total across all mentor promotions');
         }
+
 
         // Tab switching
         window.switchTab = function(tab) {
@@ -800,6 +891,12 @@
             platPctInput.value = settings.platform_percentage;
             document.getElementById('setting-min-withdrawal').value = settings.min_withdrawal_amount;
 
+            // Boost toggles
+            document.getElementById('setting-course-boost-enabled').checked = settings.course_boost_enabled !== false;
+            document.getElementById('setting-course-banner-enabled').checked = settings.course_banner_enabled !== false;
+            document.getElementById('setting-mentor-boost-enabled').checked = settings.mentor_boost_enabled !== false;
+            document.getElementById('setting-mentor-banner-enabled').checked = settings.mentor_banner_enabled !== false;
+
             // Boost pricing fields
             document.getElementById('setting-course-boost-price').value = settings.course_boost_price_per_day ?? 5;
             document.getElementById('setting-mentor-boost-price').value = settings.mentor_boost_price_per_day ?? 5;
@@ -837,6 +934,10 @@
                 platform_percentage: platPct,
                 show_refund_request: document.getElementById('setting-refund-requests-enabled').checked,
                 min_withdrawal_amount: parseFloat(document.getElementById('setting-min-withdrawal').value) || 10,
+                course_boost_enabled: document.getElementById('setting-course-boost-enabled').checked,
+                course_banner_enabled: document.getElementById('setting-course-banner-enabled').checked,
+                mentor_boost_enabled: document.getElementById('setting-mentor-boost-enabled').checked,
+                mentor_banner_enabled: document.getElementById('setting-mentor-banner-enabled').checked,
                 course_boost_price_per_day: parseFloat(document.getElementById('setting-course-boost-price').value) || 5,
                 mentor_boost_price_per_day: parseFloat(document.getElementById('setting-mentor-boost-price').value) || 5,
                 course_banner_price_per_day: parseFloat(document.getElementById('setting-course-banner-price').value) || 3,
@@ -1010,13 +1111,205 @@
                 if (type === 'banner') await (await import('/src/services/boostService.js')).boostService.adminCancelBanner(id, "Admin manual force cancel");
                 else await (await import('/src/services/boostService.js')).boostService.adminCancelBoost(id, "Admin manual force cancel");
                 window.showToast("Boost forcibly cancelled.", "success");
-                fetchAndRender();
+                renderBoostsTab();
+                loadAnalytics();
             } catch (e) {
                 console.error("Failed to admin cancel:", e);
                 window.showToast("Failed to cancel boost. Check permissions.", "error");
             }
         };
 
+        window.routePaymentReference = async function(entityId, studentId) {
+            try {
+                if (!entityId || !entityId.startsWith('PAY-')) return;
+                const serialId = parseInt(entityId.replace('PAY-', ''), 10);
+                if (isNaN(serialId)) return;
+                
+                const { supabase } = await import('/src/services/supabaseClient.js');
+                const { data: payment, error } = await supabase.from('payments').select('course_id, mentorship_session_id, mentorship_id').eq('serial_id', serialId).single();
+                if (error || !payment) {
+                    window.showToast("Payment details not found.", "error");
+                    return;
+                }
+
+                if (payment.mentorship_session_id) {
+                    window.location.href = `/src/pages/mentorship/mentor-booking/confirmation.html?sessionId=${payment.mentorship_session_id}`;
+                } else if (payment.mentorship_id) {
+                    window.location.href = `/src/pages/mentorship/mentor-booking/confirmation.html?sessionId=${payment.mentorship_id}`;
+                } else if (payment.course_id) {
+                    window.location.href = `/src/pages/instructor/public-profile/index.html?id=${studentId}&course_id=${payment.course_id}&pay_id=${entityId}`;
+                }
+            } catch (e) {
+                console.error("Routing error:", e);
+                window.showToast("An error occurred tracing the payment.", "error");
+            }
+        };
+
+
+
+    </script>
+
+    <!-- Student Profile Modal (Finance View) -->
+    <div id="finance-student-profile-modal" class="fixed inset-0 z-[200] bg-slate-950/60 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-xl rounded-[32px] overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800 max-h-[90vh] overflow-y-auto">
+            <div class="h-32 bg-gradient-to-r from-indigo-600 to-purple-600"></div>
+            <div class="px-8 pb-8 transform -translate-y-12">
+                <div class="flex items-end justify-between mb-6">
+                    <div class="w-28 h-28 rounded-3xl overflow-hidden border-4 border-white dark:border-slate-900 shadow-xl bg-white">
+                        <img id="fsp-avatar" src="" class="w-full h-full object-cover" />
+                    </div>
+                    <button onclick="window.closeFinanceStudentModal()" class="w-10 h-10 bg-white dark:bg-slate-800 hover:bg-slate-50 rounded-full flex items-center justify-center transition-all shadow-md">
+                        <span class="material-symbols-outlined text-slate-500">close</span>
+                    </button>
+                </div>
+                <div class="space-y-6">
+                    <div>
+                        <h3 id="fsp-name" class="text-2xl font-bold text-slate-900 dark:text-white">Loading...</h3>
+                        <p id="fsp-title" class="text-slate-500 font-medium">Student</p>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Email</p>
+                            <p id="fsp-email" class="text-sm font-bold text-slate-700 dark:text-slate-200 truncate">loading...</p>
+                        </div>
+                        <div class="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Phone</p>
+                            <p id="fsp-phone" class="text-sm font-bold text-slate-700 dark:text-slate-200">Not provided</p>
+                        </div>
+                        <div class="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800 md:col-span-2">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Location</p>
+                            <p id="fsp-location" class="text-sm font-bold text-slate-700 dark:text-slate-200">Not provided</p>
+                        </div>
+                    </div>
+                    <div id="fsp-social-section" class="hidden">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Social Profiles</p>
+                        <div id="fsp-social-links" class="flex flex-wrap items-center gap-3"></div>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Interests / Bio</p>
+                        <div class="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
+                            <div id="fsp-interests" class="flex flex-wrap gap-2 mb-3"></div>
+                            <p id="fsp-bio" class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed italic">Loading...</p>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Enrolled Courses</p>
+                        <div id="fsp-courses" class="space-y-2">
+                            <div class="flex items-center gap-2 text-slate-400 text-xs">
+                                <span class="material-symbols-outlined text-sm">hourglass_top</span> Loading...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { supabase } from '/src/services/supabaseClient.js';
+        import { AuthService } from '/src/services/authService.js';
+
+        let _finAdminId = null;
+        (async () => {
+            const s = await AuthService.getSession();
+            _finAdminId = s?.user?.id;
+        })();
+
+        window.openFinanceStudentProfile = async function(studentId) {
+            const modal = document.getElementById('finance-student-profile-modal');
+            if (!modal) return;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.body.style.overflow = 'hidden';
+
+            // Reset fields
+            document.getElementById('fsp-name').textContent = 'Loading...';
+            document.getElementById('fsp-email').textContent = '—';
+            document.getElementById('fsp-phone').textContent = 'Loading...';
+            document.getElementById('fsp-location').textContent = 'Loading...';
+            document.getElementById('fsp-bio').textContent = 'Loading...';
+            document.getElementById('fsp-interests').innerHTML = '';
+            document.getElementById('fsp-courses').innerHTML = '<div class="flex items-center gap-2 text-slate-400 text-xs"><span class="material-symbols-outlined text-sm">hourglass_top</span> Loading courses...</div>';
+
+            try {
+                const { data: s, error } = await supabase
+                    .from('profiles')
+                    .select('full_name,avatar_url,professional_title,email,phone_number,city,country,short_bio,learning_interests,social_links')
+                    .eq('id', studentId)
+                    .single();
+                if (s) {
+                    document.getElementById('fsp-avatar').src = s.avatar_url || ('https://ui-avatars.com/api/?name=' + encodeURIComponent(s.full_name || 'S') + '&background=4F46E5&color=fff');
+                    document.getElementById('fsp-name').textContent = s.full_name || 'Unknown';
+                    document.getElementById('fsp-title').textContent = s.professional_title || 'Student';
+                    document.getElementById('fsp-email').textContent = s.email || 'No email shared';
+                    document.getElementById('fsp-phone').textContent = s.phone_number || 'Not provided';
+                    document.getElementById('fsp-location').textContent = (s.city && s.country) ? (s.city + ', ' + s.country) : (s.country || s.city || 'Not provided');
+                    document.getElementById('fsp-bio').textContent = s.short_bio ? ('"' + s.short_bio + '"') : '"No bio shared yet."';
+
+                    const ints = Array.isArray(s.learning_interests) ? s.learning_interests : [];
+                    const intEl = document.getElementById('fsp-interests');
+                    if (ints.length > 0) {
+                        intEl.innerHTML = ints.map(i => `<span class="px-3 py-1 bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300 rounded-lg text-[10px] font-black uppercase tracking-widest">${i}</span>`).join('');
+                    } else {
+                        intEl.innerHTML = '<span class="text-slate-400 text-[10px] font-bold uppercase tracking-widest">No interests listed</span>';
+                    }
+
+                    const html = window.renderSocialIconsHtml ? window.renderSocialIconsHtml(s.social_links, '475569') : '';
+                    document.getElementById('fsp-social-links').innerHTML = html;
+                    document.getElementById('fsp-social-section').classList.toggle('hidden', !html);
+                }
+            } catch (e) {
+                document.getElementById('fsp-name').textContent = 'Failed to load';
+                console.error('Finance student profile error:', e);
+            }
+
+            try {
+                const { data: enrls } = await supabase.rpc('admin_get_student_enrollments', {
+                    p_admin_id: _finAdminId,
+                    p_student_id: studentId
+                });
+                const c = document.getElementById('fsp-courses');
+                if (!enrls || enrls.length === 0) {
+                    c.innerHTML = '<p class="text-xs text-slate-400 italic">No courses enrolled yet.</p>';
+                    return;
+                }
+                c.innerHTML = enrls.map(r => {
+                    const th = r.thumbnail_url || ('https://ui-avatars.com/api/?name=' + encodeURIComponent(r.title) + '&background=4F46E5&color=fff&size=64');
+                    const dt = r.enrolled_at ? new Date(r.enrolled_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
+                    const pct = r.progress_percentage ?? 0;
+                    return `<div class="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
+                        <img src="${th}" class="w-12 h-12 rounded-lg object-cover shrink-0"/>
+                        <div class="min-w-0 flex-1">
+                            <p class="text-sm font-bold text-slate-800 dark:text-slate-200 truncate">${r.title}</p>
+                            <p class="text-[10px] text-indigo-400 font-mono uppercase tracking-widest">CRS-${r.serial_id || '—'}</p>
+                            <div class="flex items-center gap-2 mt-1">
+                                <div class="flex-1 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                                    <div class="h-full bg-indigo-500 rounded-full" style="width:${pct}%"></div>
+                                </div>
+                                <span class="text-[10px] text-slate-400">${pct}%</span>
+                            </div>
+                        </div>
+                        <span class="text-[10px] text-slate-400 whitespace-nowrap hidden sm:block">${dt}</span>
+                    </div>`;
+                }).join('');
+            } catch (e) {
+                document.getElementById('fsp-courses').innerHTML = '<p class="text-xs text-red-400">Failed to load courses.</p>';
+            }
+        };
+
+        window.closeFinanceStudentModal = function() {
+            const m = document.getElementById('finance-student-profile-modal');
+            if (m) { m.classList.add('hidden'); m.classList.remove('flex'); }
+            document.body.style.overflow = '';
+        };
+
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') window.closeFinanceStudentModal();
+        });
+
+        document.getElementById('finance-student-profile-modal')?.addEventListener('click', e => {
+            if (e.target.id === 'finance-student-profile-modal') window.closeFinanceStudentModal();
+        });
     </script>
 </body>
 </html>

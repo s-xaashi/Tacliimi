@@ -221,7 +221,7 @@ export const CourseService = {
                 
                 // Stable sort fallback by preserving original order using index if same level
                 data.forEach((course, i) => {
-                    const matchId = course.root_course_id || course.id;
+                    const matchId = course.family_id;
                     if (bannerMap[matchId]) course.banner_text = bannerMap[matchId];
                     const bIdx = boostedIds.indexOf(matchId);
                     course._boost_order = bIdx !== -1 ? bIdx : 999999;

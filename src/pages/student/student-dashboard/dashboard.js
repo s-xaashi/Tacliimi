@@ -179,6 +179,27 @@ async function loadMyCourses() {
         .eq('student_id', currentUserSession.user.id)
         .is('redeemed_at', null);
     
+    // Fetch payments to map Pay-IDs to course cards (valid statuses: pending, paid, failed, refunded)
+    const { data: paymentsInfo, error: payErr } = await supabase
+        .from('payments')
+        .select('course_id, serial_id, created_at')
+        .eq('student_id', currentUserSession.user.id)
+        .eq('payment_status', 'paid')
+        .not('course_id', 'is', null);
+
+    if (payErr) console.warn('Payment fetch warning:', payErr.message);
+
+    const paymentMap = {};     // course_id -> serial_id
+    const paymentDateMap = {}; // course_id -> created_at
+    if (paymentsInfo) {
+        paymentsInfo.forEach(p => {
+            if (p.course_id && p.serial_id) {
+                paymentMap[p.course_id] = p.serial_id;
+                paymentDateMap[p.course_id] = p.created_at;
+            }
+        });
+    }
+    
     const continueSection = document.getElementById('continue-learning-section');
     const newStudentSection = document.getElementById('new-student-section');
     const enrolledCoursesGrid = document.getElementById('enrolled-courses-grid');
@@ -242,7 +263,9 @@ async function loadMyCourses() {
             const offer = offerMap[enr.course_id]
                 || offerMap[enr.courses?.root_course_id]
                 || null;
-            activeHtml += renderCourseCard(enr, offer);
+            const payId = paymentMap[enr.course_id] || paymentMap[enr.courses?.root_course_id] || null;
+            const payDate = paymentDateMap[enr.course_id] || paymentDateMap[enr.courses?.root_course_id] || enr.enrolled_at || null;
+            activeHtml += renderCourseCard(enr, offer, payId, payDate);
         });
         enrolledCoursesGrid.innerHTML = activeHtml || `
             <div class="col-span-full py-12 text-center">
@@ -258,7 +281,9 @@ async function loadMyCourses() {
             const offer = offerMap[enr.course_id]
                 || offerMap[enr.courses?.root_course_id]
                 || null;
-            completedHtml += renderCourseCard(enr, offer);
+            const payId = paymentMap[enr.course_id] || paymentMap[enr.courses?.root_course_id] || null;
+            const payDate = paymentDateMap[enr.course_id] || paymentDateMap[enr.courses?.root_course_id] || enr.enrolled_at || null;
+            completedHtml += renderCourseCard(enr, offer, payId, payDate);
         });
         
         if (completedGrid) {
@@ -368,7 +393,7 @@ window.reEnrollWithCoupon = async function() {
     window.location.href = `/src/pages/marketplace/course-details/index.html?id=${offer.to_version_id}${couponParam}&offer=${offer.id}`;
 };
 
-function renderCourseCard(enr, updateOffer) {
+function renderCourseCard(enr, updateOffer, payId = null, payDate = null) {
     const course = enr.courses;
     if(!course) return '';
     const category = course.course_categories ? course.course_categories.name : 'Course';
@@ -405,9 +430,9 @@ function renderCourseCard(enr, updateOffer) {
             ` : ''}
         </div>
         <div class="p-5 flex flex-col flex-1">
-            <div class="flex items-center gap-2 mb-3 shrink-0">
-                <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-primary/10 text-primary">${category}</span>
-                ${course.serial_id ? `<span class="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest bg-slate-100 dark:bg-slate-800 text-slate-400 border border-slate-200 dark:border-slate-700 font-mono">CRS-${course.serial_id}</span>` : ''}
+            <div class="flex items-center flex-wrap gap-2 mb-3 shrink-0">
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-primary/10 text-primary whitespace-nowrap">${category}</span>
+                ${course.serial_id ? `<span class="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest bg-slate-100 dark:bg-slate-800 text-slate-400 border border-slate-200 dark:border-slate-700 font-mono whitespace-nowrap">CRS-${course.serial_id}</span>` : ''}
             </div>
             <h4 class="font-bold text-slate-900 dark:text-white mb-4 line-clamp-2 min-h-[3rem] group-hover:text-primary transition-colors shrink-0">${course.title}</h4>
             <div class="space-y-3 mt-auto shrink-0">
@@ -418,12 +443,21 @@ function renderCourseCard(enr, updateOffer) {
                 <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
                     <div class="${progress === 100 ? 'bg-emerald-500' : 'bg-primary'} h-full rounded-full transition-all duration-1000" style="width: ${progress}%"></div>
                 </div>
-                ${updateOffer ? `
-                <button onclick="event.stopPropagation(); window.openUpdateModal('${updateOffer.id}');"
-                    class="w-full mt-2 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold rounded-xl text-xs flex items-center gap-2 justify-center hover:opacity-90 transition-opacity shadow-lg shadow-indigo-500/20">
-                    <span class="material-symbols-outlined text-[16px]">system_update</span>
-                    View Course Update
-                </button>` : ''}
+                <!-- Buttons Wrapper -->
+                <div class="flex flex-col gap-2 pt-2">
+                    ${updateOffer ? `
+                    <button onclick="event.stopPropagation(); window.openUpdateModal('${updateOffer.id}');"
+                        class="w-full py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold rounded-xl text-xs flex items-center gap-2 justify-center hover:opacity-90 transition-opacity shadow-lg shadow-indigo-500/20">
+                        <span class="material-symbols-outlined text-[16px]">system_update</span>
+                        View Course Update
+                    </button>` : ''}
+                    ${payId ? `
+                    <button onclick="event.stopPropagation(); window.openPaymentConfirmation('${course.serial_id || 'XXXX'}', '${payId}', '${new Date(payDate || enr.enrolled_at || Date.now()).toISOString()}')"
+                        class="w-full py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs flex items-center gap-2 justify-center hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700">
+                        <span class="material-symbols-outlined text-[16px]">receipt_long</span>
+                        Receipt
+                    </button>` : ''}
+                </div>
             </div>
         </div>
     </div>

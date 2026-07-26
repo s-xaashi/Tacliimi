@@ -339,6 +339,15 @@
                         }
                     }, 200);
                 }
+
+                // Auto-open student profile if ?studentId=uuid is in the URL
+                const targetStudentId = params.get('studentId');
+                if (targetStudentId) {
+                    const targetStudent = allStudents.find(s => s.user_id === targetStudentId);
+                    if (targetStudent) {
+                        setTimeout(() => window.openStudentProfile(targetStudent), 300);
+                    }
+                }
             } catch (e) {
                 console.error('Failed to fetch students:', e);
                 tableBody.innerHTML = `<tr><td colspan="7" class="px-6 py-10 text-center text-red-500 font-bold">Error: ${e.message}</td></tr>`;

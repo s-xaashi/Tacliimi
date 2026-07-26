@@ -555,7 +555,7 @@
                                 
                                 <!-- Hover Overlay -->
                                 <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                    <div class="w-12 h-12 rounded-full bg-primary/90 text-white flex items-center justify-center shadow-lg transform scale-75 group-hover:scale-100 transition-transform">
+                                    <div class="w-12 h-12 rounded-full ${isBoosted ? 'bg-amber-500/90 shadow-amber-500/40' : 'bg-primary/90'} text-white flex items-center justify-center shadow-lg transform scale-75 group-hover:scale-100 transition-transform">
                                         <span class="material-icons-outlined">play_arrow</span>
                                     </div>
                                 </div>
@@ -590,7 +590,7 @@
                                     }
                                 </div>
 
-                                <h3 class="font-bold text-gray-900 dark:text-white mb-4 line-clamp-2 leading-tight text-lg group-hover:text-primary transition-colors">
+                                <h3 class="font-bold text-gray-900 dark:text-white mb-4 line-clamp-2 leading-tight text-lg ${isBoosted ? 'group-hover:text-amber-500' : 'group-hover:text-primary'} transition-colors">
                                     ${course.title}</h3>
 
                                 <div class="flex items-center gap-2 mb-6">
