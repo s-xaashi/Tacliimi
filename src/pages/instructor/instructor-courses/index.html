@@ -217,18 +217,18 @@
                     <span class="material-symbols-outlined text-red-600 text-2xl">warning</span>
                 </div>
                 <div>
-                    <h3 class="text-lg font-bold text-slate-900 dark:text-white">Delete Course?</h3>
+                    <h3 id="delete-modal-title" class="text-lg font-bold text-slate-900 dark:text-white">Delete Course?</h3>
                     <p class="text-xs text-red-500 font-semibold uppercase tracking-widest">This action cannot be undone
                     </p>
                 </div>
             </div>
             <!-- Modal Body -->
             <div class="p-6 space-y-4">
-                <p class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                <p id="delete-modal-prompt" class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
                     You are about to permanently delete <span id="delete-course-title"
                         class="font-bold text-slate-900 dark:text-white"></span>.
                 </p>
-                <div
+                <div id="delete-modal-warnings"
                     class="p-4 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-900/30 rounded-xl space-y-2">
                     <p class="text-xs font-bold text-red-600 uppercase tracking-widest flex items-center gap-1.5">
                         <span class="material-symbols-outlined text-sm">block</span>
@@ -244,7 +244,7 @@
                     <p class="text-xs font-bold text-red-600 mt-2">⚠ There is no way to restore a deleted course.</p>
                 </div>
                 <!-- Confirmation type -->
-                <div>
+                <div id="delete-modal-input-area">
                     <label class="block text-xs font-bold text-slate-500 mb-1.5">Type <span
                             class="text-red-500 font-mono">DELETE</span> to confirm</label>
                     <input id="delete-confirm-input" type="text" placeholder="DELETE"
@@ -674,7 +674,7 @@
                                             ${notifyBtn}
                                             ${editBtn}
                                             <!-- Delete button -->
-                                            <button onclick="openDeleteModal('${course.id}', \`${course.title.replace(/`/g, "'")}\`)"
+                                            <button onclick="openDeleteModal('${course.id}', \`${course.title.replace(/`/g, "'")}\`, ${course.status === 'draft'})"
                                                 title="Delete course"
                                                 class="p-2 bg-slate-50 border border-slate-200 dark:border-slate-800 dark:bg-slate-800/50 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 hover:border-red-500/20 dark:hover:bg-red-900/20 dark:hover:border-red-500/20 transition-colors">
                                                 <span class="material-symbols-outlined text-xl">delete</span>
@@ -758,17 +758,44 @@
             };
 
             // Delete modal handlers
-            window.openDeleteModal = function (courseId, courseTitle) {
+            window.openDeleteModal = function (courseId, courseTitle, isDraft = false) {
                 courseToDelete = courseId;
-                document.getElementById('delete-course-title').textContent = `"${courseTitle}"`;
-                document.getElementById('delete-confirm-input').value = '';
-                document.getElementById('delete-confirm-btn').disabled = true;
-                document.getElementById('delete-confirm-btn').classList.add('opacity-50', 'cursor-not-allowed');
+                
+                const titleNode = document.getElementById('delete-modal-title');
+                const promptNode = document.getElementById('delete-modal-prompt');
+                
+                if (isDraft) {
+                    titleNode.textContent = 'Delete Draft?';
+                    promptNode.innerHTML = `Are you sure you want to delete this draft <span id="delete-course-title" class="font-bold text-slate-900 dark:text-white">"${courseTitle}"</span>?`;
+                } else {
+                    titleNode.textContent = 'Delete Course?';
+                    promptNode.innerHTML = `You are about to permanently delete <span id="delete-course-title" class="font-bold text-slate-900 dark:text-white">"${courseTitle}"</span>.`;
+                }
+                
+                const btn = document.getElementById('delete-confirm-btn');
+                const warningsArea = document.getElementById('delete-modal-warnings');
+                const inputArea = document.getElementById('delete-modal-input-area');
+                
+                if (isDraft) {
+                    warningsArea.classList.add('hidden');
+                    inputArea.classList.add('hidden');
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                } else {
+                    warningsArea.classList.remove('hidden');
+                    inputArea.classList.remove('hidden');
+                    document.getElementById('delete-confirm-input').value = '';
+                    btn.disabled = true;
+                    btn.classList.add('opacity-50', 'cursor-not-allowed');
+                }
+                
                 const modal = document.getElementById('delete-modal');
                 modal.classList.remove('hidden');
                 modal.classList.add('flex');
-                // Focus the input
-                setTimeout(() => document.getElementById('delete-confirm-input').focus(), 100);
+                
+                if (!isDraft) {
+                    setTimeout(() => document.getElementById('delete-confirm-input').focus(), 100);
+                }
             };
 
             window.closeDeleteModal = function () {

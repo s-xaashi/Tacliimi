@@ -755,8 +755,10 @@ async function loadMentors(forceRefresh = false) {
                                 <button onclick='window.openMessagingModal("${session.id}", "${(mentor.full_name || 'Mentor').replace(/'/g, "\\'")}")' class="flex-1 px-4 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all text-sm flex items-center gap-2 justify-center">
                                     <span class="material-symbols-outlined text-[18px]">forum</span>
                                 </button>
-                                ` : ''}
                                 ${isHistory && (bookingStatus === 'completed' || (bookingStatus === 'confirmed' && isCompleted)) ? `
+                                    <button onclick="window.location.href='/src/pages/mentorship/mentor-booking/confirmation.html?sessionId=${session.id}'" class="flex-1 px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl hover:bg-slate-50 transition-all text-sm whitespace-nowrap flex items-center gap-2 justify-center">
+                                        <span class="material-symbols-outlined text-[18px]">receipt_long</span> Details
+                                    </button>
                                     <button onclick='window.openReviewModal("${mentor.id || session.mentor_id}", "${(mentor.full_name || 'Mentor').replace(/'/g, "\\'")}")' class="flex-1 px-4 py-2.5 bg-amber-500 text-white font-bold rounded-xl hover:bg-amber-600 transition-all text-sm flex items-center gap-2 justify-center shadow-lg shadow-amber-500/20">
                                         <span class="material-symbols-outlined text-[18px]">star</span> Review
                                     </button>
@@ -765,6 +767,7 @@ async function loadMentors(forceRefresh = false) {
                                         Details
                                     </button>
                                 ` : '')}
+                                ` : ''}
                             </div>
                         </div>
                     </div>

@@ -402,10 +402,10 @@
 
                 try {
                     await RefundService.submitRefundRequest({
-                        ticketId: ticket.id,   // link refund → ticket (no real payment UUID needed)
+                        ticketId: ticket.id,
                         amount: refundAmount,
                         reason: description,
-                        requestType: 'general_refund'
+                        requestType: document.getElementById('refund-type').value || 'general_refund'
                     });
                     successMsg = 'Your ticket and refund request have been submitted. Our finance team will review your refund within 3–5 business days.';
                 } catch (refundErr) {

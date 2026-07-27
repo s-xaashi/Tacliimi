@@ -4,6 +4,7 @@
 import { CourseService } from '/src/services/courseService.js';
 import { AuthService } from '/src/services/authService.js';
 import { financeSettingsService } from '/src/services/financeSettingsService.js';
+import { getEmbedUrl } from '/src/utils/js/videoEmbed.js';
 
 // Global state
 window.courseDraft = {
@@ -77,6 +78,36 @@ function hideSavingIndicator() {
     }
 }
 
+window.applyVideoUploadGating = function(settings) {
+    const isLegacyVideosEnabled = settings.self_hosted_video_uploads_enabled === true;
+    
+    // Gating for Course Wizard Intro Video
+    const introVideoUploader = document.getElementById('intro-video-upload-section');
+    const introVideoGuidance = document.getElementById('youtube-unlisted-guidance');
+    if (introVideoUploader && introVideoGuidance) {
+        if (isLegacyVideosEnabled) {
+            introVideoUploader.classList.remove('hidden');
+            introVideoGuidance.classList.add('hidden');
+        } else {
+            introVideoUploader.classList.add('hidden');
+            introVideoGuidance.classList.remove('hidden');
+        }
+    }
+    
+    // Gating for Modal Lesson Video
+    const modalVideoUploader = document.getElementById('modal-file-upload-section');
+    const modalVideoGuidance = document.getElementById('modal-youtube-guidance');
+    if (modalVideoUploader && modalVideoGuidance) {
+        if (isLegacyVideosEnabled) {
+            modalVideoUploader.classList.remove('hidden');
+            modalVideoGuidance.classList.add('hidden');
+        } else {
+            modalVideoUploader.classList.add('hidden');
+            modalVideoGuidance.classList.remove('hidden');
+        }
+    }
+};
+
 document.addEventListener('DOMContentLoaded', async () => {
     // 1. Load Categories and Finance Settings
     try {
@@ -87,9 +118,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.categoriesList = categories;
         window.financeSettings = settings;
         renderCategories();
+        window.applyVideoUploadGating(settings);
     } catch (e) {
         console.error("Failed to load initial data", e);
         window.financeSettings = { is_monetization_enabled: false, instructor_percentage: 100 }; // Fallback
+        window.applyVideoUploadGating(window.financeSettings);
     }
 
     // 2. Check URL for existing course ID
@@ -734,6 +767,36 @@ async function setupEventListeners() {
         });
     }
 
+    // Intro Video URL Save Logic
+    const introUrlInput = document.getElementById('intro-video-embed-url');
+    const introUrlSaveBtn = document.getElementById('btn-save-intro-url');
+    if (introUrlInput && introUrlSaveBtn) {
+        introUrlSaveBtn.addEventListener('click', async function () {
+            const url = introUrlInput.value.trim();
+            if (!url) return;
+            const embedSrc = getEmbedUrl(url);
+            if (!embedSrc) {
+                const errEl = document.getElementById('intro-video-url-error');
+                if (errEl) {
+                    errEl.textContent = 'Please enter a valid YouTube or Vimeo URL.';
+                    errEl.classList.remove('hidden');
+                } else {
+                    alert('Please enter a valid YouTube or Vimeo URL.');
+                }
+                return;
+            }
+            const errEl = document.getElementById('intro-video-url-error');
+            if (errEl) errEl.classList.add('hidden');
+            
+            if (!window.courseDraft.id) await performSave(true);
+            window.courseDraft.intro_video_url = url;
+            showVideoPreview(url, "Embedded Video");
+            window.saveDraft(true);
+            introUrlInput.value = '';
+            if (typeof showToast === 'function') showToast("Intro video URL saved.");
+        });
+    }
+
     // Modal File Uploads
     const modalVidUpload = document.getElementById('modal-video-upload');
     if (modalVidUpload) {
@@ -1187,6 +1250,19 @@ async function wizardSaveModalVideo() {
             uploadedUrl = await CourseService.uploadLessonVideo(lessonId, fileEl.files[0]);
         } catch (e) { alert('Upload failed: ' + e.message); return; }
     } else if (embedUrl) {
+        const embedSrc = getEmbedUrl(embedUrl);
+        if (!embedSrc) {
+            const errEl = document.getElementById('modal-video-url-error');
+            if (errEl) {
+                errEl.textContent = 'Please enter a valid YouTube or Vimeo URL.';
+                errEl.classList.remove('hidden');
+            } else {
+                alert('Please enter a valid YouTube or Vimeo URL.');
+            }
+            return;
+        }
+        const errEl = document.getElementById('modal-video-url-error');
+        if (errEl) errEl.classList.add('hidden');
         uploadedUrl = embedUrl;
     }
 

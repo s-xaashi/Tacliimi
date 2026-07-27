@@ -386,6 +386,28 @@ document.addEventListener('DOMContentLoaded', async () => {
         overviewList.querySelectorAll('.session-card').forEach(card => {
             card.onclick = () => window.location.href = `${confirmationBase}?sessionId=${card.dataset.sessionId}`;
         });
+
+        // Highlight focused session if present in URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const focusSession = urlParams.get('focusSession');
+        if (focusSession) {
+            setTimeout(() => {
+                const targetCard = overviewList.querySelector(`[data-session-id="${focusSession}"]`);
+                if (targetCard) {
+                    targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    targetCard.classList.add('ring-4', 'ring-indigo-500', 'shadow-2xl', 'scale-[1.02]');
+                    setTimeout(() => {
+                        targetCard.classList.remove('ring-4', 'ring-indigo-500', 'shadow-2xl', 'scale-[1.02]');
+                        // also remove the parameter so it doesn't happen again on refresh
+                        const newUrl = new URL(window.location);
+                        newUrl.searchParams.delete('focusSession');
+                        window.history.replaceState({}, '', newUrl);
+                    }, 2500);
+                } else {
+                    // Try to look in other tabs? Usually the admin clicks in from an active payment, but if not found in active, it might be in completed or rejections.
+                }
+            }, 300);
+        }
     };
 
     const renderCompleted = () => {

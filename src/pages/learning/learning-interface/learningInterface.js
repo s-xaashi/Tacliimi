@@ -1,6 +1,7 @@
 import { supabase } from '/src/services/supabaseClient.js';
 import { CourseService } from '/src/services/courseService.js';
 import { AuthService } from '/src/services/authService.js';
+import { getEmbedUrl } from '/src/utils/js/videoEmbed.js';
 
 let currentCourseData = null;
 let currentLessonData = null;
@@ -8,30 +9,7 @@ let currentUser = null;
 let completedLessonIds = new Set();
 let totalLessonCount = 0;
 
-// ---------------------------------------------------------------
-// EMBED URL HELPER
-// ---------------------------------------------------------------
-
-/**
- * Converts a YouTube or Vimeo URL to an embeddable iframe src.
- * Returns null for direct video file URLs (mp4, mov, etc.) so the native <video> player is used.
- */
-function getEmbedUrl(url) {
-    if (!url) return null;
-    try {
-        // YouTube: https://www.youtube.com/watch?v=ID  or  https://youtu.be/ID
-        const ytMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/);
-        if (ytMatch) return `https://www.youtube.com/embed/${ytMatch[1]}?rel=0`;
-
-        // Vimeo: https://vimeo.com/ID  or  https://player.vimeo.com/video/ID
-        const vimeoMatch = url.match(/(?:vimeo\.com\/(?:video\/)?|player\.vimeo\.com\/video\/)(\d+)/);
-        if (vimeoMatch) return `https://player.vimeo.com/video/${vimeoMatch[1]}`;
-
-        // Already an embed URL
-        if (url.includes('/embed/') || url.includes('player.vimeo.com')) return url;
-    } catch (e) { /* ignore */ }
-    return null; // Direct video file — use <video> element
-}
+// getEmbedUrl is now imported from /src/utils/js/videoEmbed.js
 
 // ---------------------------------------------------------------
 // REVIEW FUNCTIONS
@@ -618,6 +596,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         currentCourseData = courseData;
         currentUser = session ? session.user : null;
+
+        const backBtn = document.getElementById('back-to-dashboard-btn');
+        if (backBtn && session) {
+            if (session.is_admin) {
+                backBtn.href = '/src/pages/admin/dashboard/index.html';
+            } else if (session.user?.user_metadata?.role === 'instructor') {
+                backBtn.href = '/src/pages/instructor/instructor-dashboard/index.html';
+            } else {
+                backBtn.href = '/src/pages/student/student-dashboard/index.html';
+            }
+        }
 
         let lastAccessedLessonId = null;
 

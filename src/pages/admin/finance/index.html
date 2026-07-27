@@ -1073,24 +1073,49 @@
                         ? `<img src="${b.instructor_avatar}" class="w-full h-full object-cover rounded-xl" />`
                         : `${(b.instructor_name || 'I')[0]}`;
 
-                    return `<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                    // Determine destination URL for the ROW
+                    const resolvedEntityType = b.entity_type === 'banner' ? (b.original_entity_type || 'course') : b.entity_type;
+                    
+                    const instructorProfileUrl = `/src/pages/instructor/public-profile/index.html?id=${encodeURIComponent(b.instructor_id)}`;
+                    const rowClickUrl = resolvedEntityType === 'mentor' 
+                        ? instructorProfileUrl 
+                        : `${instructorProfileUrl}&focusCourse=${encodeURIComponent(b.entity_id)}#taught-courses-section`;
+
+                    const entityUrl = resolvedEntityType === 'mentor'
+                        ? `/src/pages/mentorship/mentor-profile/index.html?id=${encodeURIComponent(b.entity_id)}`
+                        : `/src/pages/marketplace/course-details/index.html?id=${encodeURIComponent(b.entity_id)}`;
+
+                    const viewEntityBtn = `<a href="${entityUrl}" onclick="event.stopPropagation()" target="_blank" title="View ${resolvedEntityType === 'mentor' ? 'Mentor Profile' : 'Course Page'}" class="mt-1.5 inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 text-[10px] font-black uppercase tracking-wider border border-amber-200 dark:border-amber-700 hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-all">
+                        <span class="material-symbols-outlined text-[12px]">open_in_new</span>
+                        View ${resolvedEntityType === 'mentor' ? 'Profile' : 'Course'}
+                    </a>`;
+
+                    return `<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer" onclick="window.open('${rowClickUrl}', '_blank')">
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-3">
-                                <div class="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 font-black text-sm overflow-hidden border border-amber-200 dark:border-amber-800">${avatar}</div>
+                                <div class="w-9 h-9 shrink-0 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 font-black text-sm overflow-hidden border border-amber-200 dark:border-amber-800">
+                                    ${avatar}
+                                </div>
                                 <div>
-                                    <p class="font-bold text-sm">${b.instructor_name || 'Unknown'}</p>
+                                    <p class="font-bold text-sm text-slate-900 dark:text-white group-hover:text-primary transition-colors">${b.instructor_name || 'Unknown'}</p>
                                     <p class="text-[10px] text-slate-400 font-mono truncate max-w-[120px]">${b.entity_id?.substring(0,8) || ''}…</p>
                                 </div>
                             </div>
                         </td>
-                        <td class="px-6 py-4">${typeHtml}</td>
+                        <td class="px-6 py-4">
+                            <div class="flex flex-col gap-1.5">
+                                <span class="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-200">${b.entity_type || 'course'} boost</span>
+                                ${isBanner ? '<span class="px-2 py-0.5 rounded-full bg-purple-100 text-purple-600 text-[10px] font-black inline-block w-fit">+ Banner</span>' : ''}
+                                ${viewEntityBtn}
+                            </div>
+                        </td>
                         <td class="px-6 py-4 font-black text-lg">${fmtAmt(b.amount_paid)}</td>
                         <td class="px-6 py-4 text-xs text-slate-500">
                             <p>${fmtDate(b.starts_at)} →</p>
                             <p class="font-bold text-slate-700 dark:text-slate-300">${fmtDate(b.ends_at)}</p>
                         </td>
                         <td class="px-6 py-4">${statusHtml}</td>
-                        <td class="px-6 py-4">${cancellationHtml}</td>
+                        <td class="px-6 py-4" onclick="event.stopPropagation()">${cancellationHtml}</td>
                     </tr>`;
                 }).join('');
 
@@ -1126,18 +1151,82 @@
                 if (isNaN(serialId)) return;
                 
                 const { supabase } = await import('/src/services/supabaseClient.js');
-                const { data: payment, error } = await supabase.from('payments').select('course_id, mentorship_session_id, mentorship_id').eq('serial_id', serialId).single();
+                
+                // Fetch the payment along with course and student details
+                const { data: payment, error } = await supabase
+                    .from('payments')
+                    .select(`
+                        *,
+                        courses ( id, title, serial_id, instructor_id ),
+                        profiles!student_id ( full_name )
+                    `)
+                    .eq('serial_id', serialId)
+                    .single();
+                    
                 if (error || !payment) {
-                    window.showToast("Payment details not found.", "error");
+                    const { showToast } = await import('/src/services/uiUtils.js');
+                    if (showToast) {
+                        showToast("Payment details not found.", "error");
+                    } else {
+                        alert("Payment details not found.");
+                    }
                     return;
                 }
 
-                if (payment.mentorship_session_id) {
-                    window.location.href = `/src/pages/mentorship/mentor-booking/confirmation.html?sessionId=${payment.mentorship_session_id}`;
-                } else if (payment.mentorship_id) {
-                    window.location.href = `/src/pages/mentorship/mentor-booking/confirmation.html?sessionId=${payment.mentorship_id}`;
-                } else if (payment.course_id) {
-                    window.location.href = `/src/pages/instructor/public-profile/index.html?id=${studentId}&course_id=${payment.course_id}&pay_id=${entityId}`;
+                if (payment.mentorship_session_id || payment.mentorship_id) {
+                    const sessionId = payment.mentorship_session_id || payment.mentorship_id;
+                    window.open(`/src/pages/admin/bookings-review/index.html?focusSession=${sessionId}`, '_blank');
+                } else if (payment.course_id || payment.type === 'course') {
+                    // Fetch instructor
+                    if (payment.courses?.instructor_id) {
+                        const { data: inst } = await supabase.from('profiles').select('full_name, email, phone_number').eq('id', payment.courses.instructor_id).single();
+                        if (inst) {
+                             document.getElementById('receipt-instructor-name').textContent = inst.full_name || 'N/A';
+                             document.getElementById('receipt-instructor-email').textContent = inst.email || 'N/A';
+                             document.getElementById('receipt-instructor-phone').textContent = inst.phone_number || 'N/A';
+                        }
+                    }
+
+                    // Populate and show the modal
+                    document.getElementById('receipt-date').textContent = new Date(payment.created_at).toLocaleString();
+                    document.getElementById('receipt-pay-id').textContent = `PAY-${payment.serial_id}`;
+                    
+                    const statEl = document.getElementById('receipt-status');
+                    statEl.textContent = payment.payment_status || 'completed';
+                    statEl.classList.remove('hidden', 'bg-emerald-100', 'text-emerald-700', 'bg-rose-100', 'text-rose-700', 'bg-amber-100', 'text-amber-700');
+                    if (payment.payment_status === 'refunded') {
+                        statEl.classList.add('bg-rose-100', 'text-rose-700');
+                    } else if (payment.payment_status === 'held' || payment.payment_status === 'pending') {
+                        statEl.classList.add('bg-amber-100', 'text-amber-700');
+                    } else {
+                        statEl.classList.add('bg-emerald-100', 'text-emerald-700');
+                    }
+                    
+                    document.getElementById('receipt-crs-id').textContent = `CRS-${payment.courses?.serial_id || 'XXXX'}`;
+                    document.getElementById('receipt-course-details').classList.remove('hidden');
+
+                    document.getElementById('receipt-item-name').textContent = payment.courses?.title || 'Course Enrollment';
+                    document.getElementById('receipt-student').textContent = payment.profiles?.full_name || 'Unknown Student';
+                    document.getElementById('receipt-amount').textContent = `$${payment.amount ? payment.amount.toFixed(2) : '0.00'}`;
+                    
+                    document.getElementById('admin-payment-receipt-modal').classList.remove('hidden');
+                } else if (payment.type === 'boost' || payment.type === 'banner') {
+                     // For boosts/banners
+                     document.getElementById('receipt-date').textContent = new Date(payment.created_at).toLocaleString();
+                     document.getElementById('receipt-pay-id').textContent = `PAY-${payment.serial_id}`;
+                     
+                     const statEl = document.getElementById('receipt-status');
+                     statEl.textContent = payment.payment_status || 'completed';
+                     statEl.classList.remove('hidden', 'bg-emerald-100', 'text-emerald-700', 'bg-rose-100', 'text-rose-700', 'bg-amber-100', 'text-amber-700');
+                     statEl.classList.add(payment.payment_status === 'refunded' ? 'bg-rose-100' : 'bg-emerald-100', payment.payment_status === 'refunded' ? 'text-rose-700' : 'text-emerald-700');
+
+                     document.getElementById('receipt-course-details').classList.add('hidden');
+
+                     document.getElementById('receipt-item-name').textContent = `${payment.type.toUpperCase()}`;
+                     document.getElementById('receipt-student').textContent = payment.profiles?.full_name || 'Unknown User';
+                     document.getElementById('receipt-amount').textContent = `$${payment.amount ? payment.amount.toFixed(2) : '0.00'}`;
+                     
+                     document.getElementById('admin-payment-receipt-modal').classList.remove('hidden');
                 }
             } catch (e) {
                 console.error("Routing error:", e);
@@ -1311,5 +1400,66 @@
             if (e.target.id === 'finance-student-profile-modal') window.closeFinanceStudentModal();
         });
     </script>
+    <!-- Admin Payment Receipt Modal -->
+    <div id="admin-payment-receipt-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800 relative">
+            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-primary to-purple-500"></div>
+            <button onclick="document.getElementById('admin-payment-receipt-modal').classList.add('hidden')" class="absolute top-4 right-4 z-10 w-8 h-8 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 rounded-full flex items-center justify-center transition-all">
+                <span class="material-symbols-outlined text-sm">close</span>
+            </button>
+            <div class="p-8 pb-6">
+                <div class="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 rounded-2xl flex items-center justify-center mb-6 shadow-inner mx-auto">
+                    <span class="material-symbols-outlined text-3xl font-bold">check_circle</span>
+                </div>
+                <h3 class="text-2xl font-black text-center mb-1 text-slate-900 dark:text-white">Payment Receipt</h3>
+                <p class="text-center text-slate-500 text-sm mb-8" id="receipt-date">Loading...</p>
+                
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center py-3 border-b border-slate-100 dark:border-slate-800">
+                        <span class="text-sm text-slate-500 font-bold uppercase tracking-wider text-[10px]">Reference</span>
+                        <div class="flex items-center gap-2">
+                            <span class="font-mono font-black text-primary bg-primary/10 px-2 py-1 rounded" id="receipt-pay-id">PAY-...</span>
+                            <span class="text-[10px] font-bold px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 hidden uppercase" id="receipt-status"></span>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center py-3 border-b border-slate-100 dark:border-slate-800">
+                        <span class="text-sm text-slate-500 font-bold uppercase tracking-wider text-[10px]">Item</span>
+                        <span class="font-bold text-slate-700 dark:text-slate-300 max-w-[200px] truncate text-right" id="receipt-item-name">...</span>
+                    </div>
+                    <div class="flex justify-between items-center py-3 border-b border-slate-100 dark:border-slate-800">
+                        <span class="text-sm text-slate-500 font-bold uppercase tracking-wider text-[10px]">Student / User</span>
+                        <span class="font-bold text-slate-700 dark:text-slate-300" id="receipt-student">...</span>
+                    </div>
+                    
+                    <!-- Appended specific details for Courses -->
+                    <div id="receipt-course-details" class="hidden flex-col gap-3 py-3 border-b border-slate-100 dark:border-slate-800">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-slate-500 font-bold uppercase tracking-wider text-[10px]">Course ID</span>
+                            <span class="font-mono font-black text-indigo-500 bg-indigo-500/10 px-2 py-1 rounded" id="receipt-crs-id">CRS-...</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-slate-500 font-bold uppercase tracking-wider text-[10px]">Instructor</span>
+                            <span class="font-bold text-slate-700 dark:text-slate-300" id="receipt-instructor-name">...</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-slate-500 font-bold uppercase tracking-wider text-[10px]">Email</span>
+                            <span class="text-xs font-medium text-slate-500" id="receipt-instructor-email">...</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-slate-500 font-bold uppercase tracking-wider text-[10px]">Phone</span>
+                            <span class="text-xs font-medium text-slate-500" id="receipt-instructor-phone">...</span>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center py-4 mt-2">
+                        <span class="font-black text-slate-900 dark:text-white text-lg">Amount Paid</span>
+                        <span class="font-black text-2xl text-primary" id="receipt-amount">$0.00</span>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-slate-50 dark:bg-slate-800 p-4 border-t border-slate-100 dark:border-slate-700 flex justify-center">
+                <button onclick="document.getElementById('admin-payment-receipt-modal').classList.add('hidden')" class="px-6 py-2 bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 font-bold rounded-xl hover:bg-slate-50 dark:hover:bg-slate-600 shadow-sm transition-all text-sm">Close</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

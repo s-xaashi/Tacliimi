@@ -29,7 +29,8 @@ export const financeSettingsService = {
                     course_boost_enabled: true,
                     course_banner_enabled: true,
                     mentor_boost_enabled: true,
-                    mentor_banner_enabled: true
+                    mentor_banner_enabled: true,
+                    self_hosted_video_uploads_enabled: false
                 };
             }
             
@@ -53,7 +54,8 @@ export const financeSettingsService = {
                 course_boost_enabled: true,
                 course_banner_enabled: true,
                 mentor_boost_enabled: true,
-                mentor_banner_enabled: true
+                mentor_banner_enabled: true,
+                self_hosted_video_uploads_enabled: false
             };
         }
     },
@@ -89,6 +91,7 @@ export const financeSettingsService = {
                     course_banner_enabled: settings.course_banner_enabled,
                     mentor_boost_enabled: settings.mentor_boost_enabled,
                     mentor_banner_enabled: settings.mentor_banner_enabled,
+                    self_hosted_video_uploads_enabled: settings.self_hosted_video_uploads_enabled,
                     updated_by: user.user.id,
                     updated_at: new Date().toISOString()
                 })

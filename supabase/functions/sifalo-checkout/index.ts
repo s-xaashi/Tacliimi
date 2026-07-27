@@ -198,11 +198,12 @@ async function createDirectPayment(userId: string, payload: DirectPaymentPayload
     // Safe to leave course_id / mentorship_session_id NULL to avoid FK violations
   }
 
-  const { error: payErr } = await supabase.from('payments').insert(paymentRow);
-  if (payErr) {
+  const { data: insertedPayment, error: payErr } = await supabase.from('payments').insert(paymentRow).select('id').single();
+  if (payErr || !insertedPayment) {
     console.error('Payment insert error:', payErr);
     return err('Failed to record payment.', 500, payErr);
   }
+  const safePaymentId = insertedPayment.id;
 
   // Fetch settings for direct payment (which skips verifyTransaction)
   const { data: settings } = await supabase.rpc('get_platform_settings');
@@ -240,7 +241,6 @@ async function createDirectPayment(userId: string, payload: DirectPaymentPayload
     return json({ status: 'success', type: 'booking', referenceId, sid, order_id: orderId });
   } else if (type === 'boost' || type === 'banner') {
     // Execute the Postgres RPC to grant the feature
-    const safePaymentId = paymentRow.id || (await supabase.from('payments').select('id').eq('order_id', orderId).single()).data?.id;
     if (type === 'boost') {
       const { error: boostErr } = await supabase.rpc('purchase_boost', {
         p_entity_type: payload.entityType || 'course',
@@ -250,7 +250,14 @@ async function createDirectPayment(userId: string, payload: DirectPaymentPayload
         p_amount_paid: amount,
         p_payment_id: safePaymentId
       });
-      if (boostErr) console.error('Failed to create boost record:', boostErr);
+      if (boostErr) {
+        console.error('Failed to create boost record:', boostErr);
+        await supabase.from('payments').update({ 
+           verification_status: 'needs_manual_grant', 
+           gateway_response: { ...data, rpc_error: boostErr } 
+        }).eq('id', safePaymentId);
+        return err('Payment was captured but boost could not be granted automatically. It has been flagged for admin review.', 500, boostErr);
+      }
     } else {
       const { error: bannerErr } = await supabase.rpc('purchase_promo_banner', {
         p_entity_type: payload.entityType || 'course',
@@ -261,7 +268,14 @@ async function createDirectPayment(userId: string, payload: DirectPaymentPayload
         p_amount_paid: amount,
         p_payment_id: safePaymentId
       });
-      if (bannerErr) console.error('Failed to create banner record:', bannerErr);
+      if (bannerErr) {
+        console.error('Failed to create banner record:', bannerErr);
+        await supabase.from('payments').update({ 
+           verification_status: 'needs_manual_grant', 
+           gateway_response: { ...data, rpc_error: bannerErr } 
+        }).eq('id', safePaymentId);
+        return err('Payment was captured but banner could not be granted automatically. It has been flagged for admin review.', 500, bannerErr);
+      }
     }
     return json({ status: 'success', type, referenceId, sid, order_id: orderId });
   }

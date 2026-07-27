@@ -1344,7 +1344,7 @@ async function bindRequestsInteractions(container, userId) {
                                 </a>
                             </div>
                         </div>
-                        ${isProgram ? buildMonthlyProgressHtml(session) : ''}
+                        ${isProgram ? buildProgramProgressHtml(session) : ''}
                     </div>
                 `;
             }).join('');

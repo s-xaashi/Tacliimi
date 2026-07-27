@@ -60,6 +60,9 @@ async function initConfirmation() {
                     student:profiles!mentorship_sessions_student_id_fkey (
                         full_name,
                         avatar_url
+                    ),
+                    payments!payments_mentorship_session_id_fkey (
+                        serial_id
                     )
                 `)
                 .eq('id', sessionId)
@@ -118,19 +121,24 @@ async function initConfirmation() {
         const sessId = session.serial_id ? `SES-${session.serial_id}` : 'SES-XXXX';
         
         let paySerialId = null;
+
+        // 1. Try from the joined payments data (works for students via RLS: student_id = auth.uid())
         if (session.payments && session.payments.length > 0) {
             paySerialId = session.payments[0].serial_id;
-        } else {
-            // Secondary fetch to ensure we find the payment ID properly regardless of RLS or join aliases
-            const { data: payData } = await supabase.from('payments').select('serial_id').eq('mentorship_session_id', sessionId).maybeSingle();
-            if (payData) {
-                paySerialId = payData.serial_id;
-            } else {
-                const { data: payData2 } = await supabase.from('payments').select('serial_id').eq('mentorship_id', sessionId).maybeSingle();
-                if (payData2) paySerialId = payData2.serial_id;
-            }
         }
-        const payId = paySerialId ? `PAY-${paySerialId}` : 'PAY-XXXX';
+
+        // 2. Fallback: explicit query using mentorship_session_id
+        if (!paySerialId) {
+            const { data: payData } = await supabase
+                .from('payments')
+                .select('serial_id')
+                .eq('mentorship_session_id', sessionId)
+                .limit(1)
+                .maybeSingle();
+            if (payData) paySerialId = payData.serial_id;
+        }
+
+        const payId = paySerialId ? `PAY-${paySerialId}` : '—';
         
         const confSessEl = document.getElementById('conf-session-id');
         const confPayEl = document.getElementById('conf-payment-id');

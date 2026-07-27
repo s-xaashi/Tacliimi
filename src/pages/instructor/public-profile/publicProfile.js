@@ -34,11 +34,39 @@ async function loadInstructorProfile() {
         const mentorData = await MentorService.getMentorById(instructorId);
         if (!mentorData) return;
 
+        // Check if Mentor is boosted
+        try {
+            const { BoostService } = await import('../../services/boostService.js');
+            const [mentorBoostIds, mentorBanners] = await Promise.all([
+                BoostService.getBoostedEntityIds('mentor'),
+                BoostService.getActivePromoBanners('mentor')
+            ]);
+            
+            const isMentorBoosted = mentorBoostIds.includes(instructorId);
+            const mentorBannerText = mentorBanners.find(b => b.entity_id === instructorId)?.banner_text;
+            
+            const headerActions = document.querySelector('#instructor-name').parentElement;
+            if (isMentorBoosted) {
+                const badge = document.createElement('div');
+                badge.className = "flex items-center gap-1 px-3 py-1 bg-gradient-to-r from-amber-200 to-amber-100 text-amber-800 text-[10px] font-black uppercase tracking-wider rounded-full shadow-sm border border-amber-300 backdrop-blur-md";
+                badge.innerHTML = `<span class="material-symbols-outlined text-[12px]" style="font-variation-settings: 'FILL' 1">rocket_launch</span> Sponsored Profile`;
+                headerActions.appendChild(badge);
+            }
+            if (mentorBannerText) {
+                const bannerDiv = document.createElement('div');
+                bannerDiv.className = "w-full md:w-fit mt-3 px-4 py-2 bg-gradient-to-r from-purple-500/20 to-indigo-500/20 text-white rounded-xl border border-white/20 backdrop-blur-sm flex items-start gap-2 shadow-sm animate-pulse-slow";
+                bannerDiv.innerHTML = `<span class="material-symbols-outlined text-purple-300 text-sm mt-0.5 shrink-0 animate-bounce-slow">campaign</span><p class="text-sm font-bold text-white leading-snug">${mentorBannerText}</p>`;
+                headerActions.parentElement.insertBefore(bannerDiv, headerActions.nextSibling);
+            }
+        } catch (e) {
+            console.warn("Failed to fetch mentor boost data:", e);
+        }
+
         // Header Info
         document.getElementById('instructor-name').textContent = mentorData.full_name;
         if (mentorData.serial_id) {
             const mtrRef = document.createElement('span');
-            mtrRef.className = "ml-2 px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-400 text-[10px] font-black uppercase tracking-widest rounded border border-slate-200 dark:border-slate-700 font-mono align-middle";
+            mtrRef.className = "ml-2 px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-400 text-[10px] font-black uppercase tracking-widest rounded border border-slate-200 dark:border-slate-700 font-mono align-middle md-inline-block block mt-1 md:mt-0";
             mtrRef.textContent = `MTR-${mentorData.serial_id}`;
             document.getElementById('instructor-name').appendChild(mtrRef);
         }
@@ -166,6 +194,21 @@ async function loadInstructorCourses() {
 
         if (error) throw error;
 
+        // Fetch boost and banner data to highlight sponsored content on the public profile
+        let boostedIds = [];
+        let banners = [];
+        let bannerMap = {};
+        try {
+            const { BoostService } = await import('../../services/boostService.js');
+            [boostedIds, banners] = await Promise.all([
+                BoostService.getBoostedEntityIds('course'),
+                BoostService.getActivePromoBanners('course')
+            ]);
+            banners.forEach(b => bannerMap[b.entity_id] = b.banner_text);
+        } catch (e) {
+            console.warn("Failed to fetch boost data for public profile:", e);
+        }
+
         const grid = document.getElementById('courses-grid');
         const countEl = document.getElementById('courses-count');
         
@@ -179,9 +222,30 @@ async function loadInstructorCourses() {
             return;
         }
 
-        grid.innerHTML = courses.map(course => `
+        const urlParams = new URLSearchParams(window.location.search);
+        const focusCourseId = urlParams.get('focusCourse');
+
+        grid.innerHTML = courses.map(course => {
+            const familyId = course.root_course_id || course.id;
+            const isBoosted = boostedIds.includes(familyId);
+            const bannerText = bannerMap[familyId];
+            
+            const isFocused = focusCourseId === familyId;
+            const borderClass = isBoosted ? 'border-amber-200 dark:border-amber-900/50' : 'border-slate-100 dark:border-slate-800';
+            const focusClass = isFocused ? 'ring-4 ring-amber-400 ring-offset-2 dark:ring-offset-slate-900 transform scale-[1.02]' : '';
+
+            return `
             <div onclick="window.location.href='/src/pages/marketplace/course-details/index.html?id=${course.id}'" 
-                 class="group bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer">
+                 class="group bg-white dark:bg-slate-900 rounded-3xl border ${borderClass} shadow-sm overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer ${focusClass} relative">
+                
+                ${isBoosted ? `
+                <div class="absolute -top-10 -right-10 w-24 h-24 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full blur-xl opacity-20 pointer-events-none"></div>
+                <div class="absolute top-3 right-3 z-10 px-2 py-1 bg-gradient-to-r from-amber-200 to-amber-100 text-amber-800 text-[9px] font-black uppercase tracking-wider rounded-lg shadow-sm border border-amber-300 flex items-center gap-1 backdrop-blur-md">
+                    <span class="material-symbols-outlined text-[10px]" style="font-variation-settings: 'FILL' 1">stars</span>
+                    Sponsored
+                </div>
+                ` : ''}
+
                 <div class="aspect-video relative overflow-hidden">
                     <img src="${course.thumbnail_url || 'https://images.unsplash.com/photo-1542744094-24638eff58bb?w=800'}" 
                          class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
@@ -193,6 +257,10 @@ async function loadInstructorCourses() {
                     <div class="flex items-center gap-2 mb-3">
                         <span class="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-black uppercase rounded">${course.category || 'Course'}</span>
                     </div>
+                    ${bannerText ? `<div class="mb-2 px-2.5 py-1.5 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/40 dark:to-purple-900/40 border border-indigo-100 dark:border-indigo-800 rounded flex items-start gap-2 shadow-sm animate-pulse-slow">
+                        <span class="material-symbols-outlined text-indigo-500 text-sm mt-0.5 shrink-0 animate-bounce-slow">campaign</span>
+                        <p class="text-xs font-bold text-indigo-700 dark:text-indigo-300 leading-snug">${bannerText}</p>
+                    </div>` : ''}
                     <h3 class="font-bold text-slate-900 dark:text-white mb-2 line-clamp-2">${course.title}</h3>
                     <div class="flex justify-between items-center mt-6 pt-4 border-t border-slate-50 dark:border-slate-800">
                         <div class="flex items-center gap-1.5">
@@ -203,7 +271,8 @@ async function loadInstructorCourses() {
                     </div>
                 </div>
             </div>
-        `).join('');
+            `;
+        }).join('');
 
     } catch (err) {
         console.error("Error loading courses:", err);

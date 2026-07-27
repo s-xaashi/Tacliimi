@@ -266,6 +266,7 @@
         import { CourseService } from '/src/services/courseService.js';
         import { AuthService } from '/src/services/authService.js';
         import { showToast, showConfirmModal, showAlertModal } from '/src/services/uiUtils.js';
+        import { getEmbedUrl } from '/src/utils/js/videoEmbed.js';
 
         let currentCourse = null;
 
@@ -396,7 +397,21 @@
             const noVidElement = document.getElementById('no-video-fallback');
             
             if(course.intro_video_url) {
-                vidElement.src = course.intro_video_url;
+                let url = course.intro_video_url;
+                const embedSrc = getEmbedUrl(url);
+
+                const isDirect = /\.(mp4|webm|ogg|mov)(\?|$)/i.test(url);
+                if (isDirect || !embedSrc) {
+                    vidElement.src = url;
+                } else {
+                    vidElement.classList.add('hidden');
+                    const iframe = document.createElement('iframe');
+                    iframe.src = embedSrc;
+                    iframe.className = 'absolute inset-0 w-full h-full object-cover';
+                    iframe.setAttribute('allowfullscreen', 'true');
+                    iframe.setAttribute('frameborder', '0');
+                    vidContainer.appendChild(iframe);
+                }
             } else if (course.thumbnail_url) {
                 vidElement.classList.add('hidden');
                 noVidElement.classList.remove('hidden');
@@ -475,12 +490,15 @@
             // CURRICULUM — Expandable Lesson Cards
             // =============================================
             const sections = course.sections || [];
+            sections.sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
+            
             let totalLessons = 0;
             let totalQuizzes = 0;
             let totalResources = 0;
 
             sections.forEach(s => {
                 if(s.lessons) {
+                    s.lessons.sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
                     totalLessons += s.lessons.length;
                     s.lessons.forEach(l => {
                         if(l.quizzes) {
@@ -571,7 +589,7 @@
             const { icon, color, bg } = iconMap[contentType] || iconMap.text;
 
             // Determine if this lesson has expandable content
-            const hasVideo     = contentType === 'video' && les.video_url;
+            const hasVideo     = !!les.video_url;
             const hasQuizzes   = les.quizzes && les.quizzes.length > 0;
             const hasResources = les.lesson_resources && les.lesson_resources.length > 0;
             const hasDesc      = les.description && les.description.trim();
@@ -644,7 +662,10 @@
                     videoSection.className = 'space-y-3';
                     videoSection.innerHTML = `<p class="text-[10px] font-black uppercase tracking-widest text-indigo-600 mb-2">Lesson Video</p>`;
 
-                    // Try embedding — if it looks like a direct video URL, use <video>, else an iframe/link
+                    // Use shared embed utility — if it's a YouTube/Vimeo URL, get embed src.
+                    // If it's a direct video file or unrecognised URL, keep as-is.
+                    const resolvedEmbedUrl = getEmbedUrl(embedUrl) || embedUrl;
+
                     const isDirectVideo = /\.(mp4|webm|ogg|mov)(\?|$)/i.test(les.video_url);
                     if (isDirectVideo) {
                         const videoEl = document.createElement('video');
@@ -653,20 +674,11 @@
                         videoEl.innerHTML = `<source src="${les.video_url}" type="video/mp4">Your browser does not support the video tag.`;
                         videoSection.appendChild(videoEl);
                     } else {
-                        // External URL — show as styled link
-                        const linkEl = document.createElement('a');
-                        linkEl.href = les.video_url;
-                        linkEl.target = '_blank';
-                        linkEl.rel = 'noopener noreferrer';
-                        linkEl.className = 'inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white text-xs font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-md';
-                        linkEl.innerHTML = `<span class="material-symbols-outlined text-sm">open_in_new</span> Open Video in New Tab`;
-                        videoSection.appendChild(linkEl);
-
-                        // Also show the URL as text for context
-                        const urlP = document.createElement('p');
-                        urlP.className = 'text-[10px] text-slate-400 font-mono mt-2 break-all';
-                        urlP.innerText = les.video_url;
-                        videoSection.appendChild(urlP);
+                        // External URL — show as styled iframe
+                        const iframeContainer = document.createElement('div');
+                        iframeContainer.className = 'w-full aspect-video rounded-2xl bg-black shadow-lg border border-slate-200 dark:border-slate-700 overflow-hidden relative';
+                        iframeContainer.innerHTML = `<iframe src="${resolvedEmbedUrl}" class="absolute inset-0 w-full h-full" allowfullscreen="true" frameborder="0"></iframe>`;
+                        videoSection.appendChild(iframeContainer);
                     }
                     panel.appendChild(videoSection);
                 }

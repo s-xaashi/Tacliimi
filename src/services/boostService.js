@@ -228,6 +228,7 @@ export const boostService = {
             })),
             ...banners.map(b => ({
                 ...b,
+                original_entity_type: b.entity_type, // 'course' or 'mentor'
                 entity_type: 'banner',
                 instructor_name: profileMap[b.instructor_id]?.full_name || 'Unknown',
                 instructor_avatar: profileMap[b.instructor_id]?.avatar_url || null

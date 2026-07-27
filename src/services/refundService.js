@@ -99,30 +99,94 @@ export const RefundService = {
 
         const { data: refund, error: fetchErr } = await supabase
             .from('refund_requests')
-            .select('payment_id')
+            .select('payment_id, support_ticket_id')
             .eq('id', refundId)
             .single();
 
         if (fetchErr) throw fetchErr;
 
+        let actualPaymentId = refund.payment_id;
+
+        // If the refund was created directly from a ticket instead of a payment, payment_id is null.
+        // We must extract it from the support ticket's entity_id (e.g., "PAY-4030") to propagate the refund.
+        if (!actualPaymentId && refund.support_ticket_id) {
+            const { data: ticket } = await supabase
+                .from('support_tickets')
+                .select('entity_id')
+                .eq('id', refund.support_ticket_id)
+                .single();
+                
+            if (ticket && ticket.entity_id && ticket.entity_id.startsWith('PAY-')) {
+                const serialIdStr = ticket.entity_id.replace('PAY-', '');
+                const serialId = parseInt(serialIdStr, 10);
+                if (!isNaN(serialId)) {
+                    const { data: payRow } = await supabase
+                        .from('payments')
+                        .select('id')
+                        .eq('serial_id', serialId)
+                        .maybeSingle();
+                        
+                    if (payRow) {
+                        actualPaymentId = payRow.id;
+                    }
+                }
+            }
+        }
+
+        // Hard Failure: Never approve a refund if we can't definitively link it to a payment record, 
+        // to prevent earnings logic from slipping through unchanged.
+        if (!actualPaymentId) {
+            throw new Error("Could not resolve a payment record for this refund. Please ensure the linked entity ID is a valid PAY-XXXX format.");
+        }
+
+        const updateData = {
+            status: 'approved',
+            processed_by: adminId,
+            processed_at: now,
+            admin_notes: adminNotes
+        };
+        
+        // Heal the data model going forward if we successfully resolved a missing payment ID
+        if (!refund.payment_id) {
+            updateData.payment_id = actualPaymentId;
+        }
+
         const { error } = await supabase
             .from('refund_requests')
-            .update({
-                status: 'approved',
-                processed_by: adminId,
-                processed_at: now,
-                admin_notes: adminNotes
-            })
+            .update(updateData)
             .eq('id', refundId);
 
         if (error) throw error;
 
-        // Only update payment record if a real payment_id exists
-        if (refund.payment_id) {
-            await supabase
+        // Propagate down to the payments table so instructor earnings recalculate automatically
+        if (actualPaymentId) {
+            const { data: payRow } = await supabase
+                .from('payments')
+                .select('student_id, course_id, type')
+                .eq('id', actualPaymentId)
+                .single();
+
+            const { error: payUpdateErr } = await supabase
                 .from('payments')
                 .update({ payment_status: 'refunded' })
-                .eq('id', refund.payment_id);
+                .eq('id', actualPaymentId);
+                
+            if (payUpdateErr) {
+                console.error("Failed to propagate refund status to payment:", payUpdateErr);
+                // We don't throw right now because the refund was mathematically approved on the refund request side, 
+                // but this acts as an error trace just in case.
+            }
+            
+            // If this was a course payment, revoke course access instantly by removing the enrollment
+            if (payRow && (payRow.course_id || payRow.type === 'course')) {
+                const { error: enrErr } = await supabase
+                    .from('enrollments')
+                    .delete()
+                    .eq('student_id', payRow.student_id || refund.student_id)
+                    .eq('course_id', payRow.course_id);
+                    
+                if (enrErr) console.error("Failed to revoke course enrollment:", enrErr);
+            }
         }
 
         await supabase.from('admin_audit_logs').insert({

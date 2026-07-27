@@ -207,38 +207,41 @@ export const CourseService = {
         const { data, error } = await query;
         if (error) throw error;
         
+        // Always annotate every course with _boost_order so the sort is always applied.
+        // If the RPC fails, boostedIds defaults to [] and all courses stay at 999999,
+        // preserving the original DB order gracefully.
+        let boostedIds = [];
+        let banners = [];
         try {
             const { BoostService } = await import('./boostService.js');
-            const [boostedIds, banners] = await Promise.all([
+            [boostedIds, banners] = await Promise.all([
                 BoostService.getBoostedEntityIds('course'),
                 BoostService.getActivePromoBanners('course')
             ]);
-            
-            if (boostedIds.length > 0 || banners.length > 0) {
-                // Attach banner text
-                const bannerMap = {};
-                banners.forEach(b => bannerMap[b.entity_id] = b.banner_text);
-                
-                // Stable sort fallback by preserving original order using index if same level
-                data.forEach((course, i) => {
-                    const matchId = course.family_id;
-                    if (bannerMap[matchId]) course.banner_text = bannerMap[matchId];
-                    const bIdx = boostedIds.indexOf(matchId);
-                    course._boost_order = bIdx !== -1 ? bIdx : 999999;
-                    course._original_idx = i;
-                });
-                
-                // Sort
-                data.sort((a, b) => {
-                    if (a._boost_order !== b._boost_order) {
-                        return a._boost_order - b._boost_order;
-                    }
-                    return a._original_idx - b._original_idx;
-                });
-            }
         } catch (err) {
-            console.warn("Boost/banner fetch failed:", err);
+            console.warn("Boost/banner fetch failed, falling back to DB order:", err);
         }
+
+        const bannerMap = {};
+        banners.forEach(b => bannerMap[b.entity_id] = b.banner_text);
+
+        data.forEach((course, i) => {
+            const matchId = course.family_id;
+            if (bannerMap[matchId]) course.banner_text = bannerMap[matchId];
+            const bIdx = boostedIds.indexOf(matchId);
+            // boosted courses: 0, 1, 2... (rotation order from RPC)
+            // un-boosted courses: 999999 (stable secondary sort by original DB index)
+            course._boost_order = bIdx !== -1 ? bIdx : 999999;
+            course._original_idx = i;
+        });
+
+        // Boosted courses first (rotation order), then non-boosted in original DB order
+        data.sort((a, b) => {
+            if (a._boost_order !== b._boost_order) {
+                return a._boost_order - b._boost_order;
+            }
+            return a._original_idx - b._original_idx;
+        });
 
         return data;
     },
@@ -631,11 +634,32 @@ export const CourseService = {
     },
 
     async uploadCourseVideo(courseId, file) {
+        // SERVICE-LAYER GUARD: blocks the UI and direct calls to this service function.
+        // Note: this does not enforce at the Supabase Storage RLS level — a caller
+        // that bypasses this service and calls the Supabase storage client directly
+        // would not be blocked. Acceptable for a cost-control toggle.
+        const { data: settingsRow } = await supabase
+            .from('platform_settings')
+            .select('self_hosted_video_uploads_enabled')
+            .limit(1)
+            .maybeSingle();
+        if (settingsRow && settingsRow.self_hosted_video_uploads_enabled === false) {
+            throw new Error('Self-hosted video uploads are currently disabled. Please use a YouTube URL instead.');
+        }
         const fileName = `${courseId ? courseId : 'new'}/video_${Date.now()}`;
         return await this.uploadFile('intro_videos', fileName, file);
     },
 
     async uploadLessonVideo(lessonId, file) {
+        // SERVICE-LAYER GUARD (same boundary as uploadCourseVideo — see note above)
+        const { data: settingsRow } = await supabase
+            .from('platform_settings')
+            .select('self_hosted_video_uploads_enabled')
+            .limit(1)
+            .maybeSingle();
+        if (settingsRow && settingsRow.self_hosted_video_uploads_enabled === false) {
+            throw new Error('Self-hosted video uploads are currently disabled. Please use a YouTube URL instead.');
+        }
         const fileName = `lessons/${lessonId ? lessonId : 'new'}/video_${Date.now()}`;
         const publicUrl = await this.uploadFile('course_videos', fileName, file);
 
