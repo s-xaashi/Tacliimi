@@ -469,9 +469,30 @@ async function confirmBooking() {
                 totalSessions: isMonthly ? 30 : 1
             };
 
-            // Step 1: Create the session record
+            // Step 1: Create or Update the session record
             const newSession = await MentorService.createSession(sessionData);
             newSessionId = newSession.id;
+            window._resumingSessionId = newSessionId;
+        } else {
+            // Update the existing session in case they changed topic or duration
+            const updateData = {
+                topic: topic,
+                meeting_type: meetingType,
+                meeting_location: meetingLocation,
+                student_phone: studentPhone
+            };
+            
+            if (selectedSlot) {
+                const [startH, startM] = selectedSlot.start_time.split(':').map(Number);
+                const [endH, endM] = selectedSlot.end_time.split(':').map(Number);
+                updateData.duration_minutes = (endH * 60 + endM) - (startH * 60 + startM);
+                
+                const scheduledAt = new Date(selectedDate);
+                scheduledAt.setHours(startH, startM, 0, 0);
+                updateData.scheduled_at = scheduledAt.toISOString();
+            }
+            
+            await supabase.from('mentorship_sessions').update(updateData).eq('id', newSessionId);
         }
 
         // Step 2: Calculate the price to charge

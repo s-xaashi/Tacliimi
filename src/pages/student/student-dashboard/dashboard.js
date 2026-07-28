@@ -581,8 +581,8 @@ async function loadMentors(forceRefresh = false) {
                 const duration = s.duration_minutes || 60;
                 end = new Date(start.getTime() + duration * 60000);
             }
-            // Programs still within end_date stay in Upcoming even if DB status was prematurely set
-            const isProgramStillActive = s.mentorship_type === 'program' && s.end_date && now < end && status !== 'cancelled';
+            // Programs still within end_date stay in Upcoming only if they are confirmed
+            const isProgramStillActive = s.mentorship_type === 'program' && s.end_date && now < end && status === 'confirmed';
             return isProgramStillActive || ((status === 'confirmed' || status === 'upcoming') && now < end);
         });
         const historySessions = sessions.filter(s => {
@@ -670,11 +670,23 @@ async function loadMentors(forceRefresh = false) {
                 }
                 
                 if (!isHistory && session.meeting_type === 'online' && session.meeting_link) {
-                    actionHtml = `
-                        <a href="${session.meeting_link}" target="_blank" class="flex-1 px-4 py-2.5 bg-emerald-500 text-white font-bold rounded-xl hover:bg-emerald-600 transition-all text-sm whitespace-nowrap flex items-center gap-2 justify-center shadow-lg shadow-emerald-500/20">
-                            <span class="material-symbols-outlined text-[18px]">videocam</span> Join Meeting
-                        </a>
-                    `;
+                    const isValidLink = typeof MentorService !== 'undefined' && MentorService.isValidMeetingLink 
+                        ? MentorService.isValidMeetingLink(session.meeting_link)
+                        : true; // fallback if loaded out of order
+                    
+                    if (isValidLink) {
+                        actionHtml = `
+                            <button onclick="window.open('${session.meeting_link}', '_blank', 'noopener,noreferrer')" class="flex-1 px-4 py-2.5 bg-emerald-500 text-white font-bold rounded-xl hover:bg-emerald-600 transition-all text-sm whitespace-nowrap flex items-center gap-2 justify-center shadow-lg shadow-emerald-500/20">
+                                <span class="material-symbols-outlined text-[18px]">videocam</span> Join Meeting
+                            </button>
+                        `;
+                    } else {
+                        actionHtml = `
+                            <button disabled class="flex-1 px-4 py-2.5 bg-red-500 text-white font-bold rounded-xl text-sm whitespace-nowrap flex items-center gap-2 justify-center opacity-80 cursor-not-allowed shadow-sm shadow-red-500/20" title="Meeting link is broken or insecure">
+                                <span class="material-symbols-outlined text-[18px]">broken_image</span> Broken Link
+                            </button>
+                        `;
+                    }
                 }
             } else if (bookingStatus === 'completed') {
                 statusColor = "bg-slate-100 dark:bg-slate-800 text-slate-500";
@@ -872,44 +884,59 @@ window.deleteSession = async function(sessionId) {
 /** MESSAGING LOGIC **/
 let currentMessageBookingId = null;
 
-window.openMessagingModal = async function(bookingId, mentorName) {
-    currentMessageBookingId = bookingId;
-    const modal = document.getElementById('booking-message-modal');
-    const container = document.getElementById('chat-history-container');
-    const nameLabel = document.getElementById('modal-mentor-name');
-    
-    nameLabel.innerText = mentorName;
-    modal.classList.remove('hidden');
-    container.innerHTML = '<div class="py-20 text-center"><div class="animate-spin inline-block w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full"></div></div>';
-    
-    try {
-        const messages = await MentorService.getMessages(bookingId);
-        if (messages.length === 0) {
-            container.innerHTML = `
-                <div class="flex flex-col items-center justify-center h-full text-center py-20 px-8">
-                    <span class="material-symbols-outlined text-slate-200 dark:text-slate-700 text-7xl mb-4">chat_bubble</span>
-                    <h4 class="font-bold text-slate-400">No messages yet</h4>
-                    <p class="text-sm text-slate-400 max-w-[200px] mt-2">Start the conversation with your mentor here.</p>
-                </div>
-            `;
-        } else {
-            container.innerHTML = messages.map(msg => {
-                const isStudent = msg.sender_role === 'student';
-                return `
-                    <div class="flex ${isStudent ? 'justify-end' : 'justify-start'}">
-                        <div class="max-w-[85%] p-4 rounded-2xl ${isStudent ? 'bg-primary text-white rounded-tr-none shadow-lg shadow-primary/20' : 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-tl-none shadow-sm shadow-black/5'}">
-                            <p class="text-sm leading-relaxed">${msg.message_text}</p>
-                            <p class="text-[10px] mt-2 opacity-60 font-medium">${new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-            container.scrollTop = container.scrollHeight;
-        }
-    } catch (err) {
-        container.innerHTML = '<p class="text-red-500 text-center py-10 font-bold">Failed to load chat history.</p>';
+let _chatPollInterval = null;
+let _lastRenderedMessageId = null;
+let _isTyping = false;
+let _typingTimeout = null;
+
+function renderChatMessages(messages, myRole) {
+    if (messages.length === 0) {
+        return `<div class="flex flex-col items-center justify-center h-full text-center py-20 px-8">
+            <span class="material-symbols-outlined text-slate-200 dark:text-slate-700 text-7xl mb-4">chat_bubble</span>
+            <h4 class="font-bold text-slate-400">No messages yet</h4>
+            <p class="text-sm text-slate-400 max-w-[200px] mt-2">Start the conversation with your mentor here.</p>
+        </div>`;
     }
-};
+    return messages.map(msg => {
+        const isMe = msg.sender_role === myRole;
+        const senderAvatar = msg.sender?.avatar_url
+            || `https://ui-avatars.com/api/?name=${encodeURIComponent(msg.sender?.full_name || (isMe ? 'Me' : 'Them'))}&background=random&color=fff`;
+        const timeStr = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const avatarHtml = `<img src="${senderAvatar}" class="w-8 h-8 rounded-full object-cover shrink-0 shadow-sm" title="${msg.sender?.full_name || ''}" />`;
+        return `
+            <div class="flex items-end gap-2 ${isMe ? 'justify-end' : 'justify-start'}">
+                ${!isMe ? avatarHtml : ''}
+                <div class="max-w-[85%] p-3.5 rounded-2xl text-sm leading-relaxed ${isMe
+                    ? 'bg-primary text-white rounded-tr-none shadow-lg shadow-primary/20'
+                    : 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-tl-none shadow-sm shadow-black/5'}">
+                    <p>${msg.message_text}</p>
+                    <p class="text-[10px] mt-1.5 opacity-60 font-medium">${timeStr}</p>
+                </div>
+                ${isMe ? avatarHtml : ''}
+            </div>`;
+    }).join('');
+}
+
+function appendTypingIndicatorStudent(container) {
+    const existing = container.querySelector('#typing-indicator-row');
+    if (existing) existing.remove();
+    if (!_isTyping) return;
+    const row = document.createElement('div');
+    row.id = 'typing-indicator-row';
+    row.className = 'flex items-end gap-2 justify-end';
+    row.innerHTML = `<div class="px-4 py-2.5 bg-primary/10 rounded-2xl rounded-tr-none">
+        <span class="text-[11px] text-primary font-medium flex items-center gap-1.5">
+            <span class="inline-flex gap-0.5">
+                <span class="w-1.5 h-1.5 bg-primary rounded-full animate-bounce [animation-delay:0ms]"></span>
+                <span class="w-1.5 h-1.5 bg-primary rounded-full animate-bounce [animation-delay:150ms]"></span>
+                <span class="w-1.5 h-1.5 bg-primary rounded-full animate-bounce [animation-delay:300ms]"></span>
+            </span>
+            Typing…
+        </span>
+    </div>`;
+    container.appendChild(row);
+    container.scrollTop = container.scrollHeight;
+}
 
 /** REVIEW LOGIC **/
 let currentReviewMentorId = null;
@@ -922,35 +949,91 @@ window.openReviewModal = function(mentorId, mentorName) {
     const nameLabel = document.getElementById('review-mentor-name');
     const stars = modal.querySelectorAll('.star-btn');
     const comment = document.getElementById('review-comment');
-    
+
     nameLabel.innerText = mentorName;
     comment.value = '';
     stars.forEach(s => s.classList.remove('text-amber-400', 'bg-amber-50', 'dark:bg-amber-900/20'));
-    
+
     modal.classList.remove('hidden');
+};
+
+window.openMessagingModal = async function(bookingId, mentorName) {
+
+    currentMessageBookingId = bookingId;
+    const modal = document.getElementById('booking-message-modal');
+    const container = document.getElementById('chat-history-container');
+    const nameLabel = document.getElementById('modal-mentor-name');
+
+    nameLabel.innerText = mentorName;
+    modal.classList.remove('hidden');
+    container.innerHTML = '<div class="py-20 text-center"><div class="animate-spin inline-block w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full"></div></div>';
+
+    if (_chatPollInterval) { clearInterval(_chatPollInterval); _chatPollInterval = null; }
+    _lastRenderedMessageId = null;
+
+    const loadMessages = async (isFirstLoad = false) => {
+        try {
+            const messages = await MentorService.getMessages(bookingId);
+            const latestId = messages.length ? messages[messages.length - 1].id : null;
+            if (latestId === _lastRenderedMessageId && !isFirstLoad) return;
+            _lastRenderedMessageId = latestId;
+            const atBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 60;
+            container.innerHTML = renderChatMessages(messages, 'student');
+            appendTypingIndicatorStudent(container);
+            if (atBottom || isFirstLoad) container.scrollTop = container.scrollHeight;
+        } catch { /* silent poll failure */ }
+    };
+
+    await loadMessages(true);
+
+    _chatPollInterval = setInterval(() => {
+        if (document.getElementById('booking-message-modal')?.classList.contains('hidden')) {
+            clearInterval(_chatPollInterval); _chatPollInterval = null;
+        } else {
+            loadMessages();
+        }
+    }, 4000);
 };
 
 document.addEventListener('DOMContentLoaded', () => {
     // Messaging interactions
     const sendBtn = document.getElementById('send-chat-btn');
     const chatInput = document.getElementById('chat-input');
-    
+
+    if (chatInput) {
+        chatInput.addEventListener('input', () => {
+            _isTyping = true;
+            const container = document.getElementById('chat-history-container');
+            appendTypingIndicatorStudent(container);
+            clearTimeout(_typingTimeout);
+            _typingTimeout = setTimeout(() => {
+                _isTyping = false;
+                const row = document.getElementById('typing-indicator-row');
+                if (row) row.remove();
+            }, 2000);
+        });
+        chatInput.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendBtn?.click(); } });
+    }
+
     if (sendBtn) {
         sendBtn.onclick = async () => {
             const text = chatInput.value.trim();
             if (!text || !currentMessageBookingId) return;
-            
+
             try {
                 sendBtn.disabled = true;
+                _isTyping = false;
+                clearTimeout(_typingTimeout);
                 const session = await AuthService.getSession();
                 const userId = session?.user?.id;
-                
+
                 if (!userId) {
                     throw new Error("You must be logged in to send messages.");
                 }
 
                 await MentorService.sendMessage(currentMessageBookingId, userId, text, 'student');
                 chatInput.value = '';
+                _lastRenderedMessageId = null;
                 await window.openMessagingModal(currentMessageBookingId, document.getElementById('modal-mentor-name').innerText);
             } catch (err) {
                 alert('Failed to send message: ' + err.message);
@@ -959,6 +1042,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
     }
+
+
 
     // Review interactions
     const stars = document.querySelectorAll('.star-btn');

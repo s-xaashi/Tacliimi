@@ -9,11 +9,21 @@ function escapeHtml(str) {
 }
 
 /**
+ * Statuses that represent a genuinely confirmed and active mentorship program.
+ * Progress tracking (progress bar, meetings held, next meeting countdown) must
+ * only render for these statuses. Any pre-payment or unconfirmed state returns
+ * null / empty string so no false progress ever leaks through.
+ */
+const PROGRESS_STATUSES = new Set(['confirmed', 'completed']);
+
+/**
  * getProgramMeetingStatus(session)
  * Shared helper — call once per card render, use results everywhere.
- * Returns a rich status object about the current program lifecycle state.
+ * Returns a rich status object about the current program lifecycle state,
+ * or null if the session has not yet reached a confirmed/active state.
  */
 export function getProgramMeetingStatus(session) {
+    if (!session || !PROGRESS_STATUSES.has(session.booking_status)) return null;
     const now = new Date();
     const originalMeetingStart = new Date(session.scheduled_at);
     const duration = session.duration_minutes || 60;
@@ -128,7 +138,10 @@ export function getProgramMeetingStatus(session) {
  */
 export function buildProgramProgressHtml(session) {
     if (!session || session.mentorship_type !== 'program') return '';
-    if (session.booking_status === 'cancelled') return '';
+    // Gate: only render progress for sessions in a confirmed, active state.
+    // pending_payment, paid_waiting_review, awaiting_meeting_link, draft, etc.
+    // must all show nothing — the student hasn't confirmed yet.
+    if (!PROGRESS_STATUSES.has(session.booking_status)) return '';
 
     const s = getProgramMeetingStatus(session);
     const programGoal = session.topic || 'Program Mentorship';

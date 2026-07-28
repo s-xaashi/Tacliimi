@@ -659,34 +659,62 @@ export const MentorService = {
             ? new Date(new Date(programStartDate).getTime() + durationDays * 24 * 60 * 60 * 1000).toISOString()
             : null;
 
-        const { data, error } = await supabase
+        const sessionPayload = {
+            student_id: sessionData.studentId,
+            mentor_id: sessionData.mentorId,
+            scheduled_at: sessionData.scheduledAt,
+            status: 'pending', // Keep legacy for compat
+            booking_status: 'pending_payment', // Fix: DO NOT use pending_review before payment
+            notes: sessionData.notes || '',
+            topic: sessionData.topic,
+            meeting_type: sessionData.meetingType,
+            meeting_location: sessionData.meetingLocation,
+            student_phone: sessionData.studentPhone,
+            duration_minutes: sessionData.durationMinutes || 60,
+            mentorship_type: mentorshipType,
+            total_sessions: totalSessions,
+            completed_sessions_count: 0,
+            duration_days: durationDays,
+            program_start_date: programStartDate,
+            end_date: endDate
+        };
+
+        // FIND existing unpaid cart row for this student + mentor combination
+        const { data: existingSession, error: checkErr } = await supabase
             .from('mentorship_sessions')
-            .insert({
-                student_id: sessionData.studentId,
-                mentor_id: sessionData.mentorId,
-                scheduled_at: sessionData.scheduledAt,
-                status: 'pending', // Keep legacy for compat
-                booking_status: 'pending_review',
-                notes: sessionData.notes || '',
-                topic: sessionData.topic,
-                meeting_type: sessionData.meetingType,
-                meeting_location: sessionData.meetingLocation,
-                student_phone: sessionData.studentPhone,
-                duration_minutes: sessionData.durationMinutes || 60,
-                // Program Mentorship fields
-                mentorship_type: mentorshipType,
-                total_sessions: totalSessions,
-                completed_sessions_count: 0,
-                duration_days: durationDays,
-                program_start_date: programStartDate,
-                end_date: endDate
-            })
-            .select()
-            .single();
+            .select('id')
+            .eq('student_id', sessionData.studentId)
+            .eq('mentor_id', sessionData.mentorId)
+            .in('booking_status', ['pending_payment', 'draft'])
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
 
-        if (error) throw error;
+        if (checkErr) throw checkErr;
 
-        return data;
+        let resultData;
+        if (existingSession) {
+            // Upsert / Update the existing unpaid row instead of duplicating
+            const { data, error } = await supabase
+                .from('mentorship_sessions')
+                .update(sessionPayload)
+                .eq('id', existingSession.id)
+                .select()
+                .single();
+            if (error) throw error;
+            resultData = data;
+        } else {
+            // Insert a brand new row
+            const { data, error } = await supabase
+                .from('mentorship_sessions')
+                .insert(sessionPayload)
+                .select()
+                .single();
+            if (error) throw error;
+            resultData = data;
+        }
+
+        return resultData;
     },
 
     /**
@@ -887,9 +915,31 @@ export const MentorService = {
     },
 
     /**
+     * Helper to validate allowed meeting links
+     */
+    isValidMeetingLink(link) {
+        if (!link) return false;
+        try {
+            const url = new URL(link);
+            const patterns = [
+                /^.*\.zoom\.us$/,
+                /^meet\.google\.com$/,
+                /^teams\.microsoft\.com$/
+            ];
+            return patterns.some(p => p.test(url.hostname));
+        } catch {
+            return false;
+        }
+    },
+
+    /**
      * Update session meeting link and mark as confirmed
      */
     async updateMeetingLink(sessionId, link) {
+        if (!this.isValidMeetingLink(link)) {
+            throw new Error("Invalid meeting link. Only Zoom, Google Meet, or Microsoft Teams links are allowed.");
+        }
+
         const { error } = await supabase
             .from('mentorship_sessions')
             .update({ 

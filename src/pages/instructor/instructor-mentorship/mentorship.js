@@ -1148,22 +1148,22 @@ async function bindRequestsInteractions(container, userId) {
                 </div>
             `;
             
-        const [pending, paidWaiting, awaiting, negotiating, rejectedReview] = await Promise.all([
-                MentorService.getMentorSessions(userId, 'pending_review'),
-                MentorService.getMentorSessions(userId, 'paid_waiting_review'),
+        const [paidWaiting, awaiting, negotiating, rejectedReview] = await Promise.all([
+                MentorService.getMentorSessions(userId, 'paid_waiting_review'), // Replaced pending_review with paid_waiting_review
                 MentorService.getMentorSessions(userId, 'awaiting_meeting_link'),
                 MentorService.getMentorSessions(userId, 'location_negotiation'),
                 MentorService.getMentorSessions(userId, 'pending_rejection_review')
             ]);
             
-            const allRequests = [...pending, ...paidWaiting, ...awaiting, ...negotiating, ...rejectedReview].sort((a,b) => new Date(a.scheduled_at) - new Date(b.scheduled_at));
+            const allRequests = [...paidWaiting, ...awaiting, ...negotiating, ...rejectedReview].sort((a,b) => new Date(a.scheduled_at) - new Date(b.scheduled_at));
 
             // Helper to determine filter
             const filterBtns = container.querySelectorAll('.request-filter-btn');
             const activeFilter = Array.from(filterBtns).find(b => b.classList.contains('bg-white'))&&Array.from(filterBtns).find(b => b.classList.contains('bg-white'))?.dataset.status || 'pending_review';
 
             let filtered = allRequests;
-            if (activeFilter === 'pending_review') filtered = [...pending, ...paidWaiting, ...rejectedReview];
+            // The dataset status on the button might still say 'pending_review' but we just map it to paidWaiting
+            if (activeFilter === 'pending_review') filtered = [...paidWaiting, ...rejectedReview];
             if (activeFilter === 'action_required') filtered = [...awaiting, ...negotiating];
 
             filtered = applyTypeFilter(filtered, _requestsTypeFilter);
@@ -1183,6 +1183,13 @@ async function bindRequestsInteractions(container, userId) {
                 const studentName = student.full_name || (student.email ? student.email.split('@')[0] : 'Unknown Student');
                 const studentAvatar = student.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(studentName)}&background=random&color=fff`;
                 const status = session.booking_status || 'pending_review';
+
+                const duration = session.duration_minutes || 60;
+                // Reschedule button — shared across all actionable statuses except admin-locked rejection review
+                const rescheduleBtn = status !== 'pending_rejection_review' ? `
+                    <button class="reschedule-session-btn px-4 py-2 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-bold rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-all text-sm flex items-center justify-center gap-2 whitespace-nowrap" data-id="${session.id}" data-date="${session.scheduled_at}" data-duration="${duration}" data-name="${studentName.replace(/"/g, '&quot;')}" data-history="${JSON.stringify(session.reschedule_history || []).replace(/"/g, '&quot;')}">
+                        <span class="material-symbols-outlined text-[18px]">edit_calendar</span> Reschedule
+                    </button>` : '';
 
                 let statusBadge = '';
                 let actionsHtml = '';
@@ -1339,6 +1346,7 @@ async function bindRequestsInteractions(container, userId) {
                             <!-- Actions: Fixed width -->
                             <div class="w-full md:w-fit flex flex-col gap-2 justify-center border-t md:border-t-0 border-slate-100 dark:border-slate-800 pt-4 md:pt-0">
                                 ${actionsHtml}
+                                ${rescheduleBtn}
                                 <a href="/src/pages/mentorship/mentor-booking/confirmation.html?sessionId=${session.id}" class="px-4 py-2.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 font-bold rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-all text-sm flex items-center gap-2 justify-center border border-indigo-100 dark:border-indigo-800">
                                     <span class="material-symbols-outlined text-[18px]">receipt_long</span> Details
                                 </a>
@@ -1377,12 +1385,29 @@ async function bindRequestsInteractions(container, userId) {
                 });
             });
 
+            [...listContainer.querySelectorAll('.meeting-link-input')].forEach(input => {
+                input.addEventListener('input', () => {
+                    input.classList.remove('ring-red-500', 'border-red-500');
+                    if (input.value.trim() && !MentorService.isValidMeetingLink(input.value.trim())) {
+                        input.classList.add('ring-2', 'ring-red-500/20', 'border-red-500');
+                    }
+                });
+            });
+
             listContainer.querySelectorAll('.confirm-link-btn').forEach(btn => {
                 btn.addEventListener('click', async () => {
                     const sessionId = btn.dataset.id;
                     const card = listContainer.querySelector(`[data-session-id="${sessionId}"]`);
-                    const link = card.querySelector('.meeting-link-input').value.trim();
-                    if (!link) return window.showToast('Link required.', 'error');
+                    const input = card.querySelector('.meeting-link-input');
+                    const link = input.value.trim();
+                    if (!link) {
+                        input.classList.add('ring-2', 'ring-red-500/20', 'border-red-500');
+                        return window.showToast('Link required.', 'error');
+                    }
+                    if (!MentorService.isValidMeetingLink(link)) {
+                        input.classList.add('ring-2', 'ring-red-500/20', 'border-red-500');
+                        return window.showToast('Only Zoom, Google Meet, or Teams links are allowed.', 'error');
+                    }
                     try {
                         btn.disabled = true;
                         btn.innerText = 'Sending...';
@@ -1390,6 +1415,7 @@ async function bindRequestsInteractions(container, userId) {
                         renderRequests();
                     } catch (err) {
                         console.error(err);
+                        window.showToast(err.message || 'Failed to update link.', 'error');
                         btn.disabled = false;
                         btn.innerText = 'Send Link';
                     }
@@ -1414,6 +1440,10 @@ async function bindRequestsInteractions(container, userId) {
                 btn.addEventListener('click', () => {
                     openMessagingModal(btn.dataset.id, btn.dataset.name);
                 });
+            });
+
+            listContainer.querySelectorAll('.reschedule-session-btn').forEach(btn => {
+                btn.addEventListener('click', () => window.triggerMentorReschedule(btn.dataset.id, btn.dataset.date, btn.dataset.duration, btn.dataset.name, btn.dataset.history));
             });
 
         } catch (err) {
@@ -1567,9 +1597,11 @@ async function bindUpcomingInteractions(container, userId) {
                     end = new Date(start.getTime() + duration * 60000);
                 }
                 
-                // Programs still within end_date stay active regardless of DB status
-                const isProgramStillActive = s.mentorship_type === 'program' && s.end_date && now < end && status !== 'cancelled';
-                const isActive = ['confirmed', 'awaiting_meeting_link', 'cancelled', 'pending_rejection_review'].includes(status);
+                // Upcoming includes sessions that are fully confirmed (or cancelled history)
+                // It should NOT include 'awaiting_meeting_link', 'location_negotiation', or pending reviews.
+                const isActiveStatus = ['confirmed', 'cancelled'].includes(status);
+                const isProgramStillActive = s.mentorship_type === 'program' && s.end_date && now < end && isActiveStatus;
+                const isActive = isActiveStatus;
                 // Upcoming includes sessions that haven't ended yet
                 return isProgramStillActive || (isActive && now < end);
             });
@@ -1892,79 +1924,151 @@ async function bindCompletedInteractions(container, userId) {
 /** MESSAGING MODAL LOGIC **/
 let currentMessageBookingId = null;
 
+let _chatPollInterval = null;
+let _lastRenderedMessageId = null;
+
+function renderChatMessages(messages, myRole, myAvatarUrl) {
+    if (messages.length === 0) {
+        return `<div class="flex flex-col items-center justify-center h-full text-center py-10">
+            <span class="material-symbols-outlined text-slate-200 dark:text-slate-700 text-6xl mb-4">chat_bubble</span>
+            <p class="text-slate-400 text-sm">No messages yet. Start the conversation!</p>
+        </div>`;
+    }
+    return messages.map(msg => {
+        const isMe = msg.sender_role === myRole;
+        const senderAvatar = msg.sender?.avatar_url
+            || `https://ui-avatars.com/api/?name=${encodeURIComponent(msg.sender?.full_name || (isMe ? 'Me' : 'Them'))}&background=random&color=fff`;
+        const timeStr = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const avatarHtml = `<img src="${senderAvatar}" class="w-8 h-8 rounded-full object-cover shrink-0 shadow-sm" title="${msg.sender?.full_name || ''}" />`;
+        return `
+            <div class="flex items-end gap-2 ${isMe ? 'justify-end' : 'justify-start'}">
+                ${!isMe ? avatarHtml : ''}
+                <div class="max-w-[78%] p-3.5 rounded-2xl text-sm leading-relaxed ${isMe
+                    ? 'bg-primary text-white rounded-tr-none shadow-lg shadow-primary/20'
+                    : 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-tl-none shadow-sm'}">
+                    <p>${msg.message_text}</p>
+                    <p class="text-[10px] mt-1.5 opacity-60 font-medium">${timeStr}</p>
+                </div>
+                ${isMe ? avatarHtml : ''}
+            </div>`;
+    }).join('');
+}
+
 async function openMessagingModal(bookingId, studentName) {
     currentMessageBookingId = bookingId;
     const modal = document.getElementById('booking-message-modal');
     const historyContainer = document.getElementById('chat-history-container');
     const nameLabel = document.getElementById('modal-student-name');
-    
+
     nameLabel.innerText = studentName;
     modal.classList.remove('hidden');
-    
     historyContainer.innerHTML = '<div class="py-10 text-center"><div class="animate-spin inline-block w-6 h-6 border-2 border-primary/20 border-t-primary rounded-full"></div></div>';
-    
-    try {
-        const messages = await MentorService.getMessages(bookingId);
-        if (messages.length === 0) {
-            historyContainer.innerHTML = `
-                <div class="flex flex-col items-center justify-center h-full text-center py-10">
-                    <span class="material-symbols-outlined text-slate-200 dark:text-slate-700 text-6xl mb-4">chat_bubble</span>
-                    <p class="text-slate-400 text-sm">No messages yet. Start the conversation!</p>
-                </div>
-            `;
+
+    // Stop any previous poll
+    if (_chatPollInterval) { clearInterval(_chatPollInterval); _chatPollInterval = null; }
+    _lastRenderedMessageId = null;
+
+    const session = await AuthService.getSession();
+    const myAvatarUrl = (await supabase.from('profiles').select('avatar_url').eq('id', session?.user?.id).single()).data?.avatar_url;
+
+    const loadMessages = async (isFirstLoad = false) => {
+        try {
+            const messages = await MentorService.getMessages(bookingId);
+            const latestId = messages.length ? messages[messages.length - 1].id : null;
+            if (latestId === _lastRenderedMessageId && !isFirstLoad) return; // nothing new
+            _lastRenderedMessageId = latestId;
+
+            // Preserve scroll position if not at bottom, auto-scroll if at bottom
+            const atBottom = historyContainer.scrollHeight - historyContainer.scrollTop - historyContainer.clientHeight < 60;
+            historyContainer.innerHTML = renderChatMessages(messages, 'mentor', myAvatarUrl);
+            appendTypingIndicator(historyContainer);
+            if (atBottom || isFirstLoad) historyContainer.scrollTop = historyContainer.scrollHeight;
+        } catch { /* silent on background poll failures */ }
+    };
+
+    await loadMessages(true);
+
+    // Auto-refresh every 4 seconds while modal is open
+    _chatPollInterval = setInterval(() => {
+        if (document.getElementById('booking-message-modal')?.classList.contains('hidden')) {
+            clearInterval(_chatPollInterval); _chatPollInterval = null;
         } else {
-            historyContainer.innerHTML = messages.map(msg => {
-                const isMentor = msg.sender_role === 'mentor';
-                return `
-                    <div class="flex ${isMentor ? 'justify-end' : 'justify-start'}">
-                        <div class="max-w-[80%] p-4 rounded-2xl ${isMentor ? 'bg-primary text-white rounded-tr-none' : 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-tl-none shadow-sm'}">
-                            <p class="text-sm">${msg.message_text}</p>
-                            <p class="text-[10px] mt-2 opacity-60">${new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-            historyContainer.scrollTop = historyContainer.scrollHeight;
+            loadMessages();
         }
-    } catch (err) {
-        historyContainer.innerHTML = '<p class="text-red-500 text-center py-10">Failed to load messages.</p>';
-    }
+    }, 4000);
+}
+
+// Typing indicator state
+let _isTyping = false;
+let _typingTimeout = null;
+
+function appendTypingIndicator(container) {
+    const existing = container.querySelector('#typing-indicator-row');
+    if (existing) existing.remove();
+    if (!_isTyping) return;
+    const row = document.createElement('div');
+    row.id = 'typing-indicator-row';
+    row.className = 'flex items-end gap-2 justify-end';
+    row.innerHTML = `<div class="px-4 py-2.5 bg-primary/10 rounded-2xl rounded-tr-none">
+        <span class="text-[11px] text-primary font-medium flex items-center gap-1.5">
+            <span class="inline-flex gap-0.5">
+                <span class="w-1.5 h-1.5 bg-primary rounded-full animate-bounce [animation-delay:0ms]"></span>
+                <span class="w-1.5 h-1.5 bg-primary rounded-full animate-bounce [animation-delay:150ms]"></span>
+                <span class="w-1.5 h-1.5 bg-primary rounded-full animate-bounce [animation-delay:300ms]"></span>
+            </span>
+            Typing…
+        </span>
+    </div>`;
+    container.appendChild(row);
+    container.scrollTop = container.scrollHeight;
 }
 
 // Global modal initialization
 function initMessagingModal() {
     const modal = document.getElementById('booking-message-modal');
     if (!modal) return;
-    
-    // Remove old listeners to avoid duplicates
+
+    // Remove old listeners
     const oldCloseBtn = modal.querySelector('.close-modal-btn');
     const newCloseBtn = oldCloseBtn.cloneNode(true);
     oldCloseBtn.parentNode.replaceChild(newCloseBtn, oldCloseBtn);
-    newCloseBtn.addEventListener('click', () => modal.classList.add('hidden'));
-    
+    newCloseBtn.addEventListener('click', () => {
+        modal.classList.add('hidden');
+        if (_chatPollInterval) { clearInterval(_chatPollInterval); _chatPollInterval = null; }
+    });
+
     const oldSendBtn = document.getElementById('send-message-btn');
     const newSendBtn = oldSendBtn.cloneNode(true);
     oldSendBtn.parentNode.replaceChild(newSendBtn, oldSendBtn);
-    
+
     const input = document.getElementById('chat-input');
-    
+
+    // Typing indicator
+    input.addEventListener('input', () => {
+        _isTyping = true;
+        const container = document.getElementById('chat-history-container');
+        appendTypingIndicator(container);
+        clearTimeout(_typingTimeout);
+        _typingTimeout = setTimeout(() => {
+            _isTyping = false;
+            const row = document.getElementById('typing-indicator-row');
+            if (row) row.remove();
+        }, 2000);
+    });
+
     newSendBtn.addEventListener('click', async () => {
         const text = input.value.trim();
         if (!text || !currentMessageBookingId) return;
-        
         try {
             const session = await AuthService.getSession();
             const userId = session?.user?.id;
-            
-            if (!userId) {
-                window.showToast("Session expired. Please log in again.", "error");
-                return;
-            }
-
+            if (!userId) { window.showToast("Session expired. Please log in again.", "error"); return; }
             newSendBtn.disabled = true;
+            _isTyping = false;
+            clearTimeout(_typingTimeout);
             await MentorService.sendMessage(currentMessageBookingId, userId, text, 'mentor');
             input.value = '';
-            // Refresh history
+            _lastRenderedMessageId = null; // force refresh
             openMessagingModal(currentMessageBookingId, document.getElementById('modal-student-name').innerText);
         } catch (err) {
             window.showToast('Failed to send message.', 'error');
@@ -1973,18 +2077,26 @@ function initMessagingModal() {
         }
     });
 
-    // Close on backdrop click
+    // Enter key support
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); newSendBtn.click(); } });
+
+    // Close on backdrop
     modal.addEventListener('click', (e) => {
-        if (e.target === modal) modal.classList.add('hidden');
+        if (e.target === modal) {
+            modal.classList.add('hidden');
+            if (_chatPollInterval) { clearInterval(_chatPollInterval); _chatPollInterval = null; }
+        }
     });
 }
 
-// Call init on load and when the modal might be re-rendered (though it's static in index.html)
+// Call init on load
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initMessagingModal);
 } else {
     initMessagingModal();
 }
+
+
 
 window.deleteSession = async function(sessionId) {
     window.showConfirmModal({
