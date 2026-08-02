@@ -12,6 +12,27 @@ export const instructorEarningsService = {
                 p_instructor_id: instructorId
             });
             if (error) throw error;
+            
+            if (data) {
+                // Deduct paid withdrawals from the gross total to show the net remaining earnings as Total Earnings
+                const { data: wData } = await supabase
+                    .from('withdrawal_requests')
+                    .select('amount')
+                    .eq('instructor_id', instructorId)
+                    .eq('status', 'paid');
+                    
+                if (wData) {
+                    const totalPaidWithdrawals = wData.reduce((sum, w) => sum + parseFloat(w.amount), 0);
+                    
+                    if (data.cleared_earnings !== undefined) {
+                        data.cleared_earnings = Math.max(0, data.cleared_earnings - totalPaidWithdrawals);
+                    } else if (data.net_earnings !== undefined) {
+                        data.net_earnings = Math.max(0, data.net_earnings - totalPaidWithdrawals);
+                    } else if (data.total_earned !== undefined) {
+                        data.total_earned = Math.max(0, data.total_earned - totalPaidWithdrawals);
+                    }
+                }
+            }
             return data;
         } catch (error) {
             console.error('Error fetching earnings summary:', error);

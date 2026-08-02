@@ -8,7 +8,7 @@ export const WithdrawalService = {
     async getAllWithdrawals() {
         const { data, error } = await supabase
             .from('withdrawal_requests')
-            .select('*, profiles!withdrawal_requests_instructor_id_fkey(full_name, avatar_url, email)')
+            .select('*, profiles!withdrawal_requests_instructor_id_fkey(full_name, avatar_url, email, payout_details)')
             .order('created_at', { ascending: false });
 
         if (error) throw error;

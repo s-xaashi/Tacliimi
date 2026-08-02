@@ -132,6 +132,47 @@
             </div>
         </header>
 
+        <!-- Active Withdrawal Notice Modal -->
+        <div id="active-withdrawal-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="document.getElementById('active-withdrawal-modal').classList.add('hidden')"></div>
+            <div class="relative bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 w-full max-w-md p-6 animate-fade-in">
+                <div class="flex items-start gap-4 mb-5">
+                    <div class="w-11 h-11 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
+                        <span class="material-symbols-outlined text-amber-600 dark:text-amber-400">pending_actions</span>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-900 dark:text-white">Withdrawal In Progress</h3>
+                        <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">You already have an active withdrawal request. Please wait for it to clear before submitting a new one.</p>
+                    </div>
+                </div>
+                <div class="bg-slate-50 dark:bg-slate-800 rounded-xl p-4 space-y-3 mb-5">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-slate-500 font-medium">Reference</span>
+                        <span id="aw-ref" class="font-mono font-bold text-slate-900 dark:text-white">—</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-slate-500 font-medium">Amount</span>
+                        <span id="aw-amount" class="font-bold text-slate-900 dark:text-white">—</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-slate-500 font-medium">Method</span>
+                        <span id="aw-method" class="text-slate-700 dark:text-slate-300">—</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-slate-500 font-medium">Status</span>
+                        <span id="aw-status" class="px-2.5 py-0.5 text-xs font-bold rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 capitalize">—</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-slate-500 font-medium">Requested</span>
+                        <span id="aw-date" class="text-slate-700 dark:text-slate-300">—</span>
+                    </div>
+                </div>
+                <button onclick="document.getElementById('active-withdrawal-modal').classList.add('hidden')" class="w-full py-2.5 bg-primary text-white rounded-xl font-semibold text-sm hover:bg-primary/90 transition-colors">
+                    Got it, I'll wait
+                </button>
+            </div>
+        </div>
+
         <!-- DYNAMIC CONTENT AREA -->
         <main id="instructor-content-area" class="flex-1 bg-background-light dark:bg-background-dark pb-20">
 
@@ -421,7 +462,7 @@
                 ]);
 
                 // Default Values
-                let totalEarnings = summary?.cleared_earnings || 0;
+                let totalEarnings = summary?.cleared_earnings || summary?.total_earned || 0;
                 let monthEarnings = summary?.monthly || 0;
                 let availableForWithdrawal = summary?.available_balance || 0;
                 let heldBalance = summary?.held_balance || 0;
@@ -447,7 +488,9 @@
                         withdrawBtn.disabled = true;
                         
                         if (availableForWithdrawal >= minWithdrawalAmt) {
-                             const needed = (minWithdrawalAmt + reserveAmount - availableForWithdrawal).toFixed(2);
+                             // Use Math.ceil after fixing floating point drift to ensure we don't say "$0.00 needed"
+                             const diff = (minWithdrawalAmt + reserveAmount) - availableForWithdrawal;
+                             const needed = (Math.ceil(Math.max(0.01, diff) * 100) / 100).toFixed(2);
                              withdrawBtn.innerHTML = `<span class="text-[11px] leading-tight flex flex-col"><span>Need $${needed} more cleared</span><span>before you can withdraw</span></span>`;
                         } else {
                              withdrawBtn.innerHTML = `Min Withdrawal: $${minWithdrawalAmt}`;
@@ -458,6 +501,19 @@
                         withdrawBtn.disabled = false;
                         
                         withdrawBtn.addEventListener('click', async () => {
+                            // Check for an active (in-flight) withdrawal first
+                            const activeWithdrawal = withdrawals.find(w => ['pending', 'approved', 'processing'].includes(w.status));
+                            if (activeWithdrawal) {
+                                const awMethod = activeWithdrawal.payout_method === 'mobile_money' ? 'Mobile Money' : (activeWithdrawal.payout_method === 'cash_on_delivery' ? 'Cash on Delivery' : 'Bank Transfer');
+                                document.getElementById('aw-ref').textContent = activeWithdrawal.reference_number || 'Pending';
+                                document.getElementById('aw-amount').textContent = '$' + parseFloat(activeWithdrawal.amount).toFixed(2);
+                                document.getElementById('aw-method').textContent = awMethod;
+                                document.getElementById('aw-status').textContent = activeWithdrawal.status;
+                                document.getElementById('aw-date').textContent = new Date(activeWithdrawal.created_at).toLocaleDateString();
+                                document.getElementById('active-withdrawal-modal').classList.remove('hidden');
+                                return;
+                            }
+
                             // Check if configured payout method
                             const method = await PayoutService.getMyPayoutMethod(userId);
                             if (!method) {
@@ -615,14 +671,21 @@
 
                     withdrawals.forEach(item => {
                         const reqDateStr = new Date(item.created_at).toLocaleDateString();
-                        const processedDateStr = (item.status === 'paid' || item.status === 'rejected') ? new Date(item.updated_at).toLocaleDateString() : 'Pending';
+                        const processedAt = item.processed_at || item.updated_at;
+                        const processedDateStr = (item.status === 'paid' || item.status === 'rejected' || item.status === 'approved' || item.status === 'processing') && processedAt
+                            ? new Date(processedAt).toLocaleDateString()
+                            : 'Pending';
                         const rawItemStr = encodeURIComponent(JSON.stringify({...item, is_withdrawal: true}));
                         
                         let statusClass = 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400';
+                        let statusTitle = '';
                         if (item.status === 'pending') statusClass = 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400';
                         if (item.status === 'processing') statusClass = 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
                         if (item.status === 'paid') statusClass = 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400';
-                        if (item.status === 'rejected') statusClass = 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
+                        if (item.status === 'rejected') {
+                            statusClass = 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
+                            statusTitle = item.rejection_reason || item.notes_to_instructor || 'No reason provided';
+                        }
 
                         let methodDetails = item.payout_method === 'mobile_money' ? 'Mobile Money' : (item.payout_method === 'bank_transfer' ? 'Bank' : 'Cash');
 
@@ -632,7 +695,7 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900 dark:text-white">$${parseFloat(item.amount).toFixed(2)}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">${methodDetails}</td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="px-2.5 py-1 text-xs font-medium rounded-full ${statusClass} capitalize">${item.status}</span>
+                                <span class="px-2.5 py-1 text-xs font-medium rounded-full ${statusClass} capitalize" ${statusTitle ? `title="${statusTitle.replace(/"/g, '&quot;')}"` : ''}>${item.status}</span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">${reqDateStr}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">${processedDateStr}</td>

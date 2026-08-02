@@ -403,6 +403,19 @@
         </div>
     </div>
 
+    <!-- Confirm Modal -->
+    <div id="confirm-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeConfirmModal()"></div>
+        <div class="relative bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-md p-8 animate-fade-in">
+            <h3 class="text-xl font-bold dark:text-white mb-2" id="confirm-modal-title">Confirm Action</h3>
+            <p class="text-slate-500 mb-6 text-sm" id="confirm-modal-msg">Are you sure you want to proceed?</p>
+            <div class="flex gap-3">
+                <button onclick="closeConfirmModal()" class="flex-1 py-3 bg-slate-100 dark:bg-slate-800 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition-all">Cancel</button>
+                <button id="confirm-modal-btn" class="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-all">Confirm</button>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         import { supabase } from '/src/services/supabaseClient.js';
         import { AuthService } from '/src/services/authService.js';
@@ -418,7 +431,7 @@
         let rejectTarget = null; // { type: 'withdrawal'|'refund', id: string }
 
         // Stat colors for badges
-        const statusBadge = (s) => {
+        const statusBadge = (s, item = null) => {
             const map = {
                 pending: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
                 approved: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
@@ -428,7 +441,11 @@
                 resolved: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
                 closed: 'bg-slate-100 text-slate-500'
             };
-            return `<span class="status-badge ${map[s] || 'bg-slate-100 text-slate-500'}">${s}</span>`;
+            let attr = '';
+            if (s === 'rejected' && item) {
+                attr = `title="${(item.rejection_reason || item.notes_to_instructor || 'No reason specified').replace(/"/g, '&quot;')}"`;
+            }
+            return `<span class="status-badge ${map[s] || 'bg-slate-100 text-slate-500'}" ${attr}>${s}</span>`;
         };
 
         const fmtDate = d => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -496,15 +513,36 @@
             if (!rows.length) { tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-10 text-center text-slate-400 italic">No withdrawals found</td></tr>`; return; }
             tbody.innerHTML = rows.map(w => {
                 let methodDetails = '';
+                const snap = w.payout_method_snapshot || {};
+                // Detect if instructor has both methods configured from the snapshot
+                const hasMM = !!(snap.phone_mobile_money || snap.provider_name);
+                const hasCOD = !!(snap.address && snap.city && snap.phone_cash_on_delivery);
+
                 if (w.payout_method === 'mobile_money') {
-                    const phone = w.payout_method_snapshot?.mobile_money_number || w.profiles?.mobile_money_number || 'N/A';
-                    const provider = w.payout_method_snapshot?.mobile_money_provider || w.profiles?.mobile_money_provider || 'N/A';
+                    const phone = snap.phone_mobile_money || 'N/A';
+                    const provider = snap.provider_name || 'N/A';
                     methodDetails = `<div class="text-xs text-slate-500 mt-1 font-medium">Nmb: ${phone} <br>Prov: ${provider}</div>`;
                 } else if (w.payout_method === 'bank_transfer') {
-                    const accName = w.payout_method_snapshot?.bank_account_name || 'N/A';
-                    const accNmb = w.payout_method_snapshot?.bank_account_number || 'N/A';
-                    const bankName = w.payout_method_snapshot?.bank_name || 'N/A';
+                    const accName = snap.bank_account_name || 'N/A';
+                    const accNmb = snap.bank_account_number || 'N/A';
+                    const bankName = snap.bank_name || 'N/A';
                     methodDetails = `<div class="text-xs text-slate-500 mt-1 font-medium">Bank: ${bankName}<br>Name: ${accName} <br>Acc: ${accNmb}</div>`;
+                } else if (w.payout_method === 'cash_on_delivery') {
+                    const phone = snap.phone_cash_on_delivery || 'N/A';
+                    const addr = snap.address || 'N/A';
+                    const loc = [snap.city, snap.country].filter(Boolean).join(', ');
+                    methodDetails = `<div class="text-xs text-slate-500 mt-1 font-medium">Phone: ${phone} <br>Addr: ${addr}${loc ? ' (' + loc + ')' : ''}</div>`;
+                }
+                
+                if (w.status === 'pending' && hasMM && hasCOD) {
+                    methodDetails += `
+                        <div class="mt-2">
+                            <select onchange="window.updateWithdrawalMethod('${w.id}', this.value)" class="text-[10px] uppercase font-bold text-slate-600 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded px-1.5 py-1">
+                                <option value="mobile_money" ${w.payout_method === 'mobile_money' ? 'selected' : ''}>Switch to MM</option>
+                                <option value="cash_on_delivery" ${w.payout_method === 'cash_on_delivery' ? 'selected' : ''}>Switch to Cash</option>
+                            </select>
+                        </div>
+                    `;
                 }
 
                 let actions = `<span class="text-slate-300 text-xs italic">No actions</span>`;
@@ -543,7 +581,7 @@
                         <div class="uppercase">${w.payout_method ? w.payout_method.replace('_', ' ') : 'N/A'}</div>
                         ${methodDetails}
                     </td>
-                    <td class="px-6 py-4">${statusBadge(w.status)}</td>
+                    <td class="px-6 py-4">${statusBadge(w.status, w)}</td>
                     <td class="px-6 py-4 text-slate-400 text-sm">
                         ${fmtDate(w.created_at)}
                         ${w.reference_number ? `<div class="text-[10px] uppercase font-bold text-slate-500 mt-1">Ref: ${w.reference_number}</div>` : ''}
@@ -586,7 +624,7 @@
                     </td>
                     <td class="px-6 py-4 font-black text-lg">${fmtAmt(r.amount)}</td>
                     <td class="px-6 py-4"><span class="text-xs font-bold text-slate-500 uppercase">${(r.request_type || 'general_refund').replace(/_/g, ' ')}</span></td>
-                    <td class="px-6 py-4">${statusBadge(r.status)}</td>
+                    <td class="px-6 py-4">${statusBadge(r.status, r)}</td>
                     <td class="px-6 py-4 text-slate-400 text-sm">${fmtDate(r.created_at)}</td>
                     <td class="px-6 py-4 text-right">
                         ${r.status === 'pending' ? `
@@ -654,7 +692,7 @@
                         ${screenshotsHtml}
                         ${refundBadge}
                     </td>
-                    <td class="px-6 py-4">${statusBadge(t.status)}</td>
+                    <td class="px-6 py-4">${statusBadge(t.status, t)}</td>
                     <td class="px-6 py-4 text-slate-400 text-sm">${fmtDate(t.created_at)}</td>
                     <td class="px-6 py-4 text-right">
                         ${t.status === 'open' ? `
@@ -794,36 +832,71 @@
         };
 
         // Actions
-        window.approveWithdrawal = async function(id) {
-            if (!confirm('Approve this withdrawal? It will transition from pending to approved.')) return;
+        window.updateWithdrawalMethod = async function(id, newMethod) {
             try {
-                await WithdrawalService.approveWithdrawal(id, adminSession?.user?.id);
+                const { error } = await supabase.from('withdrawal_requests').update({ payout_method: newMethod }).eq('id', id);
+                if (error) throw error;
                 await loadAll();
-            } catch (e) { alert('Error: ' + e.message); }
+            } catch (err) {
+                console.error(err);
+                alert('Failed to update payout method: ' + err.message);
+            }
         };
 
-        window.markProcessing = async function(id) {
-            if (!confirm('Mark as processing? This indicates you are currently initiating the payment.')) return;
-            try {
+        let confirmAction = null;
+        window.openConfirmModal = function(title, msg, onConfirm) {
+            document.getElementById('confirm-modal-title').innerText = title;
+            document.getElementById('confirm-modal-msg').innerText = msg;
+            confirmAction = onConfirm;
+            document.getElementById('confirm-modal').classList.remove('hidden');
+        };
+        window.closeConfirmModal = function() {
+            document.getElementById('confirm-modal').classList.add('hidden');
+            confirmAction = null;
+        };
+        document.getElementById('confirm-modal-btn').addEventListener('click', async () => {
+            if (confirmAction) {
+                const btn = document.getElementById('confirm-modal-btn');
+                const orig = btn.innerHTML;
+                btn.innerHTML = '<span class="material-symbols-outlined text-[18px] animate-spin">refresh</span>';
+                btn.disabled = true;
+                try {
+                    await confirmAction();
+                } catch (e) {
+                    alert('Error: ' + e.message);
+                }
+                btn.innerHTML = orig;
+                btn.disabled = false;
+                closeConfirmModal();
+            }
+        });
+
+        window.approveWithdrawal = function(id) {
+            openConfirmModal('Approve Withdrawal', 'Approve this withdrawal? It will transition from pending to approved.', async () => {
+                await WithdrawalService.approveWithdrawal(id, adminSession?.user?.id);
+                await loadAll();
+            });
+        };
+
+        window.markProcessing = function(id) {
+            openConfirmModal('Mark as Processing', 'Mark as processing? This indicates you are currently initiating the payment.', async () => {
                 await WithdrawalService.updateWithdrawalStatus(id, adminSession?.user?.id, 'processing');
                 await loadAll();
-            } catch (e) { alert('Error: ' + e.message); }
-        }
+            });
+        };
 
-        window.markPaid = async function(id) {
-            if (!confirm('Mark as Paid? This indicates the funds have left the platform.')) return;
-            try {
+        window.markPaid = function(id) {
+            openConfirmModal('Mark as Paid', 'Mark as Paid? This indicates the funds have left the platform.', async () => {
                 await WithdrawalService.updateWithdrawalStatus(id, adminSession?.user?.id, 'paid');
                 await loadAll();
-            } catch (e) { alert('Error: ' + e.message); }
-        }
+            });
+        };
 
-        window.approveRefund = async function(id) {
-            if (!confirm('Approve this refund?')) return;
-            try {
+        window.approveRefund = function(id) {
+            openConfirmModal('Approve Refund', 'Approve this refund?', async () => {
                 await RefundService.approveRefund(id, adminSession?.user?.id);
                 await loadAll();
-            } catch (e) { alert('Error: ' + e.message); }
+            });
         };
 
         window.resolveTicket = async function(id) {

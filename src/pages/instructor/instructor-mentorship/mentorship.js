@@ -2173,17 +2173,7 @@ window.updateMentorshipMetrics = async function() {
             }
         });
 
-        // 2. Calculate Cleared Profit
-        transactions.forEach(t => {
-            if (t.earning_type === 'mentorship') {
-                const holdInfo = instructorEarningsService.getHoldInfo(t);
-                if (!holdInfo.held) {
-                    clearedProfit += parseFloat(t.instructor_share || 0);
-                }
-            }
-        });
-
-        // 3. Update DOM
+        // 2. DOM update for static metrics
         const formatMetric = (val) => val.toString();
         
         const upEl = document.getElementById('mentor-metric-upcoming');
@@ -2201,11 +2191,54 @@ window.updateMentorshipMetrics = async function() {
             reqEl.innerText = formatMetric(requestsCount); 
             reqEl.classList.remove('text-transparent', 'bg-clip-text', 'animate-pulse', 'bg-slate-300', 'dark:bg-slate-700', 'w-12', 'h-10');
         }
-        const profitEl = document.getElementById('mentor-metric-profit');
-        if(profitEl) { 
-            profitEl.innerText = `$${clearedProfit.toFixed(2)}`; 
-            profitEl.classList.remove('text-transparent', 'bg-clip-text', 'animate-pulse', 'bg-slate-300', 'dark:bg-slate-700', 'w-16', 'h-10');
+
+        // 3. Dynamic Profit calculation based on dropdown filter
+        const calculateProfit = () => {
+            const filterEl = document.getElementById('mentor-profit-filter');
+            const filterVal = filterEl ? filterEl.value : 'all';
+            const nowTime = now.getTime();
+            
+            clearedProfit = 0;
+            transactions.forEach(t => {
+                if (t.earning_type === 'mentorship') {
+                    const trxDate = new Date(t.created_at).getTime();
+                    let include = false;
+
+                    if (filterVal === 'all') {
+                        include = true;
+                    } else if (filterVal === 'today') {
+                        const todayStart = new Date();
+                        todayStart.setHours(0, 0, 0, 0);
+                        include = trxDate >= todayStart.getTime();
+                    } else if (filterVal === '7days') {
+                        include = (nowTime - trxDate) <= (7 * 24 * 60 * 60 * 1000);
+                    } else if (filterVal === '30days') {
+                        include = (nowTime - trxDate) <= (30 * 24 * 60 * 60 * 1000);
+                    }
+
+                    if (include) {
+                        const holdInfo = instructorEarningsService.getHoldInfo(t);
+                        if (!holdInfo.held) {
+                            clearedProfit += parseFloat(t.instructor_share || 0);
+                        }
+                    }
+                }
+            });
+
+            const profitEl = document.getElementById('mentor-metric-profit');
+            if(profitEl) { 
+                profitEl.innerText = `$${clearedProfit.toFixed(2)}`; 
+                profitEl.classList.remove('text-transparent', 'bg-clip-text', 'animate-pulse', 'bg-slate-300', 'dark:bg-slate-700', 'w-16', 'h-10');
+            }
+        };
+
+        const profitFilterDropdown = document.getElementById('mentor-profit-filter');
+        if (profitFilterDropdown) {
+            profitFilterDropdown.removeEventListener('change', calculateProfit);
+            profitFilterDropdown.addEventListener('change', calculateProfit);
         }
+        
+        calculateProfit();
 
     } catch(err) {
         console.error("Failed to calculate mentorship metrics", err);
