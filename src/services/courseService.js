@@ -745,6 +745,17 @@ export const CourseService = {
         try {
             const { data, error } = await supabase.rpc('get_course_details_admin', { p_course_id: courseId });
             if (error) throw error;
+            
+            // Patch missing field from older RPC definition
+            if (data && data.certificate_enabled === undefined) {
+                 const { data: certData } = await supabase
+                     .from('courses')
+                     .select('certificate_enabled')
+                     .eq('id', courseId)
+                     .maybeSingle();
+                 if (certData) data.certificate_enabled = certData.certificate_enabled;
+            }
+
             return data;
         } catch (e) {
             console.error("RPC Error fetching course for review:", e);
@@ -800,6 +811,32 @@ export const CourseService = {
     },
 
     /** STUDENT ENROLLMENT & WISHLIST */
+    async getCertificate(studentId, courseId) {
+        const { data, error } = await supabase
+            .from('certificates')
+            .select('*')
+            .eq('student_id', studentId)
+            .eq('course_id', courseId)
+            .maybeSingle();
+        if (error) throw error;
+        return data;
+    },
+
+    async generateCertificate(studentId, courseId) {
+        const { data, error } = await supabase
+            .rpc('generate_certificate', { p_student_id: studentId, p_course_id: courseId })
+            .single();
+        if (error) throw error;
+        return data;
+    },
+
+    async verifyCertificate(code) {
+        const { data, error } = await supabase
+            .rpc('verify_certificate', { p_code: code });
+        if (error) throw error;
+        return { valid: !!(data && data.length > 0), certificate: data?.[0] || null };
+    },
+
     async checkEnrollment(courseId, studentId) {
         const { data, error } = await supabase
             .from('enrollments')
@@ -915,6 +952,15 @@ export const CourseService = {
             if (error) throw error;
             return true;
         }
+    },
+
+    async getStudentWishlist(studentId) {
+        const { data, error } = await supabase
+            .from('wishlist')
+            .select('course_id')
+            .eq('student_id', studentId);
+        if (error) throw error;
+        return data || [];
     },
 
     /** REVIEWS */

@@ -48,6 +48,7 @@ export const PUBLIC = {
     MARKETPLACE:     '/src/pages/marketplace/',
     MENTOR_PROFILE:  (serialId) => `/src/pages/instructor/public-profile/?id=${serialId}`,
     COURSE_DETAIL:   (courseId)  => `/src/pages/course-detail/?id=${courseId}`,
+    VERIFY:          '/src/pages/verify/',
 };
 
 /** Consolidated ROUTES export for convenience */

@@ -426,8 +426,8 @@
                 let availableForWithdrawal = summary?.available_balance || 0;
                 let heldBalance = summary?.held_balance || 0;
                 let withdrawableAmount = summary?.withdrawable_amount || 0;
-                let minWithdrawalAmt = summary?.min_withdrawal_amount || 10;
-                let reserveAmount = summary?.reserve_amount || 5;
+                let minWithdrawalAmt = summary?.min_withdrawal_amount ?? 10;
+                let reserveAmount = summary?.reserve_amount ?? 5;
 
                 g_availableBalance = withdrawableAmount;
 

@@ -167,6 +167,7 @@ async function loadDraft(courseId) {
                 coupons: course.course_coupons || []
             },
             privacy: course.is_public ? 'public' : 'private',
+            certificate_enabled: course.certificate_enabled || false,
             status: course.status || 'draft',
             has_rejection_history: (course.course_moderation_logs || []).some(log => log.decision === 'rejected'),
             isLoaded: false // Safety flag to prevent accidental wiping of DB
@@ -258,6 +259,9 @@ async function loadDraft(courseId) {
         if (window.courseDraft.thumbnail_url) showThumbnailPreview(window.courseDraft.thumbnail_url);
         if (window.courseDraft.intro_video_url) showVideoPreview(window.courseDraft.intro_video_url, "Introduction Video");
         
+        const certToggle = document.getElementById('certificate-enabled-toggle');
+        if (certToggle) certToggle.checked = window.courseDraft.certificate_enabled;
+
         window.courseDraft.isLoaded = true; // Mark as safely loaded
         renderCurriculum();
         renderFinalPreview();
@@ -329,6 +333,7 @@ async function performSave(silent = false) {
                 : null,
             currency: window.courseDraft.pricing.currency || 'USD',
             is_public: window.courseDraft.privacy === 'public',
+            certificate_enabled: window.courseDraft.certificate_enabled === true,
             status: window.courseDraft.status || 'draft'
         };
 
@@ -662,6 +667,11 @@ function populateFields() {
 }
 
 async function setupEventListeners() {
+    document.getElementById('certificate-enabled-toggle')?.addEventListener('change', (e) => {
+        window.courseDraft.certificate_enabled = e.target.checked;
+        window.saveDraft(true);
+    });
+
     // Nav Buttons
     document.getElementById('btn-next')?.addEventListener('click', () => {
         // Trigger a background save
@@ -1139,7 +1149,16 @@ function wizardOpenModal(modalId, sIdx, iIdx) {
     if (modalId === 'modal-add-video') {
         const titleEl = document.getElementById('modal-video-title');
         const nameEl = document.getElementById('modal-video-name-display');
-        
+        const embedUrlEl = document.getElementById('modal-video-embed-url');
+        const fileEl = document.getElementById('modal-video-upload');
+        const errEl = document.getElementById('modal-video-url-error');
+
+        // Always resync every field to THIS lesson's data — never leave a
+        // previous lesson's leftover value sitting in a shared input.
+        if (embedUrlEl) embedUrlEl.value = (lesson.video && lesson.video.url) ? lesson.video.url : '';
+        if (fileEl) fileEl.value = ''; // clear any leftover selected File object too
+        if (errEl) errEl.classList.add('hidden');
+
         if (lesson.video) {
             if (titleEl) titleEl.value = lesson.video.title || '';
             if (nameEl) nameEl.innerText = lesson.video.url ? 'Video attached' : 'Click or drag video to upload';

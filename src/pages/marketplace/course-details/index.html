@@ -931,13 +931,17 @@
                             // If user is enrolling via an update offer, mark it as redeemed
                             if (window._pendingOfferRedemption) {
                                 await CourseService.markOfferRedeemed(window._pendingOfferRedemption);
-                                window._pendingOfferRedemption = null; // Clear it to prevent double-calls if something weird happens
+                                window._pendingOfferRedemption = null;
                             }
 
-                            showModal();
-                            showResult(true, 'Enrollment Successful! 🎉', 'You now have full access to this course.');
+                            // Use the shared payment-modal success screen (works for free courses too)
+                            window.showPaymentModal();
+                            window.showPaymentResult(true, 'Enrolled Successfully! 🎉', 'You now have full access to this course. Happy learning!');
                         } catch (e) {
-                            alert('Failed to enroll: ' + e.message);
+                            console.error('Free enrollment error:', e);
+                            if (window.showToast) {
+                                window.showToast('Failed to enroll: ' + e.message, 'error');
+                            }
                             enrollBtn.disabled = false;
                             enrollBtn.textContent = 'Enroll Now';
                             return;
@@ -1399,6 +1403,9 @@
                 modal.classList.add('flex');
                 document.body.style.overflow = 'hidden';
             }
+            // Expose to other module scripts for free-course enrollment
+            window.showPaymentModal = showModal;
+            window.showPaymentResult = showResult;
 
             function showResult(success, title, message, details = null) {
                 const container = document.getElementById('pm-result-container');

@@ -1085,5 +1085,62 @@ export const MentorService = {
             p_results_count: resultsCount
         });
         if (error) console.warn('Mentor search tracking failed:', error.message);
+    },
+
+    /** WISHLIST */
+    async toggleWishlist(mentorId, studentId) {
+        const { data: profile, error: pErr } = await supabase
+            .from('profiles')
+            .select('account_status')
+            .eq('id', studentId)
+            .single();
+
+        if (pErr) throw pErr;
+        if (profile.account_status === 'suspended') {
+            throw new Error("Your account is currently suspended. You cannot modify your wishlist.");
+        }
+
+        const { data: existing } = await supabase
+            .from('mentor_wishlist')
+            .select('id')
+            .eq('mentor_id', mentorId)
+            .eq('student_id', studentId)
+            .maybeSingle();
+
+        if (existing) {
+            await supabase.from('mentor_wishlist').delete().eq('id', existing.id);
+            return false;
+        } else {
+            await supabase.from('mentor_wishlist').insert({
+                mentor_id: mentorId,
+                student_id: studentId
+            });
+            return true;
+        }
+    },
+
+    async getWishlistStatus(mentorId, studentId) {
+        if (!studentId) return false;
+        const { data } = await supabase
+            .from('mentor_wishlist')
+            .select('id')
+            .eq('mentor_id', mentorId)
+            .eq('student_id', studentId)
+            .maybeSingle();
+        return !!data;
+    },
+
+    async getStudentWishlist(studentId) {
+        const { data: wishlisted, error } = await supabase
+            .from('mentor_wishlist')
+            .select('mentor_id, added_at')
+            .eq('student_id', studentId);
+            
+        if (error) throw error;
+        if (!wishlisted || wishlisted.length === 0) return [];
+        
+        const mentorIds = wishlisted.map(w => w.mentor_id);
+        const allActive = await this.getActiveMentors();
+        return allActive.filter(m => mentorIds.includes(m.instructor_id));
     }
 };

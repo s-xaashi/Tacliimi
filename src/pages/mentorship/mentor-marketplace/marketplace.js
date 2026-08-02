@@ -1,4 +1,5 @@
 import { MentorService } from '../../../services/mentorService.js';
+import { AuthService } from '../../../services/authService.js';
 
 let allMentors = [];
 let expandedDomains = new Set(); // Track which domain groups are open
@@ -7,6 +8,49 @@ let activeFilters = {
     category: 'all',
     country: 'all',
     city: 'all'
+};
+
+let currentUser = null;
+let wishlistedMentorIds = new Set();
+
+window.toggleMentorWishlist = async function(mentorId, btnElement) {
+    if (!currentUser) {
+        window.location.href = '/src/pages/auth/login/';
+        return;
+    }
+    try {
+        const isWishlisted = wishlistedMentorIds.has(mentorId);
+        const iconSpan = btnElement.querySelector('.ms-fav-icon');
+        
+        if (isWishlisted) {
+            iconSpan.style.fontVariationSettings = "'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24";
+            btnElement.classList.replace('text-red-500', 'text-gray-400');
+            btnElement.classList.replace('dark:text-red-500', 'dark:text-slate-300');
+            wishlistedMentorIds.delete(mentorId);
+        } else {
+            iconSpan.style.fontVariationSettings = "'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24";
+            btnElement.classList.replace('text-gray-400', 'text-red-500');
+            btnElement.classList.replace('dark:text-slate-300', 'dark:text-red-500');
+            wishlistedMentorIds.add(mentorId);
+        }
+        
+        const newState = await MentorService.toggleWishlist(mentorId, currentUser.id);
+        if (newState !== !isWishlisted) {
+            if (newState) {
+                iconSpan.style.fontVariationSettings = "'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24";
+                btnElement.classList.replace('text-gray-400', 'text-red-500');
+                btnElement.classList.replace('dark:text-slate-300', 'dark:text-red-500');
+                wishlistedMentorIds.add(mentorId);
+            } else {
+                iconSpan.style.fontVariationSettings = "'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24";
+                btnElement.classList.replace('text-red-500', 'text-gray-400');
+                btnElement.classList.replace('dark:text-red-500', 'dark:text-slate-300');
+                wishlistedMentorIds.delete(mentorId);
+            }
+        }
+    } catch (err) {
+        alert(err.message || 'Error updating wishlist');
+    }
 };
 
 async function initMarketplace() {
@@ -26,6 +70,17 @@ async function initMarketplace() {
         `;
 
         allMentors = await MentorService.getActiveMentors();
+        
+        try {
+            const session = await AuthService.getSession();
+            if (session && session.user) {
+                currentUser = session.user;
+                const wishlist = await MentorService.getStudentWishlist(currentUser.id) || [];
+                wishlistedMentorIds = new Set(wishlist.map(m => m.instructor_id));
+            }
+        } catch (e) {
+            console.warn("Could not load user or wishlist:", e);
+        }
         
         try {
             const { BoostService } = await import('../../../services/boostService.js');
@@ -341,6 +396,10 @@ function renderMentors(mentors) {
         card.className = `group bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-5 hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-none transition-all duration-300 flex flex-col h-full cursor-pointer ${boostRing}`;
         card.onclick = () => window.location.href = `/src/pages/mentorship/mentor-profile/index.html?id=${mentor.instructor_id}`;
         
+        const isWishlisted = wishlistedMentorIds.has(mentor.instructor_id);
+        const favIcon = isWishlisted ? 'favorite' : 'favorite_border';
+        const favColor = isWishlisted ? 'text-red-500 dark:text-red-500' : 'text-gray-400 dark:text-slate-300';
+        
         const expertiseTags = mentor.expertise?.slice(0, 2).map(exp => 
             `<span class="px-2.5 py-1 rounded-lg bg-primary/5 text-primary text-[10px] font-bold uppercase tracking-wider">${exp}</span>`
         ).join('') || '';
@@ -354,16 +413,21 @@ function renderMentors(mentors) {
                          class="w-16 h-16 rounded-2xl object-cover ring-4 ring-slate-50 dark:ring-slate-800 text-[10px] italic mt-3">
                     <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 border-4 border-white dark:border-slate-900 rounded-full"></div>
                 </div>
-                <div class="flex flex-col items-end">
-                    <div class="flex items-center gap-1 text-amber-500 mb-1">
-                        <span class="material-symbols-outlined text-[18px] fill-current">star</span>
-                        <span class="text-sm font-bold">${mentor.rating || '0.0'}</span>
-                        <span class="text-slate-400 text-xs font-medium">(${mentor.review_count || 0})</span>
+                <div class="flex items-start gap-4">
+                    <div class="flex flex-col items-end mt-2">
+                        <div class="flex items-center gap-1 text-amber-500 mb-0.5">
+                            <span class="material-symbols-outlined text-[16px] fill-current">star</span>
+                            <span class="text-xs font-bold leading-none">${mentor.rating || '0.0'}</span>
+                        </div>
+                        <div class="text-primary text-right">
+                            <span class="text-sm font-black">$${mentor.hourly_rate || 0}</span>
+                            <span class="text-[9px] font-bold uppercase tracking-tighter opacity-60">/hr</span>
+                        </div>
                     </div>
-                    <div class="text-primary">
-                        <span class="text-lg font-black">$${mentor.hourly_rate || 0}</span>
-                        <span class="text-[10px] font-bold uppercase tracking-tighter opacity-60">/ hr</span>
-                    </div>
+                    <button onclick="event.stopPropagation(); window.toggleMentorWishlist('${mentor.instructor_id}', this);" 
+                            class="w-10 h-10 rounded-full border border-slate-100 dark:border-slate-800/60 bg-slate-50 dark:bg-slate-800 flex items-center justify-center hover:shadow hover:bg-white dark:hover:bg-slate-700 transition-all active:scale-95 ${favColor} shrink-0 mt-2">
+                        <span class="material-symbols-outlined ms-fav-icon text-[20px]" style="font-variation-settings: ${isWishlisted ? "'FILL' 1" : "'FILL' 0"},'wght' 400,'GRAD' 0,'opsz' 24">favorite</span>
+                    </button>
                 </div>
             </div>
 

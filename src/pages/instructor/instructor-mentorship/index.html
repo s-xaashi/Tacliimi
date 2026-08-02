@@ -147,50 +147,53 @@
                         <p class="text-slate-500 dark:text-slate-400 mt-1">Manage your sessions, students, and profile
                             settings.</p>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <!-- locked cards -->
-                        <div
-                            class="locked-card rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 opacity-60 grayscale-[0.5] relative overflow-hidden">
-                            <div
-                                class="lock-badge absolute top-4 right-4 text-slate-400 bg-slate-50 dark:bg-slate-800 rounded-full p-1.5 border border-slate-100 dark:border-slate-700">
-                                <span class="material-symbols-outlined text-[18px]">lock</span>
-                            </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <!-- Card 1: Upcoming Sessions -->
+                        <div class="rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden hover:shadow-md transition-shadow">
                             <div class="flex items-center justify-between mb-4">
-                                <span
-                                    class="material-symbols-outlined text-primary bg-primary/10 p-2 rounded-lg">event</span>
+                                <span class="material-symbols-outlined text-primary bg-primary/10 p-2 rounded-lg">event</span>
                                 <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Metrics</span>
                             </div>
                             <p class="text-slate-600 dark:text-slate-400 text-sm font-medium">Upcoming Sessions</p>
-                            <p class="text-slate-900 dark:text-slate-100 text-4xl font-extrabold mt-1">0</p>
-                        </div>
-                        <div
-                            class="locked-card rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 opacity-60 grayscale-[0.5] relative overflow-hidden">
-                            <div
-                                class="lock-badge absolute top-4 right-4 text-slate-400 bg-slate-50 dark:bg-slate-800 rounded-full p-1.5 border border-slate-100 dark:border-slate-700">
-                                <span class="material-symbols-outlined text-[18px]">lock</span>
+                            <div class="flex items-end gap-3 mt-1">
+                                <p id="mentor-metric-upcoming" class="text-slate-900 dark:text-slate-100 text-4xl font-extrabold text-transparent bg-clip-text animate-pulse bg-slate-300 dark:bg-slate-700 w-12 h-10 rounded">0</p>
                             </div>
+                        </div>
+                        
+                        <!-- Card 2: Total Hours Guided -->
+                        <div class="rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden hover:shadow-md transition-shadow">
                             <div class="flex items-center justify-between mb-4">
-                                <span
-                                    class="material-symbols-outlined text-green-500 bg-green-500/10 p-2 rounded-lg">timer</span>
-                                <span
-                                    class="text-xs font-bold text-slate-400 uppercase tracking-wider">Historical</span>
+                                <span class="material-symbols-outlined text-green-500 bg-green-500/10 p-2 rounded-lg">timer</span>
+                                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Historical</span>
                             </div>
                             <p class="text-slate-600 dark:text-slate-400 text-sm font-medium">Total Hours Guided</p>
-                            <p class="text-slate-900 dark:text-slate-100 text-4xl font-extrabold mt-1">0</p>
-                        </div>
-                        <div
-                            class="locked-card rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 opacity-60 grayscale-[0.5] relative overflow-hidden">
-                            <div
-                                class="lock-badge absolute top-4 right-4 text-slate-400 bg-slate-50 dark:bg-slate-800 rounded-full p-1.5 border border-slate-100 dark:border-slate-700">
-                                <span class="material-symbols-outlined text-[18px]">lock</span>
+                            <div class="flex items-end gap-3 mt-1">
+                                <p id="mentor-metric-hours" class="text-slate-900 dark:text-slate-100 text-4xl font-extrabold text-transparent bg-clip-text animate-pulse bg-slate-300 dark:bg-slate-700 w-12 h-10 rounded">0</p>
                             </div>
+                        </div>
+                        
+                        <!-- Card 3: New Requests -->
+                        <div class="rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden hover:shadow-md transition-shadow">
                             <div class="flex items-center justify-between mb-4">
-                                <span
-                                    class="material-symbols-outlined text-amber-500 bg-amber-500/10 p-2 rounded-lg">pending_actions</span>
+                                <span class="material-symbols-outlined text-amber-500 bg-amber-500/10 p-2 rounded-lg">pending_actions</span>
                                 <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Alerts</span>
                             </div>
-                            <p class="text-slate-600 dark:text-slate-400 text-sm font-medium">New Requests</p>
-                            <p class="text-slate-900 dark:text-slate-100 text-4xl font-extrabold mt-1">0</p>
+                            <p class="text-slate-600 dark:text-slate-400 text-sm font-medium">Action Required (Requests)</p>
+                            <div class="flex items-end gap-3 mt-1">
+                                <p id="mentor-metric-requests" class="text-slate-900 dark:text-slate-100 text-4xl font-extrabold text-transparent bg-clip-text animate-pulse bg-slate-300 dark:bg-slate-700 w-12 h-10 rounded">0</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Card 4: Profit (Cleared only) -->
+                        <div class="rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden hover:shadow-md transition-shadow">
+                            <div class="flex items-center justify-between mb-4">
+                                <span class="material-symbols-outlined text-indigo-500 bg-indigo-500/10 p-2 rounded-lg">account_balance_wallet</span>
+                                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Profit</span>
+                            </div>
+                            <p class="text-slate-600 dark:text-slate-400 text-sm font-medium">Mentorship Cleared Earnings</p>
+                            <div class="flex items-end gap-3 mt-1">
+                                <p id="mentor-metric-profit" class="text-slate-900 dark:text-slate-100 text-4xl font-extrabold text-transparent bg-clip-text animate-pulse bg-slate-300 dark:bg-slate-700 w-16 h-10 rounded">$0</p>
+                            </div>
                         </div>
                     </div>
 

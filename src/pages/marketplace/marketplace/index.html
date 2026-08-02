@@ -350,6 +350,51 @@
     </footer>
     <script type="module">
         import { CourseService } from '/src/services/courseService.js';
+        import { AuthService } from '/src/services/authService.js';
+
+        let currentUser = null;
+        let wishlistedCourseIds = new Set();
+        
+        window.toggleWishlist = async function(courseId, btnElement) {
+            if (!currentUser) {
+                window.location.href = '/src/pages/auth/login/';
+                return;
+            }
+            try {
+                // Optimistic UI update
+                const isWishlisted = wishlistedCourseIds.has(courseId);
+                const iconSpan = btnElement.querySelector('.material-icons-outlined');
+                
+                if (isWishlisted) {
+                    iconSpan.textContent = 'favorite_border';
+                    btnElement.classList.replace('text-red-500', 'text-gray-600');
+                    btnElement.classList.replace('dark:text-red-500', 'dark:text-white');
+                    wishlistedCourseIds.delete(courseId);
+                } else {
+                    iconSpan.textContent = 'favorite';
+                    btnElement.classList.replace('text-gray-600', 'text-red-500');
+                    btnElement.classList.replace('dark:text-white', 'dark:text-red-500');
+                    wishlistedCourseIds.add(courseId);
+                }
+                
+                const newState = await CourseService.toggleWishlist(courseId, currentUser.id);
+                if (newState !== !isWishlisted) {
+                    if (newState) {
+                        iconSpan.textContent = 'favorite';
+                        btnElement.classList.replace('text-gray-600', 'text-red-500');
+                        btnElement.classList.replace('dark:text-white', 'dark:text-red-500');
+                        wishlistedCourseIds.add(courseId);
+                    } else {
+                        iconSpan.textContent = 'favorite_border';
+                        btnElement.classList.replace('text-red-500', 'text-gray-600');
+                        btnElement.classList.replace('dark:text-red-500', 'dark:text-white');
+                        wishlistedCourseIds.delete(courseId);
+                    }
+                }
+            } catch (err) {
+                alert(err.message || 'Error updating wishlist');
+            }
+        };
 
         const themeToggle = document.getElementById('themeToggle');
         themeToggle.addEventListener('click', () => {
@@ -521,6 +566,10 @@
                     const isBoosted = course._boost_order !== undefined && course._boost_order !== 999999;
                     const boostRing = isBoosted ? 'boosted-card' : '';
                     
+                    const isWishlisted = wishlistedCourseIds.has(course.id);
+                    const favIcon = isWishlisted ? 'favorite' : 'favorite_border';
+                    const favColor = isWishlisted ? 'text-red-500 dark:text-red-500' : 'text-gray-600 dark:text-white';
+                    
                     let badgeHtml = '';
                     if (isBoosted) {
                          badgeHtml = `<div class="absolute top-3 left-3"><div class="px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 text-[10px] font-black uppercase tracking-wider border border-amber-200 dark:border-amber-500/30 shadow-md flex items-center gap-1"><span class="material-symbols-outlined text-[10px]">stars</span> Sponsored</div></div>`;
@@ -561,9 +610,9 @@
                                 </div>
 
                                 <div class="absolute top-3 right-3">
-                                    <button onclick="event.stopPropagation(); alert('Wishlist feature coming soon!');"
-                                        class="w-9 h-9 rounded-full bg-white/95 dark:bg-black/60 backdrop-blur-md flex items-center justify-center text-gray-600 dark:text-white hover:text-red-500 transition-all shadow-sm active:scale-90">
-                                        <span class="material-icons-outlined text-base">favorite_border</span>
+                                    <button onclick="event.stopPropagation(); window.toggleWishlist('${course.id}', this);"
+                                        class="w-9 h-9 rounded-full bg-white/95 dark:bg-black/60 backdrop-blur-md flex items-center justify-center ${favColor} hover:text-red-500 transition-all shadow-sm active:scale-90">
+                                        <span class="material-icons-outlined text-base">${favIcon}</span>
                                     </button>
                                 </div>
                                 
@@ -664,6 +713,12 @@
         }
 
         document.addEventListener('DOMContentLoaded', async () => {
+            const session = await AuthService.getSession();
+            if (session && session.user) {
+                currentUser = session.user;
+                const wishlist = await CourseService.getStudentWishlist(currentUser.id) || [];
+                wishlistedCourseIds = new Set(wishlist.map(w => w.course_id));
+            }
             await initFilters();
             updateFilters();
         });

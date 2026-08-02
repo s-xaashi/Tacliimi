@@ -164,11 +164,20 @@
                             </div>
                         </div>
 
-                        <div class="pt-6 border-t border-slate-100 dark:border-slate-800">
-                            <h3 class="font-bold text-slate-400 mb-4 uppercase tracking-wider text-[10px]">Visibility Status</h3>
-                            <div id="visibility-badge" class="inline-flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-black uppercase tracking-widest">
-                                <span class="material-symbols-outlined text-sm" id="visibility-icon">public</span>
-                                <span id="visibility-text">Public</span>
+                        <div class="pt-6 border-t border-slate-100 dark:border-slate-800 grid grid-cols-2 gap-4">
+                            <div>
+                                <h3 class="font-bold text-slate-400 mb-4 uppercase tracking-wider text-[10px]">Visibility Status</h3>
+                                <div id="visibility-badge" class="inline-flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-black uppercase tracking-widest">
+                                    <span class="material-symbols-outlined text-sm" id="visibility-icon">public</span>
+                                    <span id="visibility-text">Public</span>
+                                </div>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-slate-400 mb-4 uppercase tracking-wider text-[10px]">Certificate</h3>
+                                <div id="certificate-badge" class="inline-flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-black uppercase tracking-widest">
+                                    <span class="material-symbols-outlined text-sm" id="certificate-icon">block</span>
+                                    <span id="certificate-text">None</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -486,6 +495,21 @@
                 visText.innerText = 'Private Course';
             }
 
+            // Certificate
+            const certBadge = document.getElementById('certificate-badge');
+            const certIcon = document.getElementById('certificate-icon');
+            const certText = document.getElementById('certificate-text');
+
+            if (course.certificate_enabled) {
+                certBadge.className = 'inline-flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-black uppercase tracking-widest bg-sky-50 dark:bg-sky-900/20 text-sky-600 border border-sky-100 dark:border-sky-900/30';
+                certIcon.innerText = 'workspace_premium';
+                certText.innerText = 'Included';
+            } else {
+                certBadge.className = 'inline-flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-black uppercase tracking-widest bg-slate-50 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700';
+                certIcon.innerText = 'block';
+                certText.innerText = 'None';
+            }
+
             // =============================================
             // CURRICULUM — Expandable Lesson Cards
             // =============================================
@@ -664,7 +688,7 @@
 
                     // Use shared embed utility — if it's a YouTube/Vimeo URL, get embed src.
                     // If it's a direct video file or unrecognised URL, keep as-is.
-                    const resolvedEmbedUrl = getEmbedUrl(embedUrl) || embedUrl;
+                    const resolvedEmbedUrl = getEmbedUrl(les.video_url) || les.video_url;
 
                     const isDirectVideo = /\.(mp4|webm|ogg|mov)(\?|$)/i.test(les.video_url);
                     if (isDirectVideo) {

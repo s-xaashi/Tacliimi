@@ -221,15 +221,29 @@ async function loadMyCourses() {
         enrolledCoursesGrid.classList.remove('hidden');
         emptyState.classList.add('hidden');
 
+        // Filter duplicate versions within the same family, keeping latest version
+        const familyMap = {};
+        enrollments.forEach(enr => {
+            if (enr.status === 'superseded') return;
+            const c = enr.courses;
+            if (!c) return;
+            const familyId = c.root_course_id || c.id;
+            if (!familyMap[familyId] || (c.version_number || 1) > (familyMap[familyId].courses.version_number || 1)) {
+                familyMap[familyId] = enr;
+            }
+        });
+        
+        const latestEnrollments = Object.values(familyMap);
+
         // Sort by most recently accessed (updated_at)
-        enrollments.sort((a,b) => {
+        latestEnrollments.sort((a,b) => {
             const dateA = new Date(a.updated_at || a.enrolled_at);
             const dateB = new Date(b.updated_at || b.enrolled_at);
             return dateB - dateA;
         });
 
-        const activeEnrollments = enrollments.filter(e => e.status !== 'superseded' && (e.progress_percentage || 0) < 100);
-        const completedEnrollments = enrollments.filter(e => e.status !== 'superseded' && (e.progress_percentage || 0) === 100);
+        const activeEnrollments = latestEnrollments.filter(e => (e.progress_percentage || 0) < 100);
+        const completedEnrollments = latestEnrollments.filter(e => (e.progress_percentage || 0) === 100);
         
         if (welcomeMsg) {
             if (activeEnrollments.length > 0) {
@@ -246,9 +260,14 @@ async function loadMyCourses() {
             }
         }
 
+        const enrolledCourseIds = new Set(enrollments.map(e => e.course_id));
+
         // Build offer lookup: keyed by the from_version_id (what the student is enrolled in)
         const offerMap = {};
         for (const offer of (updateOffers || [])) {
+            // Do not show an update offer if the student is already enrolled in the new version
+            if (offer.to_version_id && enrolledCourseIds.has(offer.to_version_id)) continue;
+
             if (offer.from_version_id) offerMap[offer.from_version_id] = offer;
             // Also match by root_course_id as fallback (handles older enrollments)
             if (offer.root_course_id && !offerMap[offer.root_course_id]) {
@@ -464,7 +483,7 @@ function renderCourseCard(enr, updateOffer, payId = null, payDate = null) {
     `;
 }
 
-async function loadWishlist() {
+async function loadCourseWishlist() {
     await ensureSession();
     if (!currentUserSession?.user) return;
 
@@ -483,49 +502,289 @@ async function loadWishlist() {
         wishlistContainer.innerHTML = '<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-6"></div>';
         const grid = wishlistContainer.querySelector('.grid');
         
+        let html = '';
         wishlisted.forEach(w => {
             const course = w.courses;
             if(!course) return;
-            const instructorName = course.instructor ? course.instructor.full_name : 'Instructor';
-            const category = course.categories ? course.categories.name : 'Course';
-            const price = Number(course.price) === 0 ? 'Free' : '$' + Number(course.price).toFixed(2);
-            const ratingDisplay = '4.5';
+            const categoryName = course.categories ? course.categories.name : 'Course';
+            const instructorName = course.instructor ? course.instructor.full_name : 'Expert Instructor';
+            const rating = course.average_rating || 0;
+            const fullStars = Math.floor(rating);
+            const hasHalfStar = rating % 1 >= 0.5;
+            let starsHtml = '';
+            for (let i = 1; i <= 5; i++) {
+                if (i <= fullStars) starsHtml += '<span class="material-icons-outlined text-xs">star</span>';
+                else if (i === fullStars + 1 && hasHalfStar) starsHtml += '<span class="material-icons-outlined text-xs">star_half</span>';
+                else starsHtml += '<span class="material-icons-outlined text-xs text-gray-300">star</span>';
+            }
+            const favIcon = 'favorite';
+            const favColor = 'text-red-500 dark:text-red-500';
+
+            const isBoosted = course._boost_order !== undefined && course._boost_order !== 999999;
+            const boostRing = isBoosted ? 'boosted-card' : '';
             
-            const html = `
+            let badgeHtml = '';
+            if (isBoosted) {
+                 badgeHtml = `<div class="absolute top-3 left-3"><div class="px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 text-[10px] font-black uppercase tracking-wider border border-amber-200 dark:border-amber-500/30 shadow-md flex items-center gap-1"><span class="material-symbols-outlined text-[10px]">stars</span> Sponsored</div></div>`;
+            } else if (course.is_bestseller) {
+                 badgeHtml = `<div class="absolute top-3 left-3"><div class="px-2.5 py-1 rounded bg-amber-400 text-black text-[10px] font-bold uppercase tracking-wider shadow-md">Bestseller</div></div>`;
+            }
+            
+            let bannerHtml = '';
+            if (course.banner_text) {
+                 bannerHtml = `<div class="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/30 dark:to-orange-900/30 border-y border-amber-200/50 dark:border-amber-700/50 px-4 py-2 flex gap-2 items-center"><span class="material-symbols-outlined text-amber-500 text-sm shrink-0">campaign</span><p class="text-[11px] font-bold text-amber-900 dark:text-amber-100 line-clamp-2 leading-tight">${course.banner_text}</p></div>`;
+            }
+
+            html += `
                 <div onclick="window.location.href='/src/pages/marketplace/course-details/index.html?id=${encodeURIComponent(course.id)}'"
-                    class="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 group border border-slate-200 dark:border-slate-700 hover:border-primary/50 cursor-pointer flex flex-col relative">
-                    <button onclick="event.stopPropagation(); window.removeFromWishlist('${course.id}');" 
-                        class="absolute top-3 right-3 z-10 w-8 h-8 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md rounded-full flex items-center justify-center text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 transition-all shadow-sm">
-                        <span class="material-symbols-outlined text-[18px]">favorite</span>
-                    </button>
-                    <div class="relative aspect-video">
-                        <img alt="${course.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="${course.thumbnail_url || 'https://placehold.co/600x400'}" />
-                    </div>
-                    <div class="p-5 flex flex-col flex-1">
-                        <div class="text-xs text-primary font-bold uppercase tracking-widest mb-2">${category}</div>
-                        <h3 class="font-bold text-slate-900 dark:text-white mb-2 line-clamp-2 leading-snug group-hover:text-primary transition-colors">${course.title}</h3>
-                        <p class="text-sm text-slate-500 mb-4">${instructorName}</p>
-                        <div class="flex items-center gap-1 mb-4 mt-auto">
-                            <span class="font-bold text-sm text-yellow-500">${ratingDisplay}</span>
-                            <div class="flex text-yellow-400">
-                                <span class="material-symbols-outlined text-[14px]">star</span>
+                    class="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 group border border-gray-100 dark:border-gray-700/50 hover:border-primary/30 cursor-pointer flex flex-col h-full ${boostRing}">
+                    
+                    <!-- Thumbnail Section -->
+                    <div class="relative overflow-hidden shrink-0 aspect-[16/10]">
+                        <img alt="${course.title}"
+                            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                            src="${course.thumbnail_url || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80'}" />
+                        
+                        <!-- Hover Overlay -->
+                        <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <div class="w-12 h-12 rounded-full ${isBoosted ? 'bg-amber-500/90 shadow-amber-500/40' : 'bg-primary/90'} text-white flex items-center justify-center shadow-lg transform scale-75 group-hover:scale-100 transition-transform">
+                                <span class="material-icons-outlined">play_arrow</span>
                             </div>
-                            <span class="text-xs text-slate-400">(0)</span>
                         </div>
-                        <div class="flex items-center justify-between border-t border-slate-100 dark:border-slate-700 pt-4 mt-2">
-                            <span class="text-lg font-bold text-slate-900 dark:text-white">${price}</span>
-                            <button onclick="event.stopPropagation(); window.enrollCourse('${course.id}');" 
-                                class="px-4 py-2 bg-primary/10 text-primary hover:bg-primary font-medium hover:text-white rounded-lg transition-colors text-sm">
-                                Enroll Now
+
+                        <div class="absolute top-3 right-3">
+                            <button onclick="event.stopPropagation(); window.removeFromWishlist('${course.id}');"
+                                class="w-9 h-9 rounded-full bg-white/95 dark:bg-black/60 backdrop-blur-md flex items-center justify-center ${favColor} hover:text-red-500 transition-all shadow-sm active:scale-90">
+                                <span class="material-icons-outlined text-base">${favIcon}</span>
                             </button>
+                        </div>
+                        
+                        ${badgeHtml}
+                    </div>
+                    
+                    ${bannerHtml}
+
+                    <!-- Content Section -->
+                    <div class="p-5 flex-1 flex flex-col">
+                        <!-- Category & Title -->
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-[10px] font-bold uppercase tracking-widest text-primary/80 dark:text-primary/90">${categoryName}</span>
+                            ${course.level === 'Beginner' ? `
+                                <span class="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                                    <span class="material-icons-outlined text-[12px]">signal_cellular_alt_1_bar</span>Beg</span>` :
+                              course.level === 'Intermediate' ? `
+                                <span class="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
+                                    <span class="material-icons-outlined text-[12px]">signal_cellular_alt_2_bar</span>Int</span>` :
+                              course.level === 'Expert' ? `
+                                <span class="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400">
+                                    <span class="material-icons-outlined text-[12px]">signal_cellular_alt</span>Exp</span>` :
+                              `<span class="text-[10px] font-bold uppercase tracking-wider text-gray-500">${course.level || ''}</span>`
+                            }
+                        </div>
+
+                        <h3 class="font-bold text-gray-900 dark:text-white mb-4 line-clamp-2 leading-tight text-lg ${isBoosted ? 'group-hover:text-amber-500' : 'group-hover:text-primary'} transition-colors">
+                            ${course.title}</h3>
+
+                        <div class="flex items-center gap-2 mb-6">
+                            <div class="relative">
+                                <img src="${course.instructor_avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(instructorName) + '&background=random'}"
+                                     class="w-6 h-6 rounded-full object-cover ring-2 ring-white dark:ring-gray-800"
+                                     alt="${instructorName}">
+                            </div>
+                            <span class="text-xs font-medium text-gray-500 dark:text-gray-400 line-clamp-1">${instructorName}</span>
+                        </div>
+
+                        <!-- Metadata Bar -->
+                        <div class="flex items-center justify-between py-2.5 px-3 rounded-xl bg-gray-50 dark:bg-gray-900/50 border border-gray-100/50 dark:border-gray-800/50 mb-6 group-hover:bg-primary/5 transition-colors">
+                            <div class="flex items-center gap-1.5 min-w-0">
+                                <span class="material-icons-outlined text-blue-500 text-sm shrink-0">menu_book</span>
+                                <span class="text-[11px] font-semibold text-gray-700 dark:text-gray-300 truncate">${course.total_lessons || 0} Les.</span>
+                            </div>
+                            
+                            <span class="text-gray-300 dark:text-gray-700 mx-1 flex items-center">
+                                <span class="material-icons-outlined text-[10px]">chevron_right</span>
+                            </span>
+
+                            <div class="flex items-center gap-1.5 min-w-0">
+                                <span class="material-icons-outlined text-amber-500 text-sm shrink-0">quiz</span>
+                                <span class="text-[11px] font-semibold text-gray-700 dark:text-gray-300 truncate">${course.total_quizzes || 0} Quiz</span>
+                            </div>
+
+                            <span class="text-gray-300 dark:text-gray-700 mx-1 flex items-center">
+                                <span class="material-icons-outlined text-[10px]">chevron_right</span>
+                            </span>
+
+                            <div class="flex items-center gap-1.5 min-w-0">
+                                <span class="material-icons-outlined text-emerald-500 text-sm shrink-0">attachment</span>
+                                <span class="text-[11px] font-semibold text-gray-700 dark:text-gray-300 truncate">${course.total_resources || 0} Res.</span>
+                            </div>
+                        </div>
+
+                        <!-- Footer: Rating and Price -->
+                        <div class="mt-auto pt-4 border-t border-gray-100 dark:border-gray-700/50 flex items-center justify-between">
+                            <div class="flex items-center gap-1.5">
+                                <div class="flex text-amber-400 text-[10px]">${starsHtml}</div>
+                                <span class="text-[11px] font-bold text-gray-900 dark:text-gray-100">${rating.toFixed(1)}</span>
+                            </div>
+                            <div class="flex flex-col items-end">
+                                <span class="text-lg font-black text-gray-900 dark:text-white leading-none">
+                                    ${course.price_type === 'free' ? 'Free' : '$' + (course.price || 0).toFixed(2)}
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
             `;
-            grid.insertAdjacentHTML('beforeend', html);
         });
+        grid.innerHTML = html;
     }
 }
+
+async function loadMentorWishlist() {
+    await ensureSession();
+    if (!currentUserSession?.user) return;
+
+    const wishlisted = await MentorService.getStudentWishlist(currentUserSession.user.id);
+    const wishlistContainer = document.getElementById('wishlist-container');
+    const wishlistEmptyState = document.getElementById('wishlist-empty-state');
+    
+    if (!wishlisted || wishlisted.length === 0) {
+        wishlistContainer.innerHTML = '';
+        wishlistContainer.appendChild(wishlistEmptyState);
+    } else {
+        wishlistContainer.innerHTML = '<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 pt-6"></div>';
+        const grid = wishlistContainer.querySelector('.grid');
+        
+        let html = '';
+        wishlisted.forEach(mentor => {
+            const isBoosted = mentor._boost_order !== undefined && mentor._boost_order !== 999999;
+            const boostRing = isBoosted ? 'boosted-card' : '';
+            const roleBadge = isBoosted 
+                ? `<div class="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 text-[10px] font-black uppercase tracking-widest flex items-center gap-1 border border-amber-200 dark:border-amber-500/30"><span class="material-symbols-outlined text-[10px]">stars</span> Sponsored</div>`
+                : `<div class="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-widest border border-slate-200 dark:border-slate-700">Top Mentor</div>`;
+            const expertiseTags = mentor.expertise?.slice(0, 2).map(exp => 
+                `<span class="px-2.5 py-1 rounded-lg bg-primary/5 text-primary text-[10px] font-bold uppercase tracking-wider">${exp}</span>`
+            ).join('') || '';
+
+            const favIcon = 'favorite';
+            const favColor = 'text-red-500 dark:text-red-500';
+
+            const formatResp = (hours) => {
+                if (!hours || hours === 0) return '0h 0m';
+                const h = Math.floor(hours);
+                const m = Math.round((hours - h) * 60);
+                const s = Math.round(((hours - h) * 60 - m) * 60);
+                if (h > 0) return `${h}h ${m > 0 ? m + 'm' : ''}`;
+                if (m > 0) return `${m}m ${s > 0 ? s + 's' : ''}`;
+                return `${s}s`;
+            };
+
+            let bannerHtml = '';
+            if (mentor.banner_text) {
+                bannerHtml = `<div class="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/30 dark:to-orange-900/30 border-t border-amber-200/50 dark:border-amber-700/50 px-4 py-2 mt-auto mb-4 flex gap-2 items-center mx-[-20px]"><span class="material-symbols-outlined text-amber-500 text-[14px] shrink-0">campaign</span><p class="text-[10px] font-bold text-amber-900 dark:text-amber-100 line-clamp-1 leading-tight">${mentor.banner_text}</p></div>`;
+            } else {
+                bannerHtml = `<div class="mt-auto mb-4"></div>`;
+            }
+
+            html += `
+                <div onclick="window.location.href='/src/pages/mentorship/mentor-profile/index.html?id=${mentor.instructor_id}'"
+                     class="group bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-5 hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-none transition-all duration-300 flex flex-col h-full cursor-pointer relative ${boostRing}">
+                    
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="relative cursor-pointer shrink-0">
+                            <div class="absolute -top-3 -left-3">${roleBadge}</div>
+                            <img src="${mentor.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(mentor.full_name) + '&background=random&color=fff'}" 
+                                 class="w-16 h-16 rounded-2xl object-cover ring-4 ring-slate-50 dark:ring-slate-800 text-[10px] italic mt-3">
+                            <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 border-4 border-white dark:border-slate-900 rounded-full"></div>
+                        </div>
+                        <div class="flex items-start gap-4">
+                            <div class="flex flex-col items-end mt-2">
+                                <div class="flex items-center gap-1 text-amber-500 mb-0.5">
+                                    <span class="material-symbols-outlined text-[16px] fill-current">star</span>
+                                    <span class="text-xs font-bold leading-none">${mentor.rating || '0.0'}</span>
+                                </div>
+                                <div class="text-primary text-right">
+                                    <span class="text-sm font-black">$${mentor.hourly_rate || 0}</span>
+                                    <span class="text-[9px] font-bold uppercase tracking-tighter opacity-60 block mt-[-4px]">/hr</span>
+                                </div>
+                            </div>
+                            <button onclick="event.stopPropagation(); window.removeMentorFromWishlist('${mentor.instructor_id}');" 
+                                    class="w-10 h-10 rounded-full border border-slate-100 dark:border-slate-800/60 bg-slate-50 dark:bg-slate-800 flex items-center justify-center hover:shadow hover:bg-white dark:hover:bg-slate-700 transition-all active:scale-95 ${favColor} shrink-0 mt-2">
+                                <span class="material-symbols-outlined ms-fav-icon text-[20px]" style="font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24">${favIcon}</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="flex items-center gap-2 mb-1">
+                            <h3 class="text-base font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors line-clamp-1">${mentor.full_name}</h3>
+                            ${mentor.country ? `<span class="text-[10px] text-slate-400">📍 ${mentor.country}</span>` : ''}
+                        </div>
+                        <p class="text-xs font-medium text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed h-10 overflow-hidden mt-1">${mentor.short_bio || 'Expert mentor ready to guide you.'}</p>
+                    </div>
+
+                    <div class="flex flex-wrap gap-2 mb-4">
+                        ${expertiseTags}
+                        ${mentor.expertise?.length > 2 ? `<span class="text-[10px] font-bold text-slate-400 self-center">+${mentor.expertise.length - 2} more</span>` : ''}
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 mb-5 py-4 border-y border-slate-50 dark:border-slate-800">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-800 flex items-center justify-center">
+                                <span class="material-symbols-outlined text-slate-400 text-[18px]">history</span>
+                            </div>
+                            <div>
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Sessions</p>
+                                <p class="text-xs font-bold text-slate-700 dark:text-slate-200">${mentor.completed_sessions ?? mentor.total_sessions ?? 0}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-800 flex items-center justify-center">
+                                <span class="material-symbols-outlined text-slate-400 text-[18px]">bolt</span>
+                            </div>
+                            <div>
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Response</p>
+                                <p class="text-xs font-bold text-slate-700 dark:text-slate-200">${formatResp(mentor.avg_response_time)}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    ${bannerHtml}
+
+                    <a href="/src/pages/mentorship/mentor-profile/index.html?id=${mentor.instructor_id}" 
+                       class="mt-auto block w-full py-3 rounded-xl bg-slate-900 dark:bg-primary text-white text-center text-sm font-bold hover:bg-primary dark:hover:bg-primary/90 transition-all shadow-lg shadow-slate-200 dark:shadow-none" onclick="event.stopPropagation()">
+                        View Profile
+                    </a>
+                </div>
+            `;
+        });
+        grid.innerHTML = html;
+    }
+}
+
+async function loadWishlist() {
+    if (window.currentWishlistSubTab === 'mentors') {
+        await loadMentorWishlist();
+    } else {
+        await loadCourseWishlist();
+    }
+}
+
+window.currentWishlistSubTab = 'courses';
+window.switchWishlistTab = function(tabId) {
+    window.currentWishlistSubTab = tabId;
+    const btnCourses = document.getElementById('subtab-wishlist-courses');
+    const btnMentors = document.getElementById('subtab-wishlist-mentors');
+    
+    if (tabId === 'courses') {
+        if(btnCourses) btnCourses.className = 'px-5 py-2.5 text-sm font-bold bg-primary text-white rounded-xl transition-all shadow-lg shadow-primary/20';
+        if(btnMentors) btnMentors.className = 'px-5 py-2.5 text-sm font-bold text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all border border-transparent';
+    } else {
+        if(btnCourses) btnCourses.className = 'px-5 py-2.5 text-sm font-bold text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all border border-transparent';
+        if(btnMentors) btnMentors.className = 'px-5 py-2.5 text-sm font-bold bg-primary text-white rounded-xl transition-all shadow-lg shadow-primary/20';
+    }
+    loadWishlist();
+};
 
 let currentMentorshipSubTab = 'upcoming';
 
@@ -1149,6 +1408,17 @@ window.removeFromWishlist = async function(courseId) {
     if (!currentUserSession?.user) return;
     await supabase.from('wishlist').delete().eq('course_id', courseId).eq('student_id', currentUserSession.user.id);
     loadWishlist();
+};
+
+window.removeMentorFromWishlist = async function(mentorId) {
+    await ensureSession();
+    if (!currentUserSession?.user) return;
+    try {
+        await MentorService.toggleWishlist(mentorId, currentUserSession.user.id);
+        await loadWishlist();
+    } catch (e) {
+        console.error(e);
+    }
 };
 
 window.enrollCourse = async function(courseId) {

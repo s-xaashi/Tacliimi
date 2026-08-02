@@ -6,9 +6,8 @@
     <title>Tacliimi Learn | Student Interface</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
     <script type="module" src="/src/services/globalProfile.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap"
-        rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&amp;display=swap" rel="stylesheet" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,600;1,500&family=Caveat:wght@500;600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
     <link
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
         rel="stylesheet" />
@@ -111,6 +110,14 @@
                 <div class="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                     <div id="li-progress-bar" class="bg-primary h-full w-[0%] transition-all duration-1000"></div>
                 </div>
+                <button id="li-certificate-btn" onclick="window.generateCertificate()"
+                    disabled
+                    title="Complete all lessons to unlock your certificate"
+                    class="hidden mt-4 w-full flex items-center justify-center gap-2 px-4 py-3 font-bold rounded-xl transition-all
+                           opacity-40 cursor-not-allowed bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400">
+                    <span class="material-symbols-outlined text-lg">workspace_premium</span>
+                    Generate My Certificate
+                </button>
             </div>
             <div id="li-sidebar-curriculum" class="flex-1 overflow-y-auto">
                 <!-- Curriculum populated dynamically -->
@@ -134,6 +141,7 @@
     </div>
 
     <script type="module" src="./learningInterface.js"></script>
+    <script type="module" src="./certificateGenerator.js"></script>
 </body>
 
 </html>

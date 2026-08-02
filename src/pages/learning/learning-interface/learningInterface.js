@@ -1,11 +1,40 @@
 import { supabase } from '/src/services/supabaseClient.js';
 import { CourseService } from '/src/services/courseService.js';
 import { AuthService } from '/src/services/authService.js';
-import { getEmbedUrl } from '/src/utils/js/videoEmbed.js';
+import { getEmbedUrl, getEmbedPlatform } from '/src/utils/js/videoEmbed.js';
+
+let activePlayer = null; // current YT.Player / Vimeo.Player instance — destroyed on every lesson change
+
+function loadYouTubeAPI() {
+    if (window.YT && window.YT.Player) return Promise.resolve();
+    if (window._ytApiPromise) return window._ytApiPromise;
+    window._ytApiPromise = new Promise((resolve) => {
+        const prevReady = window.onYouTubeIframeAPIReady;
+        window.onYouTubeIframeAPIReady = () => { if (prevReady) prevReady(); resolve(); };
+        const tag = document.createElement('script');
+        tag.src = 'https://www.youtube.com/iframe_api';
+        document.head.appendChild(tag);
+    });
+    return window._ytApiPromise;
+}
+
+function loadVimeoAPI() {
+    if (window.Vimeo && window.Vimeo.Player) return Promise.resolve();
+    if (window._vimeoApiPromise) return window._vimeoApiPromise;
+    window._vimeoApiPromise = new Promise((resolve) => {
+        const tag = document.createElement('script');
+        tag.src = 'https://player.vimeo.com/api/player.js';
+        tag.onload = resolve;
+        document.head.appendChild(tag);
+    });
+    return window._vimeoApiPromise;
+}
 
 let currentCourseData = null;
 let currentLessonData = null;
 let currentUser = null;
+window.currentCourseData = null;
+window.currentUser = null;
 let completedLessonIds = new Set();
 let totalLessonCount = 0;
 
@@ -216,25 +245,65 @@ window.playLesson = function (sIdx, lIdx) {
         if (embedSrc) {
             // External embed: replace <video> with an <iframe>
             videoPlayer.style.display = 'none';
-            let iframe = innerVideoDiv.querySelector('#embed-iframe');
-            if (!iframe) {
-                iframe = document.createElement('iframe');
-                iframe.id = 'embed-iframe';
-                iframe.className = 'w-full h-full object-contain bg-black';
-                iframe.setAttribute('frameborder', '0');
-                iframe.setAttribute('allowfullscreen', '');
-                iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture');
-                innerVideoDiv.appendChild(iframe);
+
+            // Destroy whatever player was bound to the previous lesson's iframe
+            if (activePlayer) {
+                try { activePlayer.destroy(); } catch (_) {}
+                activePlayer = null;
             }
+
+            // Always fully remove the old iframe so we don't leak state or postMessage listeners
+            let oldIframe = innerVideoDiv.querySelector('#embed-iframe');
+            if (oldIframe) {
+                oldIframe.remove();
+            }
+
+            let iframe = document.createElement('iframe');
+            iframe.id = 'embed-iframe';
+            iframe.className = 'w-full h-full object-contain bg-black';
+            iframe.setAttribute('frameborder', '0');
+            iframe.setAttribute('allowfullscreen', '');
+            iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture');
+            innerVideoDiv.appendChild(iframe);
+
+            const platform = getEmbedPlatform(embedSrc);
+            const thisLessonId = lesson.id;
+
+            iframe.onload = () => {
+                if (!currentLessonData || currentLessonData.id !== thisLessonId) return;
+
+                if (platform === 'youtube') {
+                    loadYouTubeAPI().then(() => {
+                        if (!currentLessonData || currentLessonData.id !== thisLessonId) return;
+                        activePlayer = new YT.Player('embed-iframe', {
+                            events: {
+                                onStateChange: (e) => {
+                                    if (e.data === YT.PlayerState.ENDED &&
+                                        currentLessonData && currentLessonData.id === thisLessonId) {
+                                        markLessonComplete(thisLessonId, 'video');
+                                    }
+                                }
+                            }
+                        });
+                    });
+                } else if (platform === 'vimeo') {
+                    loadVimeoAPI().then(() => {
+                        if (!currentLessonData || currentLessonData.id !== thisLessonId) return;
+                        activePlayer = new Vimeo.Player(iframe);
+                        activePlayer.on('ended', () => {
+                            if (currentLessonData && currentLessonData.id === thisLessonId) {
+                                markLessonComplete(thisLessonId, 'video');
+                            }
+                        });
+                    });
+                }
+            };
+
+            // Trigger the iframe load (onload event will fire afterwards)
             iframe.src = embedSrc;
             iframe.style.display = 'block';
-            // Iframes don't fire 'ended' events — auto-complete video progress after a delay.
-            setTimeout(() => {
-                if (currentLessonData && currentLessonData.id === lesson.id) {
-                    markLessonComplete(lesson.id, 'video');
-                }
-            }, 5000);
         } else {
+            if (activePlayer) { try { activePlayer.destroy(); } catch (_) {} activePlayer = null; }
             // Direct video file
             const existingIframe = innerVideoDiv.querySelector('#embed-iframe');
             if (existingIframe) existingIframe.style.display = 'none';
@@ -243,6 +312,7 @@ window.playLesson = function (sIdx, lIdx) {
         }
         videoContainer.classList.remove('hidden');
     } else {
+        if (activePlayer) { try { activePlayer.destroy(); } catch (_) {} activePlayer = null; }
         videoPlayer.src = '';
         videoPlayer.style.display = 'block';
         const existingIframe = videoContainer.querySelector('#embed-iframe');
@@ -453,8 +523,39 @@ async function syncCourseProgress() {
     try {
         await supabase.from('enrollments').update({ progress_percentage: percentage, updated_at: new Date().toISOString() })
             .eq('student_id', currentUser.id).eq('course_id', currentCourseData.id);
+
+        if (percentage === 100) {
+            // Only ever sets completed_at the first time — no-op on subsequent calls.
+            await supabase.from('enrollments')
+                .update({ completed_at: new Date().toISOString() })
+                .eq('student_id', currentUser.id).eq('course_id', currentCourseData.id)
+                .is('completed_at', null);
+            maybeShowCertificateButton(true);
+        } else {
+            maybeShowCertificateButton(false);
+        }
     } catch (e) {
         console.error("Error syncing course progress:", e);
+    }
+}
+
+function maybeShowCertificateButton(isComplete = false) {
+    const btn = document.getElementById('li-certificate-btn');
+    if (!btn || !currentCourseData?.certificate_enabled) return;
+
+    // Always show the button when certificates are enabled
+    btn.classList.remove('hidden');
+
+    if (isComplete) {
+        // Unlock: gold styling, clickable
+        btn.disabled = false;
+        btn.title = 'Click to generate your certificate!';
+        btn.className = 'mt-4 w-full flex items-center justify-center gap-2 px-4 py-3 bg-accent-gold hover:brightness-95 text-white font-bold rounded-xl transition-all shadow-lg shadow-accent-gold/20 cursor-pointer';
+    } else {
+        // Locked: grayed out, not clickable
+        btn.disabled = true;
+        btn.title = 'Complete all lessons to unlock your certificate';
+        btn.className = 'mt-4 w-full flex items-center justify-center gap-2 px-4 py-3 font-bold rounded-xl transition-all opacity-40 cursor-not-allowed bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400';
     }
 }
 
@@ -563,15 +664,38 @@ window.selectAnswer = function (labelEl, sIdx, lIdx, qidx, ansIdx, quizId, quest
 };
 
 function checkQuizCompletion(qidx) {
-    const container = document.getElementById(`quiz-content-${qidx}`);
-    if (!container) return;
-    const blocks = container.querySelectorAll('[id^="q-block-"]');
-    let allCorrect = true;
-    blocks.forEach(block => {
-        const icon = block.querySelector('.status-icon');
-        if (!icon || icon.classList.contains('hidden') || icon.textContent.trim() !== 'check_circle') allCorrect = false;
+    if (!currentLessonData) return;
+    
+    // Check if ALL quizzes in this lesson are completely answered
+    const quizzes = Array.isArray(currentLessonData.quizzes) ? currentLessonData.quizzes : 
+                    (currentLessonData.quizzes ? [currentLessonData.quizzes] : []);
+    
+    let allQuizzesAnswered = true;
+
+    quizzes.forEach((quiz, idx) => {
+        const container = document.getElementById(`quiz-content-${idx}`);
+        if (!container) {
+            allQuizzesAnswered = false;
+            return;
+        }
+        const blocks = container.querySelectorAll('[id^="q-block-"]');
+        if (blocks.length === 0) {
+            allQuizzesAnswered = false;
+            return;
+        }
+        blocks.forEach(block => {
+            const icon = block.querySelector('.status-icon');
+            // If the icon is hidden, this question hasn't been answered yet
+            if (!icon || icon.classList.contains('hidden')) {
+                allQuizzesAnswered = false;
+            }
+        });
     });
-    if (allCorrect && currentLessonData) markLessonComplete(currentLessonData.id, 'quiz');
+
+    // If every question in every quiz has an answer selected (right or wrong), the quiz requirement is met.
+    if (allQuizzesAnswered) {
+        markLessonComplete(currentLessonData.id, 'quiz');
+    }
 }
 
 // ---------------------------------------------------------------
@@ -595,7 +719,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         currentCourseData = courseData;
+        window.currentCourseData = courseData;
         currentUser = session ? session.user : null;
+        window.currentUser = currentUser;
 
         const backBtn = document.getElementById('back-to-dashboard-btn');
         if (backBtn && session) {
@@ -617,9 +743,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             const [progressResult, enrollmentResult] = await Promise.all([
                 supabase.from('lesson_progress').select('lesson_id, completed, progress_data')
                     .eq('student_id', currentUser.id).in('lesson_id', lessonIds),
-                supabase.from('enrollments').select('last_accessed_lesson_id, progress_percentage')
+                supabase.from('enrollments').select('last_accessed_lesson_id, progress_percentage, completed_at')
                     .eq('student_id', currentUser.id).eq('course_id', courseId).maybeSingle()
             ]);
+
+            const existingProgress = enrollmentResult.data?.progress_percentage || 0;
+            const alreadyCompleted = enrollmentResult.data?.completed_at != null || existingProgress === 100;
 
             if (progressResult.data) {
                 progressResult.data.forEach(p => {
@@ -636,6 +765,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if (enrollmentResult.data?.last_accessed_lesson_id) {
                 lastAccessedLessonId = enrollmentResult.data.last_accessed_lesson_id;
+            }
+
+            // Show certificate button with correct state for returning students
+            if (currentCourseData?.certificate_enabled) {
+                maybeShowCertificateButton(alreadyCompleted);
             }
         }
 
@@ -704,6 +838,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }));
         totalLessonCount = validCount;
         updateProgressUI();
+        maybeShowCertificateButton();
 
         currentCourseData.course_sections = sortedSections;
         sortedSections.forEach(s => {

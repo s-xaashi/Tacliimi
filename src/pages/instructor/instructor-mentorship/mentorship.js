@@ -2,6 +2,7 @@ import { MentorService } from '../../../services/mentorService.js';
 import { supabase } from '../../../services/supabaseClient.js';
 import { AuthService } from '../../../services/authService.js';
 import { PaymentService } from '../../../services/paymentService.js';
+import { instructorEarningsService } from '../../../services/instructorEarningsService.js';
 import { buildProgramProgressHtml, buildMonthlyBadgeHtml, getProgramMeetingStatus, openMentorshipRescheduleModal } from '../../../utils/js/mentorshipUI.js';
 import { injectSecureWalletModal } from '../../../utils/js/paymentUI.js';
 
@@ -298,6 +299,7 @@ async function initMentorship() {
                 currentTab = target;
                 updateActiveTabStyles(tabBtn);
                 loadMentorshipView(target);
+                if (window.updateMentorshipMetrics) window.updateMentorshipMetrics();
             }
         });
     });
@@ -2107,9 +2109,112 @@ window.deleteSession = async function(sessionId) {
     }, async () => {
         try {
             await MentorService.deleteSession(sessionId);
-            loadMentors(true);
+            window.showToast("Deleted session", "success");
+            setTimeout(() => window.location.reload(), 1500);
         } catch (err) {
             window.showToast("Failed to delete", "error");
         }
     });
 };
+
+window.updateMentorshipMetrics = async function() {
+    try {
+        const session = await AuthService.getSession();
+        if (!session) return;
+        const userId = session.user.id;
+
+        const [sessions, transactions] = await Promise.all([
+            MentorService.getMentorSessions(userId),
+            instructorEarningsService.getTransactionHistory(userId)
+        ]);
+
+        let upcomingCount = 0;
+        let totalMinutes = 0;
+        let requestsCount = 0;
+        let clearedProfit = 0;
+        
+        const now = new Date();
+
+        // 1. Calculate Session-based Metrics
+        sessions.forEach(s => {
+            const status = s.booking_status || s.status;
+            const isProgram = s.mentorship_type === 'program';
+            const start = new Date(s.scheduled_at);
+            const duration = s.duration_minutes || 60;
+            
+            // Upcoming logic
+            if (['confirmed'].includes(status)) {
+                let end = new Date(start.getTime() + duration * 60000);
+                if (isProgram && s.end_date) {
+                    end = new Date(s.end_date);
+                    end.setHours(23, 59, 59, 999);
+                }
+                if (now < end) upcomingCount++;
+            }
+
+            // Total Hours Guided
+            if (status === 'completed') {
+                totalMinutes += duration;
+            } else if (status === 'confirmed') {
+                let end = new Date(start.getTime() + duration * 60000);
+                if (isProgram && s.end_date) {
+                    end = new Date(s.end_date);
+                    end.setHours(23, 59, 59, 999);
+                }
+                // If the confirmed session date has passed, it counts as historical/completed
+                if (now >= end) {
+                    totalMinutes += duration;
+                }
+            }
+
+            // Action Required (Requests)
+            if (['pending_review', 'paid_waiting_review', 'awaiting_meeting_link', 'location_negotiation'].includes(status)) {
+                requestsCount++;
+            }
+        });
+
+        // 2. Calculate Cleared Profit
+        transactions.forEach(t => {
+            if (t.earning_type === 'mentorship') {
+                const holdInfo = instructorEarningsService.getHoldInfo(t);
+                if (!holdInfo.held) {
+                    clearedProfit += parseFloat(t.instructor_share || 0);
+                }
+            }
+        });
+
+        // 3. Update DOM
+        const formatMetric = (val) => val.toString();
+        
+        const upEl = document.getElementById('mentor-metric-upcoming');
+        if(upEl) { 
+            upEl.innerText = formatMetric(upcomingCount); 
+            upEl.classList.remove('text-transparent', 'bg-clip-text', 'animate-pulse', 'bg-slate-300', 'dark:bg-slate-700', 'w-12', 'h-10');
+        }
+        const hrsEl = document.getElementById('mentor-metric-hours');
+        if(hrsEl) { 
+            hrsEl.innerText = formatMetric(Math.round(totalMinutes / 60)); 
+            hrsEl.classList.remove('text-transparent', 'bg-clip-text', 'animate-pulse', 'bg-slate-300', 'dark:bg-slate-700', 'w-12', 'h-10');
+        }
+        const reqEl = document.getElementById('mentor-metric-requests');
+        if(reqEl) { 
+            reqEl.innerText = formatMetric(requestsCount); 
+            reqEl.classList.remove('text-transparent', 'bg-clip-text', 'animate-pulse', 'bg-slate-300', 'dark:bg-slate-700', 'w-12', 'h-10');
+        }
+        const profitEl = document.getElementById('mentor-metric-profit');
+        if(profitEl) { 
+            profitEl.innerText = `$${clearedProfit.toFixed(2)}`; 
+            profitEl.classList.remove('text-transparent', 'bg-clip-text', 'animate-pulse', 'bg-slate-300', 'dark:bg-slate-700', 'w-16', 'h-10');
+        }
+
+    } catch(err) {
+        console.error("Failed to calculate mentorship metrics", err);
+    }
+};
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', window.updateMentorshipMetrics);
+} else {
+    window.updateMentorshipMetrics();
+}
+
