@@ -126,7 +126,7 @@
                     <span class="material-symbols-outlined">dark_mode</span>
                 </button>
 
-                <!-- Profile (click to open quick-edit popup) -->
+                <!-- Profile -->
                 <div class="flex items-center gap-3 pl-6 border-l border-slate-100 dark:border-slate-800 cursor-pointer" id="header-profile-area">
                     <div class="text-right hidden sm:block">
                         <p class="text-sm font-bold text-slate-900 dark:text-white" id="header-admin-name">Loading...</p>
@@ -141,29 +141,105 @@
         <div class="flex-1 p-8 lg:p-12 max-w-[1600px] mx-auto w-full">
             <!-- Tabs -->
             <div class="flex items-center gap-8 border-b border-slate-200 dark:border-slate-800 mb-10">
-                <button class="admin-tab py-4 border-b-2 border-indigo-600 text-indigo-600 font-bold px-1" data-status="pending_review">
+                <button class="admin-tab py-4 border-b-2 border-indigo-600 text-indigo-600 font-bold px-1" data-tab="pending">
                     Pending Review
                 </button>
-                <button class="admin-tab py-4 border-b-2 border-transparent text-slate-500 font-medium px-1" data-status="appealed">
-                    Appeals & Rejected
+                <button class="admin-tab py-4 border-b-2 border-transparent text-slate-500 font-medium px-1" data-tab="appeals">
+                    Appeals &amp; Rejected
+                </button>
+                <button class="admin-tab py-4 border-b-2 border-transparent text-slate-500 font-medium px-1 flex items-center gap-2" data-tab="published">
+                    <span>Published Courses</span>
+                    <span id="published-count-badge" class="hidden bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-[10px] font-black px-2 py-0.5 rounded-full"></span>
                 </button>
             </div>
-            <div id="loader" class="flex flex-col items-center justify-center py-20">
-                <div class="w-12 h-12 border-4 border-slate-200 border-t-indigo-600 rounded-full animate-spin"></div>
-                <p class="mt-4 text-slate-500 font-medium">Fetching pending courses...</p>
-            </div>
 
-            <div id="empty-state" class="hidden flex-col items-center justify-center py-20 bg-white dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-100 dark:border-slate-800">
-                <div class="w-20 h-20 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl flex items-center justify-center mb-6">
-                    <span class="material-symbols-outlined text-4xl text-emerald-500">task_alt</span>
+            <!-- ══════════════════════════════════════ -->
+            <!--   PENDING / APPEALS AREA (existing)   -->
+            <!-- ══════════════════════════════════════ -->
+            <div id="moderation-panel">
+                <div id="loader" class="flex flex-col items-center justify-center py-20">
+                    <div class="w-12 h-12 border-4 border-slate-200 border-t-indigo-600 rounded-full animate-spin"></div>
+                    <p class="mt-4 text-slate-500 font-medium">Fetching pending courses...</p>
                 </div>
-                <h3 class="text-2xl font-black text-slate-900 dark:text-white mb-2">Queue Empty</h3>
-                <p class="text-slate-500 dark:text-slate-400 text-center max-w-sm">There are no courses currently waiting for review.</p>
+
+                <div id="empty-state" class="hidden flex-col items-center justify-center py-20 bg-white dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-100 dark:border-slate-800">
+                    <div class="w-20 h-20 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl flex items-center justify-center mb-6">
+                        <span class="material-symbols-outlined text-4xl text-emerald-500">task_alt</span>
+                    </div>
+                    <h3 class="text-2xl font-black text-slate-900 dark:text-white mb-2">Queue Empty</h3>
+                    <p class="text-slate-500 dark:text-slate-400 text-center max-w-sm">There are no courses currently waiting for review.</p>
+                </div>
+
+                <div id="courses-grid" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
             </div>
 
-            <div id="courses-grid" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
+            <!-- ══════════════════════════════════════ -->
+            <!--   PUBLISHED COURSES TAB               -->
+            <!-- ══════════════════════════════════════ -->
+            <div id="published-panel" class="hidden">
+                <!-- Toolbar: search + count -->
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
+                    <div class="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+                        <div class="relative w-full sm:w-80">
+                            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg pointer-events-none">search</span>
+                            <input id="published-search"
+                                type="text"
+                                placeholder="Search by CRS-ID (e.g. CRS-1023)"
+                                class="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
+                            />
+                        </div>
+                        <select id="published-sort" class="w-full sm:w-auto px-4 py-2.5 text-sm font-bold border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer">
+                            <option value="newest">Newest Approved</option>
+                            <option value="revenue_desc">Highest Revenue</option>
+                            <option value="revenue_asc">Lowest Revenue</option>
+                            <option value="enroll_desc">Most Enrolled</option>
+                            <option value="enroll_asc">Least Enrolled</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400 shrink-0">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span id="published-count-text">Loading...</span>
+                    </div>
+                </div>
+
+                <!-- Loader -->
+                <div id="published-loader" class="hidden flex-col items-center justify-center py-20">
+                    <div class="w-12 h-12 border-4 border-slate-200 border-t-emerald-500 rounded-full animate-spin"></div>
+                    <p class="mt-4 text-slate-500 font-medium">Loading published courses...</p>
+                </div>
+
+                <!-- Empty state -->
+                <div id="published-empty" class="hidden flex-col items-center justify-center py-20 bg-white dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-100 dark:border-slate-800">
+                    <div class="w-20 h-20 bg-slate-50 dark:bg-slate-800 rounded-2xl flex items-center justify-center mb-6">
+                        <span class="material-symbols-outlined text-4xl text-slate-300 dark:text-slate-600">storefront</span>
+                    </div>
+                    <h3 class="text-2xl font-black text-slate-900 dark:text-white mb-2">No Results</h3>
+                    <p class="text-slate-500 dark:text-slate-400 text-center max-w-sm">No published courses match your search.</p>
+                </div>
+
+                <!-- Table -->
+                <div id="published-table-wrap" class="hidden bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+                    <table class="min-w-full text-sm">
+                        <thead>
+                            <tr class="border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
+                                <th class="text-left px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Course</th>
+                                <th class="text-left px-4 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden sm:table-cell">CRS-ID</th>
+                                <th class="text-left px-4 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden lg:table-cell">Date Approved</th>
+                                <th class="text-left px-4 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden xl:table-cell">Students</th>
+                                <th class="text-left px-4 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden md:table-cell">Revenue</th>
+                                <th class="text-left px-4 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Status</th>
+                                <th class="text-left px-4 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="published-table-body" class="divide-y divide-slate-100 dark:divide-slate-800">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </main>
+
+    <!-- Status Change Dropdown Template (used via JS, positioned absolute) -->
 
     <script type="module">
         import { supabase } from '/src/services/supabaseClient.js';
@@ -175,18 +251,24 @@
             const grid = document.getElementById('courses-grid');
             const loader = document.getElementById('loader');
             const emptyState = document.getElementById('empty-state');
+            const moderationPanel = document.getElementById('moderation-panel');
+            const publishedPanel = document.getElementById('published-panel');
 
-
-            let currentStatus = 'pending_review';
+            let currentTab = 'pending';   // 'pending' | 'appeals' | 'published'
             let allCourses = [];
+            let publishedCourses = [];
+            let publishedLoaded = false;
 
+            // ─────────────────────────────────────────────
+            //  PENDING / APPEALS LOGIC (unchanged)
+            // ─────────────────────────────────────────────
             async function loadReviews() {
                 try {
                     loader.classList.remove('hidden');
+                    loader.classList.add('flex');
                     grid.classList.add('hidden');
                     emptyState.classList.add('hidden');
 
-                    // Optimized single fetch for all moderation states
                     const { data: modCourses, error } = await supabase
                         .from('courses')
                         .select(`
@@ -201,8 +283,7 @@
 
                     if (error) throw error;
                     allCourses = modCourses || [];
-                    
-                    render();
+                    renderModeration();
                 } catch (e) {
                     console.error("Failed to load reviews:", e);
                     if (loader) {
@@ -217,14 +298,16 @@
                 } finally {
                     if (loader && !loader.innerHTML.includes('Sync Error')) {
                         loader.classList.add('hidden');
+                        loader.classList.remove('flex');
                     }
                 }
             }
 
-            function render() {
+            function renderModeration() {
                 grid.innerHTML = '';
+                const statusFilter = currentTab === 'pending' ? 'pending_review' : null;
                 const filtered = allCourses.filter(c => {
-                    if (currentStatus === 'pending_review') return c.status === 'pending_review';
+                    if (currentTab === 'pending') return c.status === 'pending_review';
                     return c.status === 'rejected' || c.status === 'appealed';
                 });
 
@@ -236,11 +319,11 @@
 
                 emptyState.classList.add('hidden');
                 grid.classList.remove('hidden');
-                
+
                 filtered.forEach(course => {
                     const card = document.createElement('div');
                     card.className = "bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col group hover:shadow-xl hover:border-indigo-500/30 transition-all cursor-pointer";
-                    card.onclick = () => window.location.href = `/src/pages/admin/courses-review/details.html?id=${course.id}`;
+                    card.onclick = () => window.open(`/src/pages/admin/courses-review/details.html?id=${course.id}`, '_blank');
 
                     const instructorName = course.instructor ? course.instructor.full_name : 'Unknown';
                     const thumb = course.thumbnail_url || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400';
@@ -252,15 +335,14 @@
                     };
                     const label = statusLabels[course.status] || statusLabels.pending_review;
 
-                    // Finding log for appeal/rejection reason
                     const logs = course.moderation_logs || [];
-                    const lastLog = course.status === 'appealed' 
+                    const lastLog = course.status === 'appealed'
                         ? logs.find(l => l.decision === 'appealed')
                         : (logs.length > 0 ? logs[0] : null);
 
                     const categoryName = course.category ? course.category.name : 'General';
-                    const instructorAvatar = (course.instructor && course.instructor.avatar_url) 
-                        ? course.instructor.avatar_url 
+                    const instructorAvatar = (course.instructor && course.instructor.avatar_url)
+                        ? course.instructor.avatar_url
                         : `https://ui-avatars.com/api/?name=${encodeURIComponent(instructorName)}&background=4F46E5&color=fff`;
 
                     card.innerHTML = `
@@ -315,19 +397,320 @@
                 });
             }
 
-            // Tab toggling
+            // ─────────────────────────────────────────────
+            //  PUBLISHED COURSES LOGIC
+            // ─────────────────────────────────────────────
+            const publishedLoader  = document.getElementById('published-loader');
+            const publishedEmpty   = document.getElementById('published-empty');
+            const publishedWrap    = document.getElementById('published-table-wrap');
+            const publishedBody    = document.getElementById('published-table-body');
+            const publishedSearch  = document.getElementById('published-search');
+            const publishedCountText  = document.getElementById('published-count-text');
+            const publishedCountBadge = document.getElementById('published-count-badge');
+
+            async function loadPublishedCourses() {
+                publishedLoader.classList.remove('hidden');
+                publishedLoader.classList.add('flex');
+                publishedWrap.classList.add('hidden');
+                publishedEmpty.classList.add('hidden');
+
+                try {
+                    const { data, error } = await supabase
+                        .from('courses')
+                        .select(`
+                            id, root_course_id, serial_id, title, thumbnail_url, status, updated_at, created_at,
+                            instructor:profiles(full_name, avatar_url),
+                            category:course_categories(name),
+                            moderation_logs:course_moderation_logs(decision, created_at)
+                        `)
+                        .eq('status', 'published')
+                        .order('updated_at', { ascending: false });
+
+                    if (error) throw error;
+
+                    const familyIds = (data || []).map(c => c.root_course_id || c.id);
+                    let statsMap = {};
+                    if (familyIds.length > 0) {
+                        const { data: statsData } = await supabase
+                            .from('admin_course_stats')
+                            .select('*')
+                            .in('family_id', familyIds);
+                        (statsData || []).forEach(s => { statsMap[s.family_id] = s; });
+                    }
+
+                    // Default Sort by latest approval log date (FIFO — newest approved first)
+                    publishedCourses = (data || []).map(c => {
+                        const logs = c.moderation_logs || [];
+                        const approvedLogs = logs
+                            .filter(l => l.decision === 'approved')
+                            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+                        c._approvedAt = approvedLogs.length > 0 ? approvedLogs[0].created_at : c.updated_at;
+                        
+                        const famId = c.root_course_id || c.id;
+                        const s = statsMap[famId] || {};
+                        c._enrollmentCount = Number(s.enrollments_count || 0);
+                        c._revenue = Number(s.total_revenue || 0);
+                        
+                        return c;
+                    }).sort((a, b) => new Date(b._approvedAt) - new Date(a._approvedAt));
+
+                    publishedLoaded = true;
+                    renderPublished();
+                } catch (e) {
+                    console.error('Failed to load published courses:', e);
+                    publishedLoader.innerHTML = `
+                        <div class="text-red-500 p-6 bg-red-50 dark:bg-red-900/10 rounded-2xl border border-red-100 max-w-lg mx-auto">
+                            <p class="font-black text-sm mb-2">Error Loading Published Courses</p>
+                            <p class="text-xs">${e.message}</p>
+                            <button onclick="window.location.reload()" class="mt-3 px-4 py-2 bg-red-600 text-white text-[10px] font-black rounded-lg">Retry</button>
+                        </div>
+                    `;
+                } finally {
+                    if (!publishedLoader.innerHTML.includes('Error')) {
+                        publishedLoader.classList.add('hidden');
+                        publishedLoader.classList.remove('flex');
+                    }
+                }
+            }
+
+            const ALL_STATUSES = [
+                { value: 'published',      label: 'Published',      icon: 'public',         color: 'text-emerald-600' },
+                { value: 'draft',          label: 'Draft',          icon: 'draft',          color: 'text-slate-500'   },
+                { value: 'pending_review', label: 'Pending Review', icon: 'hourglass_empty', color: 'text-amber-600'  },
+                { value: 'rejected',       label: 'Rejected',       icon: 'block',          color: 'text-rose-600'    },
+            ];
+
+            function formatDate(dateStr) {
+                if (!dateStr) return '—';
+                return new Date(dateStr).toLocaleDateString('en-GB', {
+                    day: '2-digit', month: 'short', year: 'numeric'
+                });
+            }
+
+            const publishedSort = document.getElementById('published-sort');
+            publishedSort?.addEventListener('change', () => renderPublished());
+
+            function renderPublished() {
+                const searchVal = (publishedSearch.value || '').trim().toLowerCase();
+                
+                // First filter
+                let filtered = publishedCourses.filter(c => {
+                    if (!searchVal) return true;
+                    const crsId = `crs-${c.serial_id}`.toLowerCase();
+                    const titleMatch = c.title.toLowerCase().includes(searchVal);
+                    return crsId.includes(searchVal) || titleMatch;
+                });
+
+                // Then sort
+                const sortType = publishedSort ? publishedSort.value : 'newest';
+                filtered.sort((a, b) => {
+                    if (sortType === 'revenue_desc') return b._revenue - a._revenue;
+                    if (sortType === 'revenue_asc') return a._revenue - b._revenue;
+                    if (sortType === 'enroll_desc') return b._enrollmentCount - a._enrollmentCount;
+                    if (sortType === 'enroll_asc') return a._enrollmentCount - b._enrollmentCount;
+                    // newest
+                    return new Date(b._approvedAt) - new Date(a._approvedAt);
+                });
+
+                // Update count UI
+                const total = publishedCourses.length;
+                publishedCountText.textContent = `${total} published course${total !== 1 ? 's' : ''} live`;
+                publishedCountBadge.textContent = total;
+                publishedCountBadge.classList.remove('hidden');
+
+                if (filtered.length === 0) {
+                    publishedWrap.classList.add('hidden');
+                    publishedEmpty.classList.remove('hidden');
+                    publishedEmpty.classList.add('flex');
+                    return;
+                }
+
+                publishedEmpty.classList.add('hidden');
+                publishedEmpty.classList.remove('flex');
+                publishedWrap.classList.remove('hidden');
+
+                publishedBody.innerHTML = filtered.map(course => {
+                    const thumb = course.thumbnail_url || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=80';
+                    const instructorName = course.instructor ? course.instructor.full_name : 'Unknown';
+                    const crsId = course.serial_id ? `CRS-${course.serial_id}` : '—';
+                    const approvedDateStr = formatDate(course._approvedAt);
+
+                    const currentStatusMeta = ALL_STATUSES.find(s => s.value === course.status) || ALL_STATUSES[0];
+
+                    const statusOptionsHtml = ALL_STATUSES.map(s => `
+                        <button
+                            onclick="event.stopPropagation(); window.changePublishedCourseStatus('${course.id}', '${s.value}')"
+                            class="flex items-center gap-2.5 w-full text-left px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors ${s.color} ${s.value === course.status ? 'font-black bg-slate-50 dark:bg-slate-800/70' : 'font-semibold'}"
+                        >
+                            <span class="material-symbols-outlined text-base" style="font-variation-settings:'FILL' 1;">${s.icon}</span>
+                            <span class="text-xs">${s.label}</span>
+                            ${s.value === course.status ? '<span class="material-symbols-outlined text-xs ml-auto">check</span>' : ''}
+                        </button>
+                    `).join('');
+
+                    return `
+                        <tr class="group hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors cursor-pointer"
+                            onclick="window.open('/src/pages/admin/courses-review/details.html?id=${course.id}', '_blank')">
+                            <!-- Course Column -->
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-14 h-14 rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800 shrink-0 shadow-sm flex-shrink-0">
+                                        <img src="${thumb}" alt="thumb" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="font-black text-slate-900 dark:text-white text-sm truncate max-w-[120px] sm:max-w-[180px] md:max-w-[240px] lg:max-w-xs group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors block">
+                                            ${course.title || 'Untitled'}
+                                        </p>
+                                        <p class="text-[10px] text-slate-400 font-medium mt-0.5 truncate max-w-[120px] sm:max-w-[180px] md:max-w-[240px] lg:max-w-xs">${instructorName} &bull; ${course.category ? course.category.name : 'General'}</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <!-- CRS-ID Column -->
+                            <td class="px-4 py-4 hidden sm:table-cell">
+                                <span class="inline-flex items-center gap-1.5 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 text-[10px] font-black px-2.5 py-1.5 rounded-lg tracking-widest truncate">
+                                    <span class="material-symbols-outlined text-xs" style="font-variation-settings:'FILL' 1;">tag</span>
+                                    ${crsId}
+                                </span>
+                            </td>
+                            <!-- Date Approved Column -->
+                            <td class="px-4 py-4 hidden lg:table-cell">
+                                <div class="flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400 truncate">
+                                    <span class="material-symbols-outlined text-sm text-emerald-500">event_available</span>
+                                    ${approvedDateStr}
+                                </div>
+                            </td>
+                            <!-- Students Column -->
+                            <td class="px-4 py-4 hidden xl:table-cell">
+                                <div class="flex items-center gap-1.5 text-xs font-bold text-slate-600 dark:text-slate-300">
+                                    <span class="material-symbols-outlined text-sm text-sky-500">group</span>
+                                    ${course._enrollmentCount || 0}
+                                </div>
+                            </td>
+                            <!-- Revenue Column -->
+                            <td class="px-4 py-4 hidden md:table-cell">
+                                <span class="text-sm font-black text-emerald-600 dark:text-emerald-400">
+                                    $${(course._revenue || 0).toFixed(2)}
+                                </span>
+                            </td>
+                            <!-- Status Column -->
+                            <td class="px-4 py-4">
+                                <span class="inline-flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 text-[10px] font-black px-2.5 py-1.5 rounded-lg">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                    Published
+                                </span>
+                            </td>
+                            <!-- Actions Column -->
+                            <td class="px-4 py-4" onclick="event.stopPropagation()">
+                                <div class="relative inline-block" id="action-wrap-${course.id}">
+                                    <button
+                                        onclick="window.toggleStatusMenu('${course.id}')"
+                                        class="flex items-center gap-1 px-3 py-2 text-xs font-bold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl transition-all border border-slate-200 dark:border-slate-700"
+                                    >
+                                        <span class="material-symbols-outlined text-sm">tune</span>
+                                        Change
+                                        <span class="material-symbols-outlined text-xs">expand_more</span>
+                                    </button>
+                                    <div id="status-menu-${course.id}" class="hidden absolute right-0 mt-2 w-52 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl shadow-slate-200/60 dark:shadow-none z-50 overflow-hidden py-1">
+                                        <p class="text-[9px] font-black uppercase tracking-widest text-slate-400 px-4 py-2 border-b border-slate-100 dark:border-slate-800">Change Status</p>
+                                        ${statusOptionsHtml}
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            // Toggle status dropdown menu
+            window.toggleStatusMenu = (courseId) => {
+                // Close all other open menus first
+                document.querySelectorAll('[id^="status-menu-"]').forEach(menu => {
+                    if (menu.id !== `status-menu-${courseId}`) {
+                        menu.classList.add('hidden');
+                    }
+                });
+                const menu = document.getElementById(`status-menu-${courseId}`);
+                menu?.classList.toggle('hidden');
+            };
+
+            // Close menus on outside click
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('[id^="action-wrap-"]')) {
+                    document.querySelectorAll('[id^="status-menu-"]').forEach(m => m.classList.add('hidden'));
+                }
+            });
+
+            // Change published course status
+            window.changePublishedCourseStatus = async (courseId, newStatus) => {
+                // Close menu immediately
+                document.querySelectorAll('[id^="status-menu-"]').forEach(m => m.classList.add('hidden'));
+
+                const statusMeta = ALL_STATUSES.find(s => s.value === newStatus);
+                const course = publishedCourses.find(c => c.id === courseId);
+                if (!course || course.status === newStatus) return;
+
+                const dangerStatuses = ['rejected', 'draft'];
+                const isDanger = dangerStatuses.includes(newStatus);
+
+                showConfirmModal({
+                    title: `Change Status to "${statusMeta?.label}"?`,
+                    message: isDanger
+                        ? `⚠️ This will remove "${course.title}" from the marketplace. The instructor will be notified. Are you sure?`
+                        : `Change status of "${course.title}" to ${statusMeta?.label}?`,
+                    icon: statusMeta?.icon || 'tune',
+                    confirmText: `Set ${statusMeta?.label}`,
+                    variant: isDanger ? 'danger' : 'default'
+                }, async () => {
+                    try {
+                        const { error } = await supabase
+                            .from('courses')
+                            .update({ status: newStatus })
+                            .eq('id', courseId);
+
+                        if (error) throw error;
+
+                        showToast(`Course status changed to "${statusMeta?.label}" successfully.`);
+                        // Update local data and re-render
+                        publishedCourses = publishedCourses.filter(c => c.id !== courseId);
+                        renderPublished();
+                    } catch (e) {
+                        showAlertModal({ title: 'Error', message: 'Failed to update status: ' + e.message, type: 'error' });
+                    }
+                });
+            };
+
+            // Search input handler
+            publishedSearch?.addEventListener('input', () => renderPublished());
+
+            // ─────────────────────────────────────────────
+            //  TAB SWITCHING
+            // ─────────────────────────────────────────────
             document.querySelectorAll('.admin-tab').forEach(tab => {
-                tab.onclick = () => {
+                tab.onclick = async () => {
                     document.querySelectorAll('.admin-tab').forEach(t => {
-                        t.className = "admin-tab py-4 border-b-2 border-transparent text-slate-500 font-medium px-1";
+                        t.className = "admin-tab py-4 border-b-2 border-transparent text-slate-500 font-medium px-1 flex items-center gap-2";
                     });
-                    tab.className = "admin-tab py-4 border-b-2 border-indigo-600 text-indigo-600 font-bold px-1";
-                    currentStatus = tab.dataset.status;
-                    render();
+                    tab.className = "admin-tab py-4 border-b-2 border-indigo-600 text-indigo-600 font-bold px-1 flex items-center gap-2";
+
+                    currentTab = tab.dataset.tab;
+
+                    if (currentTab === 'published') {
+                        moderationPanel.classList.add('hidden');
+                        publishedPanel.classList.remove('hidden');
+                        if (!publishedLoaded) {
+                            await loadPublishedCourses();
+                        }
+                    } else {
+                        publishedPanel.classList.add('hidden');
+                        moderationPanel.classList.remove('hidden');
+                        renderModeration();
+                    }
                 };
             });
 
-            // Action Handlers
+            // ─────────────────────────────────────────────
+            //  APPEAL ACTION HANDLERS
+            // ─────────────────────────────────────────────
             window.acceptAppeal = async (courseId) => {
                 showConfirmModal({
                     title: 'Accept Appeal?',
@@ -346,11 +729,9 @@
             };
 
             window.rejectAppeal = async (courseId) => {
-                const warningMsg = "CAUTION: This will PERMANENTLY DELETE the course and all its content. This action cannot be undone.";
-                
                 showConfirmModal({
                     title: 'Reject & Delete?',
-                    message: warningMsg,
+                    message: "CAUTION: This will PERMANENTLY DELETE the course and all its content. This action cannot be undone.",
                     icon: 'delete_forever',
                     confirmText: 'Reject & Delete',
                     variant: 'danger'
@@ -365,14 +746,25 @@
                 });
             };
 
+            // ─────────────────────────────────────────────
+            //  INIT
+            // ─────────────────────────────────────────────
             await loadReviews();
 
-            // Mobile Menu Toggle (Consistency)
+            // Mobile Menu Toggle
             const toggleBtn = document.getElementById('toggle-sidebar');
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('sidebar-overlay');
             toggleBtn?.addEventListener('click', () => { sidebar.classList.toggle('-translate-x-full'); overlay.classList.toggle('hidden'); });
             overlay?.addEventListener('click', () => { sidebar.classList.add('-translate-x-full'); overlay.classList.add('hidden'); });
+
+            // Theme toggle
+            const themeToggle = document.getElementById('theme-toggle');
+            themeToggle?.addEventListener('click', () => {
+                document.documentElement.classList.toggle('dark');
+                const isDark = document.documentElement.classList.contains('dark');
+                themeToggle.innerHTML = `<span class="material-symbols-outlined">${isDark ? 'light_mode' : 'dark_mode'}</span>`;
+            });
 
             // Logout
             document.getElementById('logout-btn')?.addEventListener('click', async () => {
@@ -381,5 +773,6 @@
             });
         });
     </script>
+
 </body>
 </html>

@@ -167,20 +167,31 @@
             </div>
 
             <!-- Tabs -->
-            <div class="flex items-center gap-2 mb-8 bg-slate-100 dark:bg-slate-900 p-1.5 rounded-2xl w-fit">
-                <button data-tab="overview" class="tab-btn active px-6 py-2.5 rounded-xl transition-all flex items-center gap-2">
-                    <span class="material-symbols-outlined text-[20px]">groups</span>
-                    Connection Overview
-                </button>
-                <button data-tab="rejections" class="tab-btn px-6 py-2.5 rounded-xl transition-all flex items-center gap-2 relative">
-                    <span class="material-symbols-outlined text-[20px]">notification_important</span>
-                    Pending Rejections
-                    <span id="rejection-count" class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold border-2 border-slate-50 dark:border-slate-950">0</span>
-                </button>
-                <button data-tab="completed" class="tab-btn px-6 py-2.5 rounded-xl transition-all flex items-center gap-2">
-                    <span class="material-symbols-outlined text-[20px]">history</span>
-                    Completed Sessions
-                </button>
+            <!-- Global Search -->
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+                <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 p-1.5 rounded-2xl w-fit">
+                    <button data-tab="overview" class="tab-btn active px-6 py-2.5 rounded-xl transition-all flex items-center gap-2">
+                        <span class="material-symbols-outlined text-[20px]">groups</span>
+                        Connection Overview
+                    </button>
+                    <button data-tab="rejections" class="tab-btn px-6 py-2.5 rounded-xl transition-all flex items-center gap-2 relative">
+                        <span class="material-symbols-outlined text-[20px]">notification_important</span>
+                        Pending Rejections
+                        <span id="rejection-count" class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold border-2 border-slate-50 dark:border-slate-950">0</span>
+                    </button>
+                    <button data-tab="completed" class="tab-btn px-6 py-2.5 rounded-xl transition-all flex items-center gap-2">
+                        <span class="material-symbols-outlined text-[20px]">history</span>
+                        Completed Sessions
+                    </button>
+                </div>
+                <!-- Search Input -->
+                <div class="relative w-full sm:w-72">
+                    <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[18px] pointer-events-none">search</span>
+                    <input type="text" id="booking-search" placeholder="Search SES-ID, MTR-ID or PAY-ID..." class="w-full pl-10 pr-10 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium text-slate-700 dark:text-slate-200 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all">
+                    <button id="clear-search" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
+                        <span class="material-symbols-outlined text-[18px]">close</span>
+                    </button>
+                </div>
             </div>
 
 
@@ -189,7 +200,13 @@
                 <!-- Filter Bar -->
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800">
                     <div>
-                        <h3 class="text-lg font-bold text-slate-900 dark:text-white">Active Connections</h3>
+                        <div class="flex items-center gap-2.5">
+                            <h3 class="text-lg font-bold text-slate-900 dark:text-white">Active Connections</h3>
+                            <span id="realtime-dot" class="flex items-center gap-1.5 px-2 py-0.5 bg-emerald-50 dark:bg-emerald-900/20 rounded-full" title="Realtime auto-refresh active">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                <span class="text-[9px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest hidden sm:block">Live</span>
+                            </span>
+                        </div>
                         <p class="text-xs text-slate-500">Manage and monitor ongoing mentorship sessions</p>
                     </div>
                     <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto justify-end">
@@ -216,6 +233,19 @@
             </div>
 
             <div id="rejections-pane" class="tab-pane hidden space-y-6">
+                <!-- Header row -->
+                <div class="flex items-center justify-between bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800">
+                    <div>
+                        <div class="flex items-center gap-2.5">
+                            <h3 class="text-lg font-bold text-slate-900 dark:text-white">Pending Rejections</h3>
+                            <span class="flex items-center gap-1.5 px-2 py-0.5 bg-emerald-50 dark:bg-emerald-900/20 rounded-full" title="Realtime auto-refresh active">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                <span class="text-[9px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest hidden sm:block">Live</span>
+                            </span>
+                        </div>
+                        <p class="text-xs text-slate-500">Mentor rejection requests awaiting your decision</p>
+                    </div>
+                </div>
                 <div id="rejections-list" class="flex flex-col gap-6">
                     <!-- Cards injected via JS -->
                 </div>
@@ -225,7 +255,13 @@
                 <!-- Date Filter Bar -->
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800">
                     <div>
-                        <h3 class="text-lg font-bold text-slate-900 dark:text-white">Completed History</h3>
+                        <div class="flex items-center gap-2.5">
+                            <h3 class="text-lg font-bold text-slate-900 dark:text-white">Completed History</h3>
+                            <span class="flex items-center gap-1.5 px-2 py-0.5 bg-emerald-50 dark:bg-emerald-900/20 rounded-full" title="Realtime auto-refresh active">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                <span class="text-[9px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest hidden sm:block">Live</span>
+                            </span>
+                        </div>
                         <p class="text-xs text-slate-500">Filter and review historical sessions by date</p>
                     </div>
                     <div class="flex items-center gap-3 w-full sm:w-auto">

@@ -1106,7 +1106,7 @@ async function bindBoostInteractions(container, userId) {
 }
 
 /** Gold card wrapper classes for program mentorship */
-const GOLD_CARD_STYLE = 'border-2 rounded-2xl overflow-hidden transition-all group p-6 hover:shadow-xl'
+const GOLD_CARD_STYLE = 'border-2 rounded-2xl overflow-hidden transition-all group p-6 hover:shadow-xl relative'
     + ' bg-gradient-to-br from-amber-50/60 to-white dark:from-amber-900/10 dark:to-slate-900'
     + ' border-yellow-400/60 dark:border-yellow-500/30';
 
@@ -2213,7 +2213,8 @@ window.updateMentorshipMetrics = async function() {
                     } else if (filterVal === '7days') {
                         include = (nowTime - trxDate) <= (7 * 24 * 60 * 60 * 1000);
                     } else if (filterVal === '30days') {
-                        include = (nowTime - trxDate) <= (30 * 24 * 60 * 60 * 1000);
+                        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+                        include = trxDate >= monthStart.getTime();
                     }
 
                     if (include) {

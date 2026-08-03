@@ -54,6 +54,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     let selectedType = 'all';
     let startDate = null;
     let endDate = null;
+    let searchQuery = '';
+    let realtimeChannel = null;
 
     const LOADER_HTML = `
         <div class="flex flex-col items-center justify-center py-20 gap-4">
@@ -185,8 +187,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             
             let matchesTypeFilter = selectedType === 'all' || (session.mentorship_type || 'single') === selectedType;
+
+            // Search filter — match session, mentor, or payment serial_id (strip prefix)
+            const q = searchQuery.replace(/^(ses|ses-|mtr|mtr-|pay|pay-)/i, '').trim();
+            const matchesSearch = !q || 
+                String(session.session_serial_id || '').includes(q) ||
+                String(session.mentor_serial_id || '').includes(q) ||
+                String(session.payment_serial_id || '').includes(q);
             
-            return matchesActiveTab && matchesStatusFilter && matchesTypeFilter;
+            return matchesActiveTab && matchesStatusFilter && matchesTypeFilter && matchesSearch;
         });
 
         const overviewPane = document.getElementById('overview-pane');
@@ -305,7 +314,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             return `
                 <div class="${cardClasses} rounded-3xl p-6 hover:shadow-xl transition-all duration-300 group relative session-card" data-session-id="${session.id}">
                     ${session.mentorship_type === 'program' ? `<div class="absolute -top-3 right-8 z-10"><div class="px-3 py-1 bg-gradient-to-r from-amber-200 to-yellow-400 text-amber-900 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-1 shadow-lg shadow-amber-500/20"><span class="material-symbols-outlined text-[14px]">workspace_premium</span> Program Mentorship</div></div>` : ''}
-                    <div class="flex flex-col lg:flex-row items-center justify-between gap-8 mt-2 lg:mt-0">
+                    <!-- ID badges -->
+                    <div class="absolute top-4 left-6 flex items-center gap-2 z-10">
+                        ${session.session_serial_id ? `<span class="px-2 py-0.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-lg text-[9px] font-black uppercase tracking-widest border border-indigo-100 dark:border-indigo-800">SES-${session.session_serial_id}</span>` : ''}
+                        ${session.mentor_serial_id ? `<span class="px-2 py-0.5 bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-lg text-[9px] font-black uppercase tracking-widest border border-purple-100 dark:border-purple-800">MTR-${session.mentor_serial_id}</span>` : ''}
+                        ${session.payment_serial_id ? `<span class="px-2 py-0.5 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-lg text-[9px] font-black uppercase tracking-widest border border-emerald-100 dark:border-emerald-800">PAY-${session.payment_serial_id}</span>` : ''}
+                    </div>
+                    <div class="flex flex-col lg:flex-row items-center justify-between gap-8 mt-6 lg:mt-4">
                         
                         <!-- Connection Flow Container -->
                         <div class="flex items-center justify-between gap-4 md:gap-8 flex-1 w-full max-w-4xl">
@@ -451,6 +466,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 eDate.setHours(23,59,59,999);
                 if (start > eDate) return false;
             }
+
+            // Search filter
+            const q = searchQuery.replace(/^(ses|ses-|mtr|mtr-|pay|pay-)/i, '').trim();
+            const matchesSearch = !q || 
+                String(s.session_serial_id || '').includes(q) ||
+                String(s.mentor_serial_id || '').includes(q) ||
+                String(s.payment_serial_id || '').includes(q);
+            if (!matchesSearch) return false;
             
             return true;
         }).sort((a,b) => new Date(b.scheduled_at) - new Date(a.scheduled_at));
@@ -491,7 +514,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                             </div>
                             <div>
                                 <h4 class="font-bold text-slate-900 dark:text-white">${escapeHtml(student.full_name || "")} <span class="text-slate-400 font-medium">with</span> ${escapeHtml(mentor.full_name || "")}</h4>
-                                <div class="flex items-center gap-3 mt-1">
+                                <div class="flex items-center flex-wrap gap-3 mt-1">
+                                    ${session.session_serial_id ? `<span class="text-[9px] font-black text-indigo-500 uppercase tracking-widest bg-indigo-50 dark:bg-indigo-900/20 px-1.5 py-0.5 rounded">SES-${session.session_serial_id}</span>` : ''}
+                                    ${session.mentor_serial_id ? `<span class="text-[9px] font-black text-purple-500 uppercase tracking-widest bg-purple-50 dark:bg-purple-900/20 px-1.5 py-0.5 rounded">MTR-${session.mentor_serial_id}</span>` : ''}
+                                    ${session.payment_serial_id ? `<span class="text-[9px] font-black text-emerald-600 uppercase tracking-widest bg-emerald-50 dark:bg-emerald-900/20 px-1.5 py-0.5 rounded">PAY-${session.payment_serial_id}</span>` : ''}
                                     <span class="text-xs text-slate-500 flex items-center gap-1">
                                         <span class="material-symbols-outlined text-sm">calendar_today</span> ${dateStr}
                                     </span>
@@ -518,10 +544,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     const renderRejections = (rejections) => {
+        // Apply search filter to rejections
+        const q = searchQuery.replace(/^(ses|ses-|mtr|mtr-|pay|pay-)/i, '').trim();
+        const filtered = rejections.filter(s => !q ||
+            String(s.session_serial_id || '').includes(q) ||
+            String(s.mentor_serial_id || '').includes(q) ||
+            String(s.payment_serial_id || '').includes(q)
+        );
+
         rejectionsList.classList.remove('hidden');
         overviewList.classList.add('hidden');
 
-        if (rejections.length === 0) {
+        if (filtered.length === 0) {
             rejectionsList.innerHTML = EMPTY_STATE_HTML;
             return;
         }
@@ -540,7 +574,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                             </div>
                             <div>
                                 <h4 class="font-black text-lg">Rejection Review</h4>
-                                <p class="text-xs text-slate-500">Submitted for: ${date}</p>
+                                <div class="flex items-center gap-2 mt-0.5">
+                                    ${session.session_serial_id ? `<span class="text-[9px] font-black text-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 px-1.5 py-0.5 rounded uppercase tracking-widest">SES-${session.session_serial_id}</span>` : ''}
+                                    ${session.mentor_serial_id ? `<span class="text-[9px] font-black text-purple-500 bg-purple-50 dark:bg-purple-900/20 px-1.5 py-0.5 rounded uppercase tracking-widest">MTR-${session.mentor_serial_id}</span>` : ''}
+                                    ${session.payment_serial_id ? `<span class="text-[9px] font-black text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 px-1.5 py-0.5 rounded uppercase tracking-widest">PAY-${session.payment_serial_id}</span>` : ''}
+                                    <p class="text-xs text-slate-500">Submitted for: ${date}</p>
+                                </div>
                             </div>
                         </div>
                         <span class="px-3 py-1 bg-amber-100 text-amber-700 rounded-lg text-[10px] font-black uppercase tracking-widest">Pending Decision</span>
@@ -584,7 +623,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         rejectionsList.querySelectorAll('.deny-btn').forEach(btn => {
             btn.onclick = () => handleDecision(btn.dataset.id, 'pending_review', btn);
         });
-    };
+    };;
 
     const handleDecision = async (sessionId, status, btn) => {
         const originalText = btn.innerText;
@@ -729,6 +768,45 @@ document.addEventListener('DOMContentLoaded', async () => {
         const icon = themeToggle.querySelector('.material-symbols-outlined');
         icon.innerText = document.documentElement.classList.contains('dark') ? 'light_mode' : 'dark_mode';
     };
+
+    // Search Input
+    const searchInput = document.getElementById('booking-search');
+    const clearSearchBtn = document.getElementById('clear-search');
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            searchQuery = e.target.value.trim();
+            clearSearchBtn.classList.toggle('hidden', !searchQuery);
+            renderTab();
+        });
+    }
+    if (clearSearchBtn) {
+        clearSearchBtn.onclick = () => {
+            searchInput.value = '';
+            searchQuery = '';
+            clearSearchBtn.classList.add('hidden');
+            renderTab();
+        };
+    }
+
+    // 6. Supabase Realtime — auto-refresh all tabs on INSERT/UPDATE
+    let refreshDebounceTimer = null;
+    const debouncedRefresh = () => {
+        clearTimeout(refreshDebounceTimer);
+        refreshDebounceTimer = setTimeout(async () => {
+            await fetchData();
+        }, 1200); // small debounce to avoid rapid-fire refreshes
+    };
+
+    realtimeChannel = supabase
+        .channel('admin-bookings-realtime')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'mentorship_sessions' }, debouncedRefresh)
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'mentorship_sessions' }, debouncedRefresh)
+        .subscribe();
+
+    // Cleanup realtime on page unload
+    window.addEventListener('beforeunload', () => {
+        if (realtimeChannel) supabase.removeChannel(realtimeChannel);
+    });
 
     const toggleSidebar = document.getElementById('toggle-sidebar');
     const sidebar = document.getElementById('sidebar');
