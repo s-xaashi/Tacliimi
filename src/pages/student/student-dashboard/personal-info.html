@@ -89,6 +89,9 @@
                         <a class="bg-primary hover:bg-purple-600 text-white px-6 py-2.5 rounded-lg font-semibold transition-colors flex items-center"
                             href="/src/pages/instructor/become-instructor/">Become a Teacher</a>
                     </div>
+          <button class="md:hidden p-2 text-slate-600 dark:text-slate-300" id="mobile-menu-btn">
+            <span class="material-symbols-outlined">menu</span>
+          </button>
                 </div>
                 <div class="flex items-center gap-4">
                     <!-- Notification Bell -->
@@ -137,7 +140,16 @@
                 </div>
             </div>
         </div>
-    </nav>
+    
+  <!-- Mobile Menu -->
+  <div class="hidden md:hidden bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-4 py-6 space-y-4 absolute w-full shadow-xl z-40" id="mobile-menu">
+    <a class="block text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/">Home</a>
+    <a class="block text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/src/pages/student/student-dashboard/">Dashboard</a>
+    <a class="block text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/src/pages/marketplace/marketplace/">Browse</a>
+    <a class="block text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/src/pages/student/student-dashboard/my-mentors.html">Mentors</a>
+    <a class="block text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/src/pages/instructor/become-instructor/">Become a Teacher</a>
+  </div>
+  </nav>
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <header class="mb-8">
             <h1 class="text-3xl font-bold text-slate-900 dark:text-white">Welcome back, Student Name! 👋</h1>
@@ -293,6 +305,17 @@
     
 
 
+
+  <!-- Mobile Menu Toggle Script -->
+  <script>
+    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+    const mobileMenu = document.getElementById('mobile-menu');
+    if (mobileMenuBtn && mobileMenu) {
+        mobileMenuBtn.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+    }
+  </script>
 </body>
 
 </html>

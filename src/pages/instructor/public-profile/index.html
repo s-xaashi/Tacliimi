@@ -71,8 +71,19 @@
             <span class="material-symbols-outlined">account_circle</span>
           </div>
         </div>
+          <button class="md:hidden p-2 text-slate-600 dark:text-slate-300" id="mobile-menu-btn">
+            <span class="material-symbols-outlined">menu</span>
+          </button>
       </div>
     </div>
+  
+  <!-- Mobile Menu -->
+  <div class="hidden md:hidden bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-4 py-6 space-y-4 absolute w-full shadow-xl z-40" id="mobile-menu">
+    <a class="block text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/index.html">Home</a>
+    <a class="block text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/src/pages/mentorship/mentor-marketplace/index.html">Browse Mentors</a>
+    <a class="block text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/src/pages/marketplace/marketplace/">Browse Courses</a>
+    <a class="block text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/src/pages/student/account-settings/index.html"><span class="material-symbols-outlined">account_circle</span></a>
+  </div>
   </nav>
 
   <!-- Hero Section -->
@@ -295,6 +306,17 @@
   </div>
 
   <script type="module" src="./publicProfile.js"></script>
+
+  <!-- Mobile Menu Toggle Script -->
+  <script>
+    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+    const mobileMenu = document.getElementById('mobile-menu');
+    if (mobileMenuBtn && mobileMenu) {
+        mobileMenuBtn.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+    }
+  </script>
 </body>
 
 </html>

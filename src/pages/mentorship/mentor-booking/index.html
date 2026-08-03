@@ -98,9 +98,20 @@
                             src="https://lh3.googleusercontent.com/aida-public/AB6AXuCWtpkLzZTqZxnxjyW4wW1Xz9db0wGvAWVKqaVtV2C3dR5lZUY_Vr8CPzdPJWEEjVE8l4vfPTvVEe98FD7MFAQA7WSmrmbns0CCtSPg4oWWy3EEg9I2ntYd9Y67rrrzAMKFxksrNgo055jD5i72Jnm01Ivu4uvTPd8ILrel5J7iwbcZ_HuYyi6hlyCE18U8CBeTZU04qIC9w3fMrN6bQakIL4jCgNo_Gdpi-dFrPncThJ04krKFkT0gaQlx9Td2iHZkf0ITnm5_Y4I3" />
                     </div>
                 </div>
+          <button class="md:hidden p-2 text-slate-600 dark:text-slate-300" id="mobile-menu-btn">
+            <span class="material-symbols-outlined">menu</span>
+          </button>
             </div>
         </div>
-    </nav>
+    
+  <!-- Mobile Menu -->
+  <div class="hidden md:hidden bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-4 py-6 space-y-4 absolute w-full shadow-xl z-40" id="mobile-menu">
+    <a class="block text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/src/pages/marketplace/marketplace/">Courses</a>
+    <a class="block text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/src/pages/mentorship/mentor-marketplace/index.html">Mentors</a>
+    <a class="block text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/src/pages/instructor/become-instructor/">Become a Teacher</a>
+    <a class="block text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/src/pages/student/account-settings/index.html"><img alt="User Profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCWtpkLzZTqZxnxjyW4wW1Xz9db0wGvAWVKqaVtV2C3dR5lZUY_Vr8CPzdPJWEEjVE8l4vfPTvVEe98FD7MFAQA7WSmrmbns0CCtSPg4oWWy3EEg9I2ntYd9Y67rrrzAMKFxksrNgo055jD5i72Jnm01Ivu4uvTPd8ILrel5J7iwbcZ_HuYyi6hlyCE18U8CBeTZU04qIC9w3fMrN6bQakIL4jCgNo_Gdpi-dFrPncThJ04krKFkT0gaQlx9Td2iHZkf0ITnm5_Y4I3"/></a>
+  </div>
+  </nav>
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div class="mb-8">
             <a class="inline-flex items-center text-sm font-medium text-slate-500 hover:text-primary transition-colors gap-1"
@@ -890,6 +901,17 @@
             });
         });
     </script>
+
+  <!-- Mobile Menu Toggle Script -->
+  <script>
+    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+    const mobileMenu = document.getElementById('mobile-menu');
+    if (mobileMenuBtn && mobileMenu) {
+        mobileMenuBtn.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+    }
+  </script>
 </body>
 
 </html>

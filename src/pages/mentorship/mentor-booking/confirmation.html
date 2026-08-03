@@ -53,6 +53,9 @@
 <a class="text-slate-600 dark:text-slate-300 text-sm font-medium hover:text-primary transition-colors" href="/src/pages/student/student-dashboard/index.html">My Dashboard</a>
 </nav>
 </div>
+<button class="md:hidden p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all" id="mobile-menu-btn">
+    <span class="material-symbols-outlined">menu</span>
+</button>
 <div class="flex items-center gap-4">
 <button onclick="window.location.href='/src/pages/instructor/become-instructor/'" class="hidden sm:flex items-center justify-center rounded-lg bg-primary px-5 py-2 text-sm font-bold text-white hover:bg-primary/90 transition-all shadow-sm">
                 Become a Teacher
@@ -63,6 +66,12 @@
 </div>
 </div>
 </header>
+<!-- Mobile Menu -->
+<div class="hidden md:hidden bg-white dark:bg-background-dark border-b border-primary/10 px-4 py-6 space-y-4 shadow-xl z-40 absolute w-full" id="mobile-menu">
+    <a class="block text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/src/pages/mentorship/mentor-marketplace/index.html">Browse Mentors</a>
+    <a class="block text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/src/pages/student/student-dashboard/index.html">My Dashboard</a>
+    <a class="block text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/src/pages/instructor/become-instructor/">Become a Teacher</a>
+</div>
 <main class="flex-grow flex items-center justify-center py-12 px-4">
 <div class="max-w-2xl w-full">
 <div class="text-center mb-10">
@@ -200,5 +209,17 @@
 
 <script type="module" src="./confirmation.js"></script>
 <script type="module" src="/src/services/globalProfile.js"></script>
+<script>
+    // Mobile Menu Toggle Logic
+    document.addEventListener('DOMContentLoaded', () => {
+        const mobileBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        if (mobileBtn && mobileMenu) {
+            mobileBtn.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+        }
+    });
+</script>
 </body>
 </html>
