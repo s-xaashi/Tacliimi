@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="en"><head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
@@ -52,9 +53,9 @@
         }
     </style>
 </head>
-<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100">
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100"><div class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[50] hidden lg:hidden" id="sidebar-overlay"></div>
 <div class="flex h-screen overflow-hidden">
-<aside class="w-64 flex-shrink-0 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col">
+<aside class="bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col fixed left-0 top-0 h-full w-64 z-[60] -translate-x-full lg:translate-x-0" id="instructor-sidebar">
 <div class="p-6 flex items-center gap-3">
 <div class="w-10 h-10 rounded-xl bg-brand-purple flex items-center justify-center text-white shadow-lg shadow-brand-purple/20">
 <span class="material-symbols-outlined text-2xl fill-icon">school</span>
@@ -88,9 +89,9 @@
 </a>
 </nav>
 </aside>
-<main class="flex-1 flex flex-col overflow-hidden">
+<main class="flex-1 flex flex-col overflow-hidden lg:ml-64 transition-all">
 <header class="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-8">
-<div class="flex items-center gap-4">
+<div class="flex items-center gap-4"><button aria-label="Open navigation menu" class="lg:hidden p-2.5 text-slate-500 bg-slate-100 dark:bg-slate-800 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors mr-3" id="instructor-mobile-menu-btn"><span class="material-symbols-outlined">menu_open</span></button>
 <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100">Mentorship Bookings</h2>
 </div>
 <div class="flex items-center gap-6">
@@ -313,5 +314,35 @@
 </div>
 </main>
 </div>
-
+<script>
+(function() {
+    var btn = document.getElementById('instructor-mobile-menu-btn');
+    var sidebar = document.getElementById('instructor-sidebar');
+    var overlay = document.getElementById('sidebar-overlay');
+    if (!btn || !sidebar || !overlay) return;
+    btn.addEventListener('click', function() {
+        sidebar.classList.toggle('-translate-x-full');
+        overlay.classList.toggle('hidden');
+    });
+    overlay.addEventListener('click', function() {
+        sidebar.classList.add('-translate-x-full');
+        overlay.classList.add('hidden');
+    });
+})();
+</script>
+<script>
+// Defer sidebar transition to avoid slide-in animation on desktop page load
+window.addEventListener('load', function() {
+    var sidebar = document.getElementById('instructor-sidebar');
+    if (sidebar) {
+        // Only enable transition on mobile (below lg=1024px)
+        if (window.innerWidth < 1024) {
+            sidebar.classList.add('transition-transform', 'duration-300');
+        }
+        // No transition on desktop — already at lg:translate-x-0, nothing to animate
+    }
+});
+</script>
 </body></html>
+
+

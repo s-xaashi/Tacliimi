@@ -1,20 +1,18 @@
 <!DOCTYPE html>
-<html lang="en">
 
+<html lang="en">
 <head>
-    <meta charset="utf-8" />
-    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>Instructor Dashboard | Tacliimi Learn</title>
-    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
-        rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
-        rel="stylesheet" />
-    <script type="module" src="/src/services/globalProfile.js"></script>
-    <script>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Instructor Dashboard | Tacliimi Learn</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="/src/services/globalProfile.js" type="module"></script>
+<script>
         // Removed synchronous Auth check
     </script>
-    <script>
+<script>
         tailwind.config = {
             darkMode: "class",
             theme: {
@@ -35,7 +33,7 @@
             },
         };
     </script>
-    <style type="text/tailwindcss">
+<style type="text/tailwindcss">
         body { font-family: 'Inter', sans-serif; }
         .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
         
@@ -49,8 +47,7 @@
             pointer-events: none;
         }
     </style>
-
-    <script type="module">
+<script type="module">
         import { AuthService } from '/src/services/authService.js';
 
         // If the URL contains an access token from an email link or OAuth, do not prematurely redirect
@@ -64,106 +61,81 @@
             });
         }
     </script>
-
 </head>
-
-<body
-    class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 transition-colors duration-200">
-    <aside
-        class="fixed left-0 top-0 h-full w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 hidden lg:flex flex-col z-20">
-        <div class="p-6 border-b border-slate-100 dark:border-slate-800">
-            <div class="flex items-center gap-2 cursor-pointer" onclick="window.location.href='/index.html'">
-                <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                    <span class="material-symbols-outlined text-white text-lg">school</span>
-                </div>
-                <span class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Tacliimi</span>
-            </div>
-        </div>
-        <nav class="flex-1 p-4 space-y-1" id="instructor-sidebar-nav">
-            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                href="/src/pages/instructor/instructor-dashboard/">
-                <span class="material-symbols-outlined">dashboard</span>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 transition-colors duration-200"><div class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[50] hidden lg:hidden" id="sidebar-overlay"></div>
+<aside class="fixed left-0 top-0 h-full w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex-col flex z-[60] -translate-x-full lg:translate-x-0" id="instructor-sidebar">
+<div class="p-6 border-b border-slate-100 dark:border-slate-800">
+<div class="flex items-center gap-2 cursor-pointer" onclick="window.location.href='/index.html'">
+<div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-lg">school</span>
+</div>
+<span class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Tacliimi</span>
+</div>
+</div>
+<nav class="flex-1 p-4 space-y-1" id="instructor-sidebar-nav">
+<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-dashboard/">
+<span class="material-symbols-outlined">dashboard</span>
                 Dashboard
             </a>
-            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                href="/src/pages/instructor/instructor-courses/">
-                <span class="material-symbols-outlined">auto_stories</span>
+<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-courses/">
+<span class="material-symbols-outlined">auto_stories</span>
                 My Courses
             </a>
-            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                href="/src/pages/instructor/instructor-mentorship/">
-                <span class="material-symbols-outlined">groups</span>
+<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-mentorship/">
+<span class="material-symbols-outlined">groups</span>
                 Mentorship
             </a>
-            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                href="/src/pages/instructor/instructor-analytics/">
-                <span class="material-symbols-outlined">analytics</span>
+<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-analytics/">
+<span class="material-symbols-outlined">analytics</span>
                 Analytics
             </a>
-            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                href="/src/pages/instructor/instructor-earnings/">
-                <span class="material-symbols-outlined">payments</span>
+<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-earnings/">
+<span class="material-symbols-outlined">payments</span>
                 Earnings
             </a>
-            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                href="/src/pages/instructor/instructor-communications/">
-                <span class="material-symbols-outlined">message</span>
+<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-communications/">
+<span class="material-symbols-outlined">message</span>
                 Communications
             </a>
-        </nav>
-    </aside>
-
-    <div class="lg:ml-64 min-h-screen flex flex-col">
-        <header
-            class="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-8 sticky top-0 z-10 shrink-0">
-            <h1 class="text-lg font-semibold dark:text-white" id="header-page-title">Dashboard</h1>
-            <div class="flex items-center gap-4">
-
-
-                <button class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-                    onclick="document.documentElement.classList.toggle('dark')">
-                    <span class="material-symbols-outlined">dark_mode</span>
-                </button>
-                <div id="global-profile-header-container"
-                    class="flex items-center gap-3 pl-4 border-l border-slate-200 dark:border-slate-800 cursor-pointer hover:opacity-80 transition-opacity"
-                    onclick="window.location.href='/src/pages/instructor/instructor-profile/index.html'">
-                    <div class="text-right hidden sm:block">
-                        <p class="user-display-name text-sm font-medium dark:text-white">Instructor account</p>
-                        <p class="text-xs text-slate-500" data-role="profile-meta">ID: 32342</p>
-                    </div>
-                    <div
-                        class="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-slate-100 text-slate-400 dark:bg-slate-800 border-2 border-primary/20 hover:border-primary transition-colors">
-                        <span class="material-symbols-outlined text-2xl">account_circle</span>
-                    </div>
-                </div>
-            </div>
-        </header>
-
-        <!-- DYNAMIC CONTENT AREA -->
-        <main id="instructor-content-area" class="flex-1 bg-background-light dark:bg-background-dark pb-20 relative">
-
-            <!-- MANDATORY PROFILE COMPLETION BLOCKER -->
-            <div id="mandatory-profile-blocker"
-                class="fixed inset-0 z-[100] bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-sm hidden items-center justify-center">
-                <div
-                    class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-8 max-w-lg w-full mx-4 shadow-2xl text-center">
-                    <div
-                        class="w-16 h-16 bg-amber-50 dark:bg-amber-900/30 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <span class="material-symbols-outlined text-3xl">how_to_reg</span>
-                    </div>
-                    <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-3">Profile Incomplete</h2>
-                    <p class="text-slate-500 dark:text-slate-400 mb-8">
+</nav>
+</aside>
+<div class="lg:ml-64 min-h-screen flex flex-col">
+<header class="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-8 sticky top-0 z-10 shrink-0 w-full">
+<div class="flex items-center"><button aria-label="Open navigation menu" class="lg:hidden p-2.5 text-slate-500 bg-slate-100 dark:bg-slate-800 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors mr-3" id="instructor-mobile-menu-btn"><span class="material-symbols-outlined">menu_open</span></button><h1 class="text-lg font-semibold dark:text-white" id="header-page-title">Dashboard</h1></div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" onclick="document.documentElement.classList.toggle('dark')">
+<span class="material-symbols-outlined">dark_mode</span>
+</button>
+<div class="flex items-center gap-3 pl-4 border-l border-slate-200 dark:border-slate-800 cursor-pointer hover:opacity-80 transition-opacity" id="global-profile-header-container" onclick="window.location.href='/src/pages/instructor/instructor-profile/index.html'">
+<div class="text-right hidden sm:block">
+<p class="user-display-name text-sm font-medium dark:text-white">Instructor account</p>
+<p class="text-xs text-slate-500" data-role="profile-meta">ID: 32342</p>
+</div>
+<div class="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-slate-100 text-slate-400 dark:bg-slate-800 border-2 border-primary/20 hover:border-primary transition-colors">
+<span class="material-symbols-outlined text-2xl">account_circle</span>
+</div>
+</div>
+</div>
+</header>
+<!-- DYNAMIC CONTENT AREA -->
+<main class="flex-1 bg-background-light dark:bg-background-dark pb-20 relative" id="instructor-content-area">
+<!-- MANDATORY PROFILE COMPLETION BLOCKER -->
+<div class="fixed inset-0 z-[100] bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-sm hidden items-center justify-center" id="mandatory-profile-blocker">
+<div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-8 max-w-lg w-full mx-4 shadow-2xl text-center">
+<div class="w-16 h-16 bg-amber-50 dark:bg-amber-900/30 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-6">
+<span class="material-symbols-outlined text-3xl">how_to_reg</span>
+</div>
+<h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-3">Profile Incomplete</h2>
+<p class="text-slate-500 dark:text-slate-400 mb-8">
                         Complete your Instructor Profile to unlock your dashboard features. You must finish setting up
                         your personal info, teaching details, and payout methods before continuing.
                     </p>
-                    <button
-                        onclick="window.location.href='/src/pages/instructor/instructor-profile/index.html?setup=true'"
-                        class="w-full bg-primary hover:bg-indigo-700 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all">
+<button class="w-full bg-primary hover:bg-indigo-700 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all" onclick="window.location.href='/src/pages/instructor/instructor-profile/index.html?setup=true'">
                         Complete Profile Setup <span class="material-symbols-outlined text-xl">arrow_forward</span>
-                    </button>
-                </div>
-            </div>
-            <script type="module">
+</button>
+</div>
+</div>
+<script type="module">
                 import { AuthService } from '/src/services/authService.js';
 
                 document.addEventListener('DOMContentLoaded', async () => {
@@ -189,167 +161,134 @@
                     }
                 });
             </script>
-
-            <div class="px-8 pb-8 pt-2 max-w-7xl mx-auto">
-                <div class="mb-10">
-                    <h2 class="text-3xl font-bold dark:text-white">Welcome to Tacliimi, <span
-                            class="auto-welcome-name capitalize">Instructor</span>!</h2>
-                    <p class="text-slate-500 mt-2 text-lg">Your dashboard provides an overview of your teaching success.
+<div class="px-8 pb-8 pt-2 max-w-7xl mx-auto">
+<div class="mb-10">
+<h2 class="text-3xl font-bold dark:text-white">Welcome to Tacliimi, <span class="auto-welcome-name capitalize">Instructor</span>!</h2>
+<p class="text-slate-500 mt-2 text-lg">Your dashboard provides an overview of your teaching success.
                     </p>
-                </div>
-                <!-- DASHBOARD WIDGETS -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-                    <!-- Total Earnings (Existing) -->
-                    <div
-                        class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
-                        <div class="flex items-center gap-3 mb-3">
-                            <div
-                                class="w-10 h-10 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 rounded-xl flex items-center justify-center">
-                                <span class="material-symbols-outlined">payments</span>
-                            </div>
-                            <h3 class="font-semibold text-slate-500 dark:text-slate-400 text-sm">Total Earnings</h3>
-                        </div>
-                        <div id="total-earnings-metric" class="text-3xl font-bold dark:text-white mb-1">$0.00</div>
-                        <p class="text-slate-400 text-xs">All-time life revenue</p>
-                    </div>
-
-                    <!-- Total Courses (Existing) -->
-                    <div
-                        class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
-                        <div class="flex items-center gap-3 mb-3">
-                            <div
-                                class="w-10 h-10 bg-indigo-50 dark:bg-indigo-900/30 text-primary rounded-xl flex items-center justify-center">
-                                <span class="material-symbols-outlined">auto_stories</span>
-                            </div>
-                            <h3 class="font-semibold text-slate-500 dark:text-slate-400 text-sm">Total Courses</h3>
-                        </div>
-                        <div id="total-courses-metric" class="text-3xl font-bold dark:text-white mb-1">0</div>
-                        <p id="total-courses-desc" class="text-slate-400 text-xs">Your portfolio size</p>
-                    </div>
-
-                    <!-- Total Students (New) -->
-                    <div
-                        class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
-                        <div class="flex items-center gap-3 mb-3">
-                            <div
-                                class="w-10 h-10 bg-amber-50 dark:bg-amber-900/30 text-amber-600 rounded-xl flex items-center justify-center">
-                                <span class="material-symbols-outlined">group</span>
-                            </div>
-                            <h3 class="font-semibold text-slate-500 dark:text-slate-400 text-sm">Enrolled Students</h3>
-                        </div>
-                        <div id="total-students-metric" class="text-3xl font-bold dark:text-white mb-1">0</div>
-                        <p class="text-slate-400 text-xs">Global reach</p>
-                    </div>
-
-                    <!-- Mentorship Activity (New) -->
-                    <div
-                        class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
-                        <div class="flex items-center gap-3 mb-3">
-                            <div
-                                class="w-10 h-10 bg-rose-50 dark:bg-rose-900/30 text-rose-600 rounded-xl flex items-center justify-center">
-                                <span class="material-symbols-outlined">forum</span>
-                            </div>
-                            <h3 class="font-semibold text-slate-500 dark:text-slate-400 text-sm">Active Mentorship</h3>
-                        </div>
-                        <div id="mentorship-sessions-metric" class="text-3xl font-bold dark:text-white mb-1">0</div>
-                        <p id="next-session-desc" class="text-slate-400 text-xs">Pending sessions</p>
-                    </div>
-                </div>
-
-                <!-- QUICK ACTIONS & FILTER BAR -->
-                <div
-                    class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 mb-8 flex flex-wrap items-center justify-between gap-4">
-                    <div class="flex flex-wrap items-center gap-4 flex-1">
-                        <div class="relative flex-1 max-w-md">
-                            <span
-                                class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
-                            <input type="text" id="course-search-input"
-                                placeholder="Search courses by name, ID or category..."
-                                class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20 transition-all dark:text-white">
-                        </div>
-                        <select id="status-filter"
-                            class="bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm py-2.5 px-4 focus:ring-2 focus:ring-primary/20 dark:text-white">
-                            <option value="all">All Statuses</option>
-                            <option value="published">Published</option>
-                            <option value="pending_review">Pending Review</option>
-                            <option value="draft">Draft</option>
-                            <option value="rejected">Rejected</option>
-                        </select>
-                    </div>
-                    <button onclick="window.location.href='/src/pages/instructor/instructor-courses/wizard.html'"
-                        class="bg-primary hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl flex items-center gap-2 font-semibold transition-all shadow-lg shadow-indigo-100 dark:shadow-none whitespace-nowrap">
-                        <span class="material-symbols-outlined text-xl">add_circle</span>
+</div>
+<!-- DASHBOARD WIDGETS -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+<!-- Total Earnings (Existing) -->
+<div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
+<div class="flex items-center gap-3 mb-3">
+<div class="w-10 h-10 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 rounded-xl flex items-center justify-center">
+<span class="material-symbols-outlined">payments</span>
+</div>
+<h3 class="font-semibold text-slate-500 dark:text-slate-400 text-sm">Total Earnings</h3>
+</div>
+<div class="text-3xl font-bold dark:text-white mb-1" id="total-earnings-metric">$0.00</div>
+<p class="text-slate-400 text-xs">All-time life revenue</p>
+</div>
+<!-- Total Courses (Existing) -->
+<div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
+<div class="flex items-center gap-3 mb-3">
+<div class="w-10 h-10 bg-indigo-50 dark:bg-indigo-900/30 text-primary rounded-xl flex items-center justify-center">
+<span class="material-symbols-outlined">auto_stories</span>
+</div>
+<h3 class="font-semibold text-slate-500 dark:text-slate-400 text-sm">Total Courses</h3>
+</div>
+<div class="text-3xl font-bold dark:text-white mb-1" id="total-courses-metric">0</div>
+<p class="text-slate-400 text-xs" id="total-courses-desc">Your portfolio size</p>
+</div>
+<!-- Total Students (New) -->
+<div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
+<div class="flex items-center gap-3 mb-3">
+<div class="w-10 h-10 bg-amber-50 dark:bg-amber-900/30 text-amber-600 rounded-xl flex items-center justify-center">
+<span class="material-symbols-outlined">group</span>
+</div>
+<h3 class="font-semibold text-slate-500 dark:text-slate-400 text-sm">Enrolled Students</h3>
+</div>
+<div class="text-3xl font-bold dark:text-white mb-1" id="total-students-metric">0</div>
+<p class="text-slate-400 text-xs">Global reach</p>
+</div>
+<!-- Mentorship Activity (New) -->
+<div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
+<div class="flex items-center gap-3 mb-3">
+<div class="w-10 h-10 bg-rose-50 dark:bg-rose-900/30 text-rose-600 rounded-xl flex items-center justify-center">
+<span class="material-symbols-outlined">forum</span>
+</div>
+<h3 class="font-semibold text-slate-500 dark:text-slate-400 text-sm">Active Mentorship</h3>
+</div>
+<div class="text-3xl font-bold dark:text-white mb-1" id="mentorship-sessions-metric">0</div>
+<p class="text-slate-400 text-xs" id="next-session-desc">Pending sessions</p>
+</div>
+</div>
+<!-- QUICK ACTIONS & FILTER BAR -->
+<div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 mb-8 flex flex-wrap items-center justify-between gap-4">
+<div class="flex flex-wrap items-center gap-4 flex-1">
+<div class="relative flex-1 max-w-md">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+<input class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20 transition-all dark:text-white" id="course-search-input" placeholder="Search courses by name, ID or category..." type="text"/>
+</div>
+<select class="bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm py-2.5 px-4 focus:ring-2 focus:ring-primary/20 dark:text-white" id="status-filter">
+<option value="all">All Statuses</option>
+<option value="published">Published</option>
+<option value="pending_review">Pending Review</option>
+<option value="draft">Draft</option>
+<option value="rejected">Rejected</option>
+</select>
+</div>
+<button class="bg-primary hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl flex items-center gap-2 font-semibold transition-all shadow-lg shadow-indigo-100 dark:shadow-none whitespace-nowrap" onclick="window.location.href='/src/pages/instructor/instructor-courses/wizard.html'">
+<span class="material-symbols-outlined text-xl">add_circle</span>
                         Create New Course
                     </button>
-                </div>
-
-                <!-- PORTFOLIO SECTION -->
-                <div id="dashboard-portfolio-container">
-                    <!-- LOADING STATE -->
-                    <div id="portfolio-loading" class="py-20 flex flex-col items-center justify-center text-slate-400">
-                        <div
-                            class="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4">
-                        </div>
-                        <p>Loading your portfolio...</p>
-                    </div>
-
-                    <!-- EMPTY STATE (Hidden by default) -->
-                    <div id="portfolio-empty"
-                        class="hidden bg-white dark:bg-slate-900 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 p-16 flex flex-col items-center text-center">
-                        <div
-                            class="w-24 h-24 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-6">
-                            <span
-                                class="material-symbols-outlined text-slate-300 dark:text-slate-600 text-5xl">auto_stories</span>
-                        </div>
-                        <h3 class="text-xl font-bold dark:text-white mb-2">You haven't created any courses yet</h3>
-                        <p class="text-slate-500 max-w-sm mb-8">Your journey as an educator starts here. Create your
+</div>
+<!-- PORTFOLIO SECTION -->
+<div id="dashboard-portfolio-container">
+<!-- LOADING STATE -->
+<div class="py-20 flex flex-col items-center justify-center text-slate-400" id="portfolio-loading">
+<div class="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4">
+</div>
+<p>Loading your portfolio...</p>
+</div>
+<!-- EMPTY STATE (Hidden by default) -->
+<div class="hidden bg-white dark:bg-slate-900 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 p-16 flex flex-col items-center text-center" id="portfolio-empty">
+<div class="w-24 h-24 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-6">
+<span class="material-symbols-outlined text-slate-300 dark:text-slate-600 text-5xl">auto_stories</span>
+</div>
+<h3 class="text-xl font-bold dark:text-white mb-2">You haven't created any courses yet</h3>
+<p class="text-slate-500 max-w-sm mb-8">Your journey as an educator starts here. Create your
                             first course and reach thousands of students worldwide.</p>
-                        <button onclick="window.location.href='/src/pages/instructor/instructor-courses/wizard.html'"
-                            class="bg-primary hover:bg-indigo-700 text-white px-8 py-4 rounded-xl flex items-center gap-3 font-semibold transition-all shadow-xl shadow-indigo-200 dark:shadow-none hover:scale-105 active:scale-95">
-                            <span class="material-symbols-outlined text-2xl">add_circle</span>
+<button class="bg-primary hover:bg-indigo-700 text-white px-8 py-4 rounded-xl flex items-center gap-3 font-semibold transition-all shadow-xl shadow-indigo-200 dark:shadow-none hover:scale-105 active:scale-95" onclick="window.location.href='/src/pages/instructor/instructor-courses/wizard.html'">
+<span class="material-symbols-outlined text-2xl">add_circle</span>
                             Create Your First Course
                         </button>
-                    </div>
-
-                    <!-- DATA GRID -->
-                    <div id="portfolio-grid-wrapper" class="hidden">
-                        <div
-                            class="overflow-x-auto bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
-                            <table class="w-full text-left">
-                                <thead>
-                                    <tr
-                                        class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">
-                                        <th class="px-6 py-4">Course Details</th>
-                                        <th class="px-6 py-4">Category / ID</th>
-                                        <th class="px-6 py-4">Status</th>
-                                        <th class="px-6 py-4">Performance</th>
-                                        <th class="px-6 py-4">Price</th>
-                                        <th class="px-6 py-4 text-right">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="portfolio-table-body"
-                                    class="divide-y divide-slate-100 dark:divide-slate-800 text-sm">
-                                    <!-- Dynamic Rows -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-                <footer class="mt-16 py-8 border-t border-slate-200 dark:border-slate-800 text-center">
-                    <p class="text-xs text-slate-400 font-mono uppercase tracking-widest">ONBOARDING PHASE: STEP 1</p>
-                    <div class="flex items-center justify-center gap-4 mt-2 text-xs text-slate-500">
-                        <span>Platform Status: <span class="text-emerald-500 font-medium uppercase">Active</span></span>
-                        <span class="text-slate-300 dark:text-slate-700">|</span>
-                        <a class="text-primary hover:underline" href="#">Help Center</a>
-                        <span class="text-slate-300 dark:text-slate-700">|</span>
-                        <a class="text-primary hover:underline" href="#">Privacy Policy</a>
-                    </div>
-                </footer>
-            </div>
-
-        </main>
-
-        <script type="module">
+</div>
+<!-- DATA GRID -->
+<div class="hidden" id="portfolio-grid-wrapper">
+<div class="overflow-x-auto bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
+<table class="w-full text-left">
+<thead>
+<tr class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">
+<th class="px-6 py-4">Course Details</th>
+<th class="px-6 py-4">Category / ID</th>
+<th class="px-6 py-4">Status</th>
+<th class="px-6 py-4">Performance</th>
+<th class="px-6 py-4">Price</th>
+<th class="px-6 py-4 text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-sm" id="portfolio-table-body">
+<!-- Dynamic Rows -->
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<footer class="mt-16 py-8 border-t border-slate-200 dark:border-slate-800 text-center">
+<p class="text-xs text-slate-400 font-mono uppercase tracking-widest">ONBOARDING PHASE: STEP 1</p>
+<div class="flex items-center justify-center gap-4 mt-2 text-xs text-slate-500">
+<span>Platform Status: <span class="text-emerald-500 font-medium uppercase">Active</span></span>
+<span class="text-slate-300 dark:text-slate-700">|</span>
+<a class="text-primary hover:underline" href="#">Help Center</a>
+<span class="text-slate-300 dark:text-slate-700">|</span>
+<a class="text-primary hover:underline" href="#">Privacy Policy</a>
+</div>
+</footer>
+</div>
+</main>
+<script type="module">
             import { supabase } from '/src/services/supabaseClient.js';
             import { AuthService } from '/src/services/authService.js';
             import { CourseService } from '/src/services/courseService.js';
@@ -624,14 +563,39 @@
 
             document.addEventListener('DOMContentLoaded', initDashboard);
         </script>
-    </div>
-
-    <!-- Router Logic -->
-    <script type="module" src="/src/utils/js/instructor-app.js"></script>
-    <script src="/src/pages/instructor/instructor-mentorship/mentorship.js"></script>
-
-
-
+</div>
+<!-- Router Logic -->
+<script src="/src/utils/js/instructor-app.js" type="module"></script>
+<script type="module" src="/src/pages/instructor/instructor-mentorship/mentorship.js"></script>
+<script>
+(function() {
+    var btn = document.getElementById('instructor-mobile-menu-btn');
+    var sidebar = document.getElementById('instructor-sidebar');
+    var overlay = document.getElementById('sidebar-overlay');
+    if (!btn || !sidebar || !overlay) return;
+    btn.addEventListener('click', function() {
+        sidebar.classList.toggle('-translate-x-full');
+        overlay.classList.toggle('hidden');
+    });
+    overlay.addEventListener('click', function() {
+        sidebar.classList.add('-translate-x-full');
+        overlay.classList.add('hidden');
+    });
+})();
+</script>
+<script>
+// Defer sidebar transition to avoid slide-in animation on desktop page load
+window.addEventListener('load', function() {
+    var sidebar = document.getElementById('instructor-sidebar');
+    if (sidebar) {
+        // Only enable transition on mobile (below lg=1024px)
+        if (window.innerWidth < 1024) {
+            sidebar.classList.add('transition-transform', 'duration-300');
+        }
+        // No transition on desktop — already at lg:translate-x-0, nothing to animate
+    }
+});
+</script>
 </body>
-
 </html>
+

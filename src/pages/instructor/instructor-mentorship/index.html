@@ -1,16 +1,14 @@
 <!DOCTYPE html>
-<html lang="en">
 
+<html lang="en">
 <head>
-    <meta charset="utf-8" />
-    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>Instructor Dashboard | Tacliimi Learn</title>
-    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
-        rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
-        rel="stylesheet" />
-    <script>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Instructor Dashboard | Tacliimi Learn</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script>
         tailwind.config = {
             darkMode: "class",
             theme: {
@@ -31,7 +29,7 @@
             },
         };
     </script>
-    <style type="text/tailwindcss">
+<style type="text/tailwindcss">
         body { font-family: 'Inter', sans-serif; }
         .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
         
@@ -45,12 +43,11 @@
             pointer-events: none;
         }
     </style>
-    <script type="module" src="/src/services/globalProfile.js"></script>
-    <script>
+<script src="/src/services/globalProfile.js" type="module"></script>
+<script>
         // Removed synchronous Auth check
     </script>
-
-    <script type="module">
+<script type="module">
         import { AuthService } from '/src/services/authService.js';
         
         // If the URL contains an access token from an email link or OAuth, do not prematurely redirect
@@ -62,346 +59,322 @@
             });
         }
     </script>
-
 </head>
-
-<body
-    class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 transition-colors duration-200">
-    <aside
-        class="fixed left-0 top-0 h-full w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 hidden lg:flex flex-col z-20">
-        <div class="p-6 border-b border-slate-100 dark:border-slate-800">
-            <div class="flex items-center gap-2 cursor-pointer" onclick="window.location.href='/index.html'">
-                <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                    <span class="material-symbols-outlined text-white text-lg">school</span>
-                </div>
-                <span class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Tacliimi</span>
-            </div>
-        </div>
-        <nav class="flex-1 p-4 space-y-1" id="instructor-sidebar-nav">
-            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                href="/src/pages/instructor/instructor-dashboard/">
-                <span class="material-symbols-outlined">dashboard</span>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 transition-colors duration-200"><div class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[50] hidden lg:hidden" id="sidebar-overlay"></div>
+<aside class="fixed left-0 top-0 h-full w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex-col flex z-[60] -translate-x-full lg:translate-x-0" id="instructor-sidebar">
+<div class="p-6 border-b border-slate-100 dark:border-slate-800">
+<div class="flex items-center gap-2 cursor-pointer" onclick="window.location.href='/index.html'">
+<div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-lg">school</span>
+</div>
+<span class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Tacliimi</span>
+</div>
+</div>
+<nav class="flex-1 p-4 space-y-1" id="instructor-sidebar-nav">
+<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-dashboard/">
+<span class="material-symbols-outlined">dashboard</span>
                 Dashboard
             </a>
-            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                href="/src/pages/instructor/instructor-courses/">
-                <span class="material-symbols-outlined">auto_stories</span>
+<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-courses/">
+<span class="material-symbols-outlined">auto_stories</span>
                 My Courses
             </a>
-            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                href="/src/pages/instructor/instructor-mentorship/">
-                <span class="material-symbols-outlined">groups</span>
+<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-mentorship/">
+<span class="material-symbols-outlined">groups</span>
                 Mentorship
             </a>
-            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                href="/src/pages/instructor/instructor-analytics/">
-                <span class="material-symbols-outlined">analytics</span>
+<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-analytics/">
+<span class="material-symbols-outlined">analytics</span>
                 Analytics
             </a>
-            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                href="/src/pages/instructor/instructor-earnings/">
-                <span class="material-symbols-outlined">payments</span>
+<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-earnings/">
+<span class="material-symbols-outlined">payments</span>
                 Earnings
             </a>
-            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                href="/src/pages/instructor/instructor-communications/">
-                <span class="material-symbols-outlined">message</span>
+<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-communications/">
+<span class="material-symbols-outlined">message</span>
                 Communications
             </a>
-        </nav>
-    </aside>
-
-    <div class="lg:ml-64 min-h-screen flex flex-col">
-        <header
-            class="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-8 sticky top-0 z-10 shrink-0">
-            <h1 class="text-lg font-semibold dark:text-white" id="header-page-title">Mentorship</h1>
-            <div class="flex items-center gap-4">
-
-                <button class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-                    onclick="document.documentElement.classList.toggle('dark')">
-                    <span class="material-symbols-outlined">dark_mode</span>
-                </button>
-                <div id="global-profile-header-container" class="flex items-center gap-3 pl-4 border-l border-slate-200 dark:border-slate-800 cursor-pointer hover:opacity-80 transition-opacity"
-                    onclick="window.location.href='/src/pages/instructor/instructor-profile/index.html'">
-                    <div class="text-right hidden sm:block">
-                        <p class="text-sm font-medium dark:text-white">Instructor account</p>
-                        <p class="text-xs text-slate-500">ID: 32342</p>
-                    </div>
-                    <div
-                        class="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-slate-100 text-slate-400 dark:bg-slate-800 border-2 border-primary/20 hover:border-primary transition-colors">
-                        <span class="material-symbols-outlined text-2xl">account_circle</span>
-                    </div>
-                </div>
-            </div>
-        </header>
-
-        <!-- DYNAMIC CONTENT AREA -->
-        <main id="instructor-content-area" class="flex-1 bg-background-light dark:bg-background-dark pb-20">
-
-
-            <div class="flex-1 overflow-y-auto px-8 pb-8 pt-2 bg-background-light dark:bg-background-dark">
-                <div class="max-w-6xl mx-auto space-y-8">
-                    <div class="flex flex-col gap-1">
-                        <h1 class="text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Mentorship
+</nav>
+</aside>
+<div class="lg:ml-64 min-h-screen flex flex-col">
+<header class="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-8 sticky top-0 z-10 shrink-0 w-full">
+<div class="flex items-center"><button aria-label="Open navigation menu" class="lg:hidden p-2.5 text-slate-500 bg-slate-100 dark:bg-slate-800 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors mr-3" id="instructor-mobile-menu-btn"><span class="material-symbols-outlined">menu_open</span></button><h1 class="text-lg font-semibold dark:text-white" id="header-page-title">Mentorship</h1></div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" onclick="document.documentElement.classList.toggle('dark')">
+<span class="material-symbols-outlined">dark_mode</span>
+</button>
+<div class="flex items-center gap-3 pl-4 border-l border-slate-200 dark:border-slate-800 cursor-pointer hover:opacity-80 transition-opacity" id="global-profile-header-container" onclick="window.location.href='/src/pages/instructor/instructor-profile/index.html'">
+<div class="text-right hidden sm:block">
+<p class="text-sm font-medium dark:text-white">Instructor account</p>
+<p class="text-xs text-slate-500">ID: 32342</p>
+</div>
+<div class="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-slate-100 text-slate-400 dark:bg-slate-800 border-2 border-primary/20 hover:border-primary transition-colors">
+<span class="material-symbols-outlined text-2xl">account_circle</span>
+</div>
+</div>
+</div>
+</header>
+<!-- DYNAMIC CONTENT AREA -->
+<main class="flex-1 bg-background-light dark:bg-background-dark pb-20" id="instructor-content-area">
+<div class="flex-1 overflow-y-auto px-8 pb-8 pt-2 bg-background-light dark:bg-background-dark">
+<div class="max-w-6xl mx-auto space-y-8">
+<div class="flex flex-col gap-1">
+<h1 class="text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Mentorship
                             Overview</h1>
-                        <p class="text-slate-500 dark:text-slate-400 mt-1">Manage your sessions, students, and profile
+<p class="text-slate-500 dark:text-slate-400 mt-1">Manage your sessions, students, and profile
                             settings.</p>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        <!-- Card 1: Upcoming Sessions -->
-                        <div class="rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden hover:shadow-md transition-shadow">
-                            <div class="flex items-center justify-between mb-4">
-                                <span class="material-symbols-outlined text-primary bg-primary/10 p-2 rounded-lg">event</span>
-                                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Metrics</span>
-                            </div>
-                            <p class="text-slate-600 dark:text-slate-400 text-sm font-medium">Upcoming Sessions</p>
-                            <div class="flex items-end gap-3 mt-1">
-                                <p id="mentor-metric-upcoming" class="text-slate-900 dark:text-slate-100 text-4xl font-extrabold text-transparent bg-clip-text animate-pulse bg-slate-300 dark:bg-slate-700 w-12 h-10 rounded">0</p>
-                            </div>
-                        </div>
-                        
-                        <!-- Card 2: Total Hours Guided -->
-                        <div class="rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden hover:shadow-md transition-shadow">
-                            <div class="flex items-center justify-between mb-4">
-                                <span class="material-symbols-outlined text-green-500 bg-green-500/10 p-2 rounded-lg">timer</span>
-                                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Historical</span>
-                            </div>
-                            <p class="text-slate-600 dark:text-slate-400 text-sm font-medium">Total Hours Guided</p>
-                            <div class="flex items-end gap-3 mt-1">
-                                <p id="mentor-metric-hours" class="text-slate-900 dark:text-slate-100 text-4xl font-extrabold text-transparent bg-clip-text animate-pulse bg-slate-300 dark:bg-slate-700 w-12 h-10 rounded">0</p>
-                            </div>
-                        </div>
-                        
-                        <!-- Card 3: New Requests -->
-                        <div class="rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden hover:shadow-md transition-shadow">
-                            <div class="flex items-center justify-between mb-4">
-                                <span class="material-symbols-outlined text-amber-500 bg-amber-500/10 p-2 rounded-lg">pending_actions</span>
-                                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Alerts</span>
-                            </div>
-                            <p class="text-slate-600 dark:text-slate-400 text-sm font-medium">Action Required (Requests)</p>
-                            <div class="flex items-end gap-3 mt-1">
-                                <p id="mentor-metric-requests" class="text-slate-900 dark:text-slate-100 text-4xl font-extrabold text-transparent bg-clip-text animate-pulse bg-slate-300 dark:bg-slate-700 w-12 h-10 rounded">0</p>
-                            </div>
-                        </div>
-                        
-                        <!-- Card 4: Profit (Cleared only) -->
-                        <div class="rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden hover:shadow-md transition-shadow relative">
-                            <div class="flex items-center justify-between mb-4">
-                                <span class="material-symbols-outlined text-indigo-500 bg-indigo-500/10 p-2 rounded-lg">account_balance_wallet</span>
-                                <div class="flex items-center gap-2">
-                                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Profit</span>
-                                </div>
-                            </div>
-                            <div class="flex justify-between items-end">
-                                <div>
-                                    <p class="text-slate-600 dark:text-slate-400 text-sm font-medium mb-1">Mentorship Cleared Earnings</p>
-                                    <div class="flex items-end gap-3 mt-1">
-                                        <p id="mentor-metric-profit" class="text-slate-900 dark:text-slate-100 text-4xl font-extrabold text-transparent bg-clip-text animate-pulse bg-slate-300 dark:bg-slate-700 w-16 h-10 rounded">$0</p>
-                                    </div>
-                                </div>
-                                <select id="mentor-profit-filter" class="w-auto ml-2 bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-[11px] font-bold text-slate-500 dark:text-slate-400 py-1.5 px-2 focus:ring-0 cursor-pointer uppercase tracking-wider">
-                                    <option value="all" selected>All Time</option>
-                                    <option value="today">Today</option>
-                                    <option value="7days">Last 7 Days</option>
-                                    <option value="30days">This Month</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Tab container -->
-                    <div
-                        class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
-                        <div
-                            class="border-b border-slate-100 dark:border-slate-800 px-6 overflow-x-auto bg-slate-50/30 dark:bg-slate-800/30">
-                            <div class="flex gap-8 whitespace-nowrap" id="mentorship-tab-bar">
-                                <button
-                                    class="mentorship-tab py-4 border-b-2 border-brand-purple text-brand-purple text-sm font-bold flex items-center gap-2"
-                                    data-tab="setup">
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+<!-- Card 1: Upcoming Sessions -->
+<div class="rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden hover:shadow-md transition-shadow">
+<div class="flex items-center justify-between mb-4">
+<span class="material-symbols-outlined text-primary bg-primary/10 p-2 rounded-lg">event</span>
+<span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Metrics</span>
+</div>
+<p class="text-slate-600 dark:text-slate-400 text-sm font-medium">Upcoming Sessions</p>
+<div class="flex items-end gap-3 mt-1">
+<p class="text-slate-900 dark:text-slate-100 text-4xl font-extrabold text-transparent bg-clip-text animate-pulse bg-slate-300 dark:bg-slate-700 w-12 h-10 rounded" id="mentor-metric-upcoming">0</p>
+</div>
+</div>
+<!-- Card 2: Total Hours Guided -->
+<div class="rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden hover:shadow-md transition-shadow">
+<div class="flex items-center justify-between mb-4">
+<span class="material-symbols-outlined text-green-500 bg-green-500/10 p-2 rounded-lg">timer</span>
+<span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Historical</span>
+</div>
+<p class="text-slate-600 dark:text-slate-400 text-sm font-medium">Total Hours Guided</p>
+<div class="flex items-end gap-3 mt-1">
+<p class="text-slate-900 dark:text-slate-100 text-4xl font-extrabold text-transparent bg-clip-text animate-pulse bg-slate-300 dark:bg-slate-700 w-12 h-10 rounded" id="mentor-metric-hours">0</p>
+</div>
+</div>
+<!-- Card 3: New Requests -->
+<div class="rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden hover:shadow-md transition-shadow">
+<div class="flex items-center justify-between mb-4">
+<span class="material-symbols-outlined text-amber-500 bg-amber-500/10 p-2 rounded-lg">pending_actions</span>
+<span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Alerts</span>
+</div>
+<p class="text-slate-600 dark:text-slate-400 text-sm font-medium">Action Required (Requests)</p>
+<div class="flex items-end gap-3 mt-1">
+<p class="text-slate-900 dark:text-slate-100 text-4xl font-extrabold text-transparent bg-clip-text animate-pulse bg-slate-300 dark:bg-slate-700 w-12 h-10 rounded" id="mentor-metric-requests">0</p>
+</div>
+</div>
+<!-- Card 4: Profit (Cleared only) -->
+<div class="rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden hover:shadow-md transition-shadow relative">
+<div class="flex items-center justify-between mb-4">
+<span class="material-symbols-outlined text-indigo-500 bg-indigo-500/10 p-2 rounded-lg">account_balance_wallet</span>
+<div class="flex items-center gap-2">
+<span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Profit</span>
+</div>
+</div>
+<div class="flex justify-between items-end">
+<div>
+<p class="text-slate-600 dark:text-slate-400 text-sm font-medium mb-1">Mentorship Cleared Earnings</p>
+<div class="flex items-end gap-3 mt-1">
+<p class="text-slate-900 dark:text-slate-100 text-4xl font-extrabold text-transparent bg-clip-text animate-pulse bg-slate-300 dark:bg-slate-700 w-16 h-10 rounded" id="mentor-metric-profit">$0</p>
+</div>
+</div>
+<select class="w-auto ml-2 bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-[11px] font-bold text-slate-500 dark:text-slate-400 py-1.5 px-2 focus:ring-0 cursor-pointer uppercase tracking-wider" id="mentor-profit-filter">
+<option selected="" value="all">All Time</option>
+<option value="today">Today</option>
+<option value="7days">Last 7 Days</option>
+<option value="30days">This Month</option>
+</select>
+</div>
+</div>
+</div>
+<!-- Tab container -->
+<div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+<div class="border-b border-slate-100 dark:border-slate-800 px-6 overflow-x-auto bg-slate-50/30 dark:bg-slate-800/30">
+<div class="flex gap-8 whitespace-nowrap" id="mentorship-tab-bar">
+<button class="mentorship-tab py-4 border-b-2 border-brand-purple text-brand-purple text-sm font-bold flex items-center gap-2" data-tab="setup">
                                     Get Started
                                 </button>
-                                <button
-                                    class="mentorship-tab py-4 border-b-2 border-transparent text-slate-400 dark:text-slate-500 text-sm font-bold flex items-center gap-2 cursor-not-allowed"
-                                    disabled data-tab="upcoming">
-                                    <span>Upcoming</span>
-                                    <span class="material-symbols-outlined text-[14px]">lock</span>
-                                </button>
-                                <button
-                                    class="mentorship-tab py-4 border-b-2 border-transparent text-slate-400 dark:text-slate-500 text-sm font-bold flex items-center gap-2 cursor-not-allowed"
-                                    disabled data-tab="requests">
-                                    <span>Requests</span>
-                                    <span class="material-symbols-outlined text-[14px]">lock</span>
-                                </button>
-                                <button
-                                    class="mentorship-tab py-4 border-b-2 border-transparent text-slate-400 dark:text-slate-500 text-sm font-bold flex items-center gap-2 cursor-not-allowed"
-                                    disabled data-tab="completed">
-                                    <span>Completed</span>
-                                    <span class="material-symbols-outlined text-[14px]">lock</span>
-                                </button>
-                                <button
-                                    class="mentorship-tab py-4 border-b-2 border-transparent text-slate-400 dark:text-slate-500 text-sm font-bold flex items-center gap-2 cursor-not-allowed"
-                                    disabled data-tab="availability">
-                                    <span>Availability</span>
-                                    <span class="material-symbols-outlined text-[14px]">lock</span>
-                                </button>
-                                <button
-                                    class="mentorship-tab py-4 border-b-2 border-transparent text-slate-400 dark:text-slate-500 text-sm font-bold flex items-center gap-2 cursor-not-allowed"
-                                    disabled data-tab="pricing">
-                                    <span>Pricing</span>
-                                    <span class="material-symbols-outlined text-[14px]">lock</span>
-                                </button>
-                                <button
-                                    class="mentorship-tab py-4 border-b-2 border-transparent text-slate-400 dark:text-slate-500 text-sm font-bold flex items-center gap-2 cursor-not-allowed"
-                                    disabled data-tab="privacy">
-                                    <span>Privacy</span>
-                                    <span class="material-symbols-outlined text-[14px]">lock</span>
-                                </button>
-                                <button
-                                    class="mentorship-tab py-4 border-b-2 border-transparent text-slate-400 dark:text-slate-500 text-sm font-bold flex items-center gap-2 cursor-not-allowed"
-                                    disabled data-tab="boost">
-                                    <span>Boost</span>
-                                    <span class="material-symbols-outlined text-[14px]">rocket_launch</span>
-                                </button>
-                            </div>
-                        </div>
-                        <!-- DYNAMIC CONTENT -->
-                        <div class="p-8 md:p-12 bg-white dark:bg-slate-900" id="mentorship-dynamic-content">
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-        </main>
-    </div>
-
-    <!-- Messaging Modal -->
-    <div id="booking-message-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-all">
-        <div class="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in duration-300">
-            <!-- Header -->
-            <div class="px-8 py-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
-                <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
-                        <span class="material-symbols-outlined">forum</span>
-                    </div>
-                    <div>
-                        <h3 class="font-bold text-slate-900 dark:text-white" id="modal-student-name">Communication</h3>
-                        <p class="text-xs text-slate-500" id="modal-session-info">Session Discussion</p>
-                    </div>
-                </div>
-                <button class="close-modal-btn p-3 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-400 transition-all">
-                    <span class="material-symbols-outlined">close</span>
-                </button>
-            </div>
-
-            <!-- Chat History -->
-            <div id="chat-history-container" class="flex-1 overflow-y-auto p-8 space-y-6 bg-slate-50/30 dark:bg-slate-900/30 overflow-x-hidden min-h-0">
-                <!-- Messages load here -->
-            </div>
-
-            <!-- Message Input Area -->
-            <div class="p-6 md:p-8 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 shrink-0">
-                <div class="flex flex-col gap-4">
-                    <textarea id="chat-input" rows="2" placeholder="Type your message here..." 
-                        class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none"></textarea>
-                    <div class="flex items-center justify-between gap-4">
-                        <p class="text-[10px] text-slate-400 font-medium italic leading-tight">Messages are sent directly to the student.</p>
-                        <button id="send-message-btn" class="shrink-0 px-6 py-2.5 bg-primary text-white font-bold rounded-xl shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all flex items-center gap-2 text-sm active:scale-95">
-                            <span>Send Message</span>
-                            <span class="material-symbols-outlined !text-white">send</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Topic Modal -->
-    <div id="topic-modal" class="fixed inset-0 z-[9999] hidden flex items-center justify-center p-4">
-        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="window.closeTopicModal()"></div>
-        <div class="relative bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-lg p-8 animate-scale-in border border-slate-200 dark:border-slate-800">
-            <div class="flex items-start justify-between mb-6">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-primary/10 rounded-2xl flex items-center justify-center">
-                        <span class="material-symbols-outlined text-primary text-xl">chat_bubble</span>
-                    </div>
-                    <div>
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Session Topic</p>
-                        <h3 class="font-bold text-slate-900 dark:text-white text-lg" id="topic-modal-name">Student</h3>
-                    </div>
-                </div>
-                <button onclick="window.closeTopicModal()" class="w-9 h-9 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl flex items-center justify-center transition-colors">
-                    <span class="material-symbols-outlined text-slate-500 text-xl">close</span>
-                </button>
-            </div>
-            <div class="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-5 border border-slate-100 dark:border-slate-800 overflow-hidden">
-                <p id="topic-modal-content" class="text-slate-700 dark:text-slate-300 text-sm leading-relaxed whitespace-pre-wrap break-words overflow-wrap-anywhere"></p>
-            </div>
-            <!-- Bottom Close button removed as per user request (X button is sufficient) -->
-        </div>
-    </div>
-
-    <!-- Student Profile Modal -->
-    <div id="student-profile-modal" class="fixed inset-0 z-[9999] hidden flex items-center justify-center p-4">
-        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="window.closeStudentModal()"></div>
-        <div class="relative bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-xl overflow-hidden animate-scale-in border border-slate-200 dark:border-slate-800">
-            <!-- Header/Cover -->
-            <div class="h-32 bg-gradient-to-r from-primary to-purple-600"></div>
-            <div class="px-8 pb-8 transform -translate-y-12">
-                <div class="flex items-end justify-between mb-6">
-                    <div class="relative">
-                        <div class="w-28 h-28 rounded-3xl overflow-hidden border-4 border-white dark:border-slate-900 shadow-xl bg-white">
-                            <img id="student-modal-avatar" src="https://ui-avatars.com/api/?name=Student&background=random&color=fff" class="w-full h-full object-cover" />
-                        </div>
-                    </div>
-                    <button onclick="window.closeStudentModal()" class="w-10 h-10 bg-white dark:bg-slate-800 hover:bg-slate-50 rounded-full flex items-center justify-center transition-all shadow-md">
-                        <span class="material-symbols-outlined text-slate-500">close</span>
-                    </button>
-                </div>
-
-                <div class="space-y-6">
-                    <div>
-                        <h3 id="student-modal-name" class="text-2xl font-bold text-slate-900 dark:text-white">Student Name</h3>
-                        <p id="student-modal-title" class="text-slate-500 font-medium">Aspiring Learner</p>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Email</p>
-                            <p id="student-modal-email" class="text-sm font-bold text-slate-700 dark:text-slate-200 truncate">student@example.com</p>
-                        </div>
-                        <div class="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Phone</p>
-                            <p id="student-modal-phone" class="text-sm font-bold text-slate-700 dark:text-slate-200">Not provided</p>
-                        </div>
-                        <div class="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800 col-span-2">
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Location</p>
-                            <p id="student-modal-location" class="text-sm font-bold text-slate-700 dark:text-slate-200">Not provided</p>
-                        </div>
-                    </div>
-
-                    <div id="student-social-section" class="hidden">
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Social Profiles</p>
-                        <div id="student-social-links" class="flex flex-wrap items-center gap-3">
-                            <!-- Icons will be injected here -->
-                        </div>
-                    </div>
-
-                    <div>
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Interests / Bio</p>
-                        <div class="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
-                            <div id="student-interests-list" class="flex flex-wrap gap-2 mb-3"></div>
-                            <p id="student-modal-bio" class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed italic">"No bio shared yet."</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Router Logic -->
-    <script type="module" src="/src/utils/js/instructor-app.js"></script>
-    <script type="module" src="/src/pages/instructor/instructor-mentorship/mentorship.js"></script>
-
+<button class="mentorship-tab py-4 border-b-2 border-transparent text-slate-400 dark:text-slate-500 text-sm font-bold flex items-center gap-2 cursor-not-allowed" data-tab="upcoming" disabled="">
+<span>Upcoming</span>
+<span class="material-symbols-outlined text-[14px]">lock</span>
+</button>
+<button class="mentorship-tab py-4 border-b-2 border-transparent text-slate-400 dark:text-slate-500 text-sm font-bold flex items-center gap-2 cursor-not-allowed" data-tab="requests" disabled="">
+<span>Requests</span>
+<span class="material-symbols-outlined text-[14px]">lock</span>
+</button>
+<button class="mentorship-tab py-4 border-b-2 border-transparent text-slate-400 dark:text-slate-500 text-sm font-bold flex items-center gap-2 cursor-not-allowed" data-tab="completed" disabled="">
+<span>Completed</span>
+<span class="material-symbols-outlined text-[14px]">lock</span>
+</button>
+<button class="mentorship-tab py-4 border-b-2 border-transparent text-slate-400 dark:text-slate-500 text-sm font-bold flex items-center gap-2 cursor-not-allowed" data-tab="availability" disabled="">
+<span>Availability</span>
+<span class="material-symbols-outlined text-[14px]">lock</span>
+</button>
+<button class="mentorship-tab py-4 border-b-2 border-transparent text-slate-400 dark:text-slate-500 text-sm font-bold flex items-center gap-2 cursor-not-allowed" data-tab="pricing" disabled="">
+<span>Pricing</span>
+<span class="material-symbols-outlined text-[14px]">lock</span>
+</button>
+<button class="mentorship-tab py-4 border-b-2 border-transparent text-slate-400 dark:text-slate-500 text-sm font-bold flex items-center gap-2 cursor-not-allowed" data-tab="privacy" disabled="">
+<span>Privacy</span>
+<span class="material-symbols-outlined text-[14px]">lock</span>
+</button>
+<button class="mentorship-tab py-4 border-b-2 border-transparent text-slate-400 dark:text-slate-500 text-sm font-bold flex items-center gap-2 cursor-not-allowed" data-tab="boost" disabled="">
+<span>Boost</span>
+<span class="material-symbols-outlined text-[14px]">rocket_launch</span>
+</button>
+</div>
+</div>
+<!-- DYNAMIC CONTENT -->
+<div class="p-8 md:p-12 bg-white dark:bg-slate-900" id="mentorship-dynamic-content">
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- Messaging Modal -->
+<div class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-all" id="booking-message-modal">
+<div class="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in duration-300">
+<!-- Header -->
+<div class="px-8 py-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">forum</span>
+</div>
+<div>
+<h3 class="font-bold text-slate-900 dark:text-white" id="modal-student-name">Communication</h3>
+<p class="text-xs text-slate-500" id="modal-session-info">Session Discussion</p>
+</div>
+</div>
+<button class="close-modal-btn p-3 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-400 transition-all">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<!-- Chat History -->
+<div class="flex-1 overflow-y-auto p-8 space-y-6 bg-slate-50/30 dark:bg-slate-900/30 overflow-x-hidden min-h-0" id="chat-history-container">
+<!-- Messages load here -->
+</div>
+<!-- Message Input Area -->
+<div class="p-6 md:p-8 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 shrink-0">
+<div class="flex flex-col gap-4">
+<textarea class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none" id="chat-input" placeholder="Type your message here..." rows="2"></textarea>
+<div class="flex items-center justify-between gap-4">
+<p class="text-[10px] text-slate-400 font-medium italic leading-tight">Messages are sent directly to the student.</p>
+<button class="shrink-0 px-6 py-2.5 bg-primary text-white font-bold rounded-xl shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all flex items-center gap-2 text-sm active:scale-95" id="send-message-btn">
+<span>Send Message</span>
+<span class="material-symbols-outlined !text-white">send</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Topic Modal -->
+<div class="fixed inset-0 z-[9999] hidden flex items-center justify-center p-4" id="topic-modal">
+<div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="window.closeTopicModal()"></div>
+<div class="relative bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-lg p-8 animate-scale-in border border-slate-200 dark:border-slate-800">
+<div class="flex items-start justify-between mb-6">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-primary/10 rounded-2xl flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-xl">chat_bubble</span>
+</div>
+<div>
+<p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Session Topic</p>
+<h3 class="font-bold text-slate-900 dark:text-white text-lg" id="topic-modal-name">Student</h3>
+</div>
+</div>
+<button class="w-9 h-9 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl flex items-center justify-center transition-colors" onclick="window.closeTopicModal()">
+<span class="material-symbols-outlined text-slate-500 text-xl">close</span>
+</button>
+</div>
+<div class="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-5 border border-slate-100 dark:border-slate-800 overflow-hidden">
+<p class="text-slate-700 dark:text-slate-300 text-sm leading-relaxed whitespace-pre-wrap break-words overflow-wrap-anywhere" id="topic-modal-content"></p>
+</div>
+<!-- Bottom Close button removed as per user request (X button is sufficient) -->
+</div>
+</div>
+<!-- Student Profile Modal -->
+<div class="fixed inset-0 z-[9999] hidden flex items-center justify-center p-4" id="student-profile-modal">
+<div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="window.closeStudentModal()"></div>
+<div class="relative bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-xl overflow-hidden animate-scale-in border border-slate-200 dark:border-slate-800">
+<!-- Header/Cover -->
+<div class="h-32 bg-gradient-to-r from-primary to-purple-600"></div>
+<div class="px-8 pb-8 transform -translate-y-12">
+<div class="flex items-end justify-between mb-6">
+<div class="relative">
+<div class="w-28 h-28 rounded-3xl overflow-hidden border-4 border-white dark:border-slate-900 shadow-xl bg-white">
+<img class="w-full h-full object-cover" id="student-modal-avatar" src="https://ui-avatars.com/api/?name=Student&amp;background=random&amp;color=fff"/>
+</div>
+</div>
+<button class="w-10 h-10 bg-white dark:bg-slate-800 hover:bg-slate-50 rounded-full flex items-center justify-center transition-all shadow-md" onclick="window.closeStudentModal()">
+<span class="material-symbols-outlined text-slate-500">close</span>
+</button>
+</div>
+<div class="space-y-6">
+<div>
+<h3 class="text-2xl font-bold text-slate-900 dark:text-white" id="student-modal-name">Student Name</h3>
+<p class="text-slate-500 font-medium" id="student-modal-title">Aspiring Learner</p>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
+<p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Email</p>
+<p class="text-sm font-bold text-slate-700 dark:text-slate-200 truncate" id="student-modal-email">student@example.com</p>
+</div>
+<div class="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
+<p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Phone</p>
+<p class="text-sm font-bold text-slate-700 dark:text-slate-200" id="student-modal-phone">Not provided</p>
+</div>
+<div class="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800 col-span-2">
+<p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Location</p>
+<p class="text-sm font-bold text-slate-700 dark:text-slate-200" id="student-modal-location">Not provided</p>
+</div>
+</div>
+<div class="hidden" id="student-social-section">
+<p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Social Profiles</p>
+<div class="flex flex-wrap items-center gap-3" id="student-social-links">
+<!-- Icons will be injected here -->
+</div>
+</div>
+<div>
+<p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Interests / Bio</p>
+<div class="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
+<div class="flex flex-wrap gap-2 mb-3" id="student-interests-list"></div>
+<p class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed italic" id="student-modal-bio">"No bio shared yet."</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Router Logic -->
+<script src="/src/utils/js/instructor-app.js" type="module"></script>
+<script src="/src/pages/instructor/instructor-mentorship/mentorship.js" type="module"></script>
+<script>
+(function() {
+    var btn = document.getElementById('instructor-mobile-menu-btn');
+    var sidebar = document.getElementById('instructor-sidebar');
+    var overlay = document.getElementById('sidebar-overlay');
+    if (!btn || !sidebar || !overlay) return;
+    btn.addEventListener('click', function() {
+        sidebar.classList.toggle('-translate-x-full');
+        overlay.classList.toggle('hidden');
+    });
+    overlay.addEventListener('click', function() {
+        sidebar.classList.add('-translate-x-full');
+        overlay.classList.add('hidden');
+    });
+})();
+</script>
+<script>
+// Defer sidebar transition to avoid slide-in animation on desktop page load
+window.addEventListener('load', function() {
+    var sidebar = document.getElementById('instructor-sidebar');
+    if (sidebar) {
+        // Only enable transition on mobile (below lg=1024px)
+        if (window.innerWidth < 1024) {
+            sidebar.classList.add('transition-transform', 'duration-300');
+        }
+        // No transition on desktop — already at lg:translate-x-0, nothing to animate
+    }
+});
+</script>
 </body>
-
 </html>
+
+

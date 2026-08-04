@@ -1,17 +1,15 @@
 <!DOCTYPE html>
-<html lang="en">
 
+<html lang="en">
 <head>
-    <meta charset="utf-8" />
-    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>Instructor Dashboard | Tacliimi Learn</title>
-    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
-        rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
-        rel="stylesheet" />
-    <script>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Instructor Dashboard | Tacliimi Learn</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script>
         tailwind.config = {
             darkMode: "class",
             theme: {
@@ -28,12 +26,12 @@
             },
         };
     </script>
-    <style type="text/tailwindcss">
+<style type="text/tailwindcss">
         body { font-family: 'Inter', sans-serif; }
         .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
     </style>
-    <script type="module" src="/src/services/globalProfile.js"></script>
-    <script type="module">
+<script src="/src/services/globalProfile.js" type="module"></script>
+<script type="module">
         import { AuthService } from '/src/services/authService.js';
         const isOAuthRedirect = window.location.hash.includes('access_token=');
         if (!isOAuthRedirect) {
@@ -43,274 +41,216 @@
         }
     </script>
 </head>
-
-<body
-    class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 transition-colors duration-200">
-
-    <!-- Sidebar -->
-    <aside
-        class="fixed left-0 top-0 h-full w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 hidden lg:flex flex-col z-20">
-        <div class="p-6 border-b border-slate-100 dark:border-slate-800">
-            <div class="flex items-center gap-2 cursor-pointer" onclick="window.location.href='/index.html'">
-                <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                    <span class="material-symbols-outlined text-white text-lg">school</span>
-                </div>
-                <span class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Tacliimi</span>
-            </div>
-        </div>
-        <nav class="flex-1 p-4 space-y-1" id="instructor-sidebar-nav">
-            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                href="/src/pages/instructor/instructor-dashboard/">
-                <span class="material-symbols-outlined">dashboard</span> Dashboard
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 transition-colors duration-200"><div class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[50] hidden lg:hidden" id="sidebar-overlay"></div>
+<!-- Sidebar -->
+<aside class="fixed left-0 top-0 h-full w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex-col flex z-[60] -translate-x-full lg:translate-x-0" id="instructor-sidebar">
+<div class="p-6 border-b border-slate-100 dark:border-slate-800">
+<div class="flex items-center gap-2 cursor-pointer" onclick="window.location.href='/index.html'">
+<div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-lg">school</span>
+</div>
+<span class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Tacliimi</span>
+</div>
+</div>
+<nav class="flex-1 p-4 space-y-1" id="instructor-sidebar-nav">
+<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-dashboard/">
+<span class="material-symbols-outlined">dashboard</span> Dashboard
             </a>
-            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                href="/src/pages/instructor/instructor-courses/">
-                <span class="material-symbols-outlined">auto_stories</span> My Courses
+<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-courses/">
+<span class="material-symbols-outlined">auto_stories</span> My Courses
             </a>
-            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                href="/src/pages/instructor/instructor-mentorship/">
-                <span class="material-symbols-outlined">groups</span> Mentorship
+<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-mentorship/">
+<span class="material-symbols-outlined">groups</span> Mentorship
             </a>
-            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                href="/src/pages/instructor/instructor-analytics/">
-                <span class="material-symbols-outlined">analytics</span> Analytics
+<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-analytics/">
+<span class="material-symbols-outlined">analytics</span> Analytics
             </a>
-            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                href="/src/pages/instructor/instructor-earnings/">
-                <span class="material-symbols-outlined">payments</span> Earnings
+<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-earnings/">
+<span class="material-symbols-outlined">payments</span> Earnings
             </a>
-            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                href="/src/pages/instructor/instructor-communications/">
-                <span class="material-symbols-outlined">message</span> Communications
+<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-communications/">
+<span class="material-symbols-outlined">message</span> Communications
             </a>
-        </nav>
-    </aside>
-
-    <div class="lg:ml-64 min-h-screen flex flex-col">
-        <!-- Header -->
-        <header
-            class="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-8 sticky top-0 z-10 shrink-0">
-            <h1 class="text-lg font-semibold dark:text-white" id="header-page-title">My Courses</h1>
-            <div class="flex items-center gap-4">
-
-                <button class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-                    onclick="document.documentElement.classList.toggle('dark')">
-                    <span class="material-symbols-outlined">dark_mode</span>
-                </button>
-                <div id="global-profile-header-container"
-                    class="flex items-center gap-3 pl-4 border-l border-slate-200 dark:border-slate-800 cursor-pointer hover:opacity-80 transition-opacity"
-                    onclick="window.location.href='/src/pages/instructor/instructor-profile/index.html'">
-                    <div class="text-right hidden sm:block">
-                        <p class="text-sm font-medium dark:text-white">Instructor account</p>
-                    </div>
-                    <div
-                        class="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-slate-100 text-slate-400 dark:bg-slate-800 border-2 border-primary/20 hover:border-primary transition-colors">
-                        <span class="material-symbols-outlined text-2xl">account_circle</span>
-                    </div>
-                </div>
-            </div>
-        </header>
-
-        <!-- Main Content -->
-        <main id="instructor-content-area" class="flex-1 bg-background-light dark:bg-background-dark pb-20">
-            <div class="px-8 pb-8 pt-2 max-w-7xl mx-auto">
-
-                <!-- Tabs -->
-                <div class="border-b border-slate-200 dark:border-slate-800 mb-12">
-                    <nav class="flex gap-8 -mb-px" id="course-tabs">
-                        <a class="tab-btn py-4 px-1 text-sm border-b-2 font-bold cursor-pointer transition-all border-indigo-600 text-primary"
-                            data-status="published">Published (<span id="count-published">0</span>)</a>
-                        <a class="tab-btn py-4 px-1 text-sm border-b-2 font-medium cursor-pointer transition-all border-transparent text-slate-500"
-                            data-status="draft">Drafts (<span id="count-draft">0</span>)</a>
-                        <a class="tab-btn py-4 px-1 text-sm border-b-2 font-medium cursor-pointer transition-all border-transparent text-slate-500"
-                            data-status="rejected">Rejected (<span id="count-rejected">0</span>)</a>
-                        <a class="tab-btn py-4 px-1 text-sm border-b-2 font-medium cursor-pointer transition-all border-transparent text-slate-500"
-                            data-status="private">Private (<span id="count-private">0</span>)</a>
-                        <a class="tab-btn py-4 px-1 text-sm border-b-2 font-medium cursor-pointer transition-all border-transparent text-slate-500"
-                            data-status="review">In Review (<span id="count-review">0</span>)</a>
-                    </nav>
-                </div>
-
-                <!-- Course Grid -->
-                <div id="courses-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 hidden"></div>
-
-                <!-- Empty State -->
-                <div id="empty-state" class="mt-20 flex flex-col items-center justify-center text-center">
-                    <div class="relative mb-8">
-                        <div
-                            class="w-40 h-40 bg-indigo-50 dark:bg-slate-800/50 rounded-full flex items-center justify-center">
-                            <span
-                                class="material-symbols-outlined text-primary/40 dark:text-primary/20 text-8xl">shelves</span>
-                        </div>
-                        <div
-                            class="absolute -bottom-2 -right-2 w-16 h-16 bg-white dark:bg-slate-900 rounded-full shadow-lg flex items-center justify-center border border-slate-100 dark:border-slate-800">
-                            <span class="material-symbols-outlined text-primary text-3xl">auto_stories</span>
-                        </div>
-                    </div>
-                    <h2 class="text-3xl font-bold dark:text-white mb-4">Your library is empty</h2>
-                    <p class="text-slate-500 dark:text-slate-400 text-lg max-w-md mb-10 leading-relaxed">Start sharing
+</nav>
+</aside>
+<div class="lg:ml-64 min-h-screen flex flex-col">
+<!-- Header -->
+<header class="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-8 sticky top-0 z-10 shrink-0 w-full">
+<div class="flex items-center"><button aria-label="Open navigation menu" class="lg:hidden p-2.5 text-slate-500 bg-slate-100 dark:bg-slate-800 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors mr-3" id="instructor-mobile-menu-btn"><span class="material-symbols-outlined">menu_open</span></button><h1 class="text-lg font-semibold dark:text-white" id="header-page-title">My Courses</h1></div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" onclick="document.documentElement.classList.toggle('dark')">
+<span class="material-symbols-outlined">dark_mode</span>
+</button>
+<div class="flex items-center gap-3 pl-4 border-l border-slate-200 dark:border-slate-800 cursor-pointer hover:opacity-80 transition-opacity" id="global-profile-header-container" onclick="window.location.href='/src/pages/instructor/instructor-profile/index.html'">
+<div class="text-right hidden sm:block">
+<p class="text-sm font-medium dark:text-white">Instructor account</p>
+</div>
+<div class="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-slate-100 text-slate-400 dark:bg-slate-800 border-2 border-primary/20 hover:border-primary transition-colors">
+<span class="material-symbols-outlined text-2xl">account_circle</span>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Content -->
+<main class="flex-1 bg-background-light dark:bg-background-dark pb-20" id="instructor-content-area">
+<div class="px-8 pb-8 pt-2 max-w-7xl mx-auto">
+<!-- Tabs -->
+<div class="border-b border-slate-200 dark:border-slate-800 mb-12">
+<nav class="flex gap-8 -mb-px" id="course-tabs">
+<a class="tab-btn py-4 px-1 text-sm border-b-2 font-bold cursor-pointer transition-all border-indigo-600 text-primary" data-status="published">Published (<span id="count-published">0</span>)</a>
+<a class="tab-btn py-4 px-1 text-sm border-b-2 font-medium cursor-pointer transition-all border-transparent text-slate-500" data-status="draft">Drafts (<span id="count-draft">0</span>)</a>
+<a class="tab-btn py-4 px-1 text-sm border-b-2 font-medium cursor-pointer transition-all border-transparent text-slate-500" data-status="rejected">Rejected (<span id="count-rejected">0</span>)</a>
+<a class="tab-btn py-4 px-1 text-sm border-b-2 font-medium cursor-pointer transition-all border-transparent text-slate-500" data-status="private">Private (<span id="count-private">0</span>)</a>
+<a class="tab-btn py-4 px-1 text-sm border-b-2 font-medium cursor-pointer transition-all border-transparent text-slate-500" data-status="review">In Review (<span id="count-review">0</span>)</a>
+</nav>
+</div>
+<!-- Course Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 hidden" id="courses-grid"></div>
+<!-- Empty State -->
+<div class="mt-20 flex flex-col items-center justify-center text-center" id="empty-state">
+<div class="relative mb-8">
+<div class="w-40 h-40 bg-indigo-50 dark:bg-slate-800/50 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-primary/40 dark:text-primary/20 text-8xl">shelves</span>
+</div>
+<div class="absolute -bottom-2 -right-2 w-16 h-16 bg-white dark:bg-slate-900 rounded-full shadow-lg flex items-center justify-center border border-slate-100 dark:border-slate-800">
+<span class="material-symbols-outlined text-primary text-3xl">auto_stories</span>
+</div>
+</div>
+<h2 class="text-3xl font-bold dark:text-white mb-4">Your library is empty</h2>
+<p class="text-slate-500 dark:text-slate-400 text-lg max-w-md mb-10 leading-relaxed">Start sharing
                         your knowledge today. Create your first course to build your library.</p>
-                    <button onclick="window.location.href='/src/pages/instructor/instructor-courses/wizard.html'"
-                        class="bg-primary hover:bg-indigo-700 text-white px-10 py-5 rounded-2xl flex items-center gap-3 font-bold text-lg transition-all shadow-2xl shadow-indigo-200 dark:shadow-none hover:scale-[1.02] active:scale-[0.98]">
-                        <span class="material-symbols-outlined text-2xl">add_circle</span>
+<button class="bg-primary hover:bg-indigo-700 text-white px-10 py-5 rounded-2xl flex items-center gap-3 font-bold text-lg transition-all shadow-2xl shadow-indigo-200 dark:shadow-none hover:scale-[1.02] active:scale-[0.98]" onclick="window.location.href='/src/pages/instructor/instructor-courses/wizard.html'">
+<span class="material-symbols-outlined text-2xl">add_circle</span>
                         Create Your First Course
                     </button>
-                </div>
-
-                <footer class="mt-24 py-8 border-t border-slate-200 dark:border-slate-800 text-center">
-                    <div class="flex items-center justify-center gap-6 text-sm text-slate-500">
-                        <a class="hover:text-primary transition-colors" href="#">Instructor Guide</a>
-                        <span class="text-slate-300 dark:text-slate-700">•</span>
-                        <a class="hover:text-primary transition-colors" href="#">Support Center</a>
-                        <span class="text-slate-300 dark:text-slate-700">•</span>
-                        <a class="hover:text-primary transition-colors" href="#">Teaching Policy</a>
-                    </div>
-                    <p class="mt-4 text-xs text-slate-400 uppercase tracking-widest">Tacliimi Learn © 2024</p>
-                </footer>
-            </div>
-        </main>
-    </div>
-
-    <!-- ═══ APPEAL MODAL ═══ -->
-    <div id="appeal-modal"
-        class="fixed inset-0 z-[200] hidden items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm">
-        <div
-            class="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
-            <div class="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center gap-4">
-                <div
-                    class="w-12 h-12 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center flex-shrink-0">
-                    <span class="material-symbols-outlined text-primary text-2xl">campaign</span>
-                </div>
-                <div>
-                    <h3 class="text-lg font-bold text-slate-900 dark:text-white">Appeal Rejection</h3>
-                    <p class="text-xs text-primary font-semibold uppercase tracking-widest">Submit your reasoning</p>
-                </div>
-            </div>
-            <div class="p-6 space-y-4">
-                <p class="text-sm text-slate-600 dark:text-slate-400">Provide a clear explanation for why this course
+</div>
+<footer class="mt-24 py-8 border-t border-slate-200 dark:border-slate-800 text-center">
+<div class="flex items-center justify-center gap-6 text-sm text-slate-500">
+<a class="hover:text-primary transition-colors" href="#">Instructor Guide</a>
+<span class="text-slate-300 dark:text-slate-700">•</span>
+<a class="hover:text-primary transition-colors" href="#">Support Center</a>
+<span class="text-slate-300 dark:text-slate-700">•</span>
+<a class="hover:text-primary transition-colors" href="#">Teaching Policy</a>
+</div>
+<p class="mt-4 text-xs text-slate-400 uppercase tracking-widest">Tacliimi Learn © 2024</p>
+</footer>
+</div>
+</main>
+</div>
+<!-- ═══ APPEAL MODAL ═══ -->
+<div class="fixed inset-0 z-[200] hidden items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm" id="appeal-modal">
+<div class="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+<div class="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-primary text-2xl">campaign</span>
+</div>
+<div>
+<h3 class="text-lg font-bold text-slate-900 dark:text-white">Appeal Rejection</h3>
+<p class="text-xs text-primary font-semibold uppercase tracking-widest">Submit your reasoning</p>
+</div>
+</div>
+<div class="p-6 space-y-4">
+<p class="text-sm text-slate-600 dark:text-slate-400">Provide a clear explanation for why this course
                     should be reconsidered for publication.</p>
-                <textarea id="appeal-reason" rows="4" placeholder="Your appeal message..."
-                    class="w-full px-4 py-3 text-sm border border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 focus:ring-2 focus:ring-primary outline-none transition-all"></textarea>
-            </div>
-            <div class="px-6 pb-6 flex gap-3">
-                <button onclick="closeAppealModal()"
-                    class="flex-1 py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+<textarea class="w-full px-4 py-3 text-sm border border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 focus:ring-2 focus:ring-primary outline-none transition-all" id="appeal-reason" placeholder="Your appeal message..." rows="4"></textarea>
+</div>
+<div class="px-6 pb-6 flex gap-3">
+<button class="flex-1 py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors" onclick="closeAppealModal()">
                     Cancel
                 </button>
-                <button id="appeal-submit-btn" onclick="submitAppeal()"
-                    class="flex-1 py-3 bg-primary text-white font-bold rounded-xl hover:bg-indigo-700 transition-all">
+<button class="flex-1 py-3 bg-primary text-white font-bold rounded-xl hover:bg-indigo-700 transition-all" id="appeal-submit-btn" onclick="submitAppeal()">
                     Submit Appeal
                 </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- ═══ DELETE WARNING MODAL ═══ -->
-    <div id="delete-modal"
-        class="fixed inset-0 z-[200] hidden items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm">
-        <div
-            class="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
-            <!-- Modal Header -->
-            <div class="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center gap-4">
-                <div
-                    class="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0">
-                    <span class="material-symbols-outlined text-red-600 text-2xl">warning</span>
-                </div>
-                <div>
-                    <h3 id="delete-modal-title" class="text-lg font-bold text-slate-900 dark:text-white">Delete Course?</h3>
-                    <p class="text-xs text-red-500 font-semibold uppercase tracking-widest">This action cannot be undone
+</div>
+</div>
+</div>
+<!-- ═══ DELETE WARNING MODAL ═══ -->
+<div class="fixed inset-0 z-[200] hidden items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm" id="delete-modal">
+<div class="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+<!-- Modal Header -->
+<div class="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-red-600 text-2xl">warning</span>
+</div>
+<div>
+<h3 class="text-lg font-bold text-slate-900 dark:text-white" id="delete-modal-title">Delete Course?</h3>
+<p class="text-xs text-red-500 font-semibold uppercase tracking-widest">This action cannot be undone
                     </p>
-                </div>
-            </div>
-            <!-- Modal Body -->
-            <div class="p-6 space-y-4">
-                <p id="delete-modal-prompt" class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                    You are about to permanently delete <span id="delete-course-title"
-                        class="font-bold text-slate-900 dark:text-white"></span>.
+</div>
+</div>
+<!-- Modal Body -->
+<div class="p-6 space-y-4">
+<p class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed" id="delete-modal-prompt">
+                    You are about to permanently delete <span class="font-bold text-slate-900 dark:text-white" id="delete-course-title"></span>.
                 </p>
-                <div id="delete-modal-warnings"
-                    class="p-4 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-900/30 rounded-xl space-y-2">
-                    <p class="text-xs font-bold text-red-600 uppercase tracking-widest flex items-center gap-1.5">
-                        <span class="material-symbols-outlined text-sm">block</span>
+<div class="p-4 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-900/30 rounded-xl space-y-2" id="delete-modal-warnings">
+<p class="text-xs font-bold text-red-600 uppercase tracking-widest flex items-center gap-1.5">
+<span class="material-symbols-outlined text-sm">block</span>
                         Once deleted, the following will be permanently removed:
                     </p>
-                    <ul class="text-xs text-slate-600 dark:text-slate-400 space-y-1 pl-4 list-disc">
-                        <li>All course content, sections &amp; lessons</li>
-                        <li>Uploaded videos and resources</li>
-                        <li>Coupons and pricing settings</li>
-                        <li>Enrollment records and student progress</li>
-                        <li>Reviews and ratings</li>
-                    </ul>
-                    <p class="text-xs font-bold text-red-600 mt-2">⚠ There is no way to restore a deleted course.</p>
-                </div>
-                <!-- Confirmation type -->
-                <div id="delete-modal-input-area">
-                    <label class="block text-xs font-bold text-slate-500 mb-1.5">Type <span
-                            class="text-red-500 font-mono">DELETE</span> to confirm</label>
-                    <input id="delete-confirm-input" type="text" placeholder="DELETE"
-                        class="w-full px-4 py-2.5 text-sm border border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 focus:ring-2 focus:ring-red-400 outline-none transition-all font-mono tracking-widest" />
-                </div>
-            </div>
-            <!-- Modal Footer -->
-            <div class="px-6 pb-6 flex gap-3">
-                <button onclick="closeDeleteModal()"
-                    class="flex-1 py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+<ul class="text-xs text-slate-600 dark:text-slate-400 space-y-1 pl-4 list-disc">
+<li>All course content, sections &amp; lessons</li>
+<li>Uploaded videos and resources</li>
+<li>Coupons and pricing settings</li>
+<li>Enrollment records and student progress</li>
+<li>Reviews and ratings</li>
+</ul>
+<p class="text-xs font-bold text-red-600 mt-2">⚠ There is no way to restore a deleted course.</p>
+</div>
+<!-- Confirmation type -->
+<div id="delete-modal-input-area">
+<label class="block text-xs font-bold text-slate-500 mb-1.5">Type <span class="text-red-500 font-mono">DELETE</span> to confirm</label>
+<input class="w-full px-4 py-2.5 text-sm border border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 focus:ring-2 focus:ring-red-400 outline-none transition-all font-mono tracking-widest" id="delete-confirm-input" placeholder="DELETE" type="text"/>
+</div>
+</div>
+<!-- Modal Footer -->
+<div class="px-6 pb-6 flex gap-3">
+<button class="flex-1 py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors" onclick="closeDeleteModal()">
                     Cancel
                 </button>
-                <button id="delete-confirm-btn" onclick="confirmDeleteCourse()" disabled
-                    class="flex-1 py-3 bg-red-500 text-white font-bold rounded-xl transition-all opacity-50 cursor-not-allowed">
-                    <span class="material-symbols-outlined text-sm align-middle mr-1">delete_forever</span>
+<button class="flex-1 py-3 bg-red-500 text-white font-bold rounded-xl transition-all opacity-50 cursor-not-allowed" disabled="" id="delete-confirm-btn" onclick="confirmDeleteCourse()">
+<span class="material-symbols-outlined text-sm align-middle mr-1">delete_forever</span>
                     Delete Forever
                 </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- ═══ NOTIFY UPDATE MODAL ═══ -->
-    <div id="notify-update-modal"
-        class="fixed inset-0 z-[200] hidden items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm">
-        <div
-            class="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
-            <div class="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center gap-4">
-                <div
-                    class="w-12 h-12 rounded-full bg-sky-100 dark:bg-sky-900/30 flex items-center justify-center flex-shrink-0">
-                    <span class="material-symbols-outlined text-sky-600 dark:text-sky-400 text-2xl">campaign</span>
-                </div>
-                <div>
-                    <h3 class="text-lg font-bold text-slate-900 dark:text-white">Notify Update</h3>
-                    <p class="text-xs text-sky-500 font-semibold uppercase tracking-widest">Offer Latest Version</p>
-                </div>
-            </div>
-            <div class="p-6 space-y-4">
-                <p class="text-sm text-slate-600 dark:text-slate-400">Offer students from older versions a discount to
+</div>
+</div>
+</div>
+<!-- ═══ NOTIFY UPDATE MODAL ═══ -->
+<div class="fixed inset-0 z-[200] hidden items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm" id="notify-update-modal">
+<div class="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+<div class="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-sky-100 dark:bg-sky-900/30 flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-sky-600 dark:text-sky-400 text-2xl">campaign</span>
+</div>
+<div>
+<h3 class="text-lg font-bold text-slate-900 dark:text-white">Notify Update</h3>
+<p class="text-xs text-sky-500 font-semibold uppercase tracking-widest">Offer Latest Version</p>
+</div>
+</div>
+<div class="p-6 space-y-4">
+<p class="text-sm text-slate-600 dark:text-slate-400">Offer students from older versions a discount to
                     upgrade to the latest published version of this course.</p>
-
-                <div class="space-y-1">
-                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest">Select Promotion
-                        <span
-                            class="ml-1 text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-md lowercase">(optional)</span>
-                    </label>
-                    <select id="notify-coupon-select"
-                        class="w-full px-4 py-3 text-sm border border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 focus:ring-2 focus:ring-sky-400 outline-none transition-all appearance-none cursor-pointer">
-                        <option value="">No coupon (Free update)</option>
-                        <!-- Populated dynamically -->
-                    </select>
-                </div>
-            </div>
-            <div class="px-6 pb-6 flex gap-3">
-                <button onclick="closeNotifyUpdateModal()"
-                    class="flex-1 py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+<div class="space-y-1">
+<label class="block text-xs font-bold text-slate-500 uppercase tracking-widest">Select Promotion
+                        <span class="ml-1 text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-md lowercase">(optional)</span>
+</label>
+<select class="w-full px-4 py-3 text-sm border border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 focus:ring-2 focus:ring-sky-400 outline-none transition-all appearance-none cursor-pointer" id="notify-coupon-select">
+<option value="">No coupon (Free update)</option>
+<!-- Populated dynamically -->
+</select>
+</div>
+</div>
+<div class="px-6 pb-6 flex gap-3">
+<button class="flex-1 py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors" onclick="closeNotifyUpdateModal()">
                     Cancel
                 </button>
-                <button id="notify-update-submit-btn" onclick="submitNotifyUpdate()"
-                    class="flex-1 py-3 bg-sky-500 text-white font-bold rounded-xl hover:bg-sky-600 transition-all flex items-center justify-center gap-2">
-                    <span class="material-symbols-outlined text-[18px]">send</span> Send Notifications
+<button class="flex-1 py-3 bg-sky-500 text-white font-bold rounded-xl hover:bg-sky-600 transition-all flex items-center justify-center gap-2" id="notify-update-submit-btn" onclick="submitNotifyUpdate()">
+<span class="material-symbols-outlined text-[18px]">send</span> Send Notifications
                 </button>
-            </div>
-        </div>
-    </div>
-
-    <script type="module">
+</div>
+</div>
+</div>
+<script type="module">
         import { CourseService } from '/src/services/courseService.js';
         import { boostService } from '/src/services/boostService.js';
         import { supabase } from '/src/services/supabaseClient.js';
@@ -1312,11 +1252,38 @@
             }
         });
     </script>
-
-    <!-- Router Logic -->
-    <script type="module" src="/src/utils/js/instructor-app.js"></script>
-    <script type="module" src="/src/pages/instructor/instructor-mentorship/mentorship.js"></script>
-
+<!-- Router Logic -->
+<script src="/src/utils/js/instructor-app.js" type="module"></script>
+<script src="/src/pages/instructor/instructor-mentorship/mentorship.js" type="module"></script>
+<script>
+(function() {
+    var btn = document.getElementById('instructor-mobile-menu-btn');
+    var sidebar = document.getElementById('instructor-sidebar');
+    var overlay = document.getElementById('sidebar-overlay');
+    if (!btn || !sidebar || !overlay) return;
+    btn.addEventListener('click', function() {
+        sidebar.classList.toggle('-translate-x-full');
+        overlay.classList.toggle('hidden');
+    });
+    overlay.addEventListener('click', function() {
+        sidebar.classList.add('-translate-x-full');
+        overlay.classList.add('hidden');
+    });
+})();
+</script>
+<script>
+// Defer sidebar transition to avoid slide-in animation on desktop page load
+window.addEventListener('load', function() {
+    var sidebar = document.getElementById('instructor-sidebar');
+    if (sidebar) {
+        // Only enable transition on mobile (below lg=1024px)
+        if (window.innerWidth < 1024) {
+            sidebar.classList.add('transition-transform', 'duration-300');
+        }
+        // No transition on desktop � already at lg:translate-x-0, nothing to animate
+    }
+});
+</script>
 </body>
-
 </html>
+
