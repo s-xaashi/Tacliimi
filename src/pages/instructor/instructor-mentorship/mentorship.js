@@ -1308,10 +1308,10 @@ async function bindRequestsInteractions(container, userId) {
                 return `
                     <div class="${isProgram ? GOLD_CARD_STYLE : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden hover:shadow-lg transition-all group p-6'}" data-session-id="${session.id}">
                         ${isProgram ? `<div class="flex items-center gap-2 mb-3">${buildMonthlyBadgeHtml()}<span class="text-[10px] font-bold text-amber-600/70">${session.duration_days || 30}-Day Program · ${session.total_sessions || 4} sessions</span></div>` : ''}
-                        <div class="flex flex-col md:flex-row gap-8 items-center">
+                        <div class="flex flex-col md:flex-row gap-4 md:gap-8 items-start md:items-center">
                             <!-- Student Info: Fixed width -->
                             <div class="flex items-center gap-4 w-full md:w-64 shrink-0">
-                                <div class="w-16 h-16 rounded-2xl overflow-hidden border-2 border-primary/20 shrink-0 shadow-sm cursor-pointer" onclick='window.openStudentProfile(${JSON.stringify(student).replace(/'/g, "&#39;")})'>
+                                <div class="w-12 h-12 md:w-16 md:h-16 rounded-2xl overflow-hidden border-2 border-primary/20 shrink-0 shadow-sm cursor-pointer" onclick='window.openStudentProfile(${JSON.stringify(student).replace(/'/g, "&#39;")})'>
                                     <img src="${studentAvatar}" class="w-full h-full object-cover" />
                                 </div>
                                 <div class="flex-1 min-w-0">

@@ -73,32 +73,56 @@
 <body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100">
     <div class="relative flex min-h-screen w-full flex-col">
         <header
-            class="sticky top-0 z-50 flex h-16 w-full items-center justify-between border-b border-slate-200 bg-white px-4 md:px-10 dark:border-slate-800 dark:bg-background-dark">
-            <div class="flex items-center gap-8">
-                <div class="flex items-center gap-3 cursor-pointer" onclick="window.location.href='/index.html'">
-                    <div class="flex size-9 items-center justify-center rounded-lg bg-primary text-white">
-                        <span class="material-symbols-outlined">school</span>
-                    </div>
-                    <h2 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Tacliimi <span
-                            class="text-primary">Learn</span></h2>
+            class="sticky top-0 z-50 flex h-16 w-full items-center justify-between border-b border-slate-200 bg-white/90 backdrop-blur-md px-4 md:px-10 dark:border-slate-800 dark:bg-slate-900/90">
+            <div class="flex items-center justify-between relative w-full lg:w-auto">
+                <button class="settings-mobile-menu-btn lg:hidden p-2 -ml-2 text-slate-600 dark:text-slate-300 z-10" id="mobile-menu-btn" onclick="(function(){var s=document.getElementById('settings-sidebar'),o=document.getElementById('sidebar-overlay');if(s&&o){s.classList.toggle('-translate-x-full');o.classList.toggle('hidden');}})()">
+                    <span class="material-symbols-outlined">menu</span>
+                </button>
+                <div class="flex items-center gap-2 cursor-pointer absolute left-1/2 -translate-x-1/2 lg:static lg:transform-none lg:left-0 z-0" onclick="window.location.href='/index.html'">
+                    <img src="/public/assets/images/IMG_7448.png" alt="Tacliimi" class="h-12 w-auto object-contain">
                 </div>
-                <nav class="hidden items-center gap-6 lg:flex">
-                    <a class="text-sm font-medium text-slate-600 hover:text-primary dark:text-slate-400 dark:hover:text-white transition-colors"
-                        href="/index.html">Home</a>
-                    <a class="text-sm font-medium text-slate-600 hover:text-primary dark:text-slate-400 dark:hover:text-white transition-colors"
-                        href="/src/pages/instructor/instructor-dashboard/index.html">Dashboard</a>
+                <!-- Desktop Nav -->
+                <nav class="hidden flex-1 justify-center items-center gap-6 lg:flex ml-8">
+                    <a class="text-sm font-medium text-slate-600 hover:text-primary dark:text-slate-400 dark:hover:text-white transition-colors" href="/index.html">Home</a>
+                    <a class="flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-primary dark:text-slate-400 dark:hover:text-white transition-colors" href="/src/pages/instructor/instructor-dashboard/index.html">
+                        <span class="material-symbols-outlined text-base">arrow_back</span>Dashboard
+                    </a>
+                <a class="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+                        id="view-public-profile-link" href="#" onclick="viewPublicProfile(event)">
+                        <span class="material-symbols-outlined text-[20px]">visibility</span>
+                        View Public Profile
+                    </a>
                 </nav>
             </div>
-            <div class="flex items-center gap-4">
-
-                <div id="global-profile-header-container" class="flex items-center gap-3 border-l border-slate-200 pl-4 ml-2 dark:border-slate-800">
+            <!-- hidden lg:flex ensures no profile on mobile -->
+            <div class="hidden lg:flex items-center gap-4 w-10 lg:w-auto justify-end">
+                <div id="global-profile-header-container" class="hidden lg:flex items-center gap-3 border-l border-slate-200 pl-4 ml-2 dark:border-slate-800">
                     <!-- Global Profile Injected Below via TacliimiDB -->
                 </div>
             </div>
         </header>
         <div class="flex flex-1 overflow-hidden">
-            <aside
-                class="hidden w-72 flex-col border-r border-slate-200 bg-white p-6 lg:flex dark:border-slate-800 dark:bg-background-dark">
+            <div id="sidebar-overlay" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-30 lg:hidden hidden" onclick="document.getElementById('settings-sidebar').classList.add('-translate-x-full'); this.classList.add('hidden');"></div>
+            <aside id="settings-sidebar"
+                class="fixed top-16 left-0 z-40 w-72 h-[calc(100vh-64px)] flex-col border-r border-slate-200 bg-white overflow-y-auto -translate-x-full transition-transform duration-300 lg:translate-x-0 lg:static lg:h-auto flex dark:border-slate-800 dark:bg-background-dark pb-20 lg:pb-6">
+                <!-- Mobile Only: Profile block at top -->
+                <a href="/src/pages/instructor/instructor-profile/index.html"
+                    class="lg:hidden flex items-center gap-3 px-4 py-4 border-b border-slate-100 dark:border-slate-800 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                    <div class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-primary/20 overflow-hidden flex-shrink-0" data-role="profile-image">
+                        <span class="material-symbols-outlined text-slate-400 w-full h-full flex items-center justify-center">person</span>
+                    </div>
+                    <div class="flex-1 overflow-hidden">
+                        <p class="font-bold text-slate-900 dark:text-white truncate user-display-name">Instructor</p>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Manage Profile</p>
+                    </div>
+                    <span class="material-symbols-outlined text-slate-400">chevron_right</span>
+                </a>
+                <!-- Mobile Only: Back to Dashboard -->
+                <div class="lg:hidden px-4 pt-3 pb-2 border-b border-slate-100 dark:border-slate-800/50">
+                    <a href="/src/pages/instructor/instructor-dashboard/index.html" class="flex items-center gap-2 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-primary transition-colors">
+                        <span class="material-symbols-outlined text-base">arrow_back</span> Back to Dashboard
+                    </a>
+                </div>
                 <nav class="flex flex-col gap-2">
                     <a class="sidebar-item-active flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-all"
                         href="#" onclick="switchPanel('panel-personal', event)">
@@ -114,17 +138,29 @@
                         href="#" onclick="switchPanel('panel-security', event)">
                         <span class="material-symbols-outlined text-[20px]">shield_person</span> Security </a>
                     <div class="my-4 border-t border-slate-100 dark:border-slate-800"></div>
-                    <a class="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
-                        href="#">
+                    <a class="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800" id="view-public-profile-link" href="#" onclick="viewPublicProfile(event)">
                         <span class="material-symbols-outlined text-[20px]">visibility</span>
                         View Public Profile
                     </a>
                     <a onclick="TacliimiDB.logout(); window.location.href='/src/pages/auth/login-select/index.html';"
-                        class="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-bold text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/10 cursor-pointer transition-colors mt-2">
+                        class="hidden lg:flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-bold text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/10 cursor-pointer transition-colors mt-2">
                         <span class="material-symbols-outlined text-[20px]">logout</span>
                         Logout
                     </a>
                 </nav>
+            
+                <!-- Mobile Only: Theme + Logout at bottom of drawer -->
+                <div class="lg:hidden mt-auto border-t border-slate-100 dark:border-slate-800/50 p-4 space-y-1">
+                    <button onclick="document.documentElement.classList.toggle('dark')" class="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors">
+                        <span class="material-symbols-outlined text-xl dark:hidden">dark_mode</span>
+                        <span class="material-symbols-outlined text-xl hidden dark:block">light_mode</span>
+                        <span class="dark:hidden">Dark Mode</span>
+                        <span class="hidden dark:block">Light Mode</span>
+                    </button>
+                    <button class="tacliimi-logout-trigger w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
+                        <span class="material-symbols-outlined text-xl">logout</span> Logout
+                    </button>
+                </div>
             </aside>
             <main
                 class="flex-1 overflow-y-auto bg-slate-50 px-4 pb-4 md:px-10 md:pb-10 pt-2 md:pt-4 dark:bg-background-dark/50">
@@ -1849,6 +1885,55 @@
             });
         });
     </script>
+
+
+<script>
+    // Instructor settings menu specific toggling logic
+    document.addEventListener('DOMContentLoaded', () => {
+        const _mBtn = document.getElementById('mobile-menu-btn');
+        const _sBar = document.getElementById('settings-sidebar');
+        const _over = document.getElementById('sidebar-overlay');
+
+        // Auto-close sidebar on nav click
+        const sidebarNav = document.querySelector('#settings-sidebar nav');
+        if (sidebarNav) {
+            sidebarNav.addEventListener('click', (e) => {
+                const link = e.target.closest('a');
+                if (link && window.innerWidth < 1024) {
+                    if (_sBar && _over) {
+                        _sBar.classList.add('-translate-x-full');
+                        _over.classList.add('hidden');
+                    }
+                }
+            });
+        }
+
+        
+        if (_mBtn && _sBar && _over) {
+            _mBtn.addEventListener('click', () => {
+                _sBar.classList.remove('-translate-x-full');
+                _over.classList.remove('hidden');
+            });
+            _over.addEventListener('click', () => {
+                _sBar.classList.add('-translate-x-full');
+                _over.classList.add('hidden');
+            });
+        }
+    });
+</script>
+
+<script type="module">
+import { AuthService } from '/src/services/authService.js';
+window.viewPublicProfile = async function(event) {
+    event.preventDefault();
+    const session = await AuthService.getSession();
+    if (session && session.user) {
+        window.location.href = '/src/pages/instructor/public-profile/index.html?id=' + session.user.id;
+    } else {
+        window.location.href = '/src/pages/auth/login-select/index.html';
+    }
+};
+</script>
 
 </body>
 

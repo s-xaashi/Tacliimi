@@ -147,6 +147,8 @@ export const GlobalProfile = {
     },
 
     injectHeaderControls(session, profile, fullName, avatarUrl, isInstructor, isAdmin) {
+        if (document.querySelector('.tacliimi-injected-profile')) return;
+        
         // Find potential placeholders to remove
         let authElements = Array.from(document.querySelectorAll('nav, header')).flatMap(parent => {
             return Array.from(parent.querySelectorAll('a, button, div')).filter(el => {
@@ -181,7 +183,14 @@ export const GlobalProfile = {
         // Priority 0: Explicit container
         const explicitContainer = document.getElementById('global-profile-header-container');
         if (explicitContainer && !explicitContainer.closest('.tacliimi-injected-profile')) {
-            this.renderToContainer(explicitContainer, session, profile, fullName, avatarUrl, isInstructor, isAdmin, authElements);
+            // Only pass elements that are NOT the explicit container itself, NOT its ancestors,
+            // and NOT its descendants — removing any of those would delete the freshly-injected content.
+            const safeToPrune = authElements.filter(el =>
+                el !== explicitContainer &&
+                !explicitContainer.contains(el) &&
+                !el.contains(explicitContainer)
+            );
+            this.renderToContainer(explicitContainer, session, profile, fullName, avatarUrl, isInstructor, isAdmin, safeToPrune);
             return;
         }
 
@@ -376,17 +385,79 @@ export const GlobalProfile = {
         if (isAdmin) dashboardLink = '/src/pages/admin/dashboard/index.html';
         else if (isInstructor) dashboardLink = '/src/pages/instructor/instructor-dashboard/index.html';
 
-        // Update mobile menu
-        const mobileMenuAuth = document.querySelectorAll('#mobile-menu button');
-        if (mobileMenuAuth.length >= 2) {
-            mobileMenuAuth[0].innerText = 'Dashboard';
-            mobileMenuAuth[0].onclick = () => window.location.href = dashboardLink;
-            mobileMenuAuth[1].innerText = 'Log Out';
-            mobileMenuAuth[1].classList.add('!text-red-500');
-            mobileMenuAuth[1].onclick = async () => {
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        // NEW STRUCTURED MENU: If the menu already has #mobile-menu-profile (our new design),
+        // skip legacy injection and only populate profile info.
+        if (mobileMenu && mobileMenu.querySelector('#mobile-menu-profile')) {
+            // Populate name — grab from already-injected header profile name, fallback to email
+            const nameEl = mobileMenu.querySelector('.user-display-name');
+            if (nameEl) {
+                const headerName = document.querySelector('.tacliimi-injected-profile .user-display-name');
+                const displayName = headerName ? headerName.innerText :
+                    (session.user.email ? (session.user.email.split('@')[0].charAt(0).toUpperCase() + session.user.email.split('@')[0].slice(1)) : 'User');
+                nameEl.innerText = displayName;
+            }
+
+            // Wire profile area click to correct settings page
+            const profileArea = mobileMenu.querySelector('#mobile-menu-profile');
+            let settingsLink = '/src/pages/student/account-settings/index.html';
+            if (isAdmin) settingsLink = '/src/pages/admin/profile/index.html';
+            else if (isInstructor) settingsLink = '/src/pages/instructor/instructor-profile/index.html';
+            if (profileArea) profileArea.setAttribute('onclick', `window.location.href='${settingsLink}'`);
+
+            // Wire theme toggle in new menu
+            const mobileThemeToggle = document.getElementById('mobile-theme-toggle');
+            if (mobileThemeToggle && !mobileThemeToggle.dataset.themeBound) {
+                mobileThemeToggle.dataset.themeBound = 'true';
+                mobileThemeToggle.addEventListener('click', () => {
+                    const html = document.documentElement;
+                    if (html.classList.contains('dark')) {
+                        html.classList.remove('dark');
+                        localStorage.theme = 'light';
+                    } else {
+                        html.classList.add('dark');
+                        localStorage.theme = 'dark';
+                    }
+                });
+            }
+
+            return; // Skip legacy injection
+        }
+
+        // LEGACY MENU: Update mobile menu with old button-based structure
+        const legacyMenuAuth = document.querySelectorAll('#mobile-menu button:not(#mobile-theme-toggle):not(.tacliimi-mobile-injected)');
+        if (legacyMenuAuth.length >= 2) {
+            legacyMenuAuth[0].innerText = 'Dashboard';
+            legacyMenuAuth[0].onclick = () => window.location.href = dashboardLink;
+            legacyMenuAuth[1].innerText = 'Log Out';
+            legacyMenuAuth[1].classList.add('!text-red-500');
+            legacyMenuAuth[1].onclick = async () => {
                 await AuthService.logout();
                 window.location.href = '/src/pages/auth/login-select/index.html';
             };
+        } else {
+            if (mobileMenu && !mobileMenu.querySelector('.tacliimi-mobile-injected')) {
+                let settingsLink = '/src/pages/student/account-settings/index.html';
+                if (isAdmin) settingsLink = '/src/pages/admin/profile/index.html';
+                else if (isInstructor) settingsLink = '/src/pages/instructor/instructor-profile/index.html';
+                
+                const settingsBtn = document.createElement('a');
+                settingsBtn.className = 'tacliimi-mobile-injected block text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors cursor-pointer';
+                settingsBtn.href = settingsLink;
+                settingsBtn.innerText = 'Settings';
+                
+                const logoutBtn = document.createElement('a');
+                logoutBtn.className = 'tacliimi-mobile-injected block text-base font-medium !text-red-500 hover:text-red-600 transition-colors cursor-pointer';
+                logoutBtn.innerText = 'Log Out';
+                logoutBtn.onclick = async () => {
+                    await AuthService.logout();
+                    window.location.href = '/src/pages/auth/login-select/index.html';
+                };
+                
+                mobileMenu.appendChild(settingsBtn);
+                mobileMenu.appendChild(logoutBtn);
+            }
         }
 
         // Hide instructor CTA links for logged-in instructors

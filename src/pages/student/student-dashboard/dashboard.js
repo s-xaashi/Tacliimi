@@ -435,25 +435,25 @@ function renderCourseCard(enr, updateOffer, payId = null, payDate = null) {
     }
 
     return `
-    <div class="flex flex-col group bg-white dark:bg-slate-900 border ${updateOffer ? 'border-indigo-300 dark:border-indigo-700 shadow-indigo-100 dark:shadow-indigo-900/10 shadow-md' : 'border-slate-200 dark:border-slate-800'} rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer h-full" onclick="window.location.href='/src/pages/learning/learning-interface/index.html?course=${encodeURIComponent(course.id)}'">
+    <div class="flex flex-col group bg-white dark:bg-slate-900 border ${updateOffer ? 'border-indigo-300 dark:border-indigo-700 shadow-indigo-100 dark:shadow-indigo-900/10 shadow-md' : 'border-slate-200 dark:border-slate-800'} rounded-xl sm:rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer h-full" onclick="window.location.href='/src/pages/learning/learning-interface/index.html?course=${encodeURIComponent(course.id)}'">
         <div class="aspect-video relative overflow-hidden bg-slate-100 dark:bg-slate-800 shrink-0">
             ${updateBadgeHtml}
             <img src="${course.thumbnail_url || 'https://placehold.co/600x400'}" alt="${course.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
             <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                <span class="material-symbols-outlined text-white text-5xl">${progress === 100 ? 'replay' : 'play_circle'}</span>
+                <span class="material-symbols-outlined text-white text-3xl sm:text-5xl">${progress === 100 ? 'replay' : 'play_circle'}</span>
             </div>
             ${progress === 100 ? `
-            <div class="absolute top-2 right-2 bg-emerald-500 text-white px-2 py-1 rounded-full text-[10px] font-bold flex items-center gap-1 shadow-lg z-10">
-                <span class="material-symbols-outlined text-[12px]">verified</span> COMPLETED
+            <div class="absolute top-2 right-2 bg-emerald-500 text-white px-2 py-1 rounded-full text-[9px] sm:text-[10px] font-bold flex items-center gap-1 shadow-lg z-10">
+                <span class="material-symbols-outlined text-[10px] sm:text-[12px]">verified</span> COMPLETED
             </div>
             ` : ''}
         </div>
-        <div class="p-5 flex flex-col flex-1">
-            <div class="flex items-center flex-wrap gap-2 mb-3 shrink-0">
-                <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-primary/10 text-primary whitespace-nowrap">${category}</span>
-                ${course.serial_id ? `<span class="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest bg-slate-100 dark:bg-slate-800 text-slate-400 border border-slate-200 dark:border-slate-700 font-mono whitespace-nowrap">CRS-${course.serial_id}</span>` : ''}
+        <div class="p-4 sm:p-5 flex flex-col flex-1 min-w-0">
+            <div class="flex items-center flex-wrap gap-2 mb-2 sm:mb-3 shrink-0">
+                <span class="px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-bold uppercase tracking-wider bg-primary/10 text-primary whitespace-nowrap">${category}</span>
+                ${course.serial_id ? `<span class="px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-black uppercase tracking-widest bg-slate-100 dark:bg-slate-800 text-slate-400 border border-slate-200 dark:border-slate-700 font-mono whitespace-nowrap">CRS-${course.serial_id}</span>` : ''}
             </div>
-            <h4 class="font-bold text-slate-900 dark:text-white mb-4 line-clamp-2 min-h-[3rem] group-hover:text-primary transition-colors shrink-0">${course.title}</h4>
+            <h4 class="font-bold text-sm sm:text-base text-slate-900 dark:text-white mb-3 sm:mb-4 line-clamp-2 min-h-[2.5rem] sm:min-h-[3rem] group-hover:text-primary transition-colors shrink-0">${course.title}</h4>
             <div class="space-y-3 mt-auto shrink-0">
                 <div class="flex items-center justify-between text-[11px] text-slate-500 mb-1">
                     <span>${progress === 100 ? 'Course Finished' : 'Your Progress'}</span>

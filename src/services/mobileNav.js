@@ -8,21 +8,31 @@ document.addEventListener('DOMContentLoaded', () => {
     const instSidebar = document.getElementById('instructor-sidebar');
     const instOverlay = document.getElementById('sidebar-overlay');
     
-    // Some pages may use 'toggle-sidebar' and 'sidebar' (e.g. Admin) but we have adminSidebar.js for that.
-    // However, if we want to be fully generic:
-    const sidebar = instSidebar || document.getElementById('sidebar');
-    const toggleBtn = instToggleBtn || document.getElementById('toggle-sidebar');
+    const sidebar = instSidebar || document.getElementById('sidebar') || document.getElementById('settings-sidebar') || document.getElementById('wizard-sidebar');
+    const toggleBtns = [
+        instToggleBtn,
+        document.getElementById('toggle-sidebar'),
+        document.getElementById('settings-mobile-menu-btn'),
+        document.getElementById('wizard-mobile-menu-btn'),
+        ...document.querySelectorAll('.settings-mobile-menu-btn')
+    ].filter(Boolean);
+    
     const overlay = instOverlay || document.getElementById('sidebar-overlay');
 
-    if (toggleBtn && sidebar && overlay) {
-        // Prevent duplicate listener if run multiple times by checking a dataset flag
-        if (!toggleBtn.dataset.navBound) {
-            toggleBtn.dataset.navBound = 'true';
-            
-            toggleBtn.addEventListener('click', () => {
-                sidebar.classList.toggle('-translate-x-full');
-                overlay.classList.toggle('hidden');
-            });
+    if (toggleBtns.length > 0 && sidebar && overlay) {
+        toggleBtns.forEach(toggleBtn => {
+            if (!toggleBtn.dataset.navBound) {
+                toggleBtn.dataset.navBound = 'true';
+                
+                toggleBtn.addEventListener('click', () => {
+                    sidebar.classList.toggle('-translate-x-full');
+                    overlay.classList.toggle('hidden');
+                });
+            }
+        });
+        
+        if (!overlay.dataset.navBound) {
+            overlay.dataset.navBound = 'true';
             overlay.addEventListener('click', () => {
                 sidebar.classList.add('-translate-x-full');
                 overlay.classList.add('hidden');

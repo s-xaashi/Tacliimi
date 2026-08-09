@@ -49,41 +49,66 @@
 <body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen">
   <nav class="sticky top-0 z-50 bg-white dark:bg-background-dark border-b border-slate-200 dark:border-slate-800 transition-colors">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex justify-between items-center h-16">
-        <a href="/index.html" class="flex items-center gap-2">
-          <div class="bg-primary text-white p-1.5 rounded-lg flex items-center justify-center">
-            <svg class="w-6 h-6" fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-              <path
-                d="M24 45.8096C19.6865 45.8096 15.4698 44.5305 11.8832 42.134C8.29667 39.7376 5.50128 36.3314 3.85056 32.3462C2.19985 28.361 1.76794 23.9758 2.60947 19.7452C3.451 15.5145 5.52816 11.6284 8.57829 8.5783C11.6284 5.52817 15.5145 3.45101 19.7452 2.60948C23.9758 1.76795 28.361 2.19986 32.3462 3.85057C36.3314 5.50129 39.7376 8.29668 42.134 11.8833C44.5305 15.4698 45.8096 19.6865 45.8096 24L24 24L24 45.8096Z"
-                fill="currentColor"></path>
-            </svg>
-          </div>
-          <span class="text-xl font-bold tracking-tight">Tacliimi Learn</span>
-        </a>
-        <div class="hidden md:flex items-center gap-8">
-          <a class="text-sm font-medium hover:text-primary transition-colors" href="/index.html">Home</a>
-          <a class="text-sm font-medium hover:text-primary transition-colors"
-            href="/src/pages/mentorship/mentor-marketplace/index.html">Browse Mentors</a>
-          <a class="text-sm font-medium hover:text-primary transition-colors"
-            href="/src/pages/marketplace/marketplace/">Browse Courses</a>
-          <div onclick="window.location.href='/src/pages/student/account-settings/index.html'"
-            class="w-10 h-10 rounded-full border border-slate-200 bg-slate-50 flex items-center justify-center text-slate-400 cursor-pointer hover:border-primary/50 transition-colors">
-            <span class="material-symbols-outlined">account_circle</span>
-          </div>
-        </div>
-          <button class="md:hidden p-2 text-slate-600 dark:text-slate-300" id="mobile-menu-btn">
+      <div class="flex items-center justify-between h-16 w-full relative">
+        
+        <!-- Mobile Left Nav: Hamburger -->
+        <button class="md:hidden p-2 -ml-2 text-slate-600 dark:text-slate-300 z-10" id="mobile-menu-btn">
             <span class="material-symbols-outlined">menu</span>
-          </button>
+        </button>
+        
+        <!-- Center Logo (Mobile) / Left Logo (Desktop) -->
+        <a href="/index.html" class="flex items-center gap-2 absolute left-1/2 -translate-x-1/2 md:static md:transform-none md:left-0 z-0 hover:opacity-80 transition-opacity">
+            <img src="/public/assets/images/IMG_7454.png" alt="Tacliimi Learn" class="h-10 md:h-12 w-auto object-contain">
+        </a>
+        
+        <!-- Desktop Navigation -->
+        <div class="hidden md:flex flex-1 justify-center items-center gap-8 ml-8">
+          <a class="text-sm font-bold text-slate-600 hover:text-primary dark:text-slate-400 dark:hover:text-white transition-colors" href="/index.html">Home</a>
+          <a class="text-sm font-bold text-slate-600 hover:text-primary dark:text-slate-400 dark:hover:text-white transition-colors" href="/src/pages/mentorship/mentor-marketplace/index.html">Browse Mentors</a>
+          <a class="text-sm font-bold text-slate-600 hover:text-primary dark:text-slate-400 dark:hover:text-white transition-colors" href="/src/pages/marketplace/marketplace/">Browse Courses</a>
+        </div>
+        
+        <!-- Global Profile (Desktop Only) -->
+        <div class="hidden md:flex items-center gap-4 w-10 md:w-auto justify-end">
+            <div id="global-profile-header-container" class="flex items-center gap-3 border-l border-slate-200 pl-4 lg:ml-2 dark:border-slate-800">
+                <!-- Global Profile Injected Below via TacliimiDB -->
+            </div>
+        </div>
       </div>
     </div>
   
-  <!-- Mobile Menu -->
-  <div class="hidden md:hidden bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-4 py-6 space-y-4 absolute w-full shadow-xl z-40" id="mobile-menu">
-    <a class="block text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/index.html">Home</a>
-    <a class="block text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/src/pages/mentorship/mentor-marketplace/index.html">Browse Mentors</a>
-    <a class="block text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/src/pages/marketplace/marketplace/">Browse Courses</a>
-    <a class="block text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/src/pages/student/account-settings/index.html"><span class="material-symbols-outlined">account_circle</span></a>
-  </div>
+    <!-- Mobile Menu / Drawer -->
+    <div class="hidden md:hidden bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 absolute w-full shadow-xl z-40 transition-all custom-scrollbar overflow-y-auto max-h-[calc(100vh-64px)]" id="mobile-menu">
+        <!-- Global Profile Setup for Mobile (On TOP) -->
+        <div id="mobile-menu-profile" class="flex items-center gap-4 px-6 py-6 border-b border-slate-100 dark:border-slate-800/50 cursor-pointer">
+            <!-- GlobalProfile injects here -->
+        </div>
+        
+        <div class="flex flex-col p-4 w-full">
+            <a class="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors" href="/index.html">
+                <span class="material-symbols-outlined text-[20px]">home</span> Home
+            </a>
+            <a class="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors" href="/src/pages/mentorship/mentor-marketplace/index.html">
+                <span class="material-symbols-outlined text-[20px]">groups</span> Browse Mentors
+            </a>
+            <a class="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors" href="/src/pages/marketplace/marketplace/">
+                <span class="material-symbols-outlined text-[20px]">school</span> Browse Courses
+            </a>
+        </div>
+        <div class="px-4 pb-6">
+            <div class="border-t border-slate-100 dark:border-slate-800/50 pt-4">
+                <button onclick="document.documentElement.classList.toggle('dark')" class="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors">
+                    <span class="material-symbols-outlined text-xl dark:hidden">dark_mode</span>
+                    <span class="material-symbols-outlined text-xl hidden dark:block">light_mode</span>
+                    <span class="dark:hidden">Dark Mode</span>
+                    <span class="hidden dark:block">Light Mode</span>
+                </button>
+                <button class="tacliimi-logout-trigger w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors mt-1">
+                    <span class="material-symbols-outlined text-xl">logout</span> Logout
+                </button>
+            </div>
+        </div>
+    </div>
   </nav>
 
   <!-- Hero Section -->
@@ -97,21 +122,22 @@
         <div class="w-32 h-32 md:w-44 md:h-44 rounded-2xl border-4 border-white/10 overflow-hidden shadow-2xl shrink-0">
           <img id="instructor-avatar" alt="Avatar" class="w-full h-full object-cover" src="https://via.placeholder.com/200" />
         </div>
-        <div class="text-center md:text-left flex-1">
-          <div class="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-3">
-             <h1 id="instructor-name" class="text-3xl md:text-5xl font-black text-white tracking-tight">Loading...</h1>
-             <div class="flex items-center gap-1 px-3 py-1 bg-white/10 backdrop-blur-md rounded-full border border-white/10">
-                <span class="material-symbols-outlined text-orange-400 text-base" style="font-variation-settings: 'FILL' 1">star</span>
-                <span id="instructor-rating" class="text-white font-bold text-sm">0.0</span>
-                <span id="instructor-reviews" class="text-white/60 text-xs font-medium">(0 reviews)</span>
-             </div>
-          </div>
-          <p id="instructor-headline" class="text-xl md:text-2xl text-slate-300 font-medium mb-6"></p>
-          <div class="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-6 hidden" id="hero-video-trigger">
-             <button onclick="openVideoModal()" class="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-xl border border-white/10 text-white transition-all group">
-                <span class="material-symbols-outlined text-xl group-hover:scale-110 transition-transform" style="font-variation-settings: 'FILL' 1">play_circle</span>
-                <span class="text-sm font-bold">Watch Introduction</span>
-             </button>
+        <div class="text-center md:text-left flex-1 flex flex-col md:block items-center">
+          <h1 id="instructor-name" class="text-3xl md:text-5xl font-black text-white tracking-tight mb-2">Loading...</h1>
+          <p id="instructor-headline" class="text-lg md:text-2xl text-slate-300 font-medium mb-4"></p>
+          
+          <div class="flex flex-col md:flex-row items-center gap-4 mb-6">
+              <div class="flex items-center gap-1 px-4 py-1.5 bg-white/10 backdrop-blur-md rounded-full border border-white/10 w-fit">
+                  <span class="material-symbols-outlined text-orange-400 text-lg" style="font-variation-settings: 'FILL' 1">star</span>
+                  <span id="instructor-rating" class="text-white font-bold text-base">0.0</span>
+                  <span id="instructor-reviews" class="text-white/60 text-sm font-medium ml-1">(0 reviews)</span>
+              </div>
+              <div class="hidden" id="hero-video-trigger">
+                  <button onclick="openVideoModal()" class="flex items-center gap-2 px-5 py-2 bg-white hover:bg-slate-50 rounded-xl text-primary font-black transition-all group shadow-lg w-fit">
+                      <span class="material-symbols-outlined text-xl group-hover:scale-110 transition-transform" style="font-variation-settings: 'FILL' 1">play_circle</span>
+                      <span>Watch Introduction</span>
+                  </button>
+              </div>
           </div>
           <div class="flex flex-wrap items-center justify-center md:justify-start gap-4 text-slate-400 text-sm md:text-base font-medium">
              <div class="flex items-center gap-2">

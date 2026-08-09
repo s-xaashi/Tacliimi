@@ -50,46 +50,75 @@
 </head>
 
 <body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen">
-    <nav class="sticky top-0 z-50 bg-white dark:bg-background-dark border-b border-slate-200 dark:border-slate-800">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-16">
-                <a href="/index.html" class="flex items-center gap-2">
-                    <div class="bg-primary text-white p-1.5 rounded-lg flex items-center justify-center">
-                        <svg class="w-6 h-6" fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-                            <path
-                                d="M24 45.8096C19.6865 45.8096 15.4698 44.5305 11.8832 42.134C8.29667 39.7376 5.50128 36.3314 3.85056 32.3462C2.19985 28.361 1.76794 23.9758 2.60947 19.7452C3.451 15.5145 5.52816 11.6284 8.57829 8.5783C11.6284 5.52817 15.5145 3.45101 19.7452 2.60948C23.9758 1.76795 28.361 2.19986 32.3462 3.85057C36.3314 5.50129 39.7376 8.29668 42.134 11.8833C44.5305 15.4698 45.8096 19.6865 45.8096 24L24 24L24 45.8096Z"
-                                fill="currentColor"></path>
-                        </svg>
-                    </div>
-                    <span class="text-xl font-bold tracking-tight">Tacliimi Learn</span>
-                </a>
-                <div class="hidden md:flex items-center gap-8">
-                    <a class="text-sm font-medium hover:text-primary transition-colors" href="/src/pages/marketplace/marketplace/">Courses</a>
-                    <button onclick="window.location.href='/src/pages/instructor/become-instructor/'"
-                        class="bg-primary text-white px-5 py-2 rounded-lg text-sm font-bold hover:bg-primary/90 transition-all">
-                        Become a Teacher
-                    </button>
-                    <div class="border-l border-slate-200 dark:border-slate-700 h-6"></div>
-                    <div class="flex items-center gap-3">
-                        <button onclick="window.location.href='/src/pages/auth/login/'"
-                            class="text-sm font-semibold text-slate-700 dark:text-slate-300 hover:text-primary transition-colors">Log
-                            in</button>
-                    </div>
+    <nav class="sticky top-0 z-50 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 transition-colors min-h-[64px]">
+<div class="max-w-[1440px] mx-auto px-4 h-16 flex items-center justify-between relative">
+            <!-- Mobile Hamburger (Left) -->
+            <button class="lg:hidden p-2 -ml-2 text-slate-600 dark:text-slate-300 z-10" id="mobile-menu-btn">
+                <span class="material-symbols-outlined">menu</span>
+            </button>
+
+            <!-- Logo (Center on mobile, Left on desktop) -->
+            <a href="/index.html" class="flex items-center gap-2 absolute left-1/2 -translate-x-1/2 lg:static lg:transform-none lg:left-0 z-0 hover:opacity-80 transition-opacity">
+                <img src="/public/assets/images/IMG_7454.png" alt="Tacliimi Learn" class="h-10 md:h-12 w-auto object-contain">
+            </a>
+
+            <div class="flex-grow max-w-2xl hidden md:block mx-8 z-0">
+                <div class="relative group">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 group-focus-within:text-primary transition-colors">
+                        <span class="material-symbols-outlined">search</span>
+                    </span>
+                    <input id="marketplace-search" class="block w-full pl-10 pr-3 py-2 border border-gray-200 dark:border-gray-700 rounded-full bg-gray-50 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm" placeholder="Search for courses, instructors, or skills..." type="text" />
                 </div>
-          <button class="md:hidden p-2 text-slate-600 dark:text-slate-300" id="mobile-menu-btn">
-            <span class="material-symbols-outlined">menu</span>
-          </button>
+            </div>
+            
+            <div class="flex items-center gap-6 flex-shrink-0 z-10 hidden lg:flex">
+                <div class="flex items-center gap-4 text-sm font-medium">
+                    <a class="hover:text-primary transition-colors whitespace-nowrap" href="/src/pages/instructor/become-instructor/">Teach on Tacliimi</a>
+                </div>
+                <!-- Global Profile Injected Below via JS -->
             </div>
         </div>
-    
-  <!-- Mobile Menu -->
-  <div class="hidden md:hidden bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-4 py-6 space-y-4 absolute w-full shadow-xl z-40" id="mobile-menu">
-    <a class="block text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/src/pages/marketplace/marketplace/">Courses</a>
-    <a class="block text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/src/pages/instructor/become-instructor/">Become a Teacher</a>
-    <a class="block text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/src/pages/auth/login/">Log
-                            in</a>
-  </div>
-  </nav>
+        <!-- Mobile Menu -->
+<div class="hidden lg:hidden bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-4 py-8 flex-col absolute w-full shadow-2xl z-40 overflow-y-auto h-[calc(100vh-64px)] overflow-x-hidden left-0 text-left" id="mobile-menu">
+    <!-- Top: Mobile Profile Area -->
+    <div id="mobile-menu-profile" class="flex items-center gap-4 mb-6 pb-6 border-b border-slate-100 dark:border-slate-800 cursor-pointer" onclick="window.location.href='/src/pages/student/account-settings/index.html'">
+        <div class="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-primary/20 overflow-hidden flex-shrink-0" id="mobile-menu-avatar-wrapper" data-role="profile-image">
+            <span class="material-symbols-outlined text-slate-400 w-full h-full flex justify-center items-center">person</span>
+        </div>
+        <div class="flex-1 overflow-hidden">
+            <h4 class="font-bold text-slate-900 dark:text-white truncate user-display-name">Loading...</h4>
+            <p class="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">View and edit profile</p>
+        </div>
+        <span class="material-symbols-outlined text-slate-400">chevron_right</span>
+    </div>
+
+    <!-- Middle: Navigation Links -->
+    <div class="flex flex-col space-y-5 flex-1">
+        <a class="flex items-center gap-3 text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/index.html">
+            <span class="material-symbols-outlined text-xl text-slate-400">home</span> Home
+        </a>
+        <a class="flex items-center gap-3 text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/src/pages/marketplace/marketplace/">
+            <span class="material-symbols-outlined text-xl text-slate-400">explore</span> Marketplace Courses
+        </a>
+        <a class="flex items-center gap-3 text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/src/pages/mentorship/mentor-marketplace/index.html">
+            <span class="material-symbols-outlined text-xl text-slate-400">supervisor_account</span> Find a Mentor
+        </a>
+        <a class="flex items-center gap-3 text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/src/pages/student/student-dashboard/index.html">
+            <span class="material-symbols-outlined text-xl text-slate-400">dashboard</span> Dashboard
+        </a>
+        <a class="flex items-center gap-3 text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/src/pages/instructor/become-instructor/">
+            <span class="material-symbols-outlined text-xl text-slate-400">school</span> Teach on Tacliimi
+        </a>
+    </div>
+
+    <!-- Bottom: Footer Actions (Logout Removed as per request) -->
+    <div class="pt-6 mt-6 border-t border-slate-100 dark:border-slate-800 space-y-5 pb-10">
+        <button id="mobile-theme-toggle" class="flex items-center gap-3 w-full text-left text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors">
+            <span class="material-symbols-outlined text-xl text-slate-400">dark_mode</span> Toggle Theme
+        </button>
+    </div>
+</div>
+</nav>
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <section class="mb-12">
             <div

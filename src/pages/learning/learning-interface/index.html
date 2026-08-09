@@ -48,16 +48,17 @@
             <a id="back-to-dashboard-btn" href="/src/pages/student/student-dashboard/index.html"
                 class="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary transition-colors">
                 <span class="material-symbols-outlined text-xl">arrow_back</span>
-                <span class="font-medium text-sm">Back to Dashboard</span>
+                <span class="font-medium text-sm hidden sm:inline">Back to Dashboard</span>
             </a>
             <div class="h-6 w-px bg-slate-200 dark:bg-slate-800"></div>
-            <h1 id="li-course-title" class="text-sm font-semibold font-serif truncate max-w-[300px] lg:max-w-md">Course Title Here
+            <h1 id="li-course-title" class="text-sm font-semibold font-serif truncate max-w-[160px] sm:max-w-[300px] lg:max-w-md">Course Title Here
             </h1>
         </div>
         <div class="flex items-center gap-2 md:gap-4" id="li-header-profile-placeholder">
             <!-- Global Profile will inject its controls here -->
         </div>
     </header>
+
     <main class="flex-1 flex flex-col md:flex-row overflow-hidden">
         <section class="flex-1 overflow-y-auto no-scrollbar">
             <div class="w-full aspect-video bg-black md:bg-transparent md:p-6 lg:p-8 relative group">
@@ -67,9 +68,9 @@
                     </video>
                 </div>
             </div>
-            <div class="p-8 max-w-5xl mx-auto">
+            <div class="p-4 sm:p-8 max-w-5xl mx-auto">
                 <div class="border-b border-slate-200 dark:border-slate-800 mb-6">
-                    <nav class="flex gap-8 overflow-x-auto no-scrollbar" id="li-tabs">
+                    <nav class="flex gap-4 sm:gap-8 overflow-x-auto no-scrollbar" id="li-tabs">
                         <button
                             class="pb-4 text-sm font-medium border-b-2 border-primary text-primary active-tab whitespace-nowrap hidden"
                             data-tab="quiz">Quiz</button>
@@ -81,7 +82,7 @@
                             data-tab="review">Give Review</button>
                     </nav>
                 </div>
-                <div class="prose dark:prose-invert max-w-none">
+                <div class="prose dark:prose-invert max-w-none pb-24 md:pb-0">
                     <h2 id="li-lesson-title" class="text-2xl font-bold font-serif mb-4">Loading Lesson...</h2>
 
                     <div id="tab-content-quiz" class="tab-content">
@@ -97,9 +98,11 @@
                 </div>
             </div>
         </section>
+
+        <!-- Desktop Sidebar -->
         <aside
-            class="w-full md:w-80 lg:w-96 border-l border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col h-full relative">
-            <div class="absolute left-[-1px] top-0 bottom-0 w-1 bg-slate-200/50 dark:bg-slate-800/50 pointer-events-none z-10 hidden md:block">
+            class="hidden md:flex w-80 lg:w-96 border-l border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex-col h-full relative">
+            <div class="absolute left-[-1px] top-0 bottom-0 w-1 bg-slate-200/50 dark:bg-slate-800/50 pointer-events-none z-10">
                 <div id="li-progress-ribbon" class="w-full bg-accent-gold transition-all duration-1000" style="height: 0%;"></div>
             </div>
             <div class="p-6 border-b border-slate-200 dark:border-slate-800">
@@ -119,26 +122,134 @@
                     Generate My Certificate
                 </button>
             </div>
-            <div id="li-sidebar-curriculum" class="flex-1 overflow-y-auto">
+            <div id="li-sidebar-curriculum" class="flex-1 overflow-y-auto no-scrollbar">
                 <!-- Curriculum populated dynamically -->
             </div>
         </aside>
     </main>
-    <div
-        class="md:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex justify-around p-3 fixed bottom-0 w-full">
-        <button class="flex flex-col items-center text-primary">
-            <span class="material-symbols-outlined">play_circle</span>
-            <span class="text-[10px] mt-1 font-medium">Player</span>
+
+    <!-- Mobile Lessons Drawer (slides up when "Lessons" is tapped) -->
+    <div id="mobile-lessons-drawer"
+        class="md:hidden fixed inset-x-0 bottom-14 z-40 overflow-y-auto no-scrollbar shadow-2xl bg-white dark:bg-slate-900 border-t-2 border-primary/30 rounded-t-2xl"
+        style="top: 33vh; transform: translateY(100%); transition: transform 0.3s ease;">
+        <div class="sticky top-0 z-10 flex items-center justify-between px-5 py-3 border-b border-slate-100 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm">
+            <h3 class="font-bold text-sm text-slate-900 dark:text-white">Course Content</h3>
+            <div class="flex items-center gap-4">
+                <span id="li-progress-text-mobile" class="text-xs font-semibold text-primary px-2 py-1 bg-primary/10 rounded">0% Complete</span>
+                <button onclick="window.closeMobileLessons()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+        </div>
+        <div id="li-sidebar-curriculum-mobile" class="pb-4">
+            <!-- Mirrored from desktop sidebar by JS -->
+        </div>
+    </div>
+    <!-- Overlay behind the drawer -->
+    <div id="mobile-lessons-overlay" class="md:hidden fixed inset-0 bg-black/40 z-30 hidden" onclick="window.closeMobileLessons()"></div>
+
+    <!-- Mobile Bottom Navigation -->
+    <div id="mobile-bottom-nav"
+        class="md:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex justify-around items-center py-2 fixed bottom-0 w-full z-50">
+        <button id="mobile-nav-player"
+            class="flex flex-col items-center gap-0.5 text-primary px-5 py-1.5 rounded-xl transition-colors"
+            onclick="window.mobileNavSwitch('player')">
+            <span class="material-symbols-outlined text-2xl">play_circle</span>
+            <span class="text-[10px] font-semibold">Player</span>
         </button>
-        <button class="flex flex-col items-center text-slate-500">
-            <span class="material-symbols-outlined">list</span>
-            <span class="text-[10px] mt-1 font-medium">Lessons</span>
+        <button id="mobile-nav-lessons"
+            class="flex flex-col items-center gap-0.5 text-slate-500 px-5 py-1.5 rounded-xl transition-colors"
+            onclick="window.mobileNavSwitch('lessons')">
+            <span class="material-symbols-outlined text-2xl">list</span>
+            <span class="text-[10px] font-semibold">Lessons</span>
         </button>
-        <button class="flex flex-col items-center text-slate-500">
-            <span class="material-symbols-outlined">quiz</span>
-            <span class="text-[10px] mt-1 font-medium">Quiz</span>
+        <button id="mobile-nav-quiz"
+            class="flex flex-col items-center gap-0.5 text-slate-500 px-5 py-1.5 rounded-xl transition-colors"
+            onclick="window.mobileNavSwitch('quiz')">
+            <span class="material-symbols-outlined text-2xl">quiz</span>
+            <span class="text-[10px] font-semibold">Quiz</span>
         </button>
     </div>
+
+    <script>
+        // =====================================================
+        // Mobile Bottom Navigation Logic
+        // =====================================================
+        const _mobileNavBtns = {
+            player: document.getElementById('mobile-nav-player'),
+            lessons: document.getElementById('mobile-nav-lessons'),
+            quiz: document.getElementById('mobile-nav-quiz'),
+        };
+        const _activeNavClass = ['text-primary', 'bg-primary/5'];
+        const _inactiveNavClass = 'text-slate-500';
+
+        function _setNavActive(mode) {
+            Object.entries(_mobileNavBtns).forEach(([key, btn]) => {
+                if (!btn) return;
+                btn.classList.remove(..._activeNavClass, _inactiveNavClass);
+                btn.classList.add(...(key === mode ? _activeNavClass : [_inactiveNavClass]));
+            });
+        }
+
+        window.mobileNavSwitch = function(mode) {
+            if (mode === 'player') {
+                _setNavActive('player');
+                window.closeMobileLessons();
+                const section = document.querySelector('main > section');
+                if (section) section.scrollTo({ top: 0, behavior: 'smooth' });
+
+            } else if (mode === 'lessons') {
+                _setNavActive('lessons');
+                window.openMobileLessons();
+
+            } else if (mode === 'quiz') {
+                window.closeMobileLessons();
+                const quizTab = document.querySelector('#li-tabs button[data-tab="quiz"]');
+                if (quizTab && !quizTab.classList.contains('hidden')) {
+                    _setNavActive('quiz');
+                    quizTab.click();
+                    const quizContent = document.getElementById('tab-content-quiz');
+                    if (quizContent) {
+                        setTimeout(() => quizContent.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+                    }
+                } else {
+                    // No quiz available — stay on player, show feedback
+                    _setNavActive('player');
+                    const quizBtn = _mobileNavBtns.quiz;
+                    if (quizBtn) {
+                        quizBtn.classList.add('opacity-40');
+                        setTimeout(() => quizBtn.classList.remove('opacity-40'), 1200);
+                    }
+                }
+            }
+        };
+
+        window.openMobileLessons = function() {
+            const drawer = document.getElementById('mobile-lessons-drawer');
+            const overlay = document.getElementById('mobile-lessons-overlay');
+            // Mirror curriculum content
+            const mobileCurriculum = document.getElementById('li-sidebar-curriculum-mobile');
+            const desktopCurriculum = document.getElementById('li-sidebar-curriculum');
+            if (mobileCurriculum && desktopCurriculum) {
+                mobileCurriculum.innerHTML = desktopCurriculum.innerHTML;
+            }
+            // Sync progress label
+            const mobileProgressEl = document.getElementById('li-progress-text-mobile');
+            const desktopProgressEl = document.getElementById('li-progress-text');
+            if (mobileProgressEl && desktopProgressEl) {
+                mobileProgressEl.textContent = desktopProgressEl.textContent;
+            }
+            if (drawer) { drawer.style.transform = 'translateY(0)'; }
+            if (overlay) { overlay.classList.remove('hidden'); }
+        };
+
+        window.closeMobileLessons = function() {
+            const drawer = document.getElementById('mobile-lessons-drawer');
+            const overlay = document.getElementById('mobile-lessons-overlay');
+            if (drawer) { drawer.style.transform = 'translateY(100%)'; }
+            if (overlay) { overlay.classList.add('hidden'); }
+        };
+    </script>
 
     <script type="module" src="./learningInterface.js"></script>
     <script type="module" src="./certificateGenerator.js"></script>

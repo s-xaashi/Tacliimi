@@ -66,7 +66,7 @@ async function loadInstructorProfile() {
         document.getElementById('instructor-name').textContent = mentorData.full_name;
         if (mentorData.serial_id) {
             const mtrRef = document.createElement('span');
-            mtrRef.className = "ml-2 px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-400 text-[10px] font-black uppercase tracking-widest rounded border border-slate-200 dark:border-slate-700 font-mono align-middle md-inline-block block mt-1 md:mt-0";
+            mtrRef.className = "text-slate-400 dark:text-slate-300 text-[11px] font-black uppercase tracking-[0.1em] font-mono block md:inline-block md:ml-3 mt-2 md:mt-0";
             mtrRef.textContent = `MTR-${mentorData.serial_id}`;
             document.getElementById('instructor-name').appendChild(mtrRef);
         }

@@ -57,6 +57,9 @@
             from { opacity: 0; transform: translateY(4px); }
             to { opacity: 1; transform: translateY(0); }
         }
+        /* Hide scrollbar but keep functionality */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .anim-fade-in {
             animation: fadeIn 0.4s ease-out forwards;
         }
@@ -68,80 +71,105 @@
     <nav
         class="sticky top-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16 items-center">
-                <div class="flex items-center gap-8">
-                    <div class="flex items-center gap-2">
-                        <div
-                            class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-bold">
-                            T</div>
-                        <span
-                            class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-400">Tacliimi
-                            Learn</span>
-                    </div>
-                    <div class="hidden md:flex items-center space-x-6">
-                        <a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors px-1"
-                            href="/">Home</a>
-                        <a class="text-primary font-semibold border-b-2 border-primary pb-1 px-1"
-                            href="/src/pages/student/student-dashboard/">Dashboard</a>
-                        <a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
-                            href="/src/pages/marketplace/marketplace/">Browse</a>
-                        <a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
-                            href="/src/pages/student/account-settings/index.html?tab=my-mentors">Mentors</a>
-                        <a class="bg-primary hover:bg-purple-600 text-white px-6 py-2.5 rounded-lg font-semibold transition-colors flex items-center"
-                            href="/src/pages/instructor/become-instructor/">Become a Teacher</a>
-                    </div>
-          <button class="md:hidden p-2 text-slate-600 dark:text-slate-300" id="mobile-menu-btn">
-            <span class="material-symbols-outlined">menu</span>
-          </button>
+            <div class="flex justify-between h-16 items-center relative">
+                <!-- Mobile Hamburger (Left) -->
+                <button class="lg:hidden p-2 -ml-2 text-slate-600 dark:text-slate-300 z-10" id="mobile-menu-btn">
+                    <span class="material-symbols-outlined">menu</span>
+                </button>
+
+                <!-- Logo (Center on mobile, Left on desktop) -->
+                <a href="/index.html" class="flex items-center gap-2 absolute left-1/2 -translate-x-1/2 lg:static lg:transform-none lg:left-0 z-0 hover:opacity-80 transition-opacity">
+                    <img src="/public/assets/images/IMG_7454.png" alt="Tacliimi Learn" class="h-10 md:h-12 w-auto object-contain">
+                </a>
+
+                <!-- Desktop Nav (Center/Right) -->
+                <div class="hidden lg:flex items-center space-x-6 ml-auto mr-8">
+                    <a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors px-1" href="/">Home</a>
+                    <a class="text-primary font-semibold border-b-2 border-primary pb-1 px-1" href="/src/pages/student/student-dashboard/">Dashboard</a>
+                    <a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors" href="/src/pages/marketplace/marketplace/">Browse</a>
+                    <a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors" href="/src/pages/student/account-settings/index.html?tab=my-mentors">Mentors</a>
+                    <a class="bg-primary hover:bg-purple-600 text-white px-6 py-2.5 rounded-lg font-semibold transition-colors flex items-center" href="/src/pages/instructor/become-instructor/">Become a Teacher</a>
                 </div>
-                <div class="flex items-center gap-4">
-                    <!-- Notification Bell -->
-                    <div class="relative" id="notif-wrapper">
-                        <button id="notif-bell-btn" onclick="window.toggleNotifPanel()" 
-                            class="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all relative">
-                            <span class="material-symbols-outlined">notifications</span>
-                            <span id="notif-badge" class="absolute top-2 right-2 w-2.5 h-2.5 bg-primary border-2 border-white dark:border-slate-900 rounded-full hidden"></span>
-                        </button>
+    <div class="hidden lg:flex items-center gap-4">
+        <!-- Notification Bell -->
+        <div class="relative" id="notif-wrapper">
+            <button id="notif-bell-btn" onclick="window.toggleNotifPanel()" 
+                class="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all relative">
+                <span class="material-symbols-outlined">notifications</span>
+                <span id="notif-badge" class="absolute top-2 right-2 w-2.5 h-2.5 bg-primary border-2 border-white dark:border-slate-900 rounded-full hidden"></span>
+            </button>
 
-                        <!-- Notification Panel -->
-                        <div id="notif-panel" class="absolute right-0 mt-2 w-80 sm:w-96 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-800 overflow-hidden hidden z-[100] anim-fade-in">
-                            <div class="p-4 border-b border-slate-50 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
-                                <h3 class="font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                                    Notifications
-                                    <span class="px-2 py-0.5 bg-primary/10 text-primary text-[10px] rounded-full uppercase tracking-wider">Live</span>
-                                </h3>
-                                <button onclick="window.markAllRead()" class="text-xs font-semibold text-primary hover:text-purple-600 transition-colors">Mark all read</button>
-                            </div>
-                            
-                            <div id="notif-list" class="max-h-[420px] overflow-y-auto divide-y divide-slate-50 dark:divide-slate-800/50">
-                                <!-- Notifications injected here -->
-                                <div id="notif-empty" class="py-12 text-center hidden">
-                                    <div class="w-16 h-16 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-3">
-                                        <span class="material-symbols-outlined text-slate-300 dark:text-slate-600 text-3xl">notifications_off</span>
-                                    </div>
-                                    <p class="text-sm text-slate-500 dark:text-slate-400">No notifications yet</p>
-                                </div>
-                            </div>
-
-                            <div class="p-3 border-t border-slate-50 dark:border-slate-800 text-center bg-slate-50/30 dark:bg-slate-800/30">
-                                <button onclick="window.location.href='/src/pages/student/student-dashboard/'" class="text-xs font-bold text-slate-500 hover:text-primary transition-colors uppercase tracking-widest">View Dashboard</button>
-                            </div>
+            <!-- Notification Panel -->
+            <div id="notif-panel" class="absolute right-0 mt-2 w-80 sm:w-96 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-800 overflow-hidden hidden z-[100] anim-fade-in">
+                <div class="p-4 border-b border-slate-50 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
+                    <h3 class="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        Notifications
+                        <span class="px-2 py-0.5 bg-primary/10 text-primary text-[10px] rounded-full uppercase tracking-wider">Live</span>
+                    </h3>
+                    <button onclick="window.markAllRead()" class="text-xs font-semibold text-primary hover:text-purple-600 transition-colors">Mark all read</button>
+                </div>
+                
+                <div id="notif-list" class="max-h-[420px] overflow-y-auto divide-y divide-slate-50 dark:divide-slate-800/50">
+                    <!-- Notifications injected here -->
+                    <div id="notif-empty" class="py-12 text-center hidden">
+                        <div class="w-16 h-16 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <span class="material-symbols-outlined text-slate-300 dark:text-slate-600 text-3xl">notifications_off</span>
                         </div>
+                        <p class="text-sm text-slate-500 dark:text-slate-400">No notifications yet</p>
                     </div>
-                    <!-- Global Profile Injected Below -->
+                </div>
+
+                <div class="p-3 border-t border-slate-50 dark:border-slate-800 text-center bg-slate-50/30 dark:bg-slate-800/30">
+                    <button onclick="window.location.href='/src/pages/student/student-dashboard/'" class="text-xs font-bold text-slate-500 hover:text-primary transition-colors uppercase tracking-widest">View Dashboard</button>
                 </div>
             </div>
         </div>
-    
-  <!-- Mobile Menu -->
-  <div class="hidden md:hidden bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-4 py-6 space-y-4 absolute w-full shadow-xl z-40" id="mobile-menu">
-    <a class="block text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/">Home</a>
-    <a class="block text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/src/pages/student/student-dashboard/">Dashboard</a>
-    <a class="block text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/src/pages/marketplace/marketplace/">Browse</a>
-    <a class="block text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/src/pages/student/account-settings/index.html?tab=my-mentors">Mentors</a>
-    <a class="block text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/src/pages/instructor/become-instructor/">Become a Teacher</a>
-  </div>
-  </nav>
+        <!-- Global Profile Injected Below -->
+    </div>
+</div>
+</div>
+
+<!-- Mobile Menu -->
+<div class="hidden lg:hidden bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-4 py-8 flex-col absolute w-full shadow-2xl z-40 overflow-y-auto h-[calc(100vh-64px)] overflow-x-hidden left-0 text-left" id="mobile-menu">
+    <!-- Top: Mobile Profile Area -->
+    <div id="mobile-menu-profile" class="flex items-center gap-4 mb-6 pb-6 border-b border-slate-100 dark:border-slate-800 cursor-pointer" onclick="window.location.href='/src/pages/student/account-settings/index.html'">
+        <div class="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-primary/20 overflow-hidden flex-shrink-0" id="mobile-menu-avatar-wrapper" data-role="profile-image">
+            <span class="material-symbols-outlined text-slate-400 w-full h-full flex justify-center items-center">person</span>
+        </div>
+        <div class="flex-1 overflow-hidden">
+            <h4 class="font-bold text-slate-900 dark:text-white truncate user-display-name">Loading...</h4>
+            <p class="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">View and edit profile</p>
+        </div>
+        <span class="material-symbols-outlined text-slate-400">chevron_right</span>
+    </div>
+
+    <!-- Middle: Navigation Links -->
+    <div class="flex flex-col space-y-5 flex-1">
+        <a class="flex items-center gap-3 text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/index.html">
+            <span class="material-symbols-outlined text-xl text-slate-400">home</span> Home
+        </a>
+        <a class="flex items-center gap-3 text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/src/pages/marketplace/marketplace/">
+            <span class="material-symbols-outlined text-xl text-slate-400">explore</span> Marketplace Courses
+        </a>
+        <a class="flex items-center gap-3 text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/src/pages/mentorship/mentor-marketplace/index.html">
+            <span class="material-symbols-outlined text-xl text-slate-400">supervisor_account</span> Find a Mentor
+        </a>
+        <a class="flex items-center gap-3 text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/src/pages/student/student-dashboard/index.html">
+            <span class="material-symbols-outlined text-xl text-slate-400">dashboard</span> Dashboard
+        </a>
+        <a class="flex items-center gap-3 text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/src/pages/instructor/become-instructor/">
+            <span class="material-symbols-outlined text-xl text-slate-400">school</span> Teach on Tacliimi
+        </a>
+    </div>
+
+    <!-- Bottom: Footer Actions (Logout Removed as per request) -->
+    <div class="pt-6 mt-6 border-t border-slate-100 dark:border-slate-800 space-y-5 pb-10">
+        <button id="mobile-theme-toggle" class="flex items-center gap-3 w-full text-left text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors">
+            <span class="material-symbols-outlined text-xl text-slate-400">dark_mode</span> Toggle Theme
+        </button>
+    </div>
+</div>
+</nav>
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <header class="mb-8">
             <h1 class="text-3xl font-bold text-slate-900 dark:text-white">Welcome back, <span
@@ -186,36 +214,36 @@
             <h3 class="text-xl font-bold dark:text-white">No courses enrolled yet</h3>
             <p class="text-slate-500 mt-2">Browse the marketplace to find courses that interest you.</p>
         </div>
-        <div class="flex items-center justify-between mb-6 border-b border-slate-200 dark:border-slate-800">
-            <div class="flex gap-8">
-                <button id="tab-my-courses" onclick="switchDashboardTab('my-courses')"
-                    class="pb-4 text-primary font-semibold border-b-2 border-primary flex items-center gap-2 transition-colors">
-                    <span class="material-symbols-outlined text-xl">school</span>
-                    My Courses
-                </button>
-                <button id="tab-completed" onclick="switchDashboardTab('completed')"
-                    class="pb-4 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium flex items-center gap-2 border-b-2 border-transparent transition-colors">
-                    <span class="material-symbols-outlined text-xl">verified</span>
-                    Completed
-                </button>
-                <button id="tab-my-mentors" onclick="switchDashboardTab('my-mentors')"
-                    class="pb-4 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium flex items-center gap-2 border-b-2 border-transparent transition-colors">
-                    <span class="material-symbols-outlined text-xl">supervisor_account</span>
-                    My Mentors
-                </button>
-                <button id="tab-wishlist" onclick="switchDashboardTab('wishlist')"
-                    class="pb-4 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium flex items-center gap-2 border-b-2 border-transparent transition-colors">
-                    <span class="material-symbols-outlined text-xl">favorite</span>
-                    Wishlist
-                </button>
-            </div>
-            <div class="hidden sm:flex gap-2 mb-4">
-                <div class="relative">
-                    <span
-                        class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
-                    <input
-                        class="pl-9 pr-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-sm focus:ring-primary focus:border-primary w-64"
-                        placeholder="Search my courses..." type="text" />
+        <!-- Sub-Navigation with horizontal scroll on mobile -->
+        <div class="mb-6 border-b border-slate-200 dark:border-slate-800">
+            <div class="flex items-end justify-between">
+                <div class="flex gap-1 sm:gap-6 overflow-x-auto no-scrollbar pb-0 -mb-px">
+                    <button id="tab-my-courses" onclick="switchDashboardTab('my-courses')"
+                        class="whitespace-nowrap pb-4 px-2 text-primary font-semibold border-b-2 border-primary flex items-center gap-1.5 transition-colors shrink-0 text-sm sm:text-base">
+                        <span class="material-symbols-outlined text-lg sm:text-xl">school</span>
+                        My Courses
+                    </button>
+                    <button id="tab-completed" onclick="switchDashboardTab('completed')"
+                        class="whitespace-nowrap pb-4 px-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium flex items-center gap-1.5 border-b-2 border-transparent transition-colors shrink-0 text-sm sm:text-base">
+                        <span class="material-symbols-outlined text-lg sm:text-xl">verified</span>
+                        Completed
+                    </button>
+                    <button id="tab-my-mentors" onclick="switchDashboardTab('my-mentors')"
+                        class="whitespace-nowrap pb-4 px-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium flex items-center gap-1.5 border-b-2 border-transparent transition-colors shrink-0 text-sm sm:text-base">
+                        <span class="material-symbols-outlined text-lg sm:text-xl">supervisor_account</span>
+                        <span class="hidden xs:inline">My</span> Mentors
+                    </button>
+                    <button id="tab-wishlist" onclick="switchDashboardTab('wishlist')"
+                        class="whitespace-nowrap pb-4 px-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium flex items-center gap-1.5 border-b-2 border-transparent transition-colors shrink-0 text-sm sm:text-base">
+                        <span class="material-symbols-outlined text-lg sm:text-xl">favorite</span>
+                        Wishlist
+                    </button>
+                </div>
+                <div class="hidden sm:flex gap-2 mb-4 shrink-0 ml-4">
+                    <div class="relative">
+                        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
+                        <input class="pl-9 pr-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-sm focus:ring-primary focus:border-primary w-48 lg:w-64" placeholder="Search courses..." type="text" />
+                    </div>
                 </div>
             </div>
         </div>
@@ -562,9 +590,43 @@
     const mobileMenu = document.getElementById('mobile-menu');
     if (mobileMenuBtn && mobileMenu) {
         mobileMenuBtn.addEventListener('click', () => {
-            mobileMenu.classList.toggle('hidden');
+            const isHidden = mobileMenu.classList.contains('hidden');
+            if (isHidden) {
+                mobileMenu.classList.remove('hidden');
+                mobileMenu.classList.add('flex');
+                document.body.style.overflow = 'hidden';
+            } else {
+                mobileMenu.classList.add('hidden');
+                mobileMenu.classList.remove('flex');
+                document.body.style.overflow = '';
+            }
         });
     }
+
+    // Wire mobile theme toggle
+    document.addEventListener('DOMContentLoaded', () => {
+        const mobileThemeBtn = document.getElementById('mobile-theme-toggle');
+        if (mobileThemeBtn) {
+            mobileThemeBtn.addEventListener('click', () => {
+                const html = document.documentElement;
+                if (html.classList.contains('dark')) {
+                    html.classList.remove('dark');
+                    localStorage.setItem('theme', 'light');
+                    mobileThemeBtn.querySelector('span.material-symbols-outlined').textContent = 'dark_mode';
+                } else {
+                    html.classList.add('dark');
+                    localStorage.setItem('theme', 'dark');
+                    mobileThemeBtn.querySelector('span.material-symbols-outlined').textContent = 'light_mode';
+                }
+            });
+        }
+        // Apply saved theme label
+        const savedTheme = localStorage.getItem('theme');
+        const mobileThemeIcon = document.querySelector('#mobile-theme-toggle .material-symbols-outlined');
+        if (mobileThemeIcon && savedTheme === 'dark') {
+            mobileThemeIcon.textContent = 'light_mode';
+        }
+    });
   </script>
 </body>
 
