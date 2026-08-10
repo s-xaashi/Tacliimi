@@ -666,14 +666,6 @@
             btnCloseProfile?.addEventListener('click', () => profileModal.classList.add('hidden'));
             
             themeToggle?.addEventListener('click', () => ThemeService.toggle());
-            sidebarToggle?.addEventListener('click', () => {
-                sidebar.classList.toggle('-translate-x-full');
-                overlay.classList.toggle('hidden');
-            });
-            overlay?.addEventListener('click', () => {
-                sidebar.classList.add('-translate-x-full');
-                overlay.classList.add('hidden');
-            });
 
             document.getElementById('logout-btn')?.addEventListener('click', async () => { 
                 await AuthService.logout(); 

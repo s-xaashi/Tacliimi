@@ -1031,21 +1031,6 @@
             window.location.href = '/src/pages/auth/login-select/index.html';
         });
 
-        // ---- Mobile Sidebar inline toggle ----
-        const toggleBtn = document.getElementById('toggle-sidebar');
-        const sidebar = document.getElementById('sidebar');
-        const overlay = document.getElementById('sidebar-overlay');
-        
-        toggleBtn?.addEventListener('click', () => { 
-            sidebar.classList.toggle('-translate-x-full'); 
-            overlay?.classList.toggle('hidden');
-        });
-        
-        overlay?.addEventListener('click', () => {
-            sidebar.classList.add('-translate-x-full');
-            overlay?.classList.add('hidden');
-        });
-
         const themeToggle = document.getElementById('theme-toggle');
         themeToggle?.addEventListener('click', () => {
             document.documentElement.classList.toggle('dark');

@@ -808,10 +808,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (realtimeChannel) supabase.removeChannel(realtimeChannel);
     });
 
-    const toggleSidebar = document.getElementById('toggle-sidebar');
-    const sidebar = document.getElementById('sidebar');
-    toggleSidebar.onclick = () => sidebar.classList.toggle('-translate-x-full');
-
     document.getElementById('logout-btn').onclick = async () => {
         await AuthService.logout();
         window.location.href = '/src/pages/auth/login-select/index.html';

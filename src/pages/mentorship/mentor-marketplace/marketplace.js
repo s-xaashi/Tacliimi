@@ -387,13 +387,13 @@ function renderMentors(mentors) {
 
         let bannerHtml = '';
         if (mentor.banner_text) {
-            bannerHtml = `<div class="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/30 dark:to-orange-900/30 border-t border-amber-200/50 dark:border-amber-700/50 px-4 py-2 mt-auto mb-4 flex gap-2 items-center mx-[-20px]"><span class="material-symbols-outlined text-amber-500 text-[14px] shrink-0">campaign</span><p class="text-[10px] font-bold text-amber-900 dark:text-amber-100 line-clamp-1 leading-tight">${mentor.banner_text}</p></div>`;
+            bannerHtml = `<div class="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/30 dark:to-orange-900/30 border-t border-amber-200/50 dark:border-amber-700/50 px-4 py-2 mt-auto mb-3 md:mb-4 flex gap-2 items-center mx-[-16px] md:mx-[-20px]"><span class="material-symbols-outlined text-amber-500 text-[14px] shrink-0">campaign</span><p class="text-[10px] font-bold text-amber-900 dark:text-amber-100 line-clamp-1 leading-tight">${mentor.banner_text}</p></div>`;
         } else {
-            bannerHtml = `<div class="mt-auto mb-4"></div>`;
+            bannerHtml = `<div class="mt-auto mb-3 md:mb-4"></div>`;
         }
 
         // Added flex flex-col h-full and boost ring
-        card.className = `group bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-5 hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-none transition-all duration-300 flex flex-col h-full cursor-pointer ${boostRing}`;
+        card.className = `group bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-4 md:p-5 hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-none transition-all duration-300 flex flex-col h-full cursor-pointer ${boostRing}`;
         card.onclick = () => window.location.href = `/src/pages/mentorship/mentor-profile/index.html?id=${mentor.instructor_id}`;
         
         const isWishlisted = wishlistedMentorIds.has(mentor.instructor_id);
@@ -405,19 +405,19 @@ function renderMentors(mentors) {
         ).join('') || '';
 
         card.innerHTML = `
-            <div class="flex items-start justify-between mb-4">
+            <div class="flex items-start justify-between mb-3 md:mb-4">
                 <div class="relative cursor-pointer">
                     <div class="absolute -top-3 -left-3">${roleBadge}</div>
                     <img src="${mentor.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(mentor.full_name) + '&background=random&color=fff'}" 
                          alt="${mentor.full_name}" 
-                         class="w-16 h-16 rounded-2xl object-cover ring-4 ring-slate-50 dark:ring-slate-800 text-[10px] italic mt-3">
-                    <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 border-4 border-white dark:border-slate-900 rounded-full"></div>
+                         class="w-14 h-14 md:w-16 md:h-16 rounded-2xl object-cover ring-4 ring-slate-50 dark:ring-slate-800 text-[10px] italic mt-2 md:mt-3">
+                    <div class="absolute -bottom-1 -right-1 w-4 h-4 md:w-5 md:h-5 bg-green-500 border-2 md:border-4 border-white dark:border-slate-900 rounded-full"></div>
                 </div>
-                <div class="flex items-start gap-4">
-                    <div class="flex flex-col items-end mt-2">
+                <div class="flex items-start gap-2 md:gap-4">
+                    <div class="flex flex-col items-end mt-1 md:mt-2">
                         <div class="flex items-center gap-1 text-amber-500 mb-0.5">
-                            <span class="material-symbols-outlined text-[16px] fill-current">star</span>
-                            <span class="text-xs font-bold leading-none">${mentor.rating || '0.0'}</span>
+                            <span class="material-symbols-outlined text-[14px] md:text-[16px] fill-current">star</span>
+                            <span class="text-[11px] md:text-xs font-bold leading-none">${mentor.rating || '0.0'}</span>
                         </div>
                         <div class="text-primary text-right">
                             <span class="text-sm font-black">$${mentor.hourly_rate || 0}</span>
@@ -425,47 +425,47 @@ function renderMentors(mentors) {
                         </div>
                     </div>
                     <button onclick="event.stopPropagation(); window.toggleMentorWishlist('${mentor.instructor_id}', this);" 
-                            class="w-10 h-10 rounded-full border border-slate-100 dark:border-slate-800/60 bg-slate-50 dark:bg-slate-800 flex items-center justify-center hover:shadow hover:bg-white dark:hover:bg-slate-700 transition-all active:scale-95 ${favColor} shrink-0 mt-2">
-                        <span class="material-symbols-outlined ms-fav-icon text-[20px]" style="font-variation-settings: ${isWishlisted ? "'FILL' 1" : "'FILL' 0"},'wght' 400,'GRAD' 0,'opsz' 24">favorite</span>
+                            class="w-8 h-8 md:w-10 md:h-10 rounded-full border border-slate-100 dark:border-slate-800/60 bg-slate-50 dark:bg-slate-800 flex items-center justify-center hover:shadow hover:bg-white dark:hover:bg-slate-700 transition-all active:scale-95 ${favColor} shrink-0 mt-1 md:mt-2">
+                        <span class="material-symbols-outlined ms-fav-icon text-[18px] md:text-[20px]" style="font-variation-settings: ${isWishlisted ? "'FILL' 1" : "'FILL' 0"},'wght' 400,'GRAD' 0,'opsz' 24">favorite</span>
                     </button>
                 </div>
             </div>
 
-            <div class="mb-4">
+            <div class="mb-3 md:mb-4">
                 <div class="flex items-center gap-2 mb-1">
-                    <h3 class="text-base font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors line-clamp-1 cursor-pointer" 
+                    <h3 class="text-sm md:text-base font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors line-clamp-1 cursor-pointer" 
                         onclick="window.location.href='/src/pages/mentorship/mentor-profile/index.html?id=${mentor.instructor_id}'">
                         ${mentor.full_name}
                     </h3>
-                    ${mentor.country ? `<span class="text-[10px] text-slate-400">📍 ${mentor.country}</span>` : ''}
+                    ${mentor.country ? `<span class="text-[9px] md:text-[10px] text-slate-400">📍 ${mentor.country}</span>` : ''}
                 </div>
-                <p class="text-xs font-medium text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed h-10 overflow-hidden">
+                <p class="text-[11px] md:text-xs font-medium text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed h-8 md:h-10 overflow-hidden">
                     ${mentor.short_bio || 'Expert mentor ready to guide you.'}
                 </p>
             </div>
 
-            <div class="flex flex-wrap gap-2 mb-4">
+            <div class="flex flex-wrap gap-1.5 md:gap-2 mb-3 md:mb-4">
                 ${expertiseTags}
-                ${mentor.expertise?.length > 2 ? `<span class="text-[10px] font-bold text-slate-400 self-center">+${mentor.expertise.length - 2} more</span>` : ''}
+                ${mentor.expertise?.length > 2 ? `<span class="text-[9px] md:text-[10px] font-bold text-slate-400 self-center">+${mentor.expertise.length - 2} more</span>` : ''}
             </div>
 
-            <div class="grid grid-cols-2 gap-3 mb-5 py-4 border-y border-slate-50 dark:border-slate-800">
-                <div class="flex items-center gap-2">
-                    <div class="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-800 flex items-center justify-center">
-                        <span class="material-symbols-outlined text-slate-400 text-[18px]">history</span>
+            <div class="grid grid-cols-2 gap-2 md:gap-3 mb-4 md:mb-5 py-3 md:py-4 border-y border-slate-50 dark:border-slate-800">
+                <div class="flex items-center gap-1.5 md:gap-2">
+                    <div class="w-7 h-7 md:w-8 md:h-8 rounded-lg bg-slate-50 dark:bg-slate-800 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-slate-400 text-[16px] md:text-[18px]">history</span>
                     </div>
                     <div>
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Sessions</p>
-                        <p class="text-xs font-bold text-slate-700 dark:text-slate-200">${mentor.completed_sessions ?? mentor.total_sessions ?? 0}</p>
+                        <p class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-tight">Sessions</p>
+                        <p class="text-[11px] md:text-xs font-bold text-slate-700 dark:text-slate-200">${mentor.completed_sessions ?? mentor.total_sessions ?? 0}</p>
                     </div>
                 </div>
-                <div class="flex items-center gap-2">
-                    <div class="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-800 flex items-center justify-center">
-                        <span class="material-symbols-outlined text-slate-400 text-[18px]">bolt</span>
+                <div class="flex items-center gap-1.5 md:gap-2">
+                    <div class="w-7 h-7 md:w-8 md:h-8 rounded-lg bg-slate-50 dark:bg-slate-800 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-slate-400 text-[16px] md:text-[18px]">bolt</span>
                     </div>
                     <div>
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Response</p>
-                        <p class="text-xs font-bold text-slate-700 dark:text-slate-200">${formatResponseTime(mentor.avg_response_time)}</p>
+                        <p class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-tight">Response</p>
+                        <p class="text-[11px] md:text-xs font-bold text-slate-700 dark:text-slate-200">${formatResponseTime(mentor.avg_response_time)}</p>
                     </div>
                 </div>
             </div>
@@ -473,7 +473,7 @@ function renderMentors(mentors) {
             ${bannerHtml}
 
             <a href="/src/pages/mentorship/mentor-profile/index.html?id=${mentor.instructor_id}" 
-               class="mt-auto block w-full py-3 rounded-xl bg-slate-900 dark:bg-primary text-white text-center text-sm font-bold hover:bg-primary dark:hover:bg-primary/90 transition-all shadow-lg shadow-slate-200 dark:shadow-none">
+               class="mt-auto block w-full py-2.5 md:py-3 rounded-xl bg-slate-900 dark:bg-primary text-white text-center text-sm font-bold hover:bg-primary dark:hover:bg-primary/90 transition-all shadow-lg shadow-slate-200 dark:shadow-none">
                 View Profile
             </a>
         `;

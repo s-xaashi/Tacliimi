@@ -751,13 +751,6 @@
             // ─────────────────────────────────────────────
             await loadReviews();
 
-            // Mobile Menu Toggle
-            const toggleBtn = document.getElementById('toggle-sidebar');
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('sidebar-overlay');
-            toggleBtn?.addEventListener('click', () => { sidebar.classList.toggle('-translate-x-full'); overlay.classList.toggle('hidden'); });
-            overlay?.addEventListener('click', () => { sidebar.classList.add('-translate-x-full'); overlay.classList.add('hidden'); });
-
             // Theme toggle
             const themeToggle = document.getElementById('theme-toggle');
             themeToggle?.addEventListener('click', () => {

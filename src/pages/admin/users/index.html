@@ -695,13 +695,6 @@
                 document.getElementById('theme-toggle').innerHTML = `<span class="material-symbols-outlined">${isDark ? 'light_mode' : 'dark_mode'}</span>`;
             });
 
-            // Mobile Sidebar
-            const toggleBtn = document.getElementById('toggle-sidebar');
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('sidebar-overlay');
-            toggleBtn?.addEventListener('click', () => { sidebar.classList.toggle('-translate-x-full'); overlay.classList.toggle('hidden'); });
-            overlay?.addEventListener('click', () => { sidebar.classList.add('-translate-x-full'); overlay.classList.add('hidden'); });
-
             // Logout
             document.getElementById('logout-btn').addEventListener('click', async () => {
                 await AuthService.logout();

@@ -487,157 +487,166 @@ async function loadCourseWishlist() {
     await ensureSession();
     if (!currentUserSession?.user) return;
 
-    const { data: wishlisted, error } = await supabase
+    // First get the wishlisted course IDs
+    const { data: wishlistedIds, error: wErr } = await supabase
         .from('wishlist')
-        .select('*, courses(*, instructor:profiles!courses_instructor_id_fkey(*), categories:course_categories!courses_category_id_fkey(*))')
+        .select('course_id')
         .eq('student_id', currentUserSession.user.id);
-
+        
     const wishlistContainer = document.getElementById('wishlist-container');
     const wishlistEmptyState = document.getElementById('wishlist-empty-state');
     
-    if (!wishlisted || wishlisted.length === 0) {
+    if (!wishlistedIds || wishlistedIds.length === 0) {
         wishlistContainer.innerHTML = '';
         wishlistContainer.appendChild(wishlistEmptyState);
-    } else {
-        wishlistContainer.innerHTML = '<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-6"></div>';
-        const grid = wishlistContainer.querySelector('.grid');
+        return;
+    }
+
+    const courseIds = wishlistedIds.map(w => w.course_id);
+
+    // Fetch full course details using the marketplace view so we get all aggregated metrics
+    const { data: wishlistedCourses, error: cErr } = await supabase
+        .from('course_marketplace_view')
+        .select('*')
+        .in('id', courseIds);
+
+    if (!wishlistedCourses || wishlistedCourses.length === 0) {
+        wishlistContainer.innerHTML = '';
+        wishlistContainer.appendChild(wishlistEmptyState);
+        return;
+    }
+    
+    wishlistContainer.innerHTML = '<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-6"></div>';
+    const grid = wishlistContainer.querySelector('.grid');
+    
+    let html = '';
+    wishlistedCourses.forEach(course => {
+        const categoryName = course.category_name || 'Course';
+        const instructorName = course.instructor_name || 'Expert Instructor';
+        const rating = course.average_rating || 0;
+        const fullStars = Math.floor(rating);
+        const hasHalfStar = rating % 1 >= 0.5;
+        let starsHtml = '';
+        for (let i = 1; i <= 5; i++) {
+            if (i <= fullStars) starsHtml += '<span class="material-icons-outlined text-xs">star</span>';
+            else if (i === fullStars + 1 && hasHalfStar) starsHtml += '<span class="material-icons-outlined text-xs">star_half</span>';
+            else starsHtml += '<span class="material-icons-outlined text-xs text-gray-300">star</span>';
+        }
+        const favIcon = 'favorite';
+        const favColor = 'text-red-500 dark:text-red-500';
         
-        let html = '';
-        wishlisted.forEach(w => {
-            const course = w.courses;
-            if(!course) return;
-            const categoryName = course.categories ? course.categories.name : 'Course';
-            const instructorName = course.instructor ? course.instructor.full_name : 'Expert Instructor';
-            const rating = course.average_rating || 0;
-            const fullStars = Math.floor(rating);
-            const hasHalfStar = rating % 1 >= 0.5;
-            let starsHtml = '';
-            for (let i = 1; i <= 5; i++) {
-                if (i <= fullStars) starsHtml += '<span class="material-icons-outlined text-xs">star</span>';
-                else if (i === fullStars + 1 && hasHalfStar) starsHtml += '<span class="material-icons-outlined text-xs">star_half</span>';
-                else starsHtml += '<span class="material-icons-outlined text-xs text-gray-300">star</span>';
-            }
-            const favIcon = 'favorite';
-            const favColor = 'text-red-500 dark:text-red-500';
+        let badgeHtml = '';
+        if (course.is_bestseller) {
+             badgeHtml = `<div class="absolute top-3 left-3"><div class="px-2.5 py-1 rounded bg-amber-400 text-black text-[10px] font-bold uppercase tracking-wider shadow-md">Bestseller</div></div>`;
+        }
+        
+        let bannerHtml = '';
+        if (course.banner_text) {
+             bannerHtml = `<div class="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/30 dark:to-orange-900/30 border-y border-amber-200/50 dark:border-amber-700/50 px-4 py-2 flex gap-2 items-center"><span class="material-symbols-outlined text-amber-500 text-sm shrink-0">campaign</span><p class="text-[11px] font-bold text-amber-900 dark:text-amber-100 line-clamp-2 leading-tight">${course.banner_text}</p></div>`;
+        }
 
-            const isBoosted = course._boost_order !== undefined && course._boost_order !== 999999;
-            const boostRing = isBoosted ? 'boosted-card' : '';
-            
-            let badgeHtml = '';
-            if (isBoosted) {
-                 badgeHtml = `<div class="absolute top-3 left-3"><div class="px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 text-[10px] font-black uppercase tracking-wider border border-amber-200 dark:border-amber-500/30 shadow-md flex items-center gap-1"><span class="material-symbols-outlined text-[10px]">stars</span> Sponsored</div></div>`;
-            } else if (course.is_bestseller) {
-                 badgeHtml = `<div class="absolute top-3 left-3"><div class="px-2.5 py-1 rounded bg-amber-400 text-black text-[10px] font-bold uppercase tracking-wider shadow-md">Bestseller</div></div>`;
-            }
-            
-            let bannerHtml = '';
-            if (course.banner_text) {
-                 bannerHtml = `<div class="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/30 dark:to-orange-900/30 border-y border-amber-200/50 dark:border-amber-700/50 px-4 py-2 flex gap-2 items-center"><span class="material-symbols-outlined text-amber-500 text-sm shrink-0">campaign</span><p class="text-[11px] font-bold text-amber-900 dark:text-amber-100 line-clamp-2 leading-tight">${course.banner_text}</p></div>`;
-            }
-
-            html += `
-                <div onclick="window.location.href='/src/pages/marketplace/course-details/index.html?id=${encodeURIComponent(course.id)}'"
-                    class="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 group border border-gray-100 dark:border-gray-700/50 hover:border-primary/30 cursor-pointer flex flex-col h-full ${boostRing}">
+        html += `
+            <div onclick="window.location.href='/src/pages/marketplace/course-details/index.html?id=${encodeURIComponent(course.id)}'"
+                class="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 group border border-gray-100 dark:border-gray-700/50 hover:border-primary/30 cursor-pointer flex flex-col h-full">
+                
+                <!-- Thumbnail Section -->
+                <div class="relative overflow-hidden shrink-0 aspect-[16/10]">
+                    <img alt="${course.title}"
+                        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                        src="${course.thumbnail_url || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80'}" />
                     
-                    <!-- Thumbnail Section -->
-                    <div class="relative overflow-hidden shrink-0 aspect-[16/10]">
-                        <img alt="${course.title}"
-                            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                            src="${course.thumbnail_url || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80'}" />
-                        
-                        <!-- Hover Overlay -->
-                        <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                            <div class="w-12 h-12 rounded-full ${isBoosted ? 'bg-amber-500/90 shadow-amber-500/40' : 'bg-primary/90'} text-white flex items-center justify-center shadow-lg transform scale-75 group-hover:scale-100 transition-transform">
-                                <span class="material-icons-outlined">play_arrow</span>
-                            </div>
+                    <!-- Hover Overlay -->
+                    <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <div class="w-12 h-12 rounded-full bg-primary/90 text-white flex items-center justify-center shadow-lg transform scale-75 group-hover:scale-100 transition-transform">
+                            <span class="material-icons-outlined">play_arrow</span>
                         </div>
+                    </div>
 
-                        <div class="absolute top-3 right-3">
-                            <button onclick="event.stopPropagation(); window.removeFromWishlist('${course.id}');"
-                                class="w-9 h-9 rounded-full bg-white/95 dark:bg-black/60 backdrop-blur-md flex items-center justify-center ${favColor} hover:text-red-500 transition-all shadow-sm active:scale-90">
-                                <span class="material-icons-outlined text-base">${favIcon}</span>
-                            </button>
-                        </div>
-                        
-                        ${badgeHtml}
+                    <div class="absolute top-3 right-3">
+                        <button onclick="event.stopPropagation(); window.removeFromWishlist('${course.id}');"
+                            class="w-9 h-9 rounded-full bg-white/95 dark:bg-black/60 backdrop-blur-md flex items-center justify-center ${favColor} hover:text-red-500 transition-all shadow-sm active:scale-90">
+                            <span class="material-icons-outlined text-base">${favIcon}</span>
+                        </button>
                     </div>
                     
-                    ${bannerHtml}
+                    ${badgeHtml}
+                </div>
+                
+                ${bannerHtml}
 
-                    <!-- Content Section -->
-                    <div class="p-5 flex-1 flex flex-col">
-                        <!-- Category & Title -->
-                        <div class="flex items-center justify-between mb-3">
-                            <span class="text-[10px] font-bold uppercase tracking-widest text-primary/80 dark:text-primary/90">${categoryName}</span>
-                            ${course.level === 'Beginner' ? `
-                                <span class="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-                                    <span class="material-icons-outlined text-[12px]">signal_cellular_alt_1_bar</span>Beg</span>` :
-                              course.level === 'Intermediate' ? `
-                                <span class="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
-                                    <span class="material-icons-outlined text-[12px]">signal_cellular_alt_2_bar</span>Int</span>` :
-                              course.level === 'Expert' ? `
-                                <span class="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400">
-                                    <span class="material-icons-outlined text-[12px]">signal_cellular_alt</span>Exp</span>` :
-                              `<span class="text-[10px] font-bold uppercase tracking-wider text-gray-500">${course.level || ''}</span>`
-                            }
+                <!-- Content Section -->
+                <div class="p-5 flex-1 flex flex-col">
+                    <!-- Category & Title -->
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-[10px] font-bold uppercase tracking-widest text-primary/80 dark:text-primary/90">${categoryName}</span>
+                        ${course.level === 'Beginner' ? `
+                            <span class="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                                <span class="material-icons-outlined text-[12px]">signal_cellular_alt_1_bar</span>Beg</span>` :
+                          course.level === 'Intermediate' ? `
+                            <span class="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
+                                <span class="material-icons-outlined text-[12px]">signal_cellular_alt_2_bar</span>Int</span>` :
+                          course.level === 'Expert' ? `
+                            <span class="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400">
+                                <span class="material-icons-outlined text-[12px]">signal_cellular_alt</span>Exp</span>` :
+                          `<span class="text-[10px] font-bold uppercase tracking-wider text-gray-500">${course.level || ''}</span>`
+                        }
+                    </div>
+
+                    <h3 class="font-bold text-gray-900 dark:text-white mb-4 line-clamp-2 leading-tight text-lg group-hover:text-primary transition-colors">
+                        ${course.title}</h3>
+
+                    <div class="flex items-center gap-2 mb-6">
+                        <div class="relative">
+                            <img src="${course.instructor_avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(instructorName) + '&background=random'}"
+                                 class="w-6 h-6 rounded-full object-cover ring-2 ring-white dark:ring-gray-800"
+                                 alt="${instructorName}">
+                        </div>
+                        <span class="text-xs font-medium text-gray-500 dark:text-gray-400 line-clamp-1">${instructorName}</span>
+                    </div>
+
+                    <!-- Metadata Bar -->
+                    <div class="flex items-center justify-between py-2.5 px-3 rounded-xl bg-gray-50 dark:bg-gray-900/50 border border-gray-100/50 dark:border-gray-800/50 mb-6 group-hover:bg-primary/5 transition-colors">
+                        <div class="flex items-center gap-1.5 min-w-0">
+                            <span class="material-icons-outlined text-blue-500 text-sm shrink-0">menu_book</span>
+                            <span class="text-[11px] font-semibold text-gray-700 dark:text-gray-300 truncate">${course.total_lessons || 0} Les.</span>
+                        </div>
+                        
+                        <span class="text-gray-300 dark:text-gray-700 mx-1 flex items-center">
+                            <span class="material-icons-outlined text-[10px]">chevron_right</span>
+                        </span>
+
+                        <div class="flex items-center gap-1.5 min-w-0">
+                            <span class="material-icons-outlined text-amber-500 text-sm shrink-0">quiz</span>
+                            <span class="text-[11px] font-semibold text-gray-700 dark:text-gray-300 truncate">${course.total_quizzes || 0} Quiz</span>
                         </div>
 
-                        <h3 class="font-bold text-gray-900 dark:text-white mb-4 line-clamp-2 leading-tight text-lg ${isBoosted ? 'group-hover:text-amber-500' : 'group-hover:text-primary'} transition-colors">
-                            ${course.title}</h3>
+                        <span class="text-gray-300 dark:text-gray-700 mx-1 flex items-center">
+                            <span class="material-icons-outlined text-[10px]">chevron_right</span>
+                        </span>
 
-                        <div class="flex items-center gap-2 mb-6">
-                            <div class="relative">
-                                <img src="${course.instructor_avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(instructorName) + '&background=random'}"
-                                     class="w-6 h-6 rounded-full object-cover ring-2 ring-white dark:ring-gray-800"
-                                     alt="${instructorName}">
-                            </div>
-                            <span class="text-xs font-medium text-gray-500 dark:text-gray-400 line-clamp-1">${instructorName}</span>
+                        <div class="flex items-center gap-1.5 min-w-0">
+                            <span class="material-icons-outlined text-emerald-500 text-sm shrink-0">attachment</span>
+                            <span class="text-[11px] font-semibold text-gray-700 dark:text-gray-300 truncate">${course.total_resources || 0} Res.</span>
                         </div>
+                    </div>
 
-                        <!-- Metadata Bar -->
-                        <div class="flex items-center justify-between py-2.5 px-3 rounded-xl bg-gray-50 dark:bg-gray-900/50 border border-gray-100/50 dark:border-gray-800/50 mb-6 group-hover:bg-primary/5 transition-colors">
-                            <div class="flex items-center gap-1.5 min-w-0">
-                                <span class="material-icons-outlined text-blue-500 text-sm shrink-0">menu_book</span>
-                                <span class="text-[11px] font-semibold text-gray-700 dark:text-gray-300 truncate">${course.total_lessons || 0} Les.</span>
-                            </div>
-                            
-                            <span class="text-gray-300 dark:text-gray-700 mx-1 flex items-center">
-                                <span class="material-icons-outlined text-[10px]">chevron_right</span>
+                    <!-- Footer: Rating and Price -->
+                    <div class="mt-auto pt-4 border-t border-gray-100 dark:border-gray-700/50 flex items-center justify-between">
+                        <div class="flex items-center gap-1.5">
+                            <div class="flex text-amber-400 text-[10px]">${starsHtml}</div>
+                            <span class="text-[11px] font-bold text-gray-900 dark:text-gray-100">${rating.toFixed(1)}</span>
+                        </div>
+                        <div class="flex flex-col items-end">
+                            <span class="text-lg font-black text-gray-900 dark:text-white leading-none">
+                                ${course.price_type === 'free' ? 'Free' : '$' + (course.price || 0).toFixed(2)}
                             </span>
-
-                            <div class="flex items-center gap-1.5 min-w-0">
-                                <span class="material-icons-outlined text-amber-500 text-sm shrink-0">quiz</span>
-                                <span class="text-[11px] font-semibold text-gray-700 dark:text-gray-300 truncate">${course.total_quizzes || 0} Quiz</span>
-                            </div>
-
-                            <span class="text-gray-300 dark:text-gray-700 mx-1 flex items-center">
-                                <span class="material-icons-outlined text-[10px]">chevron_right</span>
-                            </span>
-
-                            <div class="flex items-center gap-1.5 min-w-0">
-                                <span class="material-icons-outlined text-emerald-500 text-sm shrink-0">attachment</span>
-                                <span class="text-[11px] font-semibold text-gray-700 dark:text-gray-300 truncate">${course.total_resources || 0} Res.</span>
-                            </div>
-                        </div>
-
-                        <!-- Footer: Rating and Price -->
-                        <div class="mt-auto pt-4 border-t border-gray-100 dark:border-gray-700/50 flex items-center justify-between">
-                            <div class="flex items-center gap-1.5">
-                                <div class="flex text-amber-400 text-[10px]">${starsHtml}</div>
-                                <span class="text-[11px] font-bold text-gray-900 dark:text-gray-100">${rating.toFixed(1)}</span>
-                            </div>
-                            <div class="flex flex-col items-end">
-                                <span class="text-lg font-black text-gray-900 dark:text-white leading-none">
-                                    ${course.price_type === 'free' ? 'Free' : '$' + (course.price || 0).toFixed(2)}
-                                </span>
-                            </div>
                         </div>
                     </div>
                 </div>
-            `;
-        });
-        grid.innerHTML = html;
-    }
+            </div>
+        `;
+    });
+    grid.innerHTML = html;
 }
 
 async function loadMentorWishlist() {
@@ -979,11 +988,11 @@ async function loadMentors(forceRefresh = false) {
             const programHtml = buildProgramProgressHtml(session);
 
             return `
-                <div class="${cardBg} border rounded-2xl p-6 hover:shadow-lg transition-all group ${isHistory && bookingStatus !== 'cancelled' ? 'opacity-80 grayscale-[0.3] hover:grayscale-0' : ''} anim-fade-in relative">
-                    ${isProgram ? `<div class="absolute top-4 right-4 z-10"><div class="px-2.5 py-1 bg-gradient-to-r from-amber-200 to-yellow-400 text-amber-900 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1 shadow-sm"><span class="material-symbols-outlined text-[14px]">workspace_premium</span> Program Mentorship</div></div>` : ''}
-                    <div class="flex flex-col md:flex-row gap-8 items-center relative z-0 mt-3 md:mt-0">
-                        <div class="flex items-center gap-4 w-full md:w-72 shrink-0">
-                            <a href="/src/pages/instructor/public-profile/index.html?id=${session.mentor_id}" class="w-16 h-16 rounded-2xl overflow-hidden border-2 border-primary/20 shrink-0 shadow-sm transition-transform hover:scale-110 block" title="View Public Profile">
+                <div class="${cardBg} border rounded-2xl p-4 sm:p-6 hover:shadow-lg transition-all group ${isHistory && bookingStatus !== 'cancelled' ? 'opacity-80 grayscale-[0.3] hover:grayscale-0' : ''} anim-fade-in relative">
+                    ${isProgram ? `<div class="absolute top-3 sm:top-4 right-3 sm:right-4 z-10"><div class="px-2.5 py-1 bg-gradient-to-r from-amber-200 to-yellow-400 text-amber-900 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1 shadow-sm"><span class="material-symbols-outlined text-[14px]">workspace_premium</span> Program Mentorship</div></div>` : ''}
+                    <div class="flex flex-col md:flex-row gap-4 md:gap-6 lg:gap-8 items-start md:items-center relative z-0 mt-3 md:mt-0">
+                        <div class="flex items-center gap-3 sm:gap-4 w-full md:w-72 shrink-0">
+                            <a href="/src/pages/instructor/public-profile/index.html?id=${session.mentor_id}" class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl overflow-hidden border-2 border-primary/20 shrink-0 shadow-sm transition-transform hover:scale-110 block" title="View Public Profile">
                                 <img src="${mentor.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(mentor.full_name || 'M')}&background=random&color=fff`}" class="w-full h-full object-cover" />
                             </a>
                             <div class="flex-1 min-w-0">
@@ -998,9 +1007,9 @@ async function loadMentors(forceRefresh = false) {
                             </div>
                         </div>
                         
-                        <div class="flex-1 flex flex-wrap items-center gap-x-10 gap-y-4 md:px-8 border-t md:border-t-0 md:border-l border-slate-100 dark:border-slate-800 pt-4 md:pt-0 min-w-0">
-                            <div class="flex items-center gap-3 w-48 shrink-0">
-                                <div class="w-10 h-10 bg-slate-50 dark:bg-slate-800 rounded-xl flex items-center justify-center text-primary shrink-0">
+                        <div class="flex-1 flex flex-wrap items-center gap-x-6 sm:gap-x-10 gap-y-3 sm:gap-y-4 md:px-6 lg:px-8 border-t md:border-t-0 md:border-l border-slate-100 dark:border-slate-800 pt-3 md:pt-0 min-w-0 w-full md:w-auto">
+                            <div class="flex items-center gap-2 sm:gap-3 w-40 sm:w-48 shrink-0">
+                                <div class="w-8 h-8 sm:w-10 sm:h-10 bg-slate-50 dark:bg-slate-800 rounded-xl flex items-center justify-center text-primary shrink-0">
                                     <span class="material-symbols-outlined text-xl">event</span>
                                 </div>
                                 <div class="min-w-0">
@@ -1019,7 +1028,7 @@ async function loadMentors(forceRefresh = false) {
                             </div>
                         </div>
 
-                        <div class="w-full md:w-fit flex flex-col sm:flex-row md:flex-col gap-2 pt-4 md:pt-0 border-t md:border-t-0 border-slate-100 dark:border-slate-800 shrink-0">
+                        <div class="w-full md:w-fit flex flex-col sm:flex-row md:flex-col gap-2 pt-3 md:pt-0 border-t md:border-t-0 border-slate-100 dark:border-slate-800 shrink-0">
                             ${actionHtml}
                             <div class="flex gap-2">
                                 ${bookingStatus !== 'cancelled' ? `
