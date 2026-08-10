@@ -145,9 +145,11 @@ async function initDashboard() {
         displayNames.forEach(el => el.textContent = profile.full_name || 'Student Name');
     }
 
-    await loadMyCourses();
-    await loadWishlist();
-    await loadMentors();
+    await Promise.all([
+        loadMyCourses(),
+        loadWishlist(),
+        loadMentors()
+    ]);
 }
 
 async function loadMyCourses() {
@@ -805,6 +807,15 @@ window.switchMentorshipSubTab = function(tabId) {
 async function loadMentors(forceRefresh = false) {
     const mentorsContent = document.getElementById('content-my-mentors');
     
+    // Inject loading spinner immediately
+    if (mentorsContent) {
+        mentorsContent.innerHTML = `
+            <div class="flex items-center justify-center py-20 px-4">
+                <div class="animate-spin inline-block w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full"></div>
+            </div>
+        `;
+    }
+
     try {
         await ensureSession();
         if (!currentUserSession?.user) return;

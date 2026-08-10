@@ -57,17 +57,19 @@ function drawText(ctx, text, field) {
 const PHOTO_NAME_GAP = 40; // px gap between photo right edge and name left edge
 
 function drawStudentPhotoAndName(ctx, name, photoImg, nameField, photoField) {
-    ctx.font = nameField.font;
-    const nameWidth = ctx.measureText(name).width;
-    const nameLeftEdge = nameField.x - (nameWidth / 2);
-    // Derive photo x from the name's actual rendered left edge so the
-    // gap stays constant regardless of name length.
-    const photoX = nameLeftEdge - PHOTO_NAME_GAP - photoField.r;
-
+    // Photo is drawn at the FIXED coordinate so it aligns with the
+    // pre-drawn circle border on the certificate background image.
     if (photoImg) {
-        drawCircularPhoto(ctx, photoImg, { x: photoX, y: photoField.y, r: photoField.r });
+        drawCircularPhoto(ctx, photoImg, photoField);
     }
-    drawText(ctx, name, nameField);
+
+    // Name starts to the right of the photo circle, with the gap.
+    const nameLeftEdge = photoField.x + photoField.r + PHOTO_NAME_GAP;
+    ctx.font = nameField.font;
+    ctx.fillStyle = nameField.color;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(name, nameLeftEdge, nameField.y);
 }
 
 window.generateCertificate = async function () {
@@ -121,6 +123,9 @@ window.generateCertificate = async function () {
     } catch (e) {
         alert('Could not generate certificate: ' + e.message);
     } finally {
-        if (btn) { btn.disabled = false; btn.innerHTML = '<span class="material-symbols-outlined text-lg">workspace_premium</span> Generate My Certificate'; }
+        const resetHtml = '<span class="material-symbols-outlined text-lg">workspace_premium</span> Generate My Certificate';
+        if (btn) { btn.disabled = false; btn.innerHTML = resetHtml; }
+        const mobileBtn = document.getElementById('li-certificate-btn-mobile');
+        if (mobileBtn) { mobileBtn.disabled = false; mobileBtn.innerHTML = resetHtml; }
     }
 };

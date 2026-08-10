@@ -141,6 +141,17 @@
                 </button>
             </div>
         </div>
+        <!-- Mobile Certificate Button -->
+        <div id="mobile-certificate-container" class="hidden px-5 pt-4 pb-2">
+            <button id="li-certificate-btn-mobile" onclick="window.generateCertificate()"
+                disabled
+                title="Complete all lessons to unlock your certificate"
+                class="w-full flex items-center justify-center gap-2 px-4 py-3 font-bold rounded-xl transition-all
+                       opacity-40 cursor-not-allowed bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400">
+                <span class="material-symbols-outlined text-lg">workspace_premium</span>
+                Generate My Certificate
+            </button>
+        </div>
         <div id="li-sidebar-curriculum-mobile" class="pb-4">
             <!-- Mirrored from desktop sidebar by JS -->
         </div>
@@ -238,6 +249,23 @@
             const desktopProgressEl = document.getElementById('li-progress-text');
             if (mobileProgressEl && desktopProgressEl) {
                 mobileProgressEl.textContent = desktopProgressEl.textContent;
+            }
+            // Sync certificate button state from desktop
+            const desktopCertBtn = document.getElementById('li-certificate-btn');
+            const mobileCertContainer = document.getElementById('mobile-certificate-container');
+            const mobileCertBtn = document.getElementById('li-certificate-btn-mobile');
+            if (desktopCertBtn && mobileCertContainer && mobileCertBtn) {
+                const isVisible = !desktopCertBtn.classList.contains('hidden');
+                if (isVisible) {
+                    mobileCertContainer.classList.remove('hidden');
+                    // Mirror enabled/disabled state and styling
+                    mobileCertBtn.disabled = desktopCertBtn.disabled;
+                    mobileCertBtn.className = desktopCertBtn.className
+                        .replace('hidden ', '')
+                        .replace('mt-4 w-full', 'w-full');
+                } else {
+                    mobileCertContainer.classList.add('hidden');
+                }
             }
             if (drawer) { drawer.style.transform = 'translateY(0)'; }
             if (overlay) { overlay.classList.remove('hidden'); }
