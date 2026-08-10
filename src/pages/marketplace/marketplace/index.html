@@ -113,7 +113,8 @@
             </div>
         </div>
         <!-- Mobile Menu -->
-<div class="hidden lg:hidden bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-4 py-8 flex-col absolute w-full shadow-2xl z-40 overflow-y-auto h-[calc(100vh-64px)] overflow-x-hidden left-0 text-left" id="mobile-menu">
+<div id="mobile-menu-overlay" class="fixed inset-0 bg-black/50 z-[55] hidden transition-opacity duration-300 lg:hidden" aria-hidden="true"></div>
+<div class="fixed top-0 left-0 z-[60] w-72 max-w-[82vw] h-full bg-white dark:bg-slate-900 shadow-2xl overflow-y-auto flex flex-col px-4 py-8 -translate-x-full transition-transform duration-300 ease-in-out lg:hidden" id="mobile-menu">
     <!-- Top: Mobile Profile Area -->
     <div id="mobile-menu-profile" class="flex items-center gap-4 mb-6 pb-6 border-b border-slate-100 dark:border-slate-800 cursor-pointer" onclick="window.location.href='/src/pages/student/account-settings/index.html'">
         <div class="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-primary/20 overflow-hidden flex-shrink-0" id="mobile-menu-avatar-wrapper" data-role="profile-image">
@@ -524,7 +525,7 @@
             searchInput.value = filters.search;
         }
 
-        searchInput.addEventListener('input', (e) => {
+        if (searchInput) searchInput.addEventListener('input', (e) => {
             filters.search = e.target.value;
             // Debounce search
             clearTimeout(window.searchTimeout);
@@ -625,100 +626,101 @@
 
                     html += `
                         <div onclick="window.location.href='/src/pages/marketplace/course-details/index.html?id=${encodeURIComponent(course.id)}'"
-                            class="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 group border border-gray-100 dark:border-gray-700/50 hover:border-primary/30 cursor-pointer flex flex-col h-full ${boostRing}">
-                            
-                            <!-- Thumbnail Section -->
-                            <div class="relative overflow-hidden shrink-0 aspect-[16/10]">
+                            class="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 group border border-gray-100 dark:border-gray-700/50 hover:border-primary/30 cursor-pointer
+                                   flex flex-row md:flex-col h-full ${boostRing}">
+
+                            <!-- Thumbnail: narrow left col on mobile, full-width top on md+ -->
+                            <div class="relative overflow-hidden shrink-0
+                                        w-[120px] self-stretch md:w-full md:aspect-[16/10]">
                                 <img alt="${course.title}"
                                     class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                                     src="${course.thumbnail_url || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80'}" />
-                                
-                                <!-- Hover Overlay -->
-                                <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                    <div class="w-12 h-12 rounded-full ${isBoosted ? 'bg-amber-500/90 shadow-amber-500/40' : 'bg-primary/90'} text-white flex items-center justify-center shadow-lg transform scale-75 group-hover:scale-100 transition-transform">
+
+                                <!-- Hover play overlay – hidden on mobile -->
+                                <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity hidden md:flex items-center justify-center">
+                                    <div class="w-12 h-12 rounded-full ${isBoosted ? 'bg-amber-500/90' : 'bg-primary/90'} text-white flex items-center justify-center shadow-lg transform scale-75 group-hover:scale-100 transition-transform">
                                         <span class="material-icons-outlined">play_arrow</span>
                                     </div>
                                 </div>
 
-                                <div class="absolute top-3 right-3">
+                                <!-- Wishlist btn -->
+                                <div class="absolute top-2 right-2">
                                     <button onclick="event.stopPropagation(); window.toggleWishlist('${course.id}', this);"
-                                        class="w-9 h-9 rounded-full bg-white/95 dark:bg-black/60 backdrop-blur-md flex items-center justify-center ${favColor} hover:text-red-500 transition-all shadow-sm active:scale-90">
-                                        <span class="material-icons-outlined text-base">${favIcon}</span>
+                                        class="w-7 h-7 md:w-9 md:h-9 rounded-full bg-white/95 dark:bg-black/60 backdrop-blur-md flex items-center justify-center ${favColor} hover:text-red-500 transition-all shadow-sm active:scale-90">
+                                        <span class="material-icons-outlined text-sm md:text-base">${favIcon}</span>
                                     </button>
                                 </div>
-                                
+
                                 ${badgeHtml}
                             </div>
-                            
+
                             ${bannerHtml}
 
-                            <!-- Content Section -->
-                            <div class="p-5 flex-1 flex flex-col">
-                                <!-- Category & Title -->
-                                <div class="flex items-center justify-between mb-3">
-                                    <span class="text-[10px] font-bold uppercase tracking-widest text-primary/80 dark:text-primary/90">${categoryName}</span>
+                            <!-- Content -->
+                            <div class="p-3 md:p-5 flex-1 flex flex-col min-w-0">
+
+                                <!-- Category & Level -->
+                                <div class="flex items-center justify-between mb-1.5 md:mb-3">
+                                    <span class="text-[9px] md:text-[10px] font-bold uppercase tracking-widest text-primary/80 dark:text-primary/90 truncate">${categoryName}</span>
                                     ${course.level === 'Beginner' ? `
-                                        <span class="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-                                            <span class="material-icons-outlined text-[12px]">signal_cellular_alt_1_bar</span>Beg</span>` :
+                                        <span class="flex items-center gap-0.5 text-[9px] md:text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 shrink-0">
+                                            <span class="material-icons-outlined text-[11px]">signal_cellular_alt_1_bar</span>Beg</span>` :
                                       course.level === 'Intermediate' ? `
-                                        <span class="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
-                                            <span class="material-icons-outlined text-[12px]">signal_cellular_alt_2_bar</span>Int</span>` :
+                                        <span class="flex items-center gap-0.5 text-[9px] md:text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 shrink-0">
+                                            <span class="material-icons-outlined text-[11px]">signal_cellular_alt_2_bar</span>Int</span>` :
                                       course.level === 'Expert' ? `
-                                        <span class="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400">
-                                            <span class="material-icons-outlined text-[12px]">signal_cellular_alt</span>Exp</span>` :
-                                      `<span class="text-[10px] font-bold uppercase tracking-wider text-gray-500">${course.level}</span>`
+                                        <span class="flex items-center gap-0.5 text-[9px] md:text-[10px] font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400 shrink-0">
+                                            <span class="material-icons-outlined text-[11px]">signal_cellular_alt</span>Exp</span>` :
+                                      `<span class="text-[9px] font-bold uppercase tracking-wider text-gray-500 shrink-0">${course.level}</span>`
                                     }
                                 </div>
 
-                                <h3 class="font-bold text-gray-900 dark:text-white mb-4 line-clamp-2 leading-tight text-lg ${isBoosted ? 'group-hover:text-amber-500' : 'group-hover:text-primary'} transition-colors">
+                                <!-- Title -->
+                                <h3 class="font-bold text-gray-900 dark:text-white line-clamp-2 leading-snug
+                                           text-sm md:text-lg mb-1.5 md:mb-4
+                                           ${isBoosted ? 'group-hover:text-amber-500' : 'group-hover:text-primary'} transition-colors">
                                     ${course.title}</h3>
 
-                                <div class="flex items-center gap-2 mb-6">
-                                    <div class="relative">
-                                        <img src="${course.instructor_avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(instructorName) + '&background=random'}"
-                                             class="w-6 h-6 rounded-full object-cover ring-2 ring-white dark:ring-gray-800"
-                                             alt="${instructorName}">
-                                    </div>
+                                <!-- Instructor name (desktop only) -->
+                                <div class="hidden md:flex items-center gap-2 mb-6">
+                                    <img src="${course.instructor_avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(instructorName) + '&background=random'}"
+                                         class="w-6 h-6 rounded-full object-cover ring-2 ring-white dark:ring-gray-800"
+                                         alt="${instructorName}">
                                     <span class="text-xs font-medium text-gray-500 dark:text-gray-400 line-clamp-1">${instructorName}</span>
                                 </div>
 
-                                <!-- Metadata Bar (Perfectly Aligned with Arrows) -->
-                                <div class="flex items-center justify-between py-2.5 px-3 rounded-xl bg-gray-50 dark:bg-gray-900/50 border border-gray-100/50 dark:border-gray-800/50 mb-6 group-hover:bg-primary/5 transition-colors">
-                                    <div class="flex items-center gap-1.5 min-w-0">
-                                        <span class="material-icons-outlined text-blue-500 text-sm shrink-0">menu_book</span>
-                                        <span class="text-[11px] font-semibold text-gray-700 dark:text-gray-300 truncate">${course.total_lessons || 0} Les.</span>
+                                <!-- Metadata bar -->
+                                <div class="flex items-center gap-2 md:gap-0 md:justify-between
+                                            py-1.5 md:py-2.5 px-2 md:px-3
+                                            rounded-lg md:rounded-xl
+                                            bg-gray-50 dark:bg-gray-900/50
+                                            border border-gray-100/50 dark:border-gray-800/50
+                                            mb-2 md:mb-6 group-hover:bg-primary/5 transition-colors">
+                                    <div class="flex items-center gap-1 min-w-0">
+                                        <span class="material-icons-outlined text-blue-500 text-xs md:text-sm shrink-0">menu_book</span>
+                                        <span class="text-[10px] md:text-[11px] font-semibold text-gray-700 dark:text-gray-300">${course.total_lessons || 0} Les.</span>
                                     </div>
-                                    
-                                    <span class="text-gray-300 dark:text-gray-700 mx-1 flex items-center">
-                                        <span class="material-icons-outlined text-[10px]">chevron_right</span>
-                                    </span>
-
-                                    <div class="flex items-center gap-1.5 min-w-0">
-                                        <span class="material-icons-outlined text-amber-500 text-sm shrink-0">quiz</span>
-                                        <span class="text-[11px] font-semibold text-gray-700 dark:text-gray-300 truncate">${course.total_quizzes || 0} Quiz</span>
+                                    <span class="text-gray-300 dark:text-gray-700 hidden md:flex items-center"><span class="material-icons-outlined text-[10px]">chevron_right</span></span>
+                                    <div class="flex items-center gap-1 min-w-0">
+                                        <span class="material-icons-outlined text-amber-500 text-xs md:text-sm shrink-0">quiz</span>
+                                        <span class="text-[10px] md:text-[11px] font-semibold text-gray-700 dark:text-gray-300">${course.total_quizzes || 0} Quiz</span>
                                     </div>
-
-                                    <span class="text-gray-300 dark:text-gray-700 mx-1 flex items-center">
-                                        <span class="material-icons-outlined text-[10px]">chevron_right</span>
-                                    </span>
-
-                                    <div class="flex items-center gap-1.5 min-w-0">
-                                        <span class="material-icons-outlined text-emerald-500 text-sm shrink-0">attachment</span>
-                                        <span class="text-[11px] font-semibold text-gray-700 dark:text-gray-300 truncate">${course.total_resources || 0} Res.</span>
+                                    <span class="text-gray-300 dark:text-gray-700 hidden md:flex items-center"><span class="material-icons-outlined text-[10px]">chevron_right</span></span>
+                                    <div class="flex items-center gap-1 min-w-0">
+                                        <span class="material-icons-outlined text-emerald-500 text-xs md:text-sm shrink-0">attachment</span>
+                                        <span class="text-[10px] md:text-[11px] font-semibold text-gray-700 dark:text-gray-300">${course.total_resources || 0} Res.</span>
                                     </div>
                                 </div>
 
-                                <!-- Footer: Rating and Price -->
-                                <div class="mt-auto pt-4 border-t border-gray-100 dark:border-gray-700/50 flex items-center justify-between">
-                                    <div class="flex items-center gap-1.5">
-                                        <div class="flex text-amber-400 text-[10px]">${starsHtml}</div>
-                                        <span class="text-[11px] font-bold text-gray-900 dark:text-gray-100">${rating.toFixed(1)}</span>
+                                <!-- Footer: Rating + Price -->
+                                <div class="mt-auto pt-2 md:pt-4 border-t border-gray-100 dark:border-gray-700/50 flex items-center justify-between">
+                                    <div class="flex items-center gap-1">
+                                        <div class="flex text-amber-400 text-[9px] md:text-[10px]">${starsHtml}</div>
+                                        <span class="text-[10px] md:text-[11px] font-bold text-gray-900 dark:text-gray-100">${rating.toFixed(1)}</span>
                                     </div>
-                                    <div class="flex flex-col items-end">
-                                        <span class="text-lg font-black text-gray-900 dark:text-white leading-none">
-                                            ${course.price_type === 'free' ? 'Free' : '$' + (course.price || 0).toFixed(2)}
-                                        </span>
-                                    </div>
+                                    <span class="text-base md:text-lg font-black text-gray-900 dark:text-white leading-none">
+                                        ${course.price_type === 'free' ? 'Free' : '$' + (course.price || 0).toFixed(2)}
+                                    </span>
                                 </div>
                             </div>
                         </div>
@@ -755,6 +757,37 @@
         });
     </script>
 
+
+    <!-- Side-drawer menu logic -->
+    <script>
+        (function() {
+            var btn = document.getElementById('mobile-menu-btn');
+            var menu = document.getElementById('mobile-menu');
+            var overlay = document.getElementById('mobile-menu-overlay');
+            if (!btn || !menu) return;
+
+            function openMenu() {
+                menu.classList.remove('-translate-x-full');
+                menu.classList.add('translate-x-0');
+                if (overlay) overlay.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }
+            function closeMenu() {
+                menu.classList.add('-translate-x-full');
+                menu.classList.remove('translate-x-0');
+                if (overlay) overlay.classList.add('hidden');
+                document.body.style.overflow = '';
+            }
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                menu.classList.contains('translate-x-0') ? closeMenu() : openMenu();
+            });
+            if (overlay) overlay.addEventListener('click', closeMenu);
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') closeMenu();
+            });
+        })();
+    </script>
 </body>
 
 </html>
