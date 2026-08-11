@@ -1149,21 +1149,31 @@
                 try {
                     let paymentRes;
                     const amountPaid = parseFloat(document.getElementById('boost-total').innerText);
-                    if (bannerCb && bannerCb.checked) {
+                    const boostChecked = boostCb && boostCb.checked;
+                    const bannerChecked = bannerCb && bannerCb.checked;
+                    const boostCost  = boostChecked  ? (boostSettings.course_boost_price_per_day  * days) : 0;
+                    const bannerCost = bannerChecked ? (boostSettings.course_banner_price_per_day * days) : 0;
+
+                    if (boostChecked && bannerChecked) {
+                        paymentRes = await PaymentService.startBoostAndBannerPayment('course', courseId, boostCost, bannerCost, days, bannerText);
+                    } else if (bannerChecked) {
                         paymentRes = await PaymentService.startBannerPayment('course', courseId, amountPaid, days, bannerText);
-                    } else if (boostCb && boostCb.checked) {
+                    } else if (boostChecked) {
                         paymentRes = await PaymentService.startBoostPayment('course', courseId, amountPaid, days);
                     }
                     
                     if (paymentRes.method === 'ewallet') {
                          document.getElementById('boost-modal').remove();
                          // We re-use the exact global Payment Wallet window available on the page
+                         const modalType = (boostChecked && bannerChecked) ? 'boost_and_banner' : (bannerChecked ? 'banner' : 'boost');
                          showPaymentModal(paymentRes.amount, paymentRes.currency, {
-                             type: (bannerCb && bannerCb.checked) ? 'banner' : 'boost',
+                             type: modalType,
                              referenceId: paymentRes.entityId,
                              entityType: paymentRes.entityType,
                              planDays: paymentRes.planDays,
-                             bannerText: paymentRes.bannerText
+                             bannerText: paymentRes.bannerText,
+                             boostAmount: paymentRes.boostAmount,
+                             bannerAmount: paymentRes.bannerAmount
                          });
                     } else {
                          // Redirect checkout triggers window redirect...

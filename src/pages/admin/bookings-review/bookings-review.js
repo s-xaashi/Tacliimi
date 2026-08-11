@@ -312,7 +312,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             return `
-                <div class="${cardClasses} rounded-3xl p-6 hover:shadow-xl transition-all duration-300 group relative session-card" data-session-id="${session.id}">
+                <div class="${cardClasses} rounded-3xl p-4 md:p-6 hover:shadow-xl transition-all duration-300 group relative session-card" data-session-id="${session.id}">
                     ${session.mentorship_type === 'program' ? `<div class="absolute -top-3 right-8 z-10"><div class="px-3 py-1 bg-gradient-to-r from-amber-200 to-yellow-400 text-amber-900 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-1 shadow-lg shadow-amber-500/20"><span class="material-symbols-outlined text-[14px]">workspace_premium</span> Program Mentorship</div></div>` : ''}
                     <!-- ID badges -->
                     <div class="absolute top-4 left-6 flex items-center gap-2 z-10">
@@ -506,7 +506,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (status === 'confirmed') statusColor = "bg-blue-50 text-blue-500"; // Case where it's past but confirmed
 
             return `
-                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 hover:shadow-md transition-all cursor-pointer session-card group" data-session-id="${session.id}">
+                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 md:p-6 hover:shadow-md transition-all cursor-pointer session-card group" data-session-id="${session.id}">
                     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                         <div class="flex items-center gap-4">
                             <div class="w-12 h-12 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 group-hover:text-primary transition-colors">
@@ -566,7 +566,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const date = new Date(session.scheduled_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 
             return `
-                <div class="bg-white dark:bg-slate-900 border-2 border-amber-200 dark:border-amber-900/30 rounded-3xl p-8 flex flex-col gap-6 shadow-xl shadow-amber-500/5">
+                <div class="bg-white dark:bg-slate-900 border-2 border-amber-200 dark:border-amber-900/30 rounded-3xl p-5 md:p-8 flex flex-col gap-6 shadow-xl shadow-amber-500/5">
                     <div class="flex justify-between items-start">
                         <div class="flex items-center gap-4">
                             <div class="w-14 h-14 rounded-2xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center text-amber-500">

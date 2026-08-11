@@ -3,18 +3,24 @@ import { createClient } from 'jsr:@supabase/supabase-js@2';
 type ActionType = 'createCheckout' | 'verifyTransaction' | 'createDirectPayment';
 
 interface CreateCheckoutPayload {
-  type: 'course' | 'booking' | 'boost' | 'banner';
+  type: 'course' | 'booking' | 'boost' | 'banner' | 'boost_and_banner';
   entityType?: 'course' | 'mentorship_sessions';
   referenceId: string;
   amount: number;
   currency?: string;
+  // Only needed for boost_and_banner or banner
+  bannerText?: string;
+  planDays?: number;
 }
 
 interface DirectPaymentPayload {
-  type: 'course' | 'booking' | 'boost' | 'banner';
+  type: 'course' | 'booking' | 'boost' | 'banner' | 'boost_and_banner';
   entityType?: 'course' | 'mentorship_sessions'; // for boosts
   bannerText?: string;
   planDays?: number;
+  // For boost_and_banner: individual amounts for earnings attribution
+  boostAmount?: number;
+  bannerAmount?: number;
   referenceId: string;
   amount: number;
   currency?: string;
@@ -87,13 +93,14 @@ async function createCheckout(userId: string, payload: CreateCheckoutPayload): P
 
   const supabase = adminClient();
   
-  if (type === 'boost' || type === 'banner') {
+  if (type === 'boost' || type === 'banner' || type === 'boost_and_banner') {
     const { data: settings } = await supabase.rpc('get_platform_settings');
     const isCourse = (payload.entityType || 'course') === 'course';
-    if (type === 'boost') {
+    if (type === 'boost' || type === 'boost_and_banner') {
         if (isCourse && settings?.course_boost_enabled === false) return err('Course boosting is currently disabled', 403);
         if (!isCourse && settings?.mentor_boost_enabled === false) return err('Mentor boosting is currently disabled', 403);
-    } else {
+    }
+    if (type === 'banner' || type === 'boost_and_banner') {
         if (isCourse && settings?.course_banner_enabled === false) return err('Course banners are currently disabled', 403);
         if (!isCourse && settings?.mentor_banner_enabled === false) return err('Mentor banners are currently disabled', 403);
     }
@@ -153,13 +160,14 @@ async function createDirectPayment(userId: string, payload: DirectPaymentPayload
 
   const supabase = adminClient();
 
-  if (type === 'boost' || type === 'banner') {
+  if (type === 'boost' || type === 'banner' || type === 'boost_and_banner') {
     const { data: settings } = await supabase.rpc('get_platform_settings');
     const isCourse = (payload.entityType || 'course') === 'course';
-    if (type === 'boost') {
+    if (type === 'boost' || type === 'boost_and_banner') {
         if (isCourse && settings?.course_boost_enabled === false) return err('Course boosting is currently disabled', 403);
         if (!isCourse && settings?.mentor_boost_enabled === false) return err('Mentor boosting is currently disabled', 403);
-    } else {
+    }
+    if (type === 'banner' || type === 'boost_and_banner') {
         if (isCourse && settings?.course_banner_enabled === false) return err('Course banners are currently disabled', 403);
         if (!isCourse && settings?.mentor_banner_enabled === false) return err('Mentor banners are currently disabled', 403);
     }
@@ -239,44 +247,69 @@ async function createDirectPayment(userId: string, payload: DirectPaymentPayload
     }
 
     return json({ status: 'success', type: 'booking', referenceId, sid, order_id: orderId });
-  } else if (type === 'boost' || type === 'banner') {
-    // Execute the Postgres RPC to grant the feature
-    if (type === 'boost') {
-      const { error: boostErr } = await supabase.rpc('purchase_boost', {
-        p_entity_type: payload.entityType || 'course',
+  } else if (type === 'boost' || type === 'banner' || type === 'boost_and_banner') {
+    // Execute the Postgres RPC(s) to grant the feature(s)
+    const entityT = payload.entityType || 'course';
+    const planDays = payload.planDays || 1;
+
+    if (type === 'boost_and_banner') {
+      const boostAmount = payload.boostAmount ?? (amount / 2);
+      const bannerAmount = payload.bannerAmount ?? (amount / 2);
+      const { error: atomicErr } = await supabase.rpc('purchase_boost_and_banner_atomic', {
+        p_entity_type: entityT,
         p_entity_id: referenceId,
         p_instructor_id: userId,
-        p_plan_days: payload.planDays || 1,
+        p_plan_days: planDays,
+        p_boost_amount_paid: boostAmount,
+        p_banner_amount_paid: bannerAmount,
+        p_banner_text: payload.bannerText || '',
+        p_payment_id: safePaymentId
+      });
+      if (atomicErr) {
+        console.error('Failed to create atomic boost/banner record:', atomicErr);
+        await supabase.from('payments').update({
+           verification_status: 'needs_manual_grant',
+           gateway_response: { ...data, rpc_error: atomicErr }
+        }).eq('id', safePaymentId);
+        return err('Payment was captured but boost/banner could not be granted automatically. It has been flagged for admin review.', 500, atomicErr);
+      }
+    } else if (type === 'boost') {
+      const { error: boostErr } = await supabase.rpc('purchase_boost', {
+        p_entity_type: entityT,
+        p_entity_id: referenceId,
+        p_instructor_id: userId,
+        p_plan_days: planDays,
         p_amount_paid: amount,
         p_payment_id: safePaymentId
       });
       if (boostErr) {
         console.error('Failed to create boost record:', boostErr);
-        await supabase.from('payments').update({ 
-           verification_status: 'needs_manual_grant', 
-           gateway_response: { ...data, rpc_error: boostErr } 
+        await supabase.from('payments').update({
+           verification_status: 'needs_manual_grant',
+           gateway_response: { ...data, rpc_error: boostErr }
         }).eq('id', safePaymentId);
         return err('Payment was captured but boost could not be granted automatically. It has been flagged for admin review.', 500, boostErr);
       }
-    } else {
+    } else if (type === 'banner') {
       const { error: bannerErr } = await supabase.rpc('purchase_promo_banner', {
-        p_entity_type: payload.entityType || 'course',
+        p_entity_type: entityT,
         p_entity_id: referenceId,
         p_instructor_id: userId,
         p_banner_text: payload.bannerText || '',
-        p_plan_days: payload.planDays || 1,
+        p_plan_days: planDays,
         p_amount_paid: amount,
         p_payment_id: safePaymentId
       });
       if (bannerErr) {
         console.error('Failed to create banner record:', bannerErr);
-        await supabase.from('payments').update({ 
-           verification_status: 'needs_manual_grant', 
-           gateway_response: { ...data, rpc_error: bannerErr } 
+        await supabase.from('payments').update({
+           verification_status: 'needs_manual_grant',
+           gateway_response: { ...data, rpc_error: bannerErr }
         }).eq('id', safePaymentId);
         return err('Payment was captured but banner could not be granted automatically. It has been flagged for admin review.', 500, bannerErr);
       }
     }
+
     return json({ status: 'success', type, referenceId, sid, order_id: orderId });
   }
 

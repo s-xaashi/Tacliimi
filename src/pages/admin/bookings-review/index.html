@@ -25,6 +25,7 @@
     <style type="text/tailwindcss">
         body { font-family: 'Inter', sans-serif; }
         .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .tab-btn { @apply whitespace-nowrap shrink-0; }
         .tab-btn.active { @apply bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 border-indigo-600 font-bold; }
     </style>
 </head>
@@ -122,54 +123,54 @@
             <!-- Stats Board -->
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                 <!-- Total Bookings -->
-                <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 hover:shadow-xl hover:shadow-indigo-500/5 transition-all duration-300 group">
-                    <div class="flex items-center gap-4 mb-4">
+                <div class="bg-white dark:bg-slate-900 p-4 sm:p-6 text-center sm:text-left rounded-3xl border border-slate-200 dark:border-slate-800 hover:shadow-xl hover:shadow-indigo-500/5 transition-all duration-300 group flex flex-col items-center sm:items-start justify-center">
+                    <div class="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 mb-3 sm:mb-4">
                         <div class="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 group-hover:scale-110 transition-transform">
                             <span class="material-symbols-outlined">analytics</span>
                         </div>
                         <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total</p>
                     </div>
-                    <p class="text-3xl font-black text-slate-900 dark:text-white" id="stat-total">0</p>
+                    <p class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white" id="stat-total">0</p>
                 </div>
 
                 <!-- Confirmed -->
-                <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 hover:shadow-xl hover:shadow-emerald-500/5 transition-all duration-300 group">
-                    <div class="flex items-center gap-4 mb-4">
+                <div class="bg-white dark:bg-slate-900 p-4 sm:p-6 text-center sm:text-left rounded-3xl border border-slate-200 dark:border-slate-800 hover:shadow-xl hover:shadow-emerald-500/5 transition-all duration-300 group flex flex-col items-center sm:items-start justify-center">
+                    <div class="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 mb-3 sm:mb-4">
                         <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform">
                             <span class="material-symbols-outlined">check_circle</span>
                         </div>
                         <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Confirmed</p>
                     </div>
-                    <p class="text-3xl font-black text-slate-900 dark:text-white" id="stat-confirmed">0</p>
+                    <p class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white" id="stat-confirmed">0</p>
                 </div>
 
                 <!-- Pending -->
-                <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 hover:shadow-xl hover:shadow-amber-500/5 transition-all duration-300 group">
-                    <div class="flex items-center gap-4 mb-4">
+                <div class="bg-white dark:bg-slate-900 p-4 sm:p-6 text-center sm:text-left rounded-3xl border border-slate-200 dark:border-slate-800 hover:shadow-xl hover:shadow-amber-500/5 transition-all duration-300 group flex flex-col items-center sm:items-start justify-center">
+                    <div class="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 mb-3 sm:mb-4">
                         <div class="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 dark:text-amber-400 group-hover:scale-110 transition-transform">
                             <span class="material-symbols-outlined">pending_actions</span>
                         </div>
                         <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Pending</p>
                     </div>
-                    <p class="text-3xl font-black text-slate-900 dark:text-white" id="stat-pending">0</p>
+                    <p class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white" id="stat-pending">0</p>
                 </div>
 
                 <!-- Completed -->
-                <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-300 group">
-                    <div class="flex items-center gap-4 mb-4">
+                <div class="bg-white dark:bg-slate-900 p-4 sm:p-6 text-center sm:text-left rounded-3xl border border-slate-200 dark:border-slate-800 hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-300 group flex flex-col items-center sm:items-start justify-center">
+                    <div class="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 mb-3 sm:mb-4">
                         <div class="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform">
                             <span class="material-symbols-outlined">verified</span>
                         </div>
                         <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Completed</p>
                     </div>
-                    <p class="text-3xl font-black text-slate-900 dark:text-white" id="stat-completed">0</p>
+                    <p class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white" id="stat-completed">0</p>
                 </div>
             </div>
 
             <!-- Tabs -->
             <!-- Global Search -->
             <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-                <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 p-1.5 rounded-2xl w-fit">
+                <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 p-1.5 rounded-2xl w-full max-w-full overflow-x-auto hide-scrollbar">
                     <button data-tab="overview" class="tab-btn active px-6 py-2.5 rounded-xl transition-all flex items-center gap-2">
                         <span class="material-symbols-outlined text-[20px]">groups</span>
                         Connection Overview

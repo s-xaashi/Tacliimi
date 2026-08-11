@@ -1070,7 +1070,15 @@ async function bindBoostInteractions(container, userId) {
                     let paymentRes;
                     const amountPaid = parseFloat(grandTotalEl.textContent.replace('$', ''));
                     
-                    if (wantsBanner) {
+                    // Deduce if both are wanted by checking if Boost checkbox exists and is checked
+                    const boostEl = document.getElementById('boost-checkbox');
+                    const wantsBoost = boostEl ? boostEl.checked : true; // fallback to true if no checkbox (for standard)
+                    const boostCost  = wantsBoost  ? (settings.mentor_boost_price_per_day  * days) : 0;
+                    const bannerCost = wantsBanner ? (settings.mentor_banner_price_per_day * days) : 0;
+
+                    if (wantsBoost && wantsBanner) {
+                        paymentRes = await PaymentService.startBoostAndBannerPayment('mentor', userId, boostCost, bannerCost, days, bannerText);
+                    } else if (wantsBanner) {
                         paymentRes = await PaymentService.startBannerPayment('mentor', userId, amountPaid, days, bannerText);
                     } else {
                         paymentRes = await PaymentService.startBoostPayment('mentor', userId, amountPaid, days);
@@ -1083,12 +1091,15 @@ async function bindBoostInteractions(container, userId) {
                          if(container) container.remove();
 
                          // Show exact global wallet modal for mentor boost
+                         const modalType = (wantsBoost && wantsBanner) ? 'boost_and_banner' : (wantsBanner ? 'banner' : 'boost');
                          showPaymentModal(paymentRes.amount, paymentRes.currency, {
-                             type: wantsBanner ? 'banner' : 'boost',
+                             type: modalType,
                              referenceId: paymentRes.entityId,
                              entityType: paymentRes.entityType,
                              planDays: paymentRes.planDays,
-                             bannerText: paymentRes.bannerText
+                             bannerText: paymentRes.bannerText,
+                             boostAmount: paymentRes.boostAmount,
+                             bannerAmount: paymentRes.bannerAmount
                          });
                     }
                 } catch (err) {

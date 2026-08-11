@@ -31,6 +31,8 @@
     <style type="text/tailwindcss">
         body { font-family: 'Inter', sans-serif; }
         .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 
     <script type="module" src="/src/services/adminSidebar.js"></script>
@@ -140,16 +142,16 @@
         <!-- Content Area -->
         <div class="flex-1 p-8 lg:p-12 max-w-[1600px] mx-auto w-full">
             <!-- Tabs -->
-            <div class="flex items-center gap-8 border-b border-slate-200 dark:border-slate-800 mb-10">
-                <button class="admin-tab py-4 border-b-2 border-indigo-600 text-indigo-600 font-bold px-1" data-tab="pending">
-                    Pending Review
+            <div class="flex items-center gap-4 sm:gap-8 border-b border-slate-200 dark:border-slate-800 mb-10 max-w-full overflow-x-auto hide-scrollbar whitespace-nowrap">
+                <button class="admin-tab text-sm sm:text-base py-3 sm:py-4 border-b-2 shrink-0 border-indigo-600 text-indigo-600 font-bold px-2 sm:px-1 flex items-center gap-2" data-tab="pending">
+                    <span>Pending Review</span>
                 </button>
-                <button class="admin-tab py-4 border-b-2 border-transparent text-slate-500 font-medium px-1" data-tab="appeals">
-                    Appeals &amp; Rejected
+                <button class="admin-tab text-sm sm:text-base py-3 sm:py-4 border-b-2 shrink-0 border-transparent text-slate-500 font-medium px-2 sm:px-1 flex items-center gap-2" data-tab="appeals">
+                    <span>Appeals &amp; Rejected</span>
                 </button>
-                <button class="admin-tab py-4 border-b-2 border-transparent text-slate-500 font-medium px-1 flex items-center gap-2" data-tab="published">
+                <button class="admin-tab text-sm sm:text-base py-3 sm:py-4 border-b-2 shrink-0 border-transparent text-slate-500 font-medium px-2 sm:px-1 flex items-center gap-2" data-tab="published">
                     <span>Published Courses</span>
-                    <span id="published-count-badge" class="hidden bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-[10px] font-black px-2 py-0.5 rounded-full"></span>
+                    <span id="published-count-badge" class="hidden bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-[9px] sm:text-[10px] font-black px-2 py-0.5 rounded-full"></span>
                 </button>
             </div>
 
@@ -218,15 +220,17 @@
                 </div>
 
                 <!-- Table -->
-                <div id="published-table-wrap" class="hidden bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
-                    <table class="min-w-full text-sm">
+                <div id="published-table-wrap" class="hidden bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm relative">
+                    <div class="overflow-x-auto hide-scrollbar rounded-2xl min-h-[300px]">
+                        <table class="min-w-full text-sm">
                         <thead>
                             <tr class="border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
                                 <th class="text-left px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Course</th>
-                                <th class="text-left px-4 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden sm:table-cell">CRS-ID</th>
-                                <th class="text-left px-4 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden lg:table-cell">Date Approved</th>
-                                <th class="text-left px-4 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden xl:table-cell">Students</th>
-                                <th class="text-left px-4 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden md:table-cell">Revenue</th>
+                                <th class="text-left px-4 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">CRS-ID</th>
+                                <th class="text-left px-4 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Date Approved</th>
+                                <th class="text-left px-4 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Students</th>
+                                <th class="text-left px-4 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Price</th>
+                                <th class="text-left px-4 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Revenue</th>
                                 <th class="text-left px-4 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Status</th>
                                 <th class="text-left px-4 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Actions</th>
                             </tr>
@@ -235,6 +239,7 @@
                         </tbody>
                     </table>
                 </div>
+            </div>
             </div>
         </div>
     </main>
@@ -419,11 +424,13 @@
                         .from('courses')
                         .select(`
                             id, root_course_id, serial_id, title, thumbnail_url, status, updated_at, created_at,
+                            price, price_type, is_public,
                             instructor:profiles(full_name, avatar_url),
                             category:course_categories(name),
                             moderation_logs:course_moderation_logs(decision, created_at)
                         `)
                         .eq('status', 'published')
+                        .eq('is_latest_published', true)
                         .order('updated_at', { ascending: false });
 
                     if (error) throw error;
@@ -566,38 +573,51 @@
                                 </div>
                             </td>
                             <!-- CRS-ID Column -->
-                            <td class="px-4 py-4 hidden sm:table-cell">
+                            <td class="px-4 py-4">
                                 <span class="inline-flex items-center gap-1.5 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 text-[10px] font-black px-2.5 py-1.5 rounded-lg tracking-widest truncate">
                                     <span class="material-symbols-outlined text-xs" style="font-variation-settings:'FILL' 1;">tag</span>
                                     ${crsId}
                                 </span>
                             </td>
                             <!-- Date Approved Column -->
-                            <td class="px-4 py-4 hidden lg:table-cell">
+                            <td class="px-4 py-4">
                                 <div class="flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400 truncate">
                                     <span class="material-symbols-outlined text-sm text-emerald-500">event_available</span>
                                     ${approvedDateStr}
                                 </div>
                             </td>
                             <!-- Students Column -->
-                            <td class="px-4 py-4 hidden xl:table-cell">
+                            <td class="px-4 py-4">
                                 <div class="flex items-center gap-1.5 text-xs font-bold text-slate-600 dark:text-slate-300">
                                     <span class="material-symbols-outlined text-sm text-sky-500">group</span>
                                     ${course._enrollmentCount || 0}
                                 </div>
                             </td>
+                            <!-- Price Column -->
+                            <td class="px-4 py-4">
+                                <span class="text-sm font-bold text-slate-700 dark:text-slate-300">
+                                    ${course.price_type === 'free' ? 'Free' : '$' + (course.price || 0).toFixed(2)}
+                                </span>
+                            </td>
                             <!-- Revenue Column -->
-                            <td class="px-4 py-4 hidden md:table-cell">
+                            <td class="px-4 py-4">
                                 <span class="text-sm font-black text-emerald-600 dark:text-emerald-400">
                                     $${(course._revenue || 0).toFixed(2)}
                                 </span>
                             </td>
                             <!-- Status Column -->
                             <td class="px-4 py-4">
-                                <span class="inline-flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 text-[10px] font-black px-2.5 py-1.5 rounded-lg">
+                                ${course.is_public === false ? `
+                                <span class="inline-flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-[10px] font-black px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700">
+                                    <span class="material-symbols-outlined text-[12px] opacity-70">lock</span>
+                                    Private
+                                </span>
+                                ` : `
+                                <span class="inline-flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 text-[10px] font-black px-2.5 py-1.5 rounded-lg border border-emerald-100 dark:border-emerald-800/50">
                                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                                     Published
                                 </span>
+                                `}
                             </td>
                             <!-- Actions Column -->
                             <td class="px-4 py-4" onclick="event.stopPropagation()">
@@ -688,9 +708,9 @@
             document.querySelectorAll('.admin-tab').forEach(tab => {
                 tab.onclick = async () => {
                     document.querySelectorAll('.admin-tab').forEach(t => {
-                        t.className = "admin-tab py-4 border-b-2 border-transparent text-slate-500 font-medium px-1 flex items-center gap-2";
+                        t.className = "admin-tab text-sm sm:text-base py-3 sm:py-4 border-b-2 shrink-0 border-transparent text-slate-500 font-medium px-2 sm:px-1 flex items-center gap-2";
                     });
-                    tab.className = "admin-tab py-4 border-b-2 border-indigo-600 text-indigo-600 font-bold px-1 flex items-center gap-2";
+                    tab.className = "admin-tab text-sm sm:text-base py-3 sm:py-4 border-b-2 shrink-0 border-indigo-600 text-indigo-600 font-bold px-2 sm:px-1 flex items-center gap-2";
 
                     currentTab = tab.dataset.tab;
 

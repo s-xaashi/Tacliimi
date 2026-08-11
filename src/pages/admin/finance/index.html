@@ -18,7 +18,7 @@
         body { font-family: 'Inter', sans-serif; }
         .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
         .stat-badge { @apply px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider; }
-        .tab-btn { @apply pb-4 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium flex items-center gap-2 border-b-2 border-transparent transition-colors; }
+        .tab-btn { @apply pb-4 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium flex items-center gap-2 border-b-2 border-transparent transition-colors whitespace-nowrap shrink-0; }
         .tab-btn.active { @apply text-indigo-600 dark:text-indigo-400 font-bold border-indigo-600 dark:border-indigo-400; }
         .status-badge { @apply px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider; }
     </style>
@@ -99,8 +99,8 @@
 
             <!-- Tabs -->
             <div class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-                <div class="px-8 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                    <div class="flex gap-8">
+                <div class="px-4 sm:px-8 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between overflow-x-auto hide-scrollbar gap-4">
+                    <div class="flex gap-4 sm:gap-8 shrink-0">
                         <button class="tab-btn active" id="tab-withdrawals" onclick="switchTab('withdrawals')">
                             <span class="material-symbols-outlined text-base">account_balance_wallet</span> Withdrawals
                         </button>
@@ -135,8 +135,8 @@
 
                 <!-- Tab Contents -->
                 <div id="content-withdrawals">
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left">
+                    <div class="overflow-x-auto hide-scrollbar">
+                        <table class="w-full text-left min-w-[900px]">
                             <thead>
                                 <tr class="bg-slate-50 dark:bg-slate-800/50 text-[10px] uppercase tracking-widest text-slate-400">
                                     <th class="px-6 py-4 font-black">Instructor</th>
@@ -155,8 +155,8 @@
                 </div>
 
                 <div id="content-refunds" class="hidden">
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left">
+                    <div class="overflow-x-auto hide-scrollbar">
+                        <table class="w-full text-left min-w-[900px]">
                             <thead>
                                 <tr class="bg-slate-50 dark:bg-slate-800/50 text-[10px] uppercase tracking-widest text-slate-400">
                                     <th class="px-6 py-4 font-black">Student</th>
@@ -175,8 +175,8 @@
                 </div>
 
                 <div id="content-finance-tickets" class="hidden">
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left">
+                    <div class="overflow-x-auto hide-scrollbar">
+                        <table class="w-full text-left min-w-[900px]">
                             <thead>
                                 <tr class="bg-slate-50 dark:bg-slate-800/50 text-[10px] uppercase tracking-widest text-slate-400">
                                     <th class="px-6 py-4 font-black">Student</th>
@@ -332,6 +332,81 @@
 
                 <!-- Boosts Tab -->
                 <div id="content-boosts" class="hidden p-8 space-y-6">
+                    <!-- Manual Grant Panel -->
+                    <div class="bg-indigo-50/30 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 mb-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 rounded-xl flex items-center justify-center border border-indigo-200 dark:border-indigo-800">
+                                    <span class="material-symbols-outlined">add_moderator</span>
+                                </div>
+                                <div>
+                                    <h3 class="font-black text-lg text-slate-900 dark:text-white">Manual Admin Grant</h3>
+                                    <p class="text-xs text-slate-500">Provide visibility features manually. Set Amount Collected to $0 for free grants.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <form id="admin-grant-form" class="space-y-5" onsubmit="event.preventDefault(); window.submitAdminGrant();">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Entity Type</label>
+                                    <select id="grant-entity-type" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-bold focus:ring-2 focus:ring-indigo-600 outline-none">
+                                        <option value="course">Course</option>
+                                        <option value="mentor">Mentor</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Entity ID</label>
+                                    <input type="text" id="grant-entity-id" required class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-mono text-sm focus:ring-2 focus:ring-indigo-600 outline-none" placeholder="uuid...">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-slate-200 dark:border-slate-800 pt-5">
+                                <div>
+                                    <label class="flex items-center gap-3 p-3 border border-slate-200 dark:border-slate-700 rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800/50 transition">
+                                        <input type="checkbox" id="grant-boost-cb" onchange="window.toggleGrantFields()" class="w-5 h-5 rounded text-indigo-600 border-slate-300 focus:ring-indigo-600">
+                                        <div>
+                                            <p class="font-bold text-sm text-slate-900 dark:text-white">Grant Boost</p>
+                                        </div>
+                                    </label>
+                                    <div id="grant-boost-amount-row" class="hidden mt-3 p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl">
+                                        <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Amount Collected ($)</label>
+                                        <input type="number" id="grant-boost-amount" min="0" step="0.01" value="0" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 font-bold focus:ring-2 focus:ring-indigo-600 outline-none h-10">
+                                        <p class="text-[10px] text-slate-400 mt-1">Leave $0 for free grant.</p>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="flex items-center gap-3 p-3 border border-slate-200 dark:border-slate-700 rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800/50 transition">
+                                        <input type="checkbox" id="grant-banner-cb" onchange="window.toggleGrantFields()" class="w-5 h-5 rounded text-indigo-600 border-slate-300 focus:ring-indigo-600">
+                                        <div>
+                                            <p class="font-bold text-sm text-slate-900 dark:text-white">Grant Banner</p>
+                                        </div>
+                                    </label>
+                                    <div id="grant-banner-fields" class="hidden mt-3 p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl space-y-3">
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Banner Text</label>
+                                            <input type="text" id="grant-banner-text" maxlength="60" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white font-bold focus:ring-2 focus:ring-indigo-600 outline-none h-10" placeholder="e.g. 50% Off Today!">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Amount Collected ($)</label>
+                                            <input type="number" id="grant-banner-amount" min="0" step="0.01" value="0" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 font-bold focus:ring-2 focus:ring-indigo-600 outline-none h-10">
+                                            <p class="text-[10px] text-slate-400 mt-1">Leave $0 for free grant.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-slate-200 dark:border-slate-800 pt-5 items-end">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Duration (Days)</label>
+                                    <input type="number" id="grant-days" min="1" max="90" value="7" required class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-bold focus:ring-2 focus:ring-indigo-600 outline-none">
+                                </div>
+                                <div>
+                                    <button type="submit" id="grant-submit-btn" disabled class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2">
+                                        <span class="material-symbols-outlined text-sm">check_circle</span> Create Grant
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
                     <!-- Summary Cards -->
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="boost-summary-cards">
                         <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-5 rounded-2xl">
@@ -471,25 +546,25 @@
             const pendingR = allRefunds.filter(r => r.status === 'pending');
             const totalRev = allRefunds.filter(r => r.status === 'approved').reduce((s, r) => s + Number(r.amount || 0), 0);
             document.getElementById('finance-stats').innerHTML = `
-                <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                    <p class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Pending Withdrawals</p>
-                    <h3 class="text-2xl font-black text-amber-600">${pendingW.length}</h3>
-                    <p class="text-xs text-slate-400 mt-1">${fmtAmt(pendingW.reduce((s, w) => s + Number(w.amount || 0), 0))} total</p>
+                <div class="bg-white dark:bg-slate-900 p-3 sm:p-5 text-center sm:text-left rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-center">
+                    <p class="text-slate-400 text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-1">Pending Withdrawals</p>
+                    <h3 class="text-xl sm:text-2xl font-black text-amber-600">${pendingW.length}</h3>
+                    <p class="text-[10px] sm:text-xs text-slate-400 mt-1">${fmtAmt(pendingW.reduce((s, w) => s + Number(w.amount || 0), 0))} total</p>
                 </div>
-                <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                    <p class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Pending Refunds</p>
-                    <h3 class="text-2xl font-black text-purple-600">${pendingR.length}</h3>
-                    <p class="text-xs text-slate-400 mt-1">${fmtAmt(pendingR.reduce((s, r) => s + Number(r.amount || 0), 0))} total</p>
+                <div class="bg-white dark:bg-slate-900 p-3 sm:p-5 text-center sm:text-left rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-center">
+                    <p class="text-slate-400 text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-1">Pending Refunds</p>
+                    <h3 class="text-xl sm:text-2xl font-black text-purple-600">${pendingR.length}</h3>
+                    <p class="text-[10px] sm:text-xs text-slate-400 mt-1">${fmtAmt(pendingR.reduce((s, r) => s + Number(r.amount || 0), 0))} total</p>
                 </div>
-                <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                    <p class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Approved Refunds</p>
-                    <h3 class="text-2xl font-black text-emerald-600">${fmtAmt(totalRev)}</h3>
-                    <p class="text-xs text-slate-400 mt-1">${allRefunds.filter(r => r.status === 'approved').length} items</p>
+                <div class="bg-white dark:bg-slate-900 p-3 sm:p-5 text-center sm:text-left rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-center">
+                    <p class="text-slate-400 text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-1">Approved Refunds</p>
+                    <h3 class="text-xl sm:text-2xl font-black text-emerald-600">${fmtAmt(totalRev)}</h3>
+                    <p class="text-[10px] sm:text-xs text-slate-400 mt-1">${allRefunds.filter(r => r.status === 'approved').length} items</p>
                 </div>
-                <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                    <p class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Finance Tickets</p>
-                    <h3 class="text-2xl font-black text-blue-600">${allFinanceTickets.length}</h3>
-                    <p class="text-xs text-slate-400 mt-1">${allFinanceTickets.filter(t => t.status === 'open').length} open</p>
+                <div class="bg-white dark:bg-slate-900 p-3 sm:p-5 text-center sm:text-left rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-center">
+                    <p class="text-slate-400 text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-1">Finance Tickets</p>
+                    <h3 class="text-xl sm:text-2xl font-black text-blue-600">${allFinanceTickets.length}</h3>
+                    <p class="text-[10px] sm:text-xs text-slate-400 mt-1">${allFinanceTickets.filter(t => t.status === 'open').length} open</p>
                 </div>
             `;
         }
@@ -1177,7 +1252,10 @@
                         </td>
                         <td class="px-6 py-4">
                             <div class="flex flex-col gap-1.5">
-                                <span class="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-200">${b.entity_type || 'course'} boost</span>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-200">${b.entity_type || 'course'} boost</span>
+                                    ${b.is_admin_granted ? '<span class="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 text-[9px] font-black uppercase tracking-widest border border-slate-200 dark:border-slate-700" title="Granted manually by an administrator">Admin Granted</span>' : ''}
+                                </div>
                                 ${isBanner ? '<span class="px-2 py-0.5 rounded-full bg-purple-100 text-purple-600 text-[10px] font-black inline-block w-fit">+ Banner</span>' : ''}
                                 ${viewEntityBtn}
                             </div>
@@ -1208,12 +1286,140 @@
             try {
                 if (type === 'banner') await (await import('/src/services/boostService.js')).boostService.adminCancelBanner(id, "Admin manual force cancel");
                 else await (await import('/src/services/boostService.js')).boostService.adminCancelBoost(id, "Admin manual force cancel");
-                window.showToast("Boost forcibly cancelled.", "success");
+                
+                const { showToast } = await import('/src/services/uiUtils.js');
+                if (showToast) showToast("Boost forcibly cancelled.", "success");
+                
                 renderBoostsTab();
-                loadAnalytics();
+                // Optionally reload analytics if available
+                if (window.loadAnalytics) loadAnalytics();
             } catch (e) {
                 console.error("Failed to admin cancel:", e);
-                window.showToast("Failed to cancel boost. Check permissions.", "error");
+                const { showToast } = await import('/src/services/uiUtils.js');
+                if (showToast) showToast("Failed to cancel boost. Check permissions.", "error");
+            }
+        };
+
+        window.toggleGrantFields = function() {
+            const hasBoost = document.getElementById('grant-boost-cb')?.checked;
+            const hasBanner = document.getElementById('grant-banner-cb')?.checked;
+            const subBtn = document.getElementById('grant-submit-btn');
+            
+            document.getElementById('grant-boost-amount-row')?.classList.toggle('hidden', !hasBoost);
+            document.getElementById('grant-banner-fields')?.classList.toggle('hidden', !hasBanner);
+            
+            if(subBtn) subBtn.disabled = (!hasBoost && !hasBanner);
+        };
+
+        window.submitAdminGrant = async function() {
+            const type = document.getElementById('grant-entity-type').value; 
+            const entityId = document.getElementById('grant-entity-id').value.trim();
+            const days = parseInt(document.getElementById('grant-days').value, 10);
+            
+            const hasBoost = document.getElementById('grant-boost-cb').checked;
+            const boostAmount = parseFloat(document.getElementById('grant-boost-amount').value || "0");
+            
+            const hasBanner = document.getElementById('grant-banner-cb').checked;
+            const bannerText = document.getElementById('grant-banner-text').value.trim();
+            const bannerAmount = parseFloat(document.getElementById('grant-banner-amount').value || "0");
+            
+            const { showToast } = await import('/src/services/uiUtils.js');
+            
+            if (!entityId) return showToast("Please enter an entity ID", "error");
+            if (!hasBoost && !hasBanner) return showToast("Select at least one grant type", "error");
+            if (hasBanner && !bannerText) return showToast("Please enter banner text", "error");
+
+            const subBtn = document.getElementById('grant-submit-btn');
+            subBtn.disabled = true;
+            const oldHtml = subBtn.innerHTML;
+            subBtn.innerHTML = '<span class="material-symbols-outlined text-sm animate-spin">progress_activity</span> Processing...';
+
+            try {
+                const { supabase } = await import('/src/services/supabaseClient.js');
+                
+                // Validate entity exists and resolve final UUID
+                let resolvedEntityId = entityId;
+                let instructorId = entityId;
+
+                if (type === 'course') {
+                    if (entityId.toLowerCase().startsWith('crs-')) {
+                        const serialId = parseInt(entityId.substring(4), 10);
+                        const { data: crs, error: crsErr } = await supabase.from('courses').select('id, instructor_id').eq('serial_id', serialId).single();
+                        if (crsErr || !crs) throw new Error("Course not found for this CRS ID.");
+                        resolvedEntityId = crs.id;
+                        instructorId = crs.instructor_id;
+                    } else {
+                        const { data: crs, error: crsErr } = await supabase.from('courses').select('id, instructor_id').eq('id', entityId).single();
+                        if (crsErr || !crs) throw new Error("Course not found for this ID.");
+                        resolvedEntityId = crs.id;
+                        instructorId = crs.instructor_id;
+                    }
+                } else if (type === 'mentor') {
+                    if (entityId.toLowerCase().startsWith('mtr-')) {
+                        const serialId = parseInt(entityId.substring(4), 10);
+                        const { data: mnt, error: mntErr } = await supabase.from('profiles').select('id').eq('serial_id', serialId).single();
+                        if (mntErr || !mnt) throw new Error("Mentor not found for this MTR ID.");
+                        resolvedEntityId = mnt.id;
+                        instructorId = mnt.id;
+                    } else {
+                        const { data: mnt, error: mntErr } = await supabase.from('profiles').select('id').eq('id', entityId).single();
+                        if (mntErr || !mnt) throw new Error("Mentor not found for this ID.");
+                        resolvedEntityId = mnt.id;
+                        instructorId = mnt.id;
+                    }
+                }
+
+                // Grant!
+                if (hasBoost && hasBanner) {
+                    const { error } = await supabase.rpc('admin_grant_boost_and_banner_atomic', {
+                        p_entity_type: type,
+                        p_entity_id: resolvedEntityId,
+                        p_instructor_id: instructorId,
+                        p_plan_days: days,
+                        p_boost_amount_paid: boostAmount,
+                        p_banner_amount_paid: bannerAmount,
+                        p_banner_text: bannerText
+                    });
+                    if (error) throw error;
+                } else if (hasBoost) {
+                    const { error } = await supabase.rpc('admin_grant_boost', {
+                        p_entity_type: type,
+                        p_entity_id: resolvedEntityId,
+                        p_instructor_id: instructorId,
+                        p_plan_days: days,
+                        p_amount_paid: boostAmount
+                    });
+                    if (error) throw error;
+                } else if (hasBanner) {
+                    const { error } = await supabase.rpc('admin_grant_promo_banner', {
+                        p_entity_type: type,
+                        p_entity_id: resolvedEntityId,
+                        p_instructor_id: instructorId,
+                        p_banner_text: bannerText,
+                        p_plan_days: days,
+                        p_amount_paid: bannerAmount
+                    });
+                    if (error) throw error;
+                }
+                
+                showToast("Manual grant successful!", "success");
+                
+                document.getElementById('grant-entity-id').value = '';
+                document.getElementById('grant-boost-cb').checked = false;
+                document.getElementById('grant-banner-cb').checked = false;
+                document.getElementById('grant-boost-amount').value = '0';
+                document.getElementById('grant-banner-amount').value = '0';
+                document.getElementById('grant-banner-text').value = '';
+                document.getElementById('grant-days').value = document.getElementById('setting-boost-min-days')?.value || '1';
+                window.toggleGrantFields();
+                
+                renderBoostsTab();
+            } catch (err) {
+                console.error("Grant error:", err);
+                showToast(err.message || "Failed to create manual grant. Check console.", "error");
+            } finally {
+                subBtn.disabled = false;
+                subBtn.innerHTML = oldHtml;
             }
         };
 

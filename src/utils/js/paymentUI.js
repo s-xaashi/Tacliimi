@@ -419,6 +419,8 @@ export function injectSecureWalletModal() {
                 entityType: ctx.entityType,
                 planDays: ctx.planDays,
                 bannerText: ctx.bannerText,
+                boostAmount: ctx.boostAmount,
+                bannerAmount: ctx.bannerAmount,
                 amount: ctx.amount,
                 currency: ctx.currency,
                 gateway: ctx.gateway,

@@ -110,6 +110,27 @@ export const PaymentService = {
   },
 
   /**
+   * Initiate a combined boost + banner payment (single charge, both records created atomically).
+   * boostAmount + bannerAmount must add up to totalAmount.
+   */
+  async startBoostAndBannerPayment(entityType, entityId, boostAmount, bannerAmount, planDays, bannerText, currency = 'USD') {
+    const totalAmount = boostAmount + bannerAmount;
+    const isSomali = await PaymentService.isSomaliUser();
+    if (isSomali) return {
+      method: 'ewallet', entityType, entityId,
+      amount: totalAmount, planDays, bannerText, currency,
+      boostAmount, bannerAmount,
+    };
+    const result = await callEdgeFn('createCheckout', {
+      type: 'boost_and_banner', referenceId: entityId, entityType,
+      planDays, bannerText, amount: totalAmount, currency,
+    });
+    if (!result.checkout_url) throw new Error('No checkout URL returned from gateway.');
+    window.location.href = result.checkout_url;
+    return { method: 'redirect' };
+  },
+
+  /**
    * Process a direct e-wallet payment (Somali users).
    * No redirect — result is returned immediately.
    */

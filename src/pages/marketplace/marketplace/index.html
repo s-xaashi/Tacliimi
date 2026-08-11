@@ -625,37 +625,38 @@
                     html += `
                         <div onclick="window.location.href='/src/pages/marketplace/course-details/index.html?id=${encodeURIComponent(course.id)}'"
                             class="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 group border border-gray-100 dark:border-gray-700/50 hover:border-primary/30 cursor-pointer
-                                   flex flex-row md:flex-col h-full ${boostRing}">
+                                   flex flex-col h-full ${boostRing}">
 
-                            <!-- Thumbnail: narrow left col on mobile, full-width top on md+ -->
-                            <div class="relative overflow-hidden shrink-0
-                                        w-[120px] self-stretch md:w-full md:aspect-[16/10]">
-                                <img alt="${course.title}"
-                                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                                    src="${course.thumbnail_url || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80'}" />
+                            <!-- Inner wrapper: row on mobile (thumbnail beside content), col on md+ (thumbnail above content) -->
+                            <div class="flex flex-row md:flex-col flex-1 min-h-0">
 
-                                <!-- Hover play overlay – hidden on mobile -->
-                                <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity hidden md:flex items-center justify-center">
-                                    <div class="w-12 h-12 rounded-full ${isBoosted ? 'bg-amber-500/90' : 'bg-primary/90'} text-white flex items-center justify-center shadow-lg transform scale-75 group-hover:scale-100 transition-transform">
-                                        <span class="material-icons-outlined">play_arrow</span>
+                                <!-- Thumbnail: narrow left col on mobile, full-width top on md+ -->
+                                <div class="relative overflow-hidden shrink-0
+                                            w-[120px] self-stretch md:w-full md:aspect-[16/10]">
+                                    <img alt="${course.title}"
+                                        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                                        src="${course.thumbnail_url || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80'}" />
+
+                                    <!-- Hover play overlay – hidden on mobile -->
+                                    <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity hidden md:flex items-center justify-center">
+                                        <div class="w-12 h-12 rounded-full ${isBoosted ? 'bg-amber-500/90' : 'bg-primary/90'} text-white flex items-center justify-center shadow-lg transform scale-75 group-hover:scale-100 transition-transform">
+                                            <span class="material-icons-outlined">play_arrow</span>
+                                        </div>
                                     </div>
+
+                                    <!-- Wishlist btn -->
+                                    <div class="absolute top-2 right-2">
+                                        <button onclick="event.stopPropagation(); window.toggleWishlist('${course.id}', this);"
+                                            class="w-7 h-7 md:w-9 md:h-9 rounded-full bg-white/95 dark:bg-black/60 backdrop-blur-md flex items-center justify-center ${favColor} hover:text-red-500 transition-all shadow-sm active:scale-90">
+                                            <span class="material-icons-outlined text-sm md:text-base">${favIcon}</span>
+                                        </button>
+                                    </div>
+
+                                    ${badgeHtml}
                                 </div>
 
-                                <!-- Wishlist btn -->
-                                <div class="absolute top-2 right-2">
-                                    <button onclick="event.stopPropagation(); window.toggleWishlist('${course.id}', this);"
-                                        class="w-7 h-7 md:w-9 md:h-9 rounded-full bg-white/95 dark:bg-black/60 backdrop-blur-md flex items-center justify-center ${favColor} hover:text-red-500 transition-all shadow-sm active:scale-90">
-                                        <span class="material-icons-outlined text-sm md:text-base">${favIcon}</span>
-                                    </button>
-                                </div>
-
-                                ${badgeHtml}
-                            </div>
-
-                            ${bannerHtml}
-
-                            <!-- Content -->
-                            <div class="p-3 md:p-5 flex-1 flex flex-col min-w-0">
+                                <!-- Content -->
+                                <div class="p-3 md:p-5 flex-1 flex flex-col min-w-0">
 
                                 <!-- Category & Level -->
                                 <div class="flex items-center justify-between mb-1.5 md:mb-3">
@@ -721,7 +722,10 @@
                                     </span>
                                 </div>
                             </div>
-                        </div>
+                        </div><!-- /.inner-wrapper (thumbnail+content) -->
+
+                        ${bannerHtml}
+                    </div><!-- /.card outer -->
                     `;
                 });
 
