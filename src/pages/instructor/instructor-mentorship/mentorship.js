@@ -1357,10 +1357,10 @@ async function bindRequestsInteractions(container, userId) {
                             </div>
 
                             <!-- Actions: Fixed width -->
-                            <div class="w-full md:w-fit flex flex-col gap-2 justify-center border-t md:border-t-0 border-slate-100 dark:border-slate-800 pt-4 md:pt-0">
+                            <div class="w-full md:w-fit flex flex-wrap md:flex-col gap-2 justify-start border-t md:border-t-0 border-slate-100 dark:border-slate-800 pt-4 md:pt-0">
                                 ${actionsHtml}
                                 ${rescheduleBtn}
-                                <a href="/src/pages/mentorship/mentor-booking/confirmation.html?sessionId=${session.id}" class="px-4 py-2.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 font-bold rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-all text-sm flex items-center gap-2 justify-center border border-indigo-100 dark:border-indigo-800">
+                                <a href="/src/pages/mentorship/mentor-booking/confirmation.html?sessionId=${session.id}" class="flex-1 min-w-[120px] px-4 py-2.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 font-bold rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-all text-sm flex items-center gap-2 justify-center border border-indigo-100 dark:border-indigo-800">
                                     <span class="material-symbols-outlined text-[18px]">receipt_long</span> Details
                                 </a>
                             </div>
@@ -1660,7 +1660,7 @@ async function bindUpcomingInteractions(container, userId) {
                 let actionHtml = '';
                 if (isCancelled) {
                     actionHtml = `
-                        <button class="delete-session-btn px-4 py-2.5 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 transition-all text-sm flex items-center gap-2 shadow-lg shadow-red-500/20" data-id="${session.id}">
+                        <button class="delete-session-btn flex-1 min-w-[120px] px-4 py-2.5 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 transition-all text-sm flex items-center gap-2 justify-center shadow-lg shadow-red-500/20" data-id="${session.id}">
                             <span class="material-symbols-outlined text-[18px]">delete</span> Remove
                         </button>
                     `;
@@ -1673,7 +1673,7 @@ async function bindUpcomingInteractions(container, userId) {
                 return `
                     <div class="${cardClass}" data-session-id="${session.id}">
                         ${isProgram && !isCancelled ? `<div class="absolute top-4 right-4 z-10">${buildMonthlyBadgeHtml()}</div>` : ''}
-                        <div class="flex flex-col md:flex-row gap-8 items-center">
+                        <div class="flex flex-col md:flex-row gap-4 md:gap-8 items-start md:items-center">
                             <!-- Student Info: Fixed width -->
                             <div class="flex items-center gap-4 w-full md:w-64 shrink-0">
                                 <div class="w-16 h-16 rounded-2xl overflow-hidden border-2 ${isCancelled ? 'border-red-200' : 'border-primary/20'} shrink-0 shadow-sm cursor-pointer" onclick='window.openStudentProfile(${JSON.stringify(student).replace(/'/g, "&#39;")})'>
@@ -1721,17 +1721,17 @@ async function bindUpcomingInteractions(container, userId) {
                             </div>
 
                             <!-- Actions: Fixed width -->
-                            <div class="w-full md:w-fit flex flex-row md:flex-col gap-2 justify-center border-t md:border-t-0 ${isCancelled ? 'border-red-100 dark:border-red-900/20' : 'border-slate-100 dark:border-slate-800'} pt-4 md:pt-0">
+                            <div class="w-full md:w-fit flex flex-wrap md:flex-col gap-2 justify-start border-t md:border-t-0 ${isCancelled ? 'border-red-100 dark:border-red-900/20' : 'border-slate-100 dark:border-slate-800'} pt-4 md:pt-0">
                                 ${actionHtml}
                                 ${!isCancelled ? `
-                                <button class="reschedule-session-btn px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-bold rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-all text-sm flex items-center justify-center gap-2 whitespace-nowrap" data-id="${session.id}" data-date="${progStatus && progStatus.nextMeeting ? progStatus.nextMeeting.toISOString() : session.scheduled_at}" data-duration="${duration}" data-name="${(student.full_name || 'Student').replace(/"/g, '&quot;')}" data-history="${JSON.stringify(session.reschedule_history || []).replace(/"/g, '&quot;')}">
+                                <button class="reschedule-session-btn flex-1 min-w-[120px] px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-bold rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-all text-sm flex items-center justify-center gap-2 whitespace-nowrap" data-id="${session.id}" data-date="${progStatus && progStatus.nextMeeting ? progStatus.nextMeeting.toISOString() : session.scheduled_at}" data-duration="${duration}" data-name="${(student.full_name || 'Student').replace(/"/g, '&quot;')}" data-history="${JSON.stringify(session.reschedule_history || []).replace(/"/g, '&quot;')}">
                                     <span class="material-symbols-outlined text-[18px]">edit_calendar</span> Reschedule
                                 </button>
-                                <button class="message-btn px-4 py-2.5 bg-slate-100 dark:bg-slate-800 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex items-center justify-center" data-id="${session.id}" data-name="${student.full_name || 'Student'}">
+                                <button class="message-btn shrink-0 px-4 py-2.5 bg-slate-100 dark:bg-slate-800 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex items-center justify-center" data-id="${session.id}" data-name="${student.full_name || 'Student'}">
                                     <span class="material-symbols-outlined text-[18px]">forum</span>
                                 </button>
                                 ` : ''}
-                                <a href="/src/pages/mentorship/mentor-booking/confirmation.html?sessionId=${session.id}" class="px-4 py-2.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 font-bold rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-all text-sm flex items-center gap-2 justify-center border border-indigo-100 dark:border-indigo-800">
+                                <a href="/src/pages/mentorship/mentor-booking/confirmation.html?sessionId=${session.id}" class="flex-1 min-w-[120px] px-4 py-2.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 font-bold rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-all text-sm flex items-center gap-2 justify-center border border-indigo-100 dark:border-indigo-800">
                                     <span class="material-symbols-outlined text-[18px]">receipt_long</span> Details
                                 </a>
                             </div>
@@ -1857,10 +1857,10 @@ async function bindCompletedInteractions(container, userId) {
                 return `
                     <div class="${isProgram ? GOLD_CARD_STYLE : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden hover:shadow-lg transition-all group p-6'} opacity-80 hover:opacity-100" data-session-id="${session.id}">
                         ${isProgram ? `<div class="flex items-center gap-2 mb-3">${buildMonthlyBadgeHtml()}<span class="text-[10px] font-bold text-amber-600/70">Program Completed</span></div>` : ''}
-                        <div class="flex flex-col md:flex-row gap-8 items-center">
+                        <div class="flex flex-col md:flex-row gap-4 md:gap-6 items-start md:items-center">
                             <!-- Student Info: Fixed width -->
-                            <div class="flex items-center gap-4 w-full md:w-64 shrink-0">
-                                <div class="w-16 h-16 rounded-2xl overflow-hidden border-2 border-slate-200 dark:border-slate-700 shrink-0 shadow-sm grayscale cursor-pointer" onclick='window.openStudentProfile(${JSON.stringify(student).replace(/'/g, "&#39;")})'>
+                            <div class="flex items-center gap-4 w-full md:w-56 shrink-0">
+                                <div class="w-14 h-14 md:w-16 md:h-16 rounded-2xl overflow-hidden border-2 border-slate-200 dark:border-slate-700 shrink-0 shadow-sm grayscale cursor-pointer" onclick='window.openStudentProfile(${JSON.stringify(student).replace(/'/g, "&#39;")})' >
                                     <img src="${studentAvatar}" class="w-full h-full object-cover" />
                                 </div>
                                 <div class="flex-1 min-w-0">
@@ -1887,11 +1887,11 @@ async function bindCompletedInteractions(container, userId) {
                             </div>
 
                             <!-- Actions: Fixed width -->
-                            <div class="w-full md:w-fit flex flex-col gap-2 justify-center border-t md:border-t-0 border-slate-100 dark:border-slate-800 pt-4 md:pt-0">
-                                <button class="message-btn px-4 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all text-sm flex items-center gap-2" data-id="${session.id}" data-name="${(student.full_name || 'Student').replace(/'/g, "\\'")}">
+                            <div class="w-full md:w-fit flex flex-wrap md:flex-col gap-2 justify-start border-t md:border-t-0 border-slate-100 dark:border-slate-800 pt-4 md:pt-0">
+                                <button class="message-btn flex-1 min-w-[130px] px-4 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all text-sm flex items-center justify-center gap-2" data-id="${session.id}" data-name="${(student.full_name || 'Student').replace(/'/g, "\\'")}"> 
                                     <span class="material-symbols-outlined text-[18px]">forum</span> Review Chat
                                 </button>
-                                <a href="/src/pages/mentorship/mentor-booking/confirmation.html?sessionId=${session.id}" class="px-4 py-2.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 font-bold rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-all text-sm flex items-center gap-2 justify-center border border-indigo-100 dark:border-indigo-800">
+                                <a href="/src/pages/mentorship/mentor-booking/confirmation.html?sessionId=${session.id}" class="flex-1 min-w-[120px] px-4 py-2.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 font-bold rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-all text-sm flex items-center gap-2 justify-center border border-indigo-100 dark:border-indigo-800">
                                     <span class="material-symbols-outlined text-[18px]">receipt_long</span> Details
                                 </a>
                             </div>
