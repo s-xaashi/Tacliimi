@@ -53,6 +53,51 @@ window.toggleMentorWishlist = async function(mentorId, btnElement) {
     }
 };
 
+function buildMentorSkeletons(count) {
+    return Array(count).fill(0).map(() => `
+        <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-4 md:p-5 flex flex-col h-full animate-pulse" aria-hidden="true">
+            <div class="flex items-start justify-between mb-3 md:mb-4">
+                <div class="relative mt-2 md:mt-3">
+                    <div class="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-slate-200 dark:bg-slate-700"></div>
+                </div>
+                <div class="flex items-start gap-2 md:gap-4">
+                    <div class="flex flex-col items-end mt-1 md:mt-2 gap-1.5">
+                        <div class="h-4 w-10 bg-slate-200 dark:bg-slate-700 rounded"></div>
+                        <div class="h-5 w-12 bg-slate-200 dark:bg-slate-700 rounded"></div>
+                    </div>
+                    <div class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-slate-200 dark:bg-slate-700 mt-1 md:mt-2"></div>
+                </div>
+            </div>
+            <div class="mb-3 md:mb-4">
+                <div class="h-4 w-2/3 bg-slate-200 dark:bg-slate-700 rounded mb-2"></div>
+                <div class="h-3 w-full bg-slate-200 dark:bg-slate-700 rounded mb-1"></div>
+                <div class="h-3 w-4/5 bg-slate-200 dark:bg-slate-700 rounded"></div>
+            </div>
+            <div class="flex flex-wrap gap-1.5 md:gap-2 mb-3 md:mb-4">
+                <div class="h-5 w-20 bg-slate-200 dark:bg-slate-700 rounded-lg"></div>
+                <div class="h-5 w-16 bg-slate-200 dark:bg-slate-700 rounded-lg"></div>
+            </div>
+            <div class="grid grid-cols-2 gap-2 md:gap-3 py-3 md:py-4 border-y border-slate-100 dark:border-slate-800 mb-4 md:mb-5">
+                <div class="flex items-center gap-1.5 md:gap-2">
+                    <div class="w-7 h-7 md:w-8 md:h-8 rounded-lg bg-slate-200 dark:bg-slate-700"></div>
+                    <div class="flex flex-col gap-1">
+                        <div class="h-2.5 w-12 bg-slate-200 dark:bg-slate-700 rounded"></div>
+                        <div class="h-3 w-8 bg-slate-200 dark:bg-slate-700 rounded"></div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-1.5 md:gap-2">
+                    <div class="w-7 h-7 md:w-8 md:h-8 rounded-lg bg-slate-200 dark:bg-slate-700"></div>
+                    <div class="flex flex-col gap-1">
+                        <div class="h-2.5 w-14 bg-slate-200 dark:bg-slate-700 rounded"></div>
+                        <div class="h-3 w-10 bg-slate-200 dark:bg-slate-700 rounded"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-auto h-10 md:h-11 w-full bg-slate-200 dark:bg-slate-700 rounded-xl"></div>
+        </div>
+    `).join('');
+}
+
 async function initMarketplace() {
     const grid = document.getElementById('mentor-cards-grid');
     if (!grid) {
@@ -62,12 +107,8 @@ async function initMarketplace() {
     }
 
     try {
-        grid.innerHTML = `
-            <div class="col-span-full py-20 text-center">
-                <div class="w-10 h-10 border-4 border-slate-200 border-t-primary rounded-full animate-spin mx-auto"></div>
-                <p class="mt-4 text-slate-500 font-medium">Finding best mentors for you...</p>
-            </div>
-        `;
+        grid.setAttribute('aria-busy', 'true');
+        grid.innerHTML = buildMentorSkeletons(6);
 
         allMentors = await MentorService.getActiveMentors();
         
@@ -117,6 +158,7 @@ async function initMarketplace() {
         renderMentors(allMentors);
 
     } catch (err) {
+        grid.removeAttribute('aria-busy');
         console.error("Error loading marketplace:", err);
         grid.innerHTML = `
             <div class="col-span-full py-20 text-center text-red-500">
@@ -369,6 +411,7 @@ function formatResponseTime(hours) {
 function renderMentors(mentors) {
     const grid = document.querySelector('.grid.grid-cols-1.md\\:grid-cols-2.xl\\:grid-cols-3');
     if (!grid) return;
+    grid.removeAttribute('aria-busy');
 
     if (mentors.length === 0) {
         renderEmptyState(grid, true);

@@ -264,9 +264,9 @@ function renderProfile(mentor) {
             reviewsContainer.innerHTML = reviews.map(rev => `
                 <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm">
                     <div class="flex items-center gap-3 mb-4">
-                        <img src="${rev.student?.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(rev.student?.full_name || 'Anonymous') + '&background=random&color=fff'}" class="w-10 h-10 rounded-full object-cover">
+                        <img src="${rev.student?.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(rev.student?.full_name || 'Student') + '&background=random&color=fff'}" class="w-10 h-10 rounded-full object-cover">
                         <div>
-                            <h4 class="text-sm font-bold text-slate-900 dark:text-white">${rev.student?.full_name || 'Anonymous Student'}</h4>
+                            <h4 class="text-sm font-bold text-slate-900 dark:text-white">${rev.student?.full_name || 'Student'}</h4>
                             <div class="flex text-orange-400">
                                 ${Array(5).fill(0).map((_, i) => `<span class="material-symbols-outlined text-xs ${i < rev.rating ? 'fill-1' : ''}">star</span>`).join('')}
                             </div>
@@ -284,6 +284,9 @@ function renderProfile(mentor) {
             `;
         }
     }
+
+    // Clear all skeleton loaders now that data is populated
+    document.querySelectorAll('.animate-pulse').forEach(el => el.classList.remove('animate-pulse'));
 
     // Review Button & Modal Logic
     const addReviewBtn = document.getElementById('add-review-btn');
@@ -406,9 +409,16 @@ function renderAvailabilitySummary(mentor) {
         const slots = mentor.availability || [];
         if (slots.length > 0) {
             // Group by time if multiple slots exist
+            const formatTime = (timeStr) => {
+                const [h, m] = timeStr.split(':');
+                const hour = parseInt(h);
+                const ampm = hour >= 12 ? 'PM' : 'AM';
+                const hour12 = hour % 12 || 12;
+                return `${hour12}:${m} ${ampm}`;
+            };
             const timeRanges = slots.map(s => {
-                const start = s.start_time.substring(0, 5);
-                const end = s.end_time.substring(0, 5);
+                const start = formatTime(s.start_time.substring(0, 5));
+                const end = formatTime(s.end_time.substring(0, 5));
                 return `${start} - ${end}`;
             });
             timeEl.textContent = [...new Set(timeRanges)].join(', ');

@@ -181,8 +181,19 @@
                 start learning.</p>
         </header>
 
-        <section id="continue-learning-section" class="mb-12 hidden">
-            <!-- Latest course rendered here -->
+        <!-- Hero skeleton: shown while active-course banner loads -->
+        <section id="continue-learning-section" class="mb-12" aria-busy="true">
+            <div class="rounded-3xl bg-gradient-to-r from-indigo-200 to-purple-200 dark:from-indigo-900/40 dark:to-purple-900/40 p-6 md:p-8 animate-pulse">
+                <div class="flex flex-col md:flex-row gap-6 md:gap-8 items-center">
+                    <div class="w-full md:w-1/3 aspect-video rounded-2xl bg-white/30 dark:bg-white/10 shrink-0"></div>
+                    <div class="flex-1 w-full space-y-4">
+                        <div class="flex gap-2"><div class="h-5 w-28 rounded-full bg-white/40"></div><div class="h-5 w-16 rounded-full bg-white/30"></div></div>
+                        <div class="h-7 rounded-lg bg-white/40 w-3/4"></div>
+                        <div class="h-2 rounded-full bg-white/30 w-full"></div>
+                        <div class="h-10 rounded-xl bg-white/40 w-40"></div>
+                    </div>
+                </div>
+            </div>
         </section>
 
         <section id="new-student-section" class="mb-12 hidden">
@@ -222,23 +233,23 @@
             <div class="flex items-end justify-between">
                 <div class="flex gap-1 sm:gap-6 overflow-x-auto no-scrollbar pb-0 -mb-px">
                     <button id="tab-my-courses" onclick="switchDashboardTab('my-courses')"
-                        class="whitespace-nowrap pb-4 px-2 text-primary font-semibold border-b-2 border-primary flex items-center gap-1.5 transition-colors shrink-0 text-sm sm:text-base">
-                        <span class="material-symbols-outlined text-lg sm:text-xl">school</span>
+                        class="whitespace-nowrap pb-4 px-1.5 text-primary font-semibold border-b-2 border-primary flex items-center gap-1 transition-colors shrink-0 text-xs sm:text-base sm:px-2 sm:gap-1.5">
+                        <span class="material-symbols-outlined text-base sm:text-xl">school</span>
                         My Courses
                     </button>
                     <button id="tab-completed" onclick="switchDashboardTab('completed')"
-                        class="whitespace-nowrap pb-4 px-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium flex items-center gap-1.5 border-b-2 border-transparent transition-colors shrink-0 text-sm sm:text-base">
-                        <span class="material-symbols-outlined text-lg sm:text-xl">verified</span>
+                        class="whitespace-nowrap pb-4 px-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium flex items-center gap-1 border-b-2 border-transparent transition-colors shrink-0 text-xs sm:text-base sm:px-2 sm:gap-1.5">
+                        <span class="material-symbols-outlined text-base sm:text-xl">verified</span>
                         Completed
                     </button>
                     <button id="tab-my-mentors" onclick="switchDashboardTab('my-mentors')"
-                        class="whitespace-nowrap pb-4 px-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium flex items-center gap-1.5 border-b-2 border-transparent transition-colors shrink-0 text-sm sm:text-base">
-                        <span class="material-symbols-outlined text-lg sm:text-xl">supervisor_account</span>
+                        class="whitespace-nowrap pb-4 px-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium flex items-center gap-1 border-b-2 border-transparent transition-colors shrink-0 text-xs sm:text-base sm:px-2 sm:gap-1.5">
+                        <span class="material-symbols-outlined text-base sm:text-xl">supervisor_account</span>
                         <span class="hidden xs:inline">My</span> Mentors
                     </button>
                     <button id="tab-wishlist" onclick="switchDashboardTab('wishlist')"
-                        class="whitespace-nowrap pb-4 px-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium flex items-center gap-1.5 border-b-2 border-transparent transition-colors shrink-0 text-sm sm:text-base">
-                        <span class="material-symbols-outlined text-lg sm:text-xl">favorite</span>
+                        class="whitespace-nowrap pb-4 px-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium flex items-center gap-1 border-b-2 border-transparent transition-colors shrink-0 text-xs sm:text-base sm:px-2 sm:gap-1.5">
+                        <span class="material-symbols-outlined text-base sm:text-xl">favorite</span>
                         Wishlist
                     </button>
                 </div>
@@ -250,9 +261,45 @@
                 </div>
             </div>
         </div>
-        <div id="content-my-courses">
+        <div id="content-my-courses" aria-busy="true">
             <div id="enrolled-courses-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Cards will be populated here by JS -->
+                <!-- 3 skeleton placeholders – replaced by JS when data arrives -->
+                <div class="skeleton-card flex flex-col bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-700 animate-pulse h-[340px]">
+                    <div class="aspect-video bg-slate-200 dark:bg-slate-700 w-full"></div>
+                    <div class="p-5 flex flex-col gap-3 flex-1">
+                        <div class="flex gap-2"><div class="h-3 w-20 rounded bg-slate-200 dark:bg-slate-700"></div><div class="h-3 w-16 rounded bg-slate-200 dark:bg-slate-700"></div></div>
+                        <div class="h-5 w-4/5 rounded bg-slate-200 dark:bg-slate-700"></div>
+                        <div class="h-4 w-3/5 rounded bg-slate-200 dark:bg-slate-700"></div>
+                        <div class="mt-auto space-y-2">
+                            <div class="h-2 w-full rounded-full bg-slate-200 dark:bg-slate-700"></div>
+                            <div class="h-9 w-full rounded-xl bg-slate-200 dark:bg-slate-700"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="skeleton-card flex flex-col bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-700 animate-pulse h-[340px]">
+                    <div class="aspect-video bg-slate-200 dark:bg-slate-700 w-full"></div>
+                    <div class="p-5 flex flex-col gap-3 flex-1">
+                        <div class="flex gap-2"><div class="h-3 w-24 rounded bg-slate-200 dark:bg-slate-700"></div><div class="h-3 w-12 rounded bg-slate-200 dark:bg-slate-700"></div></div>
+                        <div class="h-5 w-2/3 rounded bg-slate-200 dark:bg-slate-700"></div>
+                        <div class="h-4 w-1/2 rounded bg-slate-200 dark:bg-slate-700"></div>
+                        <div class="mt-auto space-y-2">
+                            <div class="h-2 w-full rounded-full bg-slate-200 dark:bg-slate-700"></div>
+                            <div class="h-9 w-full rounded-xl bg-slate-200 dark:bg-slate-700"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="skeleton-card flex flex-col bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-700 animate-pulse h-[340px] hidden md:flex">
+                    <div class="aspect-video bg-slate-200 dark:bg-slate-700 w-full"></div>
+                    <div class="p-5 flex flex-col gap-3 flex-1">
+                        <div class="flex gap-2"><div class="h-3 w-16 rounded bg-slate-200 dark:bg-slate-700"></div><div class="h-3 w-20 rounded bg-slate-200 dark:bg-slate-700"></div></div>
+                        <div class="h-5 w-3/4 rounded bg-slate-200 dark:bg-slate-700"></div>
+                        <div class="h-4 w-2/3 rounded bg-slate-200 dark:bg-slate-700"></div>
+                        <div class="mt-auto space-y-2">
+                            <div class="h-2 w-full rounded-full bg-slate-200 dark:bg-slate-700"></div>
+                            <div class="h-9 w-full rounded-xl bg-slate-200 dark:bg-slate-700"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -299,10 +346,7 @@
             <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
                 <div class="col-span-1 md:col-span-2">
                     <div class="flex items-center gap-2 mb-4">
-                        <div
-                            class="w-6 h-6 bg-primary rounded-md flex items-center justify-center text-white text-xs font-bold">
-                            T</div>
-                        <span class="text-lg font-bold text-slate-900 dark:text-white">Tacliimi Learn</span>
+                        <img src="/public/assets/images/IMG_7454.png" alt="Tacliimi Learn" class="h-8 md:h-10 w-auto object-contain">
                     </div>
                     <p class="text-slate-500 dark:text-slate-400 max-w-sm mb-6">
                         Empowering students and institutions with world-class digital learning experiences.

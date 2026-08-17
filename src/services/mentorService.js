@@ -360,62 +360,78 @@ export const MentorService = {
 
     async getMentorById(mentorId) {
         try {
-            // ── Query 1: Core profile (required) ────────────────────────────
-            const { data, error } = await supabase
-                .from('mentorship_profiles')
-                .select(`
-                    *,
-                    profile:profiles (
-                        full_name,
-                        avatar_url,
-                        short_bio,
-                        serial_id,
-                        gender,
-                        teaching:teaching_profiles (
-                            introduction_video_url,
-                            teaching_experience,
-                            educational_background,
-                            languages_spoken
-                        ),
-                        expertise:expertise_areas (
-                            expertise_name
+            // ── Fire all queries in parallel for maximum speed ────────────────────────────
+            const [profileRes, statsRes, reviewsRes, availRes] = await Promise.all([
+                supabase
+                    .from('mentorship_profiles')
+                    .select(`
+                        *,
+                        profile:profiles (
+                            full_name,
+                            avatar_url,
+                            short_bio,
+                            serial_id,
+                            gender,
+                            teaching:teaching_profiles (
+                                introduction_video_url,
+                                teaching_experience,
+                                educational_background,
+                                languages_spoken
+                            ),
+                            expertise:expertise_areas (
+                                expertise_name
+                            )
                         )
-                    )
-                `)
-                .eq('instructor_id', mentorId)
-                .maybeSingle();
-
-            if (error) throw error;
-            if (!data) return null;
-
-            // ── Query 2: Rating stats (optional) ────────────────────────────
-            let ratingStats = null;
-            try {
-                const { data: rs } = await supabase
+                    `)
+                    .eq('instructor_id', mentorId)
+                    .maybeSingle(),
+                supabase
                     .from('mentor_rating_stats')
                     .select('avg_rating, review_count')
                     .eq('instructor_id', mentorId)
-                    .maybeSingle();
-                ratingStats = rs || null;
-            } catch (ratingErr) {
-                console.warn('[MentorProfile] Could not load rating stats:', ratingErr.message);
-            }
+                    .maybeSingle(),
+                supabase
+                    .from('mentor_profile_reviews_view')
+                    .select('rating, comment, created_at, full_name, avatar_url')
+                    .eq('mentor_id', mentorId),
+                supabase
+                    .from('mentor_availability')
+                    .select('*')
+                    .eq('mentor_id', mentorId)
+                    .is('is_enabled', true)
+                    .order('day_of_week', { ascending: true })
+                    .order('start_time', { ascending: true })
+            ]);
+
+            const { data, error } = profileRes;
+            if (error) throw error;
+            if (!data) return null;
+
+            let ratingStats = null;
+            if (!statsRes.error) ratingStats = statsRes.data || null;
             
             const teachingData = Array.isArray(data.profile?.teaching) 
                 ? data.profile.teaching[0] 
                 : data.profile?.teaching;
 
-            // Fetch full reviews with comments (for display)
-            const { data: reviews, error: rErr } = await supabase
-                .from('mentorship_reviews')
-                .select('rating, comment, created_at, student:profiles!mentorship_reviews_student_id_fkey(full_name, avatar_url)')
-                .eq('mentor_id', mentorId);
+            // Fetch full reviews with comments (for display) using the secure view
+            const reviews = reviewsRes.data;
+            const rErr = reviewsRes.error;
 
             if (rErr) {
                 console.warn("Failed to fetch mentorship reviews:", rErr);
             }
 
-            const activeReviews = reviews || [];
+            // Map the view fields to the expected nested structure 'student'
+            const activeReviews = (reviews || []).map(r => ({
+                rating: r.rating,
+                comment: r.comment,
+                created_at: r.created_at,
+                student: {
+                    full_name: r.full_name,
+                    avatar_url: r.avatar_url
+                }
+            }));
 
             // ── Compute rating from actual reviews (source of truth) ─────────
             // This ensures the header always matches the reviews section.
@@ -431,13 +447,8 @@ export const MentorService = {
                 computedReviewCount = ratingStats.review_count ?? 0;
             }
 
-            const { data: availability, error: aErr } = await supabase
-                .from('mentor_availability')
-                .select('*')
-                .eq('mentor_id', mentorId)
-                .is('is_enabled', true)
-                .order('day_of_week', { ascending: true })
-                .order('start_time', { ascending: true });
+            const availability = availRes.data;
+            const aErr = availRes.error;
 
             if (aErr) {
                 console.warn("Failed to fetch mentor availability:", aErr);

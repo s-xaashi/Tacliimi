@@ -158,23 +158,23 @@
 <!-- These will be populated natively by JS but I'm placing the template here for JS to clone or fill -->
 <div class="p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-center">
 <p class="text-xs text-slate-500 uppercase font-semibold">Total Revenue</p>
-<p class="text-2xl font-bold dark:text-white" id="metric-revenue">$0</p>
+<p class="text-2xl font-bold dark:text-white flex items-center h-8" id="metric-revenue"><span class="h-8 w-24 bg-slate-200 dark:bg-slate-700 animate-pulse rounded block"></span></p>
 </div>
 <div class="p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-center">
 <p class="text-xs text-slate-500 uppercase font-semibold">Enrolled Students</p>
-<p class="text-2xl font-bold dark:text-white" id="metric-students">0</p>
+<p class="text-2xl font-bold dark:text-white flex items-center h-8" id="metric-students"><span class="h-8 w-16 bg-slate-200 dark:bg-slate-700 animate-pulse rounded block"></span></p>
 </div>
 <div class="p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-center">
 <p class="text-xs text-slate-500 uppercase font-semibold">Course Views</p>
-<p class="text-2xl font-bold dark:text-white" id="metric-views">0</p>
+<p class="text-2xl font-bold dark:text-white flex items-center h-8" id="metric-views"><span class="h-8 w-16 bg-slate-200 dark:bg-slate-700 animate-pulse rounded block"></span></p>
 </div>
 <div class="p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-center">
 <p class="text-xs text-slate-500 uppercase font-semibold">Avg Rating</p>
-<p class="text-2xl font-bold dark:text-white" id="metric-rating">0.0</p>
+<p class="text-2xl font-bold dark:text-white flex items-center h-8" id="metric-rating"><span class="h-8 w-12 bg-slate-200 dark:bg-slate-700 animate-pulse rounded block"></span></p>
 </div>
 <div class="p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-center">
 <p class="text-xs text-slate-500 uppercase font-semibold">Completions</p>
-<p class="text-2xl font-bold dark:text-white" id="metric-completions">0%</p>
+<p class="text-2xl font-bold dark:text-white flex items-center h-8" id="metric-completions"><span class="h-8 w-16 bg-slate-200 dark:bg-slate-700 animate-pulse rounded block"></span></p>
 </div>
 </div>
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -224,19 +224,48 @@
 <h3 class="font-bold text-slate-800 dark:text-slate-200">Top Performing Courses</h3>
 </div>
 </div>
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" aria-busy="true">
 <table class="w-full text-left border-collapse">
 <thead>
 <tr class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 text-xs uppercase tracking-wider">
-<th class="p-4 font-semibold">Course</th>
-<th class="p-4 font-semibold">Students</th>
-<th class="p-4 font-semibold">Revenue</th>
-<th class="p-4 font-semibold">Rating</th>
-<th class="p-4 font-semibold">Views</th>
+<th class="p-4 font-semibold min-w-[280px]">Course</th>
+<th class="p-4 font-semibold whitespace-nowrap">Students</th>
+<th class="p-4 font-semibold whitespace-nowrap">Revenue</th>
+<th class="p-4 font-semibold whitespace-nowrap">Rating</th>
+<th class="p-4 font-semibold whitespace-nowrap">Views</th>
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-sm" id="top-courses-table-body">
-<!-- Courses loaded by JS -->
+<tr class="animate-pulse">
+    <td class="p-4">
+        <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded bg-slate-200 dark:bg-slate-700"></div>
+            <div class="flex-1 space-y-2">
+                <div class="h-4 w-40 bg-slate-200 dark:bg-slate-700 rounded"></div>
+                <div class="h-3 w-16 bg-slate-200 dark:bg-slate-700 rounded"></div>
+            </div>
+        </div>
+    </td>
+    <td class="p-4"><div class="h-4 w-10 bg-slate-200 dark:bg-slate-700 rounded"></div></td>
+    <td class="p-4"><div class="h-4 w-12 bg-slate-200 dark:bg-slate-700 rounded"></div></td>
+    <td class="p-4"><div class="h-4 w-14 bg-slate-200 dark:bg-slate-700 rounded"></div></td>
+    <td class="p-4"><div class="h-4 w-10 bg-slate-200 dark:bg-slate-700 rounded"></div></td>
+</tr>
+<tr class="animate-pulse">
+    <td class="p-4">
+        <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded bg-slate-200 dark:bg-slate-700"></div>
+            <div class="flex-1 space-y-2">
+                <div class="h-4 w-40 bg-slate-200 dark:bg-slate-700 rounded"></div>
+                <div class="h-3 w-16 bg-slate-200 dark:bg-slate-700 rounded"></div>
+            </div>
+        </div>
+    </td>
+    <td class="p-4"><div class="h-4 w-10 bg-slate-200 dark:bg-slate-700 rounded"></div></td>
+    <td class="p-4"><div class="h-4 w-12 bg-slate-200 dark:bg-slate-700 rounded"></div></td>
+    <td class="p-4"><div class="h-4 w-14 bg-slate-200 dark:bg-slate-700 rounded"></div></td>
+    <td class="p-4"><div class="h-4 w-10 bg-slate-200 dark:bg-slate-700 rounded"></div></td>
+</tr>
 </tbody>
 </table>
 </div>

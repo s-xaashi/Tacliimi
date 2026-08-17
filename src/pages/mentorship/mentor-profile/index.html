@@ -55,16 +55,12 @@
 <body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen">
   <nav class="sticky top-0 z-50 bg-white dark:bg-background-dark border-b border-slate-200 dark:border-slate-800">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex justify-between items-center h-16">
-        <a href="/index.html" class="flex items-center gap-2">
-          <div class="bg-primary text-white p-1.5 rounded-lg flex items-center justify-center">
-            <svg class="w-6 h-6" fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-              <path
-                d="M24 45.8096C19.6865 45.8096 15.4698 44.5305 11.8832 42.134C8.29667 39.7376 5.50128 36.3314 3.85056 32.3462C2.19985 28.361 1.76794 23.9758 2.60947 19.7452C3.451 15.5145 5.52816 11.6284 8.57829 8.5783C11.6284 5.52817 15.5145 3.45101 19.7452 2.60948C23.9758 1.76795 28.361 2.19986 32.3462 3.85057C36.3314 5.50129 39.7376 8.29668 42.134 11.8833C44.5305 15.4698 45.8096 19.6865 45.8096 24L24 24L24 45.8096Z"
-                fill="currentColor"></path>
-            </svg>
-          </div>
-          <span class="text-xl font-bold tracking-tight">Tacliimi Learn</span>
+      <div class="flex justify-start md:justify-between items-center h-16 relative">
+        <button class="md:hidden p-2 text-slate-600 dark:text-slate-300" id="mobile-menu-btn">
+          <span class="material-symbols-outlined">menu</span>
+        </button>
+        <a href="/index.html" class="flex items-center gap-2 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 md:static md:translate-x-0 md:translate-y-0">
+          <img src="/public/assets/images/IMG_7454.png" alt="Tacliimi Learn" class="h-9 w-auto object-contain">
         </a>
         <div class="hidden md:flex items-center gap-8">
           <a class="text-sm font-medium hover:text-primary transition-colors" href="/index.html">Home</a>
@@ -72,25 +68,58 @@
             href="/src/pages/mentorship/mentor-marketplace/index.html">Browse Mentors</a>
           <a class="text-sm font-medium hover:text-primary transition-colors"
             href="/src/pages/marketplace/marketplace/">Browse Courses</a>
-          <div onclick="window.location.href='/src/pages/student/account-settings/index.html'"
-            class="w-10 h-10 rounded-full border border-slate-200 bg-slate-50 flex items-center justify-center text-slate-400 cursor-pointer hover:border-primary/50 transition-colors">
-            <span class="material-symbols-outlined">account_circle</span>
-          </div>
+          <div id="global-profile-header-container" class="[&_.user-display-name]:!hidden [&_#global-logout]:!hidden ml-4"></div>
         </div>
-          <button class="md:hidden p-2 text-slate-600 dark:text-slate-300" id="mobile-menu-btn">
-            <span class="material-symbols-outlined">menu</span>
-          </button>
       </div>
     </div>
-  
-  <!-- Mobile Menu -->
-  <div class="hidden md:hidden bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-4 py-6 space-y-4 absolute w-full shadow-xl z-40" id="mobile-menu">
-    <a class="block text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/index.html">Home</a>
-    <a class="block text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/src/pages/mentorship/mentor-marketplace/index.html">Browse Mentors</a>
-    <a class="block text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/src/pages/marketplace/marketplace/">Browse Courses</a>
-    <a class="block text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/src/pages/student/account-settings/index.html"><span class="material-symbols-outlined">account_circle</span></a>
-  </div>
   </nav>
+
+  <!-- Mobile Menu Drawer -->
+  <div id="mobile-menu-overlay" class="fixed inset-0 bg-black/50 z-40 hidden md:hidden transition-opacity duration-300" aria-hidden="true"></div>
+  <div class="fixed top-0 left-0 z-[60] w-72 max-w-[82vw] h-full bg-white dark:bg-slate-900 shadow-2xl overflow-y-auto flex flex-col px-4 py-8 -translate-x-full transition-transform duration-300 ease-in-out md:hidden" id="mobile-menu">
+    <!-- Top: Logo / Close -->
+    <div class="flex items-center justify-between mb-8 pb-4 border-b border-slate-100 dark:border-slate-800">
+        <img src="/public/assets/images/IMG_7454.png" alt="Tacliimi Learn" class="h-8 w-auto object-contain">
+        <button id="close-mobile-menu-btn" class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+            <span class="material-symbols-outlined text-xl">close</span>
+        </button>
+    </div>
+    
+    <!-- Top: Mobile Profile Area -->
+    <div id="mobile-menu-profile" class="flex items-center gap-4 mb-6 pb-6 border-b border-slate-100 dark:border-slate-800 cursor-pointer" onclick="window.location.href='/src/pages/student/account-settings/index.html'">
+        <div class="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-primary/20 overflow-hidden flex-shrink-0" id="mobile-menu-avatar-wrapper" data-role="profile-image">
+            <span class="material-symbols-outlined text-slate-400 w-full h-full flex justify-center items-center">person</span>
+        </div>
+        <div class="flex-1 overflow-hidden">
+            <h4 class="font-bold text-slate-900 dark:text-white truncate user-display-name">Loading...</h4>
+            <p class="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">View and edit profile</p>
+        </div>
+        <span class="material-symbols-outlined text-slate-400">chevron_right</span>
+    </div>
+    
+    <!-- Navigation Links -->
+    <div class="flex flex-col space-y-5 flex-1">
+        <a class="flex items-center gap-3 text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/index.html">
+            <span class="material-symbols-outlined text-xl text-slate-400">home</span> Home
+        </a>
+        <a class="flex items-center gap-3 text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/src/pages/mentorship/mentor-marketplace/index.html">
+            <span class="material-symbols-outlined text-xl text-slate-400">groups</span> Browse Mentors
+        </a>
+        <a class="flex items-center gap-3 text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/src/pages/marketplace/marketplace/">
+            <span class="material-symbols-outlined text-xl text-slate-400">explore</span> Browse Courses
+        </a>
+    </div>
+
+    <!-- Bottom: Footer Actions -->
+    <div class="pt-6 mt-6 border-t border-slate-100 dark:border-slate-800 space-y-5 pb-10">
+        <button id="mobile-theme-toggle" class="flex items-center gap-3 w-full text-left text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors">
+            <span class="material-symbols-outlined text-xl text-slate-400">dark_mode</span> Toggle Theme
+        </button>
+        <button onclick="window.location.href='/src/pages/auth/login-select/index.html'; localStorage.removeItem('sb-rbycddckjrvlryxowqob-auth-token')" class="flex items-center gap-3 w-full text-left text-base font-medium !text-red-500 hover:text-red-600 transition-colors">
+            <span class="material-symbols-outlined text-xl pointer-events-none">logout</span> Log Out
+        </button>
+    </div>
+  </div>
 
   <!-- Promo Banner -->
   <div id="mentor-promo-banner-container" class="hidden overflow-hidden bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 shadow-md relative perspective-1000 z-40 transition-all duration-[1000ms] ease-out transform-gpu -translate-y-full rotate-x-90 max-h-0 opacity-0 origin-top border-b border-amber-600/20">
@@ -101,149 +130,37 @@
   </div>
 
   <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-      <!-- Left Column: Content -->
-      <div class="lg:col-span-2 space-y-4">
-        <!-- Introduction Video -->
-        <div class="relative aspect-video bg-slate-900 rounded-2xl overflow-hidden shadow-sm group !mb-0">
-          <div class="absolute inset-0 flex items-center justify-center cursor-pointer">
-            <div
-              class="w-20 h-20 bg-primary/90 text-white rounded-full flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform">
-              <span class="material-symbols-outlined text-4xl fill-1">play_arrow</span>
-            </div>
-          </div>
-          <div class="absolute bottom-0 left-0 right-0 p-6 video-overlay text-white">
-            <p class="text-sm font-medium flex items-center gap-2">
-              <span class="material-symbols-outlined text-sm">visibility</span>
-              Introduction Video
-            </p>
-          </div>
-          <div class="absolute inset-0 -z-10 bg-slate-200 flex items-center justify-center">
-            <span class="material-symbols-outlined text-6xl text-slate-300">smart_display</span>
-          </div>
-        </div>
+    <!-- Mobile: flex-col with order classes. Desktop: 3-col grid -->
+    <div class="flex flex-col lg:grid lg:grid-cols-3 gap-6 lg:gap-8">
 
-        <!-- About Me -->
-        <section
-          class="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-100 dark:border-slate-800 shadow-sm !mt-0">
-          <div class="flex items-center gap-3 mb-6">
-            <div class="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
-              <span class="material-symbols-outlined">person</span>
-            </div>
-            <h2 class="text-xl font-bold">About Me</h2>
-          </div>
-          <div class="prose dark:prose-invert max-w-none text-slate-600 dark:text-slate-400 leading-relaxed">
-            <p id="mentor-bio">Detailed bio will appear here. This space provides mentors with the opportunity to share their
-              professional journey, academic background, and personal motivation for teaching. It’s a place to establish
-              trust and build a connection with prospective students.</p>
-          </div>
-        </section>
-        <section id="education-section"
-          class="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-100 dark:border-slate-800 shadow-sm hidden">
-          <div class="flex items-center gap-3 mb-4">
-            <div class="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
-              <span class="material-symbols-outlined">school</span>
-            </div>
-            <h2 class="text-xl font-bold">Education</h2>
-          </div>
-          <div id="education-list" class="space-y-4">
-            <!-- Education items will be injected here -->
-          </div>
-        </section>
-        <section
-          class="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-100 dark:border-slate-800 shadow-sm">
-          <div class="flex items-center gap-3 mb-6">
-            <div class="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
-              <span class="material-symbols-outlined">psychology</span>
-            </div>
-            <h2 class="text-xl font-bold">Expertise</h2>
-          </div>
-          <div id="expertise-tags-container" class="flex flex-wrap gap-2">
-            <!-- Tags injected by mentorProfile.js -->
-          </div>
-        </section>
-        <section id="languages-section" class="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-100 dark:border-slate-800 shadow-sm hidden">
-          <div class="flex items-center gap-3 mb-6">
-            <div class="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
-              <span class="material-symbols-outlined">language</span>
-            </div>
-            <h2 class="text-xl font-bold">Languages Spoken</h2>
-          </div>
-          <div id="languages-list" class="flex flex-wrap gap-2">
-            <!-- Language badges injected by mentorProfile.js -->
-          </div>
-        </section>
-        <section
-          class="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-100 dark:border-slate-800 shadow-sm">
-          <div class="flex items-center gap-3 mb-6">
-            <div class="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
-              <span class="material-symbols-outlined">school</span>
-            </div>
-            <h2 class="text-xl font-bold">Mentorship Style</h2>
-          </div>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div
-              class="p-4 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30">
-              <div class="flex items-center gap-2 mb-2 font-bold text-sm">
-                <span class="material-symbols-outlined text-primary text-lg">videocam</span>
-                Online Sessions
-              </div>
-              <p class="text-sm text-slate-500">Available for remote video calls worldwide using our integrated
-                platform.</p>
-            </div>
-            <div
-              class="p-4 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30">
-              <div class="flex items-center gap-2 mb-2 font-bold text-sm">
-                <span class="material-symbols-outlined text-primary text-lg">location_on</span>
-                In-person Sessions
-              </div>
-              <p class="text-sm text-slate-500">Also available for face-to-face meetings in specific metropolitan areas.
-              </p>
-            </div>
-          </div>
-          <p class="mt-6 text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-            Description of how the mentor conducts sessions. This might include their approach to goal setting,
-            preferred tools (e.g., whiteboards, code sharing), and the overall vibe of their teaching (e.g., structured
-            vs. conversational).
-          </p>
-        </section>
-        <section id="reviews-section" class="hidden">
-          <div class="flex justify-between items-center mb-6">
-            <h2 class="text-xl font-bold">What students say</h2>
-            <div class="flex gap-4 items-center">
-                <button id="add-review-btn" class="bg-primary/5 text-primary text-xs font-bold px-4 py-2 rounded-lg hover:bg-primary/10 transition-all">
-                    Write a Review
-                </button>
-                <a class="text-primary text-sm font-bold hover:underline" href="#">View all reviews</a>
-            </div>
-          </div>
-          <div id="reviews-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- Reviews will be injected here -->
-          </div>
-        </section>
+      <!-- 1. Introduction Video -->
+      <div class="order-1 lg:col-span-2 relative aspect-video bg-slate-900 rounded-2xl overflow-hidden shadow-sm group animate-pulse">
+        <div class="absolute inset-0 bg-slate-700 dark:bg-slate-800 flex items-center justify-center">
+          <span class="material-symbols-outlined text-6xl text-slate-500">smart_display</span>
+        </div>
       </div>
-      <aside class="space-y-6 lg:sticky lg:top-24 self-start">
+
+      <!-- 2 & 3. Booking + Stats Aside — order-2 on mobile, right sticky col on desktop -->
+      <aside class="order-2 lg:row-span-8 lg:col-start-3 lg:row-start-1 space-y-6 lg:sticky lg:top-24 self-start">
         <!-- Main Booking Card -->
         <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-100 dark:border-slate-800 shadow-xl">
           <div class="flex flex-col items-center text-center mb-6">
-            <div class="w-24 h-24 rounded-full border-4 border-primary/5 bg-slate-100 flex items-center justify-center text-slate-400 mb-4">
+            <div class="w-24 h-24 rounded-full border-4 border-primary/5 bg-slate-100 flex items-center justify-center text-slate-400 mb-4 animate-pulse">
               <span class="material-symbols-outlined text-6xl shadow-inner">account_circle</span>
             </div>
-            <h1 class="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Mentor Name Here</h1>
-            <p id="mentor-headline" class="text-primary font-bold text-sm tracking-wide mt-1">Expertise / Subject Here</p>
+            <h1 class="text-2xl font-black text-slate-900 dark:text-white tracking-tight"><span class="h-8 bg-slate-200 dark:bg-slate-700 animate-pulse rounded w-48 mx-auto inline-block"></span></h1>
+            <p id="mentor-headline" class="text-primary font-bold text-sm tracking-wide mt-1"><span class="h-4 bg-primary/20 dark:bg-primary/40 animate-pulse rounded w-32 mx-auto inline-block"></span></p>
             <div class="flex items-center gap-1.5 mt-3 px-3 py-1 bg-orange-50 dark:bg-orange-900/20 rounded-full">
               <span class="material-symbols-outlined text-orange-400 text-base fill-1">star</span>
-              <span id="mentor-rating" class="font-bold text-orange-700 dark:text-orange-300 text-sm">0.0</span>
-              <span id="mentor-review-count" class="text-slate-400 text-xs font-medium">(0 reviews)</span>
+              <span id="mentor-rating" class="font-bold text-orange-700 dark:text-orange-300 text-sm"><span class="h-4 bg-orange-200 dark:bg-orange-800 animate-pulse rounded w-6 inline-block"></span></span>
+              <span id="mentor-review-count" class="text-slate-400 text-xs font-medium"><span class="h-3 bg-slate-200 dark:bg-slate-700 animate-pulse rounded w-16 inline-block"></span></span>
             </div>
           </div>
-
           <div class="space-y-4 pt-6 border-t border-slate-100 dark:border-slate-800">
             <div class="flex justify-between items-center bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
               <span class="text-slate-500 text-xs font-bold uppercase tracking-widest">Session Price</span>
-              <span id="mentor-price" class="text-2xl font-black text-primary">$0.00</span>
+              <span id="mentor-price" class="text-2xl font-black text-primary"><span class="h-8 bg-primary/20 dark:bg-primary/40 animate-pulse rounded w-20 inline-block"></span></span>
             </div>
-            
             <div id="availability-summary" class="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl space-y-4 border border-slate-100 dark:border-slate-800">
               <div class="flex items-start gap-3">
                 <div class="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
@@ -251,7 +168,7 @@
                 </div>
                 <div>
                   <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Available Days</p>
-                  <p id="available-days" class="text-sm font-bold text-slate-700 dark:text-slate-300">Loading...</p>
+                  <p id="available-days" class="text-sm font-bold text-slate-700 dark:text-slate-300"><span class="h-4 bg-slate-200 dark:bg-slate-700 animate-pulse rounded w-24 inline-block"></span></p>
                 </div>
               </div>
               <div class="flex items-start gap-3 border-t border-slate-200/50 dark:border-slate-700/50 pt-4">
@@ -260,11 +177,10 @@
                 </div>
                 <div>
                   <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Available Time</p>
-                  <p id="available-time" class="text-sm font-bold text-slate-700 dark:text-slate-300">Loading...</p>
+                  <p id="available-time" class="text-sm font-bold text-slate-700 dark:text-slate-300"><span class="h-4 bg-slate-200 dark:bg-slate-700 animate-pulse rounded w-28 inline-block"></span></p>
                 </div>
               </div>
             </div>
-
             <a id="book-session-btn" href="/src/pages/mentorship/mentor-booking/index.html"
               class="w-full block text-center bg-primary text-white py-4 rounded-xl font-bold text-lg hover:bg-primary/90 transition-all active:scale-[0.98] shadow-lg shadow-primary/20">
               Book a Session
@@ -272,7 +188,6 @@
             <p class="text-center text-[10px] text-slate-400 uppercase tracking-widest font-bold">Instant Confirmation</p>
           </div>
         </div>
-
         <!-- Stats Card -->
         <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-100 dark:border-slate-800 shadow-sm">
           <h3 class="font-bold mb-4 flex items-center gap-2">
@@ -282,15 +197,15 @@
           <div class="space-y-4">
             <div class="flex justify-between items-center text-sm">
               <span class="text-slate-500">Total sessions</span>
-              <span id="stat-total-sessions" class="font-bold">0+</span>
+              <span id="stat-total-sessions" class="font-bold"><span class="h-4 bg-slate-200 dark:bg-slate-700 animate-pulse rounded w-8 inline-block"></span></span>
             </div>
             <div class="flex justify-between items-center text-sm">
               <span class="text-slate-500">Avg. response time</span>
-              <span id="stat-response-time" class="font-bold">0 hours</span>
+              <span id="stat-response-time" class="font-bold"><span class="h-4 bg-slate-200 dark:bg-slate-700 animate-pulse rounded w-16 inline-block"></span></span>
             </div>
             <div class="flex justify-between items-center text-sm">
               <span class="text-slate-500">Experience</span>
-              <span id="stat-experience" class="font-bold">0+ Years</span>
+              <span id="stat-experience" class="font-bold"><span class="h-4 bg-slate-200 dark:bg-slate-700 animate-pulse rounded w-16 inline-block"></span></span>
             </div>
           </div>
           <div class="mt-6 pt-6 border-t border-slate-100 dark:border-slate-800">
@@ -306,6 +221,113 @@
           </div>
         </div>
       </aside>
+
+      <!-- 4. About Me -->
+      <section class="order-3 lg:col-span-2 bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-100 dark:border-slate-800 shadow-sm">
+        <div class="flex items-center gap-3 mb-6">
+          <div class="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+            <span class="material-symbols-outlined">person</span>
+          </div>
+          <h2 class="text-xl font-bold">About Me</h2>
+        </div>
+        <div class="prose dark:prose-invert max-w-none text-slate-600 dark:text-slate-400 leading-relaxed">
+          <div id="mentor-bio" class="space-y-3 animate-pulse">
+            <div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-full"></div>
+            <div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-5/6"></div>
+            <div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-4/6"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. Education -->
+      <section id="education-section" class="order-4 lg:col-span-2 bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-100 dark:border-slate-800 shadow-sm hidden">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+            <span class="material-symbols-outlined">school</span>
+          </div>
+          <h2 class="text-xl font-bold">Education</h2>
+        </div>
+        <div id="education-list" class="space-y-4"></div>
+      </section>
+
+      <!-- 6. Expertise -->
+      <section class="order-5 lg:col-span-2 bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-100 dark:border-slate-800 shadow-sm">
+        <div class="flex items-center gap-3 mb-6">
+          <div class="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+            <span class="material-symbols-outlined">psychology</span>
+          </div>
+          <h2 class="text-xl font-bold">Expertise</h2>
+        </div>
+        <div id="expertise-tags-container" class="flex flex-wrap gap-2">
+          <div class="h-8 w-20 bg-slate-200 dark:bg-slate-700 animate-pulse rounded-lg"></div>
+          <div class="h-8 w-28 bg-slate-200 dark:bg-slate-700 animate-pulse rounded-lg"></div>
+          <div class="h-8 w-16 bg-slate-200 dark:bg-slate-700 animate-pulse rounded-lg"></div>
+        </div>
+      </section>
+
+      <!-- 7. Languages Spoken -->
+      <section id="languages-section" class="order-6 lg:col-span-2 bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-100 dark:border-slate-800 shadow-sm hidden">
+        <div class="flex items-center gap-3 mb-6">
+          <div class="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+            <span class="material-symbols-outlined">language</span>
+          </div>
+          <h2 class="text-xl font-bold">Languages Spoken</h2>
+        </div>
+        <div id="languages-list" class="flex flex-wrap gap-2"></div>
+      </section>
+
+      <!-- 8. Mentorship Style -->
+      <section class="order-7 lg:col-span-2 bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-100 dark:border-slate-800 shadow-sm">
+        <div class="flex items-center gap-3 mb-6">
+          <div class="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+            <span class="material-symbols-outlined">school</span>
+          </div>
+          <h2 class="text-xl font-bold">Mentorship Style</h2>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="p-4 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30">
+            <div class="flex items-center gap-2 mb-2 font-bold text-sm">
+              <span class="material-symbols-outlined text-primary text-lg">videocam</span>
+              Online Sessions
+            </div>
+            <p class="text-sm text-slate-500">Available for remote video calls worldwide using our integrated platform.</p>
+          </div>
+          <div class="p-4 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30">
+            <div class="flex items-center gap-2 mb-2 font-bold text-sm">
+              <span class="material-symbols-outlined text-primary text-lg">location_on</span>
+              In-person Sessions
+            </div>
+            <p class="text-sm text-slate-500">Also available for face-to-face meetings in specific metropolitan areas.</p>
+          </div>
+        </div>
+        <p class="mt-6 text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+          Description of how the mentor conducts sessions, their approach to goal setting, preferred tools, and overall teaching style.
+        </p>
+      </section>
+
+      <!-- 9. Reviews -->
+      <section id="reviews-section" class="order-8 lg:col-span-2 hidden">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-xl font-bold">What students say</h2>
+          <div class="flex gap-4 items-center">
+            <button id="add-review-btn" class="bg-primary/5 text-primary text-xs font-bold px-4 py-2 rounded-lg hover:bg-primary/10 transition-all">Write a Review</button>
+            <a class="text-primary text-sm font-bold hover:underline" href="#">View all reviews</a>
+          </div>
+        </div>
+        <div id="reviews-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 animate-pulse space-y-3">
+            <div class="flex gap-3"><div class="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-700"></div><div class="flex-1 space-y-2"><div class="h-3 bg-slate-200 dark:bg-slate-700 rounded w-28"></div><div class="h-3 bg-slate-200 dark:bg-slate-700 rounded w-16"></div></div></div>
+            <div class="h-3 bg-slate-200 dark:bg-slate-700 rounded w-full"></div>
+            <div class="h-3 bg-slate-200 dark:bg-slate-700 rounded w-4/6"></div>
+          </div>
+          <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 animate-pulse space-y-3">
+            <div class="flex gap-3"><div class="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-700"></div><div class="flex-1 space-y-2"><div class="h-3 bg-slate-200 dark:bg-slate-700 rounded w-28"></div><div class="h-3 bg-slate-200 dark:bg-slate-700 rounded w-16"></div></div></div>
+            <div class="h-3 bg-slate-200 dark:bg-slate-700 rounded w-full"></div>
+            <div class="h-3 bg-slate-200 dark:bg-slate-700 rounded w-3/6"></div>
+          </div>
+        </div>
+      </section>
+
     </div>
   </main>
   <footer class="bg-white dark:bg-background-dark border-t border-slate-200 dark:border-slate-800 py-12 mt-20">
@@ -313,14 +335,7 @@
       <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
         <div class="col-span-1 md:col-span-2">
           <a href="/index.html" class="flex items-center gap-2 mb-6">
-            <div class="bg-primary text-white p-1.5 rounded-lg flex items-center justify-center">
-              <svg class="w-6 h-6" fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-                <path
-                  d="M24 45.8096C19.6865 45.8096 15.4698 44.5305 11.8832 42.134C8.29667 39.7376 5.50128 36.3314 3.85056 32.3462C2.19985 28.361 1.76794 23.9758 2.60947 19.7452C3.451 15.5145 5.52816 11.6284 8.57829 8.5783C11.6284 5.52817 15.5145 3.45101 19.7452 2.60948C23.9758 1.76795 28.361 2.19986 32.3462 3.85057C36.3314 5.50129 39.7376 8.29668 42.134 11.8833C44.5305 15.4698 45.8096 19.6865 45.8096 24L24 24L24 45.8096Z"
-                  fill="currentColor"></path>
-              </svg>
-            </div>
-            <span class="text-xl font-bold tracking-tight">Tacliimi Learn</span>
+            <img src="/public/assets/images/IMG_7454.png" alt="Tacliimi Learn" class="h-9 w-auto object-contain">
           </a>
           <p class="text-slate-500 max-w-sm mb-6">
             The world's leading community for personal and professional growth through expert mentorship.
@@ -422,11 +437,28 @@
   <!-- Mobile Menu Toggle Script -->
   <script>
     const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+    const closeMobileMenuBtn = document.getElementById('close-mobile-menu-btn');
     const mobileMenu = document.getElementById('mobile-menu');
+    const mobileMenuOverlay = document.getElementById('mobile-menu-overlay');
+
+    function openMobileMenu() {
+        mobileMenu?.classList.remove('-translate-x-full');
+        mobileMenu?.classList.add('translate-x-0');
+        mobileMenuOverlay?.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeMobileMenu() {
+        mobileMenu?.classList.add('-translate-x-full');
+        mobileMenu?.classList.remove('translate-x-0');
+        mobileMenuOverlay?.classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+
     if (mobileMenuBtn && mobileMenu) {
-        mobileMenuBtn.addEventListener('click', () => {
-            mobileMenu.classList.toggle('hidden');
-        });
+        mobileMenuBtn.addEventListener('click', openMobileMenu);
+        closeMobileMenuBtn?.addEventListener('click', closeMobileMenu);
+        mobileMenuOverlay?.addEventListener('click', closeMobileMenu);
     }
   </script>
 </body>

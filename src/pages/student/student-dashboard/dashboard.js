@@ -103,9 +103,9 @@ window.switchDashboardTab = function (tabId) {
         const btn = document.getElementById('tab-' + tab);
         if (!btn) return;
         if (tab === tabId) {
-            btn.className = "pb-4 text-primary font-semibold border-b-2 border-primary flex items-center gap-2 transition-colors";
+            btn.className = "whitespace-nowrap pb-4 px-1.5 text-primary font-semibold border-b-2 border-primary flex items-center gap-1 transition-colors shrink-0 text-xs sm:text-base sm:px-2 sm:gap-1.5";
         } else {
-            btn.className = "pb-4 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium flex items-center gap-2 border-b-2 border-transparent transition-colors";
+            btn.className = "whitespace-nowrap pb-4 px-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium flex items-center gap-1 border-b-2 border-transparent transition-colors shrink-0 text-xs sm:text-base sm:px-2 sm:gap-1.5";
         }
     });
 
@@ -208,9 +208,17 @@ async function loadMyCourses() {
     const welcomeMsg = document.getElementById('dashboard-welcome-msg');
     const emptyState = document.getElementById('global-courses-empty-state');
     
+    // Clear aria-busy on the courses grid container (skeleton was pre-rendered in HTML)
+    const coursesContent = document.getElementById('content-my-courses');
+    if (coursesContent) coursesContent.removeAttribute('aria-busy');
+
     if (!enrollments || enrollments.length === 0) {
+        // Replace hero skeleton with hidden state
+        continueSection.innerHTML = '';
         continueSection.classList.add('hidden');
+        continueSection.removeAttribute('aria-busy');
         newStudentSection.classList.remove('hidden');
+        enrolledCoursesGrid.innerHTML = ''; // clear skeleton cards
         enrolledCoursesGrid.classList.add('hidden');
         emptyState.classList.remove('hidden');
         if (welcomeMsg) welcomeMsg.textContent = "Start your learning journey by exploring our beginner-friendly courses.";
@@ -218,8 +226,9 @@ async function loadMyCourses() {
         // Fetch and show beginner courses in new student section
         await loadBeginnerCourses();
     } else {
+        continueSection.removeAttribute('aria-busy');
         newStudentSection.classList.add('hidden');
-        continueSection.classList.remove('hidden');
+        // continueSection visibility managed below by renderActiveCourseBanner
         enrolledCoursesGrid.classList.remove('hidden');
         emptyState.classList.add('hidden');
 
@@ -489,15 +498,41 @@ async function loadCourseWishlist() {
     await ensureSession();
     if (!currentUserSession?.user) return;
 
+    const wishlistContainer = document.getElementById('wishlist-container');
+    const wishlistEmptyState = document.getElementById('wishlist-empty-state');
+    
+    if (wishlistContainer) {
+        wishlistContainer.innerHTML = `
+            <div class="w-full mt-2" aria-busy="true">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-6">
+                    ${Array(3).fill(`
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm border border-slate-100 dark:border-slate-700/50 flex flex-col h-[400px] animate-pulse">
+                        <div class="h-40 bg-slate-200 dark:bg-slate-700 w-full shrink-0"></div>
+                        <div class="p-5 flex-1 flex flex-col justify-between">
+                            <div>
+                                <div class="flex justify-between mb-3"><div class="h-3 bg-slate-200 dark:bg-slate-700 rounded w-1/4"></div><div class="h-3 bg-slate-200 dark:bg-slate-700 rounded w-16"></div></div>
+                                <div class="h-5 bg-slate-200 dark:bg-slate-700 rounded w-4/5 mb-4"></div>
+                                <div class="flex items-center gap-2 mb-6"><div class="w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-700"></div><div class="h-3 bg-slate-200 dark:bg-slate-700 w-20 rounded"></div></div>
+                            </div>
+                            <div class="h-8 bg-slate-200 dark:bg-slate-700 rounded w-full mb-4"></div>
+                            <div class="flex justify-between pt-4 border-t border-slate-100 dark:border-slate-700/50">
+                                <div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-16"></div>
+                                <div class="h-5 bg-slate-200 dark:bg-slate-700 rounded w-12"></div>
+                            </div>
+                        </div>
+                    </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+
     // First get the wishlisted course IDs
     const { data: wishlistedIds, error: wErr } = await supabase
         .from('wishlist')
         .select('course_id')
         .eq('student_id', currentUserSession.user.id);
         
-    const wishlistContainer = document.getElementById('wishlist-container');
-    const wishlistEmptyState = document.getElementById('wishlist-empty-state');
-    
     if (!wishlistedIds || wishlistedIds.length === 0) {
         wishlistContainer.innerHTML = '';
         wishlistContainer.appendChild(wishlistEmptyState);
@@ -655,9 +690,38 @@ async function loadMentorWishlist() {
     await ensureSession();
     if (!currentUserSession?.user) return;
 
-    const wishlisted = await MentorService.getStudentWishlist(currentUserSession.user.id);
     const wishlistContainer = document.getElementById('wishlist-container');
     const wishlistEmptyState = document.getElementById('wishlist-empty-state');
+    
+    if (wishlistContainer) {
+        wishlistContainer.innerHTML = `
+            <div class="w-full mt-2" aria-busy="true">
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 pt-6">
+                    ${Array(3).fill(`
+                    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-5 flex flex-col h-[340px] animate-pulse">
+                         <div class="flex items-start justify-between mb-4">
+                             <div class="w-16 h-16 rounded-2xl bg-slate-200 dark:bg-slate-800"></div>
+                             <div class="flex gap-4">
+                                 <div class="w-12 h-8 rounded bg-slate-200 dark:bg-slate-800 mt-2"></div>
+                                 <div class="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 mt-2"></div>
+                             </div>
+                         </div>
+                         <div class="mb-4">
+                             <div class="h-5 bg-slate-200 dark:bg-slate-800 rounded w-1/2 mb-2"></div>
+                             <div class="h-3 bg-slate-200 dark:bg-slate-800 rounded w-3/4 mb-1"></div>
+                             <div class="h-3 bg-slate-200 dark:bg-slate-800 rounded w-5/6"></div>
+                         </div>
+                         <div class="flex gap-2 mb-6"><div class="h-4 bg-slate-200 dark:bg-slate-800 rounded w-16"></div><div class="h-4 bg-slate-200 dark:bg-slate-800 rounded w-16"></div></div>
+                         <div class="grid grid-cols-2 gap-3 mb-5 py-4 border-y border-slate-50 dark:border-slate-800"><div class="h-8 bg-slate-200 dark:bg-slate-800 rounded"></div><div class="h-8 bg-slate-200 dark:bg-slate-800 rounded"></div></div>
+                         <div class="mt-auto h-10 bg-slate-200 dark:bg-slate-800 rounded-xl w-full"></div>
+                    </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    const wishlisted = await MentorService.getStudentWishlist(currentUserSession.user.id);
     
     if (!wishlisted || wishlisted.length === 0) {
         wishlistContainer.innerHTML = '';
@@ -1000,7 +1064,7 @@ async function loadMentors(forceRefresh = false) {
 
             return `
                 <div class="${cardBg} border rounded-2xl p-4 sm:p-6 hover:shadow-lg transition-all group ${isHistory && bookingStatus !== 'cancelled' ? 'opacity-80 grayscale-[0.3] hover:grayscale-0' : ''} anim-fade-in relative">
-                    ${isProgram ? `<div class="absolute top-3 sm:top-4 right-3 sm:right-4 z-10"><div class="px-2.5 py-1 bg-gradient-to-r from-amber-200 to-yellow-400 text-amber-900 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1 shadow-sm"><span class="material-symbols-outlined text-[14px]">workspace_premium</span> Program Mentorship</div></div>` : ''}
+                    ${isProgram ? `<div class="absolute top-2 right-2 sm:top-4 sm:right-4 z-10"><div class="px-1.5 py-0.5 sm:px-2.5 sm:py-1 bg-gradient-to-r from-amber-200 to-yellow-400 text-amber-900 rounded-full text-[8px] sm:text-[10px] font-black uppercase tracking-widest flex items-center gap-1 shadow-sm"><span class="material-symbols-outlined text-[10px] sm:text-[14px]">workspace_premium</span> Program<span class="hidden sm:inline"> Mentorship</span></div></div>` : ''}
                     <div class="flex flex-col md:flex-row gap-4 md:gap-6 lg:gap-8 items-start md:items-center relative z-0 mt-3 md:mt-0">
                         <div class="flex items-center gap-3 sm:gap-4 w-full md:w-72 shrink-0">
                             <a href="/src/pages/instructor/public-profile/index.html?id=${session.mentor_id}" class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl overflow-hidden border-2 border-primary/20 shrink-0 shadow-sm transition-transform hover:scale-110 block" title="View Public Profile">
@@ -1073,11 +1137,11 @@ async function loadMentors(forceRefresh = false) {
 
         if (!navContainer || !contentContainer) {
             mentorsContent.innerHTML = `
-                <div class="flex flex-col gap-8 pt-6">
-                    <div class="mentorship-sub-nav flex flex-wrap gap-3 p-1.5 bg-slate-100/50 dark:bg-slate-800/30 rounded-2xl w-fit">
-                        <button id="subtab-active" onclick="switchMentorshipSubTab('active')"></button>
-                        <button id="subtab-upcoming" onclick="switchMentorshipSubTab('upcoming')"></button>
-                        <button id="subtab-history" onclick="switchMentorshipSubTab('history')"></button>
+                <div class="flex flex-col gap-5 pt-6">
+                    <div class="mentorship-sub-nav flex overflow-x-auto no-scrollbar gap-2 sm:gap-3 p-1.5 bg-slate-100/50 dark:bg-slate-800/30 rounded-2xl w-full max-w-fit">
+                        <button id="subtab-active" onclick="switchMentorshipSubTab('active')" class="shrink-0"></button>
+                        <button id="subtab-upcoming" onclick="switchMentorshipSubTab('upcoming')" class="shrink-0"></button>
+                        <button id="subtab-history" onclick="switchMentorshipSubTab('history')" class="shrink-0"></button>
                     </div>
                     <div id="mentorship-tab-content" class="grid grid-cols-1 gap-6"></div>
                 </div>
@@ -1086,8 +1150,8 @@ async function loadMentors(forceRefresh = false) {
             contentContainer = document.getElementById('mentorship-tab-content');
         }
 
-        const activeSubBtnClass = "px-6 py-3 bg-primary text-white font-bold rounded-xl shadow-lg shadow-primary/20 transition-all flex items-center gap-2";
-        const inactiveSubBtnClass = "px-6 py-3 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all flex items-center gap-2";
+        const activeSubBtnClass = "px-4 py-2 sm:px-6 sm:py-3 bg-primary text-white font-bold rounded-xl shadow-lg shadow-primary/20 transition-all flex items-center gap-1.5 sm:gap-2 text-xs sm:text-base whitespace-nowrap shrink-0";
+        const inactiveSubBtnClass = "px-4 py-2 sm:px-6 sm:py-3 bg-transparent hover:bg-white dark:hover:bg-slate-800 text-slate-500 font-bold rounded-xl transition-all flex items-center gap-1.5 sm:gap-2 text-xs sm:text-base whitespace-nowrap shrink-0 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 hover:shadow-sm";
 
         // Update button states and counts without re-rendering the entire nav bar
         const updateButton = (id, label, count, icon, tabKey) => {
@@ -1095,9 +1159,9 @@ async function loadMentors(forceRefresh = false) {
             if (!btn) return;
             btn.className = currentMentorshipSubTab === tabKey ? activeSubBtnClass : inactiveSubBtnClass;
             btn.innerHTML = `
-                <span class="material-symbols-outlined text-[20px]">${icon}</span>
+                <span class="material-symbols-outlined text-[16px] sm:text-[20px]">${icon}</span>
                 ${label}
-                ${count > 0 ? `<span class="ml-1 px-2 py-0.5 ${currentMentorshipSubTab === tabKey ? 'bg-white/20' : 'bg-slate-100 dark:bg-slate-700 text-slate-500'} rounded-md text-[10px]">${count}</span>` : ''}
+                ${count > 0 ? `<span class="ml-0.5 sm:ml-1 px-1.5 sm:px-2 py-0.5 ${currentMentorshipSubTab === tabKey ? 'bg-white/20' : 'bg-slate-200 dark:bg-slate-700 text-slate-600'} rounded-md text-[9px] sm:text-[10px]">${count}</span>` : ''}
             `;
         };
 

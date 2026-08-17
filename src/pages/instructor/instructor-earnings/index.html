@@ -242,12 +242,51 @@
 <div class="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
 <h3 class="font-semibold text-slate-900 dark:text-white">Recent Transactions</h3>
 </div>
-<div class="min-h-[400px] flex flex-col items-center justify-center text-center p-8" id="transactions-container">
-<div class="w-20 h-20 bg-slate-50 dark:bg-slate-800/50 rounded-full flex items-center justify-center mb-6">
-<span class="material-symbols-outlined text-slate-300 dark:text-slate-600 text-4xl">receipt_long</span>
+<div class="min-h-[400px] flex flex-col items-center justify-center text-center p-0" id="transactions-container">
+<div class="w-full overflow-x-auto" aria-busy="true">
+<table class="w-full text-left border-collapse">
+<thead>
+    <tr class="bg-slate-50 dark:bg-slate-800/50 border-y border-slate-200 dark:border-slate-800">
+        <th class="px-6 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Date</th>
+        <th class="px-6 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Description</th>
+        <th class="px-6 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Your Share</th>
+        <th class="px-6 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
+    </tr>
+</thead>
+<tbody>
+    <tr class="animate-pulse border-b border-slate-100 dark:border-slate-800">
+        <td class="px-6 py-4"><div class="h-4 w-24 bg-slate-200 dark:bg-slate-700 rounded"></div></td>
+        <td class="px-6 py-4">
+            <div class="h-4 w-48 bg-slate-200 dark:bg-slate-700 rounded mb-2"></div>
+            <div class="h-3 w-32 bg-slate-200 dark:bg-slate-700 rounded mb-2"></div>
+            <div class="h-3 w-20 bg-slate-200 dark:bg-slate-700 rounded"></div>
+        </td>
+        <td class="px-6 py-4"><div class="h-4 w-16 bg-slate-200 dark:bg-slate-700 rounded"></div></td>
+        <td class="px-6 py-4"><div class="h-6 w-24 bg-emerald-100 dark:bg-emerald-900/30 rounded-full"></div></td>
+    </tr>
+    <tr class="animate-pulse border-b border-slate-100 dark:border-slate-800">
+        <td class="px-6 py-4"><div class="h-4 w-24 bg-slate-200 dark:bg-slate-700 rounded"></div></td>
+        <td class="px-6 py-4">
+            <div class="h-4 w-40 bg-slate-200 dark:bg-slate-700 rounded mb-2"></div>
+            <div class="h-3 w-24 bg-slate-200 dark:bg-slate-700 rounded mb-2"></div>
+            <div class="h-3 w-20 bg-slate-200 dark:bg-slate-700 rounded"></div>
+        </td>
+        <td class="px-6 py-4"><div class="h-4 w-16 bg-slate-200 dark:bg-slate-700 rounded"></div></td>
+        <td class="px-6 py-4"><div class="h-6 w-24 bg-emerald-100 dark:bg-emerald-900/30 rounded-full"></div></td>
+    </tr>
+    <tr class="animate-pulse border-b border-slate-100 dark:border-slate-800">
+        <td class="px-6 py-4"><div class="h-4 w-24 bg-slate-200 dark:bg-slate-700 rounded"></div></td>
+        <td class="px-6 py-4">
+            <div class="h-4 w-52 bg-slate-200 dark:bg-slate-700 rounded mb-2"></div>
+            <div class="h-3 w-28 bg-slate-200 dark:bg-slate-700 rounded mb-2"></div>
+            <div class="h-3 w-20 bg-slate-200 dark:bg-slate-700 rounded"></div>
+        </td>
+        <td class="px-6 py-4"><div class="h-4 w-16 bg-slate-200 dark:bg-slate-700 rounded"></div></td>
+        <td class="px-6 py-4"><div class="h-6 w-24 bg-emerald-100 dark:bg-emerald-900/30 rounded-full"></div></td>
+    </tr>
+</tbody>
+</table>
 </div>
-<h4 class="text-lg font-medium dark:text-white mb-2">No transactions found</h4>
-<p class="text-slate-500 max-w-xs">Start selling courses to see your earnings history here.</p>
 </div>
 </div>
 <!-- Withdrawals Panel -->
@@ -255,12 +294,42 @@
 <div class="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
 <h3 class="font-semibold text-slate-900 dark:text-white">Withdrawal History</h3>
 </div>
-<div class="min-h-[400px] flex flex-col items-center justify-center text-center p-8" id="withdrawals-container">
-<div class="w-20 h-20 bg-slate-50 dark:bg-slate-800/50 rounded-full flex items-center justify-center mb-6">
-<span class="material-symbols-outlined text-slate-300 dark:text-slate-600 text-4xl">payments</span>
+<div class="min-h-[400px] flex flex-col items-center justify-center text-center p-0" id="withdrawals-container">
+<div class="w-full overflow-x-auto" aria-busy="true">
+<table class="w-full text-left border-collapse">
+<thead>
+    <tr class="bg-slate-50 dark:bg-slate-800/50 border-y border-slate-200 dark:border-slate-800">
+        <th class="px-6 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Ref Number</th>
+        <th class="px-6 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Amount</th>
+        <th class="px-6 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Method</th>
+        <th class="px-6 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
+        <th class="px-6 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Requested</th>
+        <th class="px-6 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Processed</th>
+        <th class="px-6 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Notes</th>
+    </tr>
+</thead>
+<tbody>
+    <tr class="animate-pulse border-b border-slate-100 dark:border-slate-800">
+        <td class="px-6 py-4"><div class="h-4 w-20 bg-slate-200 dark:bg-slate-700 rounded"></div></td>
+        <td class="px-6 py-4"><div class="h-4 w-16 bg-slate-200 dark:bg-slate-700 rounded"></div></td>
+        <td class="px-6 py-4"><div class="h-4 w-24 bg-slate-200 dark:bg-slate-700 rounded"></div></td>
+        <td class="px-6 py-4"><div class="h-6 w-20 bg-slate-200 dark:bg-slate-700 rounded-full"></div></td>
+        <td class="px-6 py-4"><div class="h-4 w-24 bg-slate-200 dark:bg-slate-700 rounded"></div></td>
+        <td class="px-6 py-4"><div class="h-4 w-24 bg-slate-200 dark:bg-slate-700 rounded"></div></td>
+        <td class="px-6 py-4"><div class="h-4 w-8 bg-slate-200 dark:bg-slate-700 rounded"></div></td>
+    </tr>
+    <tr class="animate-pulse border-b border-slate-100 dark:border-slate-800">
+        <td class="px-6 py-4"><div class="h-4 w-20 bg-slate-200 dark:bg-slate-700 rounded"></div></td>
+        <td class="px-6 py-4"><div class="h-4 w-16 bg-slate-200 dark:bg-slate-700 rounded"></div></td>
+        <td class="px-6 py-4"><div class="h-4 w-24 bg-slate-200 dark:bg-slate-700 rounded"></div></td>
+        <td class="px-6 py-4"><div class="h-6 w-20 bg-slate-200 dark:bg-slate-700 rounded-full"></div></td>
+        <td class="px-6 py-4"><div class="h-4 w-24 bg-slate-200 dark:bg-slate-700 rounded"></div></td>
+        <td class="px-6 py-4"><div class="h-4 w-24 bg-slate-200 dark:bg-slate-700 rounded"></div></td>
+        <td class="px-6 py-4"><div class="h-4 w-8 bg-slate-200 dark:bg-slate-700 rounded"></div></td>
+    </tr>
+</tbody>
+</table>
 </div>
-<h4 class="text-lg font-medium dark:text-white mb-2">No withdrawals found</h4>
-<p class="text-slate-500 max-w-xs">Your withdrawal history will appear here once you make requests.</p>
 </div>
 </div>
 </div>
@@ -576,7 +645,8 @@
 
                 // Render Transactions Table
                 const transactionsContainer = document.getElementById('transactions-container');
-                if (transactions.length > 0 && transactionsContainer) {
+                if (transactionsContainer) {
+                    if (transactions.length > 0) {
                     transactionsContainer.className = "w-full overflow-x-auto";
                     let transHtml = '';
 
@@ -642,11 +712,20 @@
                         </tbody>
                         </table>
                     `;
+                    } else {
+                        transactionsContainer.className = "min-h-[400px] flex flex-col items-center justify-center text-center p-8";
+                        transactionsContainer.innerHTML = `<div class="w-20 h-20 bg-slate-50 dark:bg-slate-800/50 rounded-full flex items-center justify-center mb-6">
+<span class="material-symbols-outlined text-slate-300 dark:text-slate-600 text-4xl">receipt_long</span>
+</div>
+<h4 class="text-lg font-medium dark:text-white mb-2">No transactions found</h4>
+<p class="text-slate-500 max-w-xs">Start selling courses to see your earnings history here.</p>`;
+                    }
                 }
 
                 // Render Withdrawals Table
                 const withdrawalsContainer = document.getElementById('withdrawals-container');
-                if (withdrawals.length > 0 && withdrawalsContainer) {
+                if (withdrawalsContainer) {
+                    if (withdrawals.length > 0) {
                     withdrawalsContainer.className = "w-full overflow-x-auto";
                     let widthHtml = '';
 
@@ -702,6 +781,14 @@
                         </tbody>
                         </table>
                     `;
+                    } else {
+                        withdrawalsContainer.className = "min-h-[400px] flex flex-col items-center justify-center text-center p-8";
+                        withdrawalsContainer.innerHTML = `<div class="w-20 h-20 bg-slate-50 dark:bg-slate-800/50 rounded-full flex items-center justify-center mb-6">
+<span class="material-symbols-outlined text-slate-300 dark:text-slate-600 text-4xl">payments</span>
+</div>
+<h4 class="text-lg font-medium dark:text-white mb-2">No withdrawals found</h4>
+<p class="text-slate-500 max-w-xs">Your withdrawal history will appear here once you make requests.</p>`;
+                    }
                 }
 
                 // Handle Submitting Withdrawal

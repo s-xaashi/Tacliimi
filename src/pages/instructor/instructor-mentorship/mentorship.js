@@ -158,9 +158,14 @@ async function initMentorship() {
     // 2) Function to fetch and render the HTML view
     const loadMentorshipView = async (tabName) => {
         try {
-            // Visual feedback
+            // Show accessible spinner while HTML fragment loads over the network
             if (container) {
-                container.style.opacity = '0.5';
+                container.setAttribute('aria-busy', 'true');
+                container.innerHTML = `
+                    <div role="status" aria-label="Loading ${tabName} tab" class="flex flex-col items-center justify-center py-24 gap-4">
+                        <div class="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin" aria-hidden="true"></div>
+                        <p class="text-sm text-slate-500 font-medium sr-only">Loading ${tabName}…</p>
+                    </div>`;
                 container.style.pointerEvents = 'none';
             }
 
@@ -205,7 +210,7 @@ async function initMentorship() {
             }
         } finally {
             if (container) {
-                container.style.opacity = '1';
+                container.removeAttribute('aria-busy');
                 container.style.pointerEvents = 'auto';
             }
         }
@@ -1116,6 +1121,45 @@ async function bindBoostInteractions(container, userId) {
     }
 }
 
+/**
+ * Build N skeleton card rows matching the shared session card geometry.
+ * @param {number} count - number of skeleton cards to render
+ * @param {'grid'|'space'} layout - 'grid' for upcoming (gap-4), 'space' for requests/completed
+ */
+function buildSessionSkeleton(count = 3, layout = 'space') {
+    const widths = ['w-32', 'w-24', 'w-28', 'w-36', 'w-20'];
+    const topicWidths = ['w-48', 'w-40', 'w-56', 'w-36', 'w-44'];
+    return Array.from({ length: count }, (_, i) => `
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 animate-pulse" aria-hidden="true">
+            <div class="flex flex-col md:flex-row gap-4 md:gap-8 items-start md:items-center">
+                <div class="flex items-center gap-4 w-full md:w-64 shrink-0">
+                    <div class="w-16 h-16 rounded-2xl bg-slate-200 dark:bg-slate-700 shrink-0"></div>
+                    <div class="flex-1 space-y-2">
+                        <div class="h-4 bg-slate-200 dark:bg-slate-700 rounded ${widths[i % widths.length]}"></div>
+                        <div class="h-5 bg-slate-200 dark:bg-slate-700 rounded-full w-20"></div>
+                    </div>
+                </div>
+                <div class="flex-1 flex flex-wrap items-center gap-x-10 gap-y-4 md:px-8 border-t md:border-t-0 md:border-l border-slate-100 dark:border-slate-800 pt-4 md:pt-0 min-w-0">
+                    <div class="flex items-center gap-3 w-44 shrink-0">
+                        <div class="w-10 h-10 bg-slate-200 dark:bg-slate-700 rounded-xl shrink-0"></div>
+                        <div class="space-y-1.5">
+                            <div class="h-2.5 bg-slate-200 dark:bg-slate-700 rounded w-14"></div>
+                            <div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-28"></div>
+                        </div>
+                    </div>
+                    <div class="flex-1 min-w-[180px] space-y-1.5">
+                        <div class="h-2.5 bg-slate-200 dark:bg-slate-700 rounded w-10"></div>
+                        <div class="h-4 bg-slate-200 dark:bg-slate-700 rounded ${topicWidths[i % topicWidths.length]}"></div>
+                    </div>
+                </div>
+                <div class="w-full md:w-fit flex flex-wrap md:flex-col gap-2 border-t md:border-t-0 border-slate-100 dark:border-slate-800 pt-4 md:pt-0">
+                    <div class="h-10 w-28 bg-slate-200 dark:bg-slate-700 rounded-xl"></div>
+                    <div class="h-10 w-28 bg-slate-200 dark:bg-slate-700 rounded-xl"></div>
+                </div>
+            </div>
+        </div>`).join('');
+}
+
 /** Gold card wrapper classes for program mentorship */
 const GOLD_CARD_STYLE = 'border-2 rounded-2xl overflow-hidden transition-all group p-6 hover:shadow-xl relative'
     + ' bg-gradient-to-br from-amber-50/60 to-white dark:from-amber-900/10 dark:to-slate-900'
@@ -1154,12 +1198,8 @@ async function bindRequestsInteractions(container, userId) {
 
     const renderRequests = async () => {
         try {
-            listContainer.innerHTML = `
-                <div class="flex flex-col items-center justify-center py-20 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                    <div class="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-4"></div>
-                    <p class="text-slate-500 font-medium">Fetching requests...</p>
-                </div>
-            `;
+            listContainer.setAttribute('aria-busy', 'true');
+            listContainer.innerHTML = buildSessionSkeleton(2, 'space');
             
         const [paidWaiting, awaiting, negotiating, rejectedReview] = await Promise.all([
                 MentorService.getMentorSessions(userId, 'paid_waiting_review'), // Replaced pending_review with paid_waiting_review
@@ -1182,12 +1222,14 @@ async function bindRequestsInteractions(container, userId) {
             filtered = applyTypeFilter(filtered, _requestsTypeFilter);
 
             if (filtered.length === 0) {
+                listContainer.removeAttribute('aria-busy');
                 listContainer.innerHTML = '';
                 emptyState.classList.remove('hidden');
                 return;
             }
 
             emptyState.classList.add('hidden');
+            listContainer.removeAttribute('aria-busy');
             listContainer.innerHTML = filtered.map(session => {
                 const date = new Date(session.scheduled_at);
                 const dateStr = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
@@ -1461,6 +1503,7 @@ async function bindRequestsInteractions(container, userId) {
 
         } catch (err) {
             console.error("Error rendering requests:", err);
+            listContainer.removeAttribute('aria-busy');
             listContainer.innerHTML = `<p class="text-red-500 p-8 text-center">Failed to load requests.</p>`;
         }
     };
@@ -1592,7 +1635,8 @@ async function bindUpcomingInteractions(container, userId) {
 
     const renderUpcoming = async () => {
         try {
-            listContainer.innerHTML = `<div class="py-20 text-center"><div class="animate-spin inline-block w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full"></div></div>`;
+            listContainer.setAttribute('aria-busy', 'true');
+            listContainer.innerHTML = buildSessionSkeleton(3, 'grid');
             
             const sessions = await MentorService.getMentorSessions(userId);
             
@@ -1623,12 +1667,14 @@ async function bindUpcomingInteractions(container, userId) {
             const typeFiltered = applyTypeFilter(activeSessions, _upcomingTypeFilter);
             
             if (typeFiltered.length === 0) {
+                listContainer.removeAttribute('aria-busy');
                 listContainer.innerHTML = '';
                 emptyState.classList.remove('hidden');
                 return;
             }
 
             emptyState.classList.add('hidden');
+            listContainer.removeAttribute('aria-busy');
             listContainer.innerHTML = typeFiltered.map(session => {
                 const date = new Date(session.scheduled_at);
                 const duration = session.duration_minutes || 60;
@@ -1775,6 +1821,7 @@ async function bindUpcomingInteractions(container, userId) {
 
         } catch (err) {
             console.error(err);
+            listContainer.removeAttribute('aria-busy');
             listContainer.innerHTML = '<p class="text-red-500">Error loading sessions.</p>';
         }
     };
@@ -1810,7 +1857,8 @@ async function bindCompletedInteractions(container, userId) {
 
     const renderCompleted = async () => {
         try {
-            listContainer.innerHTML = `<div class="py-20 text-center"><div class="animate-spin inline-block w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full"></div></div>`;
+            listContainer.setAttribute('aria-busy', 'true');
+            listContainer.innerHTML = buildSessionSkeleton(2, 'space');
             
             // Fetch both confirmed and completed sessions
             const [confirmed, completed] = await Promise.all([
@@ -1841,12 +1889,14 @@ async function bindCompletedInteractions(container, userId) {
             historical = applyTypeFilter(historical, _completedTypeFilter);
 
             if (historical.length === 0) {
+                listContainer.removeAttribute('aria-busy');
                 listContainer.innerHTML = '';
                 emptyState.classList.remove('hidden');
                 return;
             }
 
             emptyState.classList.add('hidden');
+            listContainer.removeAttribute('aria-busy');
             listContainer.innerHTML = historical.map(session => {
                 const date = new Date(session.scheduled_at);
                 const dateStr = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
@@ -1906,6 +1956,7 @@ async function bindCompletedInteractions(container, userId) {
 
         } catch (err) {
             console.error(err);
+            listContainer.removeAttribute('aria-busy');
             listContainer.innerHTML = '<p class="text-red-500">Error loading history.</p>';
         }
     };

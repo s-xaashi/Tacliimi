@@ -40,6 +40,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('metric-views').innerText = overview.totalCourseViews.toLocaleString();
             document.getElementById('metric-rating').innerText = overview.averageCourseRating.toFixed(1);
             document.getElementById('metric-completions').innerText = `${overview.courseCompletionRate.toFixed(1)}%`;
+            document.getElementById('metric-cards-container')?.removeAttribute('aria-busy');
         }
 
         // Fetch Top Courses table
@@ -85,6 +86,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 tableBody.innerHTML = '<tr><td colspan="5" class="p-8 text-center text-slate-500">No course data available yet. Your performance metrics will appear here once you publish courses and students interact with them.</td></tr>';
             }
         }
+        
+        // Remove aria-busy from the table wrapper
+        const tableContainer = document.querySelector('#top-courses-table-body')?.closest('[aria-busy]');
+        if (tableContainer) tableContainer.removeAttribute('aria-busy');
 
         // Load student demographics (country breakdown)
         await loadStudentDemographics();

@@ -339,7 +339,7 @@ export const GlobalProfile = {
         `;
 
         const headerControlsHtml = `
-            <div class="flex items-center gap-1 tacliimi-injected-profile">
+            <div class="hidden md:flex items-center gap-1 tacliimi-injected-profile">
                 ${themeToggleHtml}
                 ${(!isPublicPage || isAdmin) ? logoutHtml : ''}
 
