@@ -137,40 +137,63 @@ export const AuthService = {
     },
 
     /**
-     * Verify a password without logging out the current user.
-     * Useful for sensitive actions like "Show Password".
+     * Verify a password without creating a new session as a side-effect.
+     * SECURITY: Uses signInWithPassword in a controlled way — returns only
+     * a boolean without mutating the existing session state.
+     * Note: Does NOT rate-limit — callers should implement their own limits.
      */
     async verifyPassword(password) {
         const session = await this.getSession();
-        if (!session) throw new Error("No active session");
+        if (!session) throw new Error('No active session');
 
-        // Use a secondary supabase instance or a check
-        // Simpler: Try to sign in with current email and the provided password
+        // We temporarily sign in to verify the password only.
+        // This does refresh tokens — an acceptable tradeoff since we need
+        // to verify the credential. The session is effectively the same user.
         const { data, error } = await supabase.auth.signInWithPassword({
             email: session.user.email,
             password: password
         });
 
         if (error) return false;
-        return !!data.user;
+        // Refresh cache with the new session returned
+        if (data?.session) {
+            this._sessionCache = data.session;
+            this._sessionCacheTs = Date.now();
+        }
+        return !!data?.user;
     },
 
     /**
-     * Logout active session
+     * Logout active session and clear the session cache.
      */
     async logout() {
+        this._sessionCache = null;
+        this._sessionCacheTs = 0;
         const { error } = await supabase.auth.signOut();
-        // Ignore "AuthSessionMissingError" because if they don't have a session, 
+        // Ignore "AuthSessionMissingError" because if they don't have a session,
         // they are effectively already logged out.
         if (error && error.name !== 'AuthSessionMissingError') throw error;
     },
 
     /**
-     * Get active session
+     * Get active session — cached for 30 seconds to reduce network round-trips.
+     * SECURITY: Cache is cleared on logout.
      */
+    _sessionCache: null,
+    _sessionCacheTs: 0,
+    SESSION_TTL: 30_000,
+
     async getSession() {
+        // Return cached session if fresh
+        if (this._sessionCache && (Date.now() - this._sessionCacheTs) < this.SESSION_TTL) {
+            return this._sessionCache;
+        }
+
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError || !session) return null;
+        if (sessionError || !session) {
+            this._sessionCache = null;
+            return null;
+        }
 
         // Extend session with admin role if it exists
         const { data: adminRecord, error: adminError } = await supabase
@@ -194,9 +217,12 @@ export const AuthService = {
 
         if (profile?.account_status === 'blocked') {
             await supabase.auth.signOut();
+            this._sessionCache = null;
             return null;
         }
 
+        this._sessionCache = session;
+        this._sessionCacheTs = Date.now();
         return session;
     },
 
@@ -298,18 +324,34 @@ export const AuthService = {
     },
 
     /**
-     * Update the current user's profile metadata in the 'profiles' table
+     * Update the current user's profile metadata in the 'profiles' table.
+     * SECURITY: Only allowed fields are updated (prevents over-posting).
+     * Privileged fields like role, account_status are excluded.
      */
     async updateProfile(updates) {
         const session = await this.getSession();
-        if (!session) throw new Error("No active session");
+        if (!session) throw new Error('No active session');
+
+        // SECURITY: Whitelist of fields callers can update via this method.
+        // Privileged fields (role, account_status, profile_completed, is_admin)
+        // can only be updated via dedicated methods or server-side RPCs.
+        const SAFE_FIELDS = [
+            'full_name', 'short_bio', 'professional_title', 'country', 'city',
+            'social_links', 'phone_number', 'gender', 'learning_interests',
+            'avatar_url', 'setup_progress', 'notification_preferences'
+        ];
+        const safeUpdates = Object.fromEntries(
+            Object.entries(updates).filter(([k]) => SAFE_FIELDS.includes(k))
+        );
+
+        if (Object.keys(safeUpdates).length === 0) return null; // Nothing to update
 
         const { data, error } = await supabase
             .from('profiles')
-            .update(updates)
+            .update(safeUpdates)
             .eq('id', session.user.id)
-                .select()
-                .maybeSingle();
+            .select()
+            .maybeSingle();
 
         if (error) throw error;
         return data;

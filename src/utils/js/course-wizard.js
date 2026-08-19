@@ -930,45 +930,43 @@ function renderCurriculum() {
                 itemsHtml += `
                     <div class="group border ${borderClass} rounded-lg bg-white dark:bg-slate-900 hover:border-primary/30 transition-colors mb-3"
                          draggable="true" ondragstart="dragStartItem(event, ${sIdx}, ${iIdx})" ondragover="dragOverItem(event)" ondrop="dropItem(event, ${sIdx}, ${iIdx})">
-                        <div class="p-4 flex items-center justify-between">
-                            <div class="flex items-center gap-4 w-full">
-                                <span class="material-symbols-outlined text-slate-300 cursor-move group-hover:text-slate-400">drag_handle</span>
-                                <div class="flex items-center gap-3 w-full">
-                                    <span class="material-symbols-outlined text-slate-400">${icon}</span>
-                                    <div class="flex flex-col w-full text-left">
-                                        <input class="text-sm font-medium text-slate-900 dark:text-white leading-none bg-transparent border-none focus:ring-0 p-0 transition w-full mb-1" 
+                        <div class="p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                            <div class="flex items-start sm:items-center gap-2 sm:gap-4 w-full flex-1 min-w-0">
+                                <span class="material-symbols-outlined text-slate-300 cursor-move group-hover:text-slate-400 mt-1 sm:mt-0">drag_handle</span>
+                                <div class="flex items-start sm:items-center gap-2 sm:gap-3 w-full flex-1 min-w-0">
+                                    <span class="material-symbols-outlined text-slate-400 mt-0.5 sm:mt-0">${icon}</span>
+                                    <div class="flex flex-col flex-1 min-w-0 text-left w-full">
+                                        <input class="text-sm font-medium text-slate-900 dark:text-white leading-none bg-transparent border-none focus:ring-0 p-0 transition w-full mb-1 truncate" 
                                            value="${item.title}" onblur="updateItemTitle(${sIdx}, ${iIdx}, this.value)" />
                                         
                                         <!-- Scrollable container for Lesson Details -->
-                                        <div class="overflow-x-auto scrollbar-hide py-1">
-                                            <div class="flex items-center gap-3 mt-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap">
-                                                <span>${item.content_type.toUpperCase()}</span>
-                                                ${item.video ? `
-                                                    <span class="flex items-center gap-1 text-blue-500 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded">
-                                                        <span class="material-symbols-outlined text-[12px]">videocam</span> 
-                                                        ${item.video.title || 'Video'}
-                                                    </span>
-                                                ` : ''}
-                                                ${(item.quiz && item.quiz.length > 0) ? `
-                                                    <button onclick="wizardOpenModal('modal-add-quiz', ${sIdx}, ${iIdx})" class="flex items-center gap-1 text-amber-500 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded hover:bg-amber-100 dark:hover:bg-amber-900/40 transition">
-                                                        <span class="material-symbols-outlined text-[12px]">quiz</span> 
-                                                        ${item.quiz.length} Quiz${item.quiz.length !== 1 ? 'zes' : ''}
-                                                    </button>
-                                                ` : ''}
+                                        <div class="flex flex-wrap items-center gap-2 mt-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                                            <span>${item.content_type.toUpperCase()}</span>
+                                            ${item.video ? `
+                                                <span class="flex items-center gap-1 text-blue-500 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded truncate max-w-[120px]">
+                                                    <span class="material-symbols-outlined text-[12px]">videocam</span> 
+                                                    <span class="truncate">${item.video.title || 'Video'}</span>
+                                                </span>
+                                            ` : ''}
+                                            ${(item.quiz && item.quiz.length > 0) ? `
+                                                <button onclick="wizardOpenModal('modal-add-quiz', ${sIdx}, ${iIdx})" class="flex items-center gap-1 text-amber-500 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded hover:bg-amber-100 dark:hover:bg-amber-900/40 transition">
+                                                    <span class="material-symbols-outlined text-[12px]">quiz</span> 
+                                                    ${item.quiz.length} Quiz${item.quiz.length !== 1 ? 'zes' : ''}
+                                                </button>
+                                            ` : ''}
 
-                                                ${(item.resources && item.resources.length > 0) ? `
-                                                    <button onclick="wizardOpenModal('modal-add-resource', ${sIdx}, ${iIdx})" class="flex items-center gap-1 text-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition">
-                                                        <span class="material-symbols-outlined text-[12px]">attachment</span> 
-                                                        ${item.resources.length} Resource${item.resources.length !== 1 ? 's' : ''}
-                                                    </button>
-                                                ` : ''}
-                                            </div>
+                                            ${(item.resources && item.resources.length > 0) ? `
+                                                <button onclick="wizardOpenModal('modal-add-resource', ${sIdx}, ${iIdx})" class="flex items-center gap-1 text-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition flex-shrink-0">
+                                                    <span class="material-symbols-outlined text-[12px]">attachment</span> 
+                                                    ${item.resources.length} Resource${item.resources.length !== 1 ? 's' : ''}
+                                                </button>
+                                            ` : ''}
                                         </div>
                                         
                                         <!-- Video Preview for Lesson -->
                                         ${item.video?.url ? `
-                                            <div class="mt-2 w-full max-w-sm rounded-lg overflow-hidden border border-slate-100 dark:border-slate-800 bg-black/5 flex items-center gap-3 p-2">
-                                                <div class="w-16 h-10 bg-black rounded flex items-center justify-center relative group-preview">
+                                            <div class="mt-2 w-full max-w-xs rounded-lg overflow-hidden border border-slate-100 dark:border-slate-800 bg-black/5 flex items-center gap-3 p-2">
+                                                <div class="w-16 h-10 shrink-0 bg-black rounded flex items-center justify-center relative group-preview">
                                                     <video class="w-full h-full object-cover">
                                                         <source src="${item.video.url}#t=0.5" type="video/mp4">
                                                     </video>
@@ -985,24 +983,23 @@ function renderCurriculum() {
                                     </div>
                                 </div>
                             </div>
-                            <div class="flex items-center gap-1 shrink-0 ml-4">
-                                <button onclick="deleteItem(${sIdx}, ${iIdx})" class="p-2 text-slate-400 hover:text-red-500 transition"><span class="material-symbols-outlined text-xl">delete</span></button>
+                            <div class="flex items-center sm:ml-4 self-end sm:self-auto shrink-0">
+                                <!-- Delete button moved to bottom actions -->
                             </div>
                         </div>
-                        <div class="px-4 pb-4 flex gap-2">
-                            <div class="flex items-center gap-4">
-                                <div class="flex items-center gap-2">
-                                    <label class="relative inline-flex items-center cursor-pointer">
-                                        <input type="checkbox" ${item.is_preview ? 'checked' : ''} onchange="toggleLessonPreview(${sIdx}, ${iIdx})" class="sr-only peer">
-                                        <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-accent"></div>
-                                    </label>
-                                    <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Preview</span>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <button onclick="wizardOpenModal('modal-add-video', ${sIdx}, ${iIdx})" class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-accent transition flex items-center justify-center" title="Add Video"><span class="material-symbols-outlined text-lg">videocam</span></button>
-                                    <button onclick="wizardOpenModal('modal-add-resource', ${sIdx}, ${iIdx})" class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-accent transition flex items-center justify-center" title="Add Resource"><span class="material-symbols-outlined text-lg">attachment</span></button>
-                                    <button onclick="wizardOpenModal('modal-add-quiz', ${sIdx}, ${iIdx})" class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-accent transition flex items-center justify-center" title="Add Quiz"><span class="material-symbols-outlined text-lg">quiz</span></button>
-                                </div>
+                        <div class="px-3 sm:px-4 pb-3 sm:pb-4 flex flex-col sm:flex-row sm:items-center justify-between border-t border-slate-50 dark:border-slate-800/50 pt-3 sm:pt-0 sm:border-t-0 gap-3">
+                            <div class="flex items-center gap-2 self-start sm:self-center">
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" ${item.is_preview ? 'checked' : ''} onchange="toggleLessonPreview(${sIdx}, ${iIdx})" class="sr-only peer">
+                                    <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-accent"></div>
+                                </label>
+                                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-1">Preview</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:gap-2 w-full sm:w-auto ml-auto">
+                                <button onclick="wizardOpenModal('modal-add-quiz', ${sIdx}, ${iIdx})" class="flex items-center justify-center w-full sm:w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-900/10 sm:bg-slate-100 sm:dark:bg-slate-800 text-amber-500 sm:text-slate-500 hover:text-accent transition border border-amber-200 dark:border-amber-900/30 sm:border-transparent" title="Add Quiz"><span class="material-symbols-outlined text-[16px] sm:text-lg">quiz</span></button>
+                                <button onclick="wizardOpenModal('modal-add-video', ${sIdx}, ${iIdx})" class="flex items-center justify-center w-full sm:w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/10 sm:bg-slate-100 sm:dark:bg-slate-800 text-blue-500 sm:text-slate-500 hover:text-accent transition border border-blue-200 dark:border-blue-900/30 sm:border-transparent" title="Add Video"><span class="material-symbols-outlined text-[16px] sm:text-lg">videocam</span></button>
+                                <button onclick="wizardOpenModal('modal-add-resource', ${sIdx}, ${iIdx})" class="col-span-2 flex items-center justify-center w-full sm:w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-900/10 sm:bg-slate-100 sm:dark:bg-slate-800 text-emerald-500 sm:text-slate-500 hover:text-accent transition border border-emerald-200 dark:border-emerald-900/30 sm:border-transparent" title="Add Resource"><span class="material-symbols-outlined text-[16px] sm:text-lg">attachment</span></button>
+                                <button onclick="deleteItem(${sIdx}, ${iIdx})" class="col-span-2 sm:col-span-1 mt-1 sm:mt-0 flex items-center justify-center w-full sm:w-8 h-8 rounded-lg bg-red-50 dark:bg-red-900/10 sm:bg-transparent sm:dark:bg-transparent text-red-500 hover:text-red-700 sm:text-slate-400 sm:hover:text-red-500 transition border border-red-200 dark:border-red-900/30 sm:border-transparent" title="Delete Lesson"><span class="material-symbols-outlined text-[16px] sm:text-lg">delete</span></button>
                             </div>
                         </div>
                     </div>`;
@@ -1011,16 +1008,16 @@ function renderCurriculum() {
 
         html += `
         <div draggable="true" ondragstart="dragStartSection(event, ${sIdx})" ondragover="dragOverSection(event)" ondrop="dropSection(event, ${sIdx})" class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-visible relative mb-8 cursor-grab active:cursor-grabbing">
-            <div class="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50 pointer-events-none">
-                <div class="flex items-center gap-4">
-                    <span class="material-symbols-outlined text-slate-400 cursor-move">drag_indicator</span>
-                    <div class="flex items-center gap-2 relative pointer-events-auto">
-                        <span class="text-sm font-bold text-slate-400 uppercase">Section ${sIdx + 1}:</span>
-                        <input type="text" value="${sec.title}" onchange="updateSectionTitle(${sIdx}, this.value)" class="text-lg font-semibold text-slate-900 dark:text-white bg-transparent border-none outline-none focus:ring-0 p-0 rounded px-1 w-64" placeholder="Section Title..." />
+            <div class="p-4 sm:p-6 border-b border-slate-100 dark:border-slate-800 flex flex-nowrap items-center justify-between gap-3 bg-slate-50/50 dark:bg-slate-800/50 pointer-events-none">
+                <div class="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
+                    <span class="material-symbols-outlined text-slate-400 cursor-move shrink-0">drag_indicator</span>
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:gap-2 relative pointer-events-auto flex-1 min-w-0">
+                        <span class="text-[11px] sm:text-sm font-bold text-slate-400 uppercase tracking-widest shrink-0">Section ${sIdx + 1}:</span>
+                        <input type="text" value="${sec.title}" onchange="updateSectionTitle(${sIdx}, this.value)" class="text-base sm:text-lg font-semibold text-slate-900 dark:text-white bg-transparent border-none outline-none focus:ring-0 p-0 rounded w-full truncate" placeholder="Section Title..." />
                     </div>
                 </div>
-                <div class="flex items-center gap-2 pointer-events-auto">
-                    <button onclick="deleteSection(${sIdx})" class="text-slate-400 hover:text-red-500 transition p-1 rounded">
+                <div class="flex items-center gap-2 pointer-events-auto shrink-0 self-start sm:self-center">
+                    <button onclick="deleteSection(${sIdx})" class="text-slate-400 hover:text-red-500 transition p-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded">
                         <span class="material-symbols-outlined">delete</span>
                     </button>
                 </div>
@@ -1754,8 +1751,8 @@ function wizardCalculatePayout() {
     const priceStr = isFree ? 'FREE' : `$${price.toFixed(2)}`;
     
     // Dynamic Commission Logic
-    const settings = window.financeSettings || { is_monetization_enabled: false, instructor_percentage: 100 };
-    const instructorShare = settings.is_monetization_enabled ? settings.instructor_percentage : 100;
+    const settings = window.financeSettings || { commission_enabled: false, instructor_percentage: 100 };
+    const instructorShare = settings.commission_enabled ? settings.instructor_percentage : 100;
     const earnings = (price * (instructorShare / 100)).toFixed(2);
 
     // 1. Update Final Price Preview (Step 4 Card)

@@ -65,17 +65,20 @@
 <body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen relative">
 <nav class="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 sticky top-0 z-50 relative">
 <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-<div class="flex items-center justify-between h-16">
-<!-- Left: Logo only -->
-<div class="flex items-center gap-2">
-<div class="bg-primary p-1.5 rounded-lg text-white">
-<span class="material-icons text-2xl">school</span>
+<div class="flex items-center justify-between h-16 relative">
+<!-- Left: Hamburger icon on mobile -->
+<div class="flex items-center lg:w-1/3">
+<button aria-label="Open menu" class="lg:hidden p-2 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors" id="wizard-mobile-menu-btn"><span class="material-symbols-outlined">menu</span></button>
 </div>
+
+<!-- Center: Logo -->
+<div class="absolute left-1/2 -translate-x-1/2 flex items-center gap-2">
+<img src="/public/assets/images/IMG_7448.png" alt="Tacliimi Logo" class="h-8 w-auto">
 <span class="text-xl font-bold tracking-tight text-primary hidden sm:block">Tacliimi Learn</span>
 </div>
+
 <!-- Right: All actions + profile -->
-<button aria-label="Open menu" class="lg:hidden p-2 text-slate-500 bg-slate-100 dark:bg-slate-800 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors" id="wizard-mobile-menu-btn"><span class="material-symbols-outlined">menu</span></button>
-<div class="hidden lg:flex items-center gap-3">
+<div class="flex items-center justify-end gap-3 lg:w-1/3 hidden lg:flex">
 <!-- Auto-save indicator -->
 <div class="hidden items-center gap-2 px-3 py-1 bg-slate-50 dark:bg-slate-800 rounded-full border border-slate-100 dark:border-slate-700" id="save-status">
 <span class="flex h-2 w-2 relative">
@@ -99,15 +102,27 @@
 </div>
 </div>
 </div>
-<div class="hidden lg:hidden absolute w-full bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-4 py-4 space-y-3 shadow-xl z-40 top-full left-0" id="wizard-mobile-menu">
-<button class="flex items-center gap-2 w-full px-4 py-3 text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" onclick="saveDraftManual()">
-<span class="material-symbols-outlined text-lg">save</span> Save Draft
-  </button>
-<button class="flex items-center gap-2 w-full px-4 py-3 text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" onclick="exitWizard()">
-<span class="material-symbols-outlined text-lg">logout</span> Exit Wizard
-  </button>
-</div>
 
+<!-- Mobile Menu Overlay -->
+<div id="mobile-menu-overlay" class="fixed inset-0 bg-slate-900/50 z-[45] hidden lg:hidden backdrop-blur-sm transition-opacity opacity-0"></div>
+
+<!-- Mobile Menu Drawer (Side) -->
+<div id="wizard-mobile-menu" class="fixed inset-y-0 left-0 w-[240px] bg-white dark:bg-slate-900 z-50 transform -translate-x-full transition-transform duration-300 shadow-2xl flex flex-col hidden lg:hidden">
+    <div class="p-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
+        <span class="font-bold text-slate-700 dark:text-slate-200 block">Menu</span>
+        <button id="close-mobile-menu-btn" class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition">
+            <span class="material-symbols-outlined">close</span>
+        </button>
+    </div>
+    <div class="p-4 space-y-3 overflow-y-auto flex-1">
+        <button class="flex items-center gap-3 w-full px-4 py-3 text-sm font-bold text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors border border-slate-200 dark:border-slate-700" onclick="saveDraftManual()">
+            <span class="material-symbols-outlined text-indigo-500">save</span> Save Draft
+        </button>
+        <button class="flex items-center gap-3 w-full px-4 py-3 text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-lg transition-colors" onclick="exitWizard()">
+            <span class="material-symbols-outlined text-red-500">logout</span> Exit Wizard
+        </button>
+    </div>
+</div>
 </nav>
 <main class="max-w-4xl mx-auto px-4 py-12">
 <div class="mb-12">
@@ -694,14 +709,34 @@
 (function() {
     var btn = document.getElementById('wizard-mobile-menu-btn');
     var menu = document.getElementById('wizard-mobile-menu');
-    if (!btn || !menu) return;
-    btn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        menu.classList.toggle('hidden');
-    });
-    document.addEventListener('click', function() {
-        menu.classList.add('hidden');
-    });
+    var overlay = document.getElementById('mobile-menu-overlay');
+    var closeBtn = document.getElementById('close-mobile-menu-btn');
+
+    if (!btn || !menu || !overlay) return;
+
+    function openMenu(e) {
+        if(e) e.stopPropagation();
+        menu.classList.remove('hidden');
+        overlay.classList.remove('hidden');
+        // Small timeout for css transitions
+        setTimeout(() => {
+            menu.classList.remove('-translate-x-full');
+            overlay.classList.remove('opacity-0');
+        }, 10);
+    }
+
+    function closeMenu() {
+        menu.classList.add('-translate-x-full');
+        overlay.classList.add('opacity-0');
+        setTimeout(() => {
+            menu.classList.add('hidden');
+            overlay.classList.add('hidden');
+        }, 300);
+    }
+
+    btn.addEventListener('click', openMenu);
+    if(closeBtn) closeBtn.addEventListener('click', closeMenu);
+    overlay.addEventListener('click', closeMenu);
 })();
 </script>
 </body>

@@ -98,7 +98,7 @@ async function ensureSession() {
 
 // Routing for tabs
 window.switchDashboardTab = function (tabId) {
-    const tabs = ['my-courses', 'completed', 'my-mentors', 'wishlist'];
+    const tabs = ['my-courses', 'completed', 'my-mentors', 'communications', 'wishlist'];
     tabs.forEach(tab => {
         const btn = document.getElementById('tab-' + tab);
         if (!btn) return;
@@ -123,6 +123,7 @@ window.switchDashboardTab = function (tabId) {
     if (tabId === 'my-courses') loadMyCourses();
     else if (tabId === 'my-mentors') loadMentors();
     else if (tabId === 'wishlist') loadWishlist();
+    else if (tabId === 'communications' && window.initStudentCommunications) window.initStudentCommunications();
 };
 
 async function initDashboard() {
@@ -212,6 +213,22 @@ async function loadMyCourses() {
     const coursesContent = document.getElementById('content-my-courses');
     if (coursesContent) coursesContent.removeAttribute('aria-busy');
 
+    if (error && !navigator.onLine) {
+        continueSection.classList.add('hidden');
+        newStudentSection.classList.add('hidden');
+        enrolledCoursesGrid.classList.add('hidden');
+        emptyState.classList.remove('hidden');
+        emptyState.innerHTML = `
+            <div class="mb-4">
+                <span class="material-symbols-outlined text-[4rem] text-slate-300">wifi_off</span>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2">No Internet Connection</h3>
+            <p class="text-slate-500 max-w-sm mx-auto mb-6">Connect to the internet to view your enrolled courses.</p>
+        `;
+        if (welcomeMsg) welcomeMsg.textContent = "Offline Mode";
+        return;
+    }
+
     if (!enrollments || enrollments.length === 0) {
         // Replace hero skeleton with hidden state
         continueSection.innerHTML = '';
@@ -224,7 +241,7 @@ async function loadMyCourses() {
         if (welcomeMsg) welcomeMsg.textContent = "Start your learning journey by exploring our beginner-friendly courses.";
         
         // Fetch and show beginner courses in new student section
-        await loadBeginnerCourses();
+        if (navigator.onLine) await loadBeginnerCourses();
     } else {
         continueSection.removeAttribute('aria-busy');
         newStudentSection.classList.add('hidden');
@@ -533,6 +550,19 @@ async function loadCourseWishlist() {
         .select('course_id')
         .eq('student_id', currentUserSession.user.id);
         
+    if (wErr && !navigator.onLine) {
+        wishlistContainer.innerHTML = '';
+        wishlistEmptyState.innerHTML = `
+            <div class="mb-4">
+                <span class="material-symbols-outlined text-[4rem] text-slate-300">wifi_off</span>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2">No Internet Connection</h3>
+            <p class="text-slate-500 max-w-sm mx-auto mb-6">Connect to the internet to view your wishlist.</p>
+        `;
+        wishlistContainer.appendChild(wishlistEmptyState);
+        return;
+    }
+
     if (!wishlistedIds || wishlistedIds.length === 0) {
         wishlistContainer.innerHTML = '';
         wishlistContainer.appendChild(wishlistEmptyState);

@@ -1,6 +1,21 @@
 import { supabase } from './supabaseClient.js';
 import { AuthService } from './authService.js';
 
+// ── File Validation Constants ───────────────────────────────────────────────
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024; // 10 MB
+const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/quicktime'];
+const MAX_LESSON_VIDEO_BYTES = 500 * 1024 * 1024; // 500 MB
+const MAX_COURSE_VIDEO_BYTES = 500 * 1024 * 1024; // 500 MB
+const ALLOWED_RESOURCE_TYPES = [
+    'application/pdf', 'application/zip', 'application/x-zip-compressed',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation', // pptx
+    'application/vnd.ms-powerpoint', // ppt
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // docx
+    'text/plain', 'text/csv'
+];
+const MAX_RESOURCE_BYTES = 50 * 1024 * 1024; // 50 MB
+
 export const CourseService = {
 
     /** Generate a slug from a title */
@@ -282,25 +297,33 @@ export const CourseService = {
 
     /**
      * Submit a draft or revision for admin review.
-     * Sets status to 'pending_review' — picked up by the admin review dashboard.
+     * SECURITY: Only the owning instructor can submit their course.
      */
     async submitForReview(courseId) {
+        const session = await AuthService.getSession();
+        if (!session) throw new Error('Unauthorized: No active session');
+
         const { error } = await supabase
             .from('courses')
             .update({ status: 'pending_review', version_status: 'pending_review' })
-            .eq('id', courseId);
+            .eq('id', courseId)
+            .eq('instructor_id', session.user.id); // SECURITY: ownership guard
         if (error) throw error;
     },
 
     /**
-     * Acknowledge a course rejection and return it to draft status
-     * for the instructor to fix issues and resubmit.
+     * Acknowledge a course rejection and return it to draft status.
+     * SECURITY: Only the owning instructor can ack their rejection.
      */
     async confirmRejection(courseId) {
+        const session = await AuthService.getSession();
+        if (!session) throw new Error('Unauthorized: No active session');
+
         const { error } = await supabase
             .from('courses')
-            .update({ status: 'draft', version_status: 'draft' }) // Reset both just in case
+            .update({ status: 'draft', version_status: 'draft' })
             .eq('id', courseId)
+            .eq('instructor_id', session.user.id) // SECURITY: ownership guard
             .eq('status', 'rejected'); // Safety guard
         if (error) throw error;
     },
@@ -620,7 +643,24 @@ export const CourseService = {
     },
 
     /** File Uploads */
-    async uploadFile(bucket, path, file) {
+    /**
+     * SECURITY: Validates file type and size before uploading.
+     * @param {string} bucket - Supabase storage bucket name
+     * @param {string} path - Target path within the bucket
+     * @param {File} file - File object to upload
+     * @param {string[]} allowedTypes - Allowed MIME types
+     * @param {number} maxBytes - Maximum allowed file size in bytes
+     */
+    async uploadFile(bucket, path, file, allowedTypes, maxBytes) {
+        // SECURITY: Validate file type and size if constraints are provided
+        if (allowedTypes && !allowedTypes.includes(file.type)) {
+            throw new Error(`Invalid file type "${file.type}". Allowed: ${allowedTypes.join(', ')}`);
+        }
+        if (maxBytes && file.size > maxBytes) {
+            const maxMB = (maxBytes / (1024 * 1024)).toFixed(0);
+            throw new Error(`File too large (${(file.size / 1024 / 1024).toFixed(1)} MB). Maximum allowed: ${maxMB} MB.`);
+        }
+
         const { data, error } = await supabase.storage.from(bucket).upload(path, file, { upsert: true });
         if (error) throw error;
 
@@ -630,7 +670,7 @@ export const CourseService = {
 
     async uploadCourseThumbnail(courseId, file) {
         const fileName = `${courseId ? courseId : 'new'}/thumb_${Date.now()}`;
-        return await this.uploadFile('course_thumbnails', fileName, file);
+        return await this.uploadFile('course_thumbnails', fileName, file, ALLOWED_IMAGE_TYPES, MAX_IMAGE_BYTES);
     },
 
     async uploadCourseVideo(courseId, file) {
@@ -647,7 +687,7 @@ export const CourseService = {
             throw new Error('Self-hosted video uploads are currently disabled. Please use a YouTube URL instead.');
         }
         const fileName = `${courseId ? courseId : 'new'}/video_${Date.now()}`;
-        return await this.uploadFile('intro_videos', fileName, file);
+        return await this.uploadFile('intro_videos', fileName, file, ALLOWED_VIDEO_TYPES, MAX_COURSE_VIDEO_BYTES);
     },
 
     async uploadLessonVideo(lessonId, file) {
@@ -661,7 +701,7 @@ export const CourseService = {
             throw new Error('Self-hosted video uploads are currently disabled. Please use a YouTube URL instead.');
         }
         const fileName = `lessons/${lessonId ? lessonId : 'new'}/video_${Date.now()}`;
-        const publicUrl = await this.uploadFile('course_videos', fileName, file);
+        const publicUrl = await this.uploadFile('course_videos', fileName, file, ALLOWED_VIDEO_TYPES, MAX_LESSON_VIDEO_BYTES);
 
         // Register in media assets
         await supabase.from('course_media_assets').insert([{
@@ -676,7 +716,7 @@ export const CourseService = {
 
     async uploadLessonResource(lessonId, file) {
         const fileName = `resources/${lessonId ? lessonId : 'new'}/${Date.now()}_${file.name}`;
-        return await this.uploadFile('course_resources', fileName, file);
+        return await this.uploadFile('course_resources', fileName, file, ALLOWED_RESOURCE_TYPES, MAX_RESOURCE_BYTES);
     },
 
 

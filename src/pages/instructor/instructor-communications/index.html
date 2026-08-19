@@ -1,206 +1,293 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Instructor Dashboard | Tacliimi Learn</title>
+<title>Communications | Tacliimi Learn</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <script>
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        primary: "#4F46E5",
-                        "brand-purple": "#7c3aed",
-                        "background-light": "#F9FAFB",
-                        "background-dark": "#111827",
-                    },
-                    fontFamily: {
-                        display: ["Inter", "sans-serif"],
-                    },
-                    borderRadius: {
-                        DEFAULT: "0.5rem",
-                    },
+    tailwind.config = {
+        darkMode: "class",
+        theme: {
+            extend: {
+                colors: {
+                    primary: "#4F46E5",
+                    "brand-purple": "#7c3aed",
+                    "background-light": "#F9FAFB",
+                    "background-dark": "#111827",
                 },
+                fontFamily: { display: ["Inter", "sans-serif"] },
             },
-        };
-    </script>
+        },
+    };
+</script>
 <style type="text/tailwindcss">
-        body { font-family: 'Inter', sans-serif; }
-        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
-        
-        /* Hide content until router loads it */
-        #instructor-content-area {
-            opacity: 1;
-            transition: opacity 0.2s ease-in-out;
-        }
-        #instructor-content-area.loading {
-            opacity: 0.5;
-            pointer-events: none;
-        }
-    </style>
+    body { font-family: 'Inter', sans-serif; }
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+
+    /* Scrollbar styling */
+    .custom-scroll::-webkit-scrollbar { width: 4px; }
+    .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
+    .dark .custom-scroll::-webkit-scrollbar-thumb { background: #334155; }
+
+    /* Conversation list item */
+    .convo-item {
+        @apply flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors border-b border-slate-100 dark:border-slate-800 relative;
+    }
+    .convo-item:hover { @apply bg-slate-50 dark:bg-slate-800/60; }
+    .convo-item.active { @apply bg-indigo-50 dark:bg-indigo-900/20 border-l-2 border-l-primary; }
+
+    /* Session divider */
+    .session-divider {
+        @apply flex items-center gap-3 my-4 px-2;
+    }
+    .session-divider .line {
+        @apply flex-1 h-px bg-slate-200 dark:bg-slate-700;
+    }
+    .session-divider .label {
+        @apply text-xs font-medium text-slate-400 dark:text-slate-500 bg-white dark:bg-slate-900 px-2 py-1 rounded-full border border-slate-200 dark:border-slate-700 whitespace-nowrap;
+    }
+
+    /* Message bubbles */
+    .msg-bubble-mentor {
+        @apply bg-primary text-white rounded-2xl rounded-br-sm px-4 py-2.5 max-w-[75%] shadow-sm whitespace-pre-wrap;
+        width: max-content;
+        overflow-wrap: anywhere;
+    }
+    .msg-bubble-student {
+        @apply bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 rounded-2xl rounded-bl-sm px-4 py-2.5 max-w-[75%] shadow-sm border border-slate-200 dark:border-slate-700 whitespace-pre-wrap;
+        width: max-content;
+        overflow-wrap: anywhere;
+    }
+
+    /* Avatar fallback */
+    .avatar-fallback {
+        @apply w-full h-full flex items-center justify-center text-white font-bold text-sm rounded-full;
+    }
+
+    /* Mobile: hide chat pane by default, show when student selected */
+    @media (max-width: 767px) {
+        #chat-pane { display: none; }
+        #chat-pane.mobile-open { display: flex; }
+        #conversation-list-panel { display: flex; }
+        #conversation-list-panel.mobile-hide { display: none; }
+    }
+</style>
 <script src="/src/services/globalProfile.js" type="module"></script>
-<script>
-        // Removed synchronous Auth check
-    </script>
 <script type="module">
-        import { AuthService } from '/src/services/authService.js';
-        
-        // If the URL contains an access token from an email link or OAuth, do not prematurely redirect
-        const isOAuthRedirect = window.location.hash.includes('access_token=');
-        
-        if (!isOAuthRedirect) {
-            AuthService.getSession().then(session => {
-                if (!session) window.location.href = '/src/pages/auth/login-select/index.html';
-            });
-        }
-    </script>
+    import { AuthService } from '/src/services/authService.js';
+    const isOAuthRedirect = window.location.hash.includes('access_token=');
+    if (!isOAuthRedirect) {
+        AuthService.getSession().then(session => {
+            if (!session) window.location.href = '/src/pages/auth/login-select/index.html';
+        });
+    }
+</script>
 </head>
-<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 transition-colors duration-200"><div class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[50] hidden lg:hidden" id="sidebar-overlay"></div>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 transition-colors duration-200">
+
+<!-- Sidebar Overlay (mobile) -->
+<div class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[50] hidden lg:hidden" id="sidebar-overlay"></div>
+
+<!-- Sidebar -->
 <aside class="fixed left-0 top-0 h-full w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex-col flex z-[60] -translate-x-full lg:translate-x-0" id="instructor-sidebar">
-<div class="p-6 border-b border-slate-100 dark:border-slate-800">
-<div class="flex items-center cursor-pointer" onclick="window.location.href='/index.html'">
-    <img src="/public/assets/images/IMG_7454.png" alt="Tacliimi Logo" class="h-14 w-auto object-contain">
-</div>
-</div>
-<nav class="flex-1 p-4 space-y-1" id="instructor-sidebar-nav">
-<a href="/src/pages/instructor/instructor-profile/index.html"
-   class="flex items-center gap-3 px-4 py-3 mb-2 border-b border-slate-100 dark:border-slate-800 cursor-pointer lg:hidden">
-    <div class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-primary/20 overflow-hidden flex-shrink-0" data-role="profile-image">
-        <span class="material-symbols-outlined text-slate-400 w-full h-full flex items-center justify-center">person</span>
+    <div class="p-6 border-b border-slate-100 dark:border-slate-800">
+        <div class="flex items-center cursor-pointer" onclick="window.location.href='/index.html'">
+            <img src="/public/assets/images/IMG_7454.png" alt="Tacliimi Logo" class="h-14 w-auto object-contain">
+        </div>
     </div>
-    <div class="flex-1 overflow-hidden">
-        <p class="font-bold text-slate-900 dark:text-white truncate user-display-name">Instructor</p>
-        <p class="text-xs text-slate-500 dark:text-slate-400 truncate">View and edit profile</p>
-    </div>
-    <span class="material-symbols-outlined text-slate-400">chevron_right</span>
-</a>
-<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-dashboard/">
-<span class="material-symbols-outlined">dashboard</span>
-                Dashboard
-            </a>
-<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-courses/">
-<span class="material-symbols-outlined">auto_stories</span>
-                My Courses
-            </a>
-<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-mentorship/">
-<span class="material-symbols-outlined">groups</span>
-                Mentorship
-            </a>
-<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-analytics/">
-<span class="material-symbols-outlined">analytics</span>
-                Analytics
-            </a>
-<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-earnings/">
-<span class="material-symbols-outlined">payments</span>
-                Earnings
-            </a>
-<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-communications/">
-<span class="material-symbols-outlined">message</span>
-                Communications
-            </a>
-<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-profile/index.html">
-<span class="material-symbols-outlined">settings</span>
-                Settings
-            </a>
-</nav>
+    <nav class="flex-1 p-4 space-y-1" id="instructor-sidebar-nav">
+        <a href="/src/pages/instructor/instructor-profile/index.html"
+           class="flex items-center gap-3 px-4 py-3 mb-2 border-b border-slate-100 dark:border-slate-800 cursor-pointer lg:hidden">
+            <div class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-primary/20 overflow-hidden flex-shrink-0" data-role="profile-image">
+                <span class="material-symbols-outlined text-slate-400 w-full h-full flex items-center justify-center">person</span>
+            </div>
+            <div class="flex-1 overflow-hidden">
+                <p class="font-bold text-slate-900 dark:text-white truncate user-display-name">Instructor</p>
+                <p class="text-xs text-slate-500 dark:text-slate-400 truncate">View and edit profile</p>
+            </div>
+            <span class="material-symbols-outlined text-slate-400">chevron_right</span>
+        </a>
+        <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-dashboard/">
+            <span class="material-symbols-outlined">dashboard</span>Dashboard
+        </a>
+        <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-courses/">
+            <span class="material-symbols-outlined">auto_stories</span>My Courses
+        </a>
+        <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-mentorship/">
+            <span class="material-symbols-outlined">groups</span>Mentorship
+        </a>
+        <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-analytics/">
+            <span class="material-symbols-outlined">analytics</span>Analytics
+        </a>
+        <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-earnings/">
+            <span class="material-symbols-outlined">payments</span>Earnings
+        </a>
+        <a class="nav-link flex items-center gap-3 px-4 py-3 bg-indigo-50 dark:bg-indigo-900/20 text-primary rounded-lg transition-colors font-medium" href="/src/pages/instructor/instructor-communications/">
+            <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">message</span>Communications
+        </a>
+        <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-profile/index.html">
+            <span class="material-symbols-outlined">settings</span>Settings
+        </a>
+    </nav>
 </aside>
+
+<!-- Main layout -->
 <div class="lg:ml-64 min-h-screen flex flex-col">
-<header class="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-8 sticky top-0 z-10 shrink-0 w-full">
-<div class="flex items-center"><button aria-label="Open navigation menu" class="lg:hidden p-2.5 text-slate-500 bg-slate-100 dark:bg-slate-800 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors mr-3" id="instructor-mobile-menu-btn"><span class="material-symbols-outlined">menu_open</span></button><h1 class="text-lg font-semibold dark:text-white hidden lg:block" id="header-page-title">Communications</h1></div>
+    <!-- Header -->
+    <header class="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-6 sticky top-0 z-10 shrink-0 w-full">
+        <div class="flex items-center">
+            <button aria-label="Open navigation menu" class="lg:hidden p-2.5 text-slate-500 bg-slate-100 dark:bg-slate-800 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors mr-3" id="instructor-mobile-menu-btn">
+                <span class="material-symbols-outlined">menu_open</span>
+            </button>
+            <h1 class="text-lg font-semibold dark:text-white hidden lg:block">Communications</h1>
+        </div>
+        <a href="/index.html" class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 lg:hidden flex items-center gap-2 cursor-pointer transition-opacity hover:opacity-80">
+            <img src="/public/assets/images/IMG_7448.png" alt="Tacliimi Logo" class="h-10 w-auto object-contain drop-shadow-sm">
+        </a>
+        <div class="flex items-center gap-4 hidden lg:flex">
+            <button class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" onclick="document.documentElement.classList.toggle('dark')">
+                <span class="material-symbols-outlined">dark_mode</span>
+            </button>
+            <div class="flex items-center gap-3 pl-4 border-l border-slate-200 dark:border-slate-800 cursor-pointer hover:opacity-80 transition-opacity" id="global-profile-header-container" onclick="window.location.href='/src/pages/instructor/instructor-profile/index.html'">
+                <div class="text-right hidden sm:block">
+                    <p class="text-sm font-medium dark:text-white" id="header-mentor-name">Instructor account</p>
+                </div>
+                <div class="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-slate-100 text-slate-400 dark:bg-slate-800 border-2 border-primary/20 hover:border-primary transition-colors" id="header-mentor-avatar-wrap">
+                    <span class="material-symbols-outlined text-2xl">account_circle</span>
+                </div>
+            </div>
+        </div>
+    </header>
 
+    <!-- Main content: Communications layout -->
+    <main class="flex-1 flex flex-col overflow-hidden" id="instructor-content-area">
+        <div class="px-4 md:px-8 pt-4 pb-2 flex items-center justify-between shrink-0">
+            <h2 class="text-xl md:text-2xl font-bold dark:text-white">Instructor Communications Center</h2>
+        </div>
 
-<a href="/index.html" class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 lg:hidden flex items-center gap-2 cursor-pointer transition-opacity hover:opacity-80">
-    <img src="/public/assets/images/IMG_7448.png" alt="Tacliimi Logo" class="h-10 w-auto object-contain drop-shadow-sm">
-</a>
-<div class="flex items-center gap-4 hidden lg:flex">
-<button class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" onclick="document.documentElement.classList.toggle('dark')">
-<span class="material-symbols-outlined">dark_mode</span>
-</button>
-<div class="flex items-center gap-3 pl-4 border-l border-slate-200 dark:border-slate-800 cursor-pointer hover:opacity-80 transition-opacity" id="global-profile-header-container" onclick="window.location.href='/src/pages/instructor/instructor-profile/index.html'">
-<div class="text-right hidden sm:block">
-<p class="text-sm font-medium dark:text-white">Instructor account</p>
-</div>
-<div class="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-slate-100 text-slate-400 dark:bg-slate-800 border-2 border-primary/20 hover:border-primary transition-colors">
-<span class="material-symbols-outlined text-2xl">account_circle</span>
-</div>
-</div>
-</div>
-</header>
-<!-- DYNAMIC CONTENT AREA -->
-<main class="flex-1 bg-background-light dark:bg-background-dark pb-20" id="instructor-content-area">
-<div class="px-8 pb-8 pt-2 flex-1 flex flex-col overflow-hidden max-w-7xl mx-auto w-full">
-<div class="flex items-center justify-between mb-6">
-<h2 class="text-2xl font-bold dark:text-white">Instructor Communications Center</h2>
-<button class="flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary hover:bg-primary/20 rounded-lg font-medium text-sm transition-colors">
-<span class="material-symbols-outlined text-sm">edit_square</span>
-                    New Message
-                </button>
-</div>
-<div class="flex-1 flex bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm min-h-[600px]">
-<div class="w-80 border-r border-slate-200 dark:border-slate-800 flex flex-col">
-<div class="p-4 border-b border-slate-100 dark:border-slate-800">
-<div class="relative">
-<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
-<input class="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm focus:ring-1 focus:ring-primary transition-all" placeholder="Search conversations..." type="text"/>
-</div>
-</div>
-<div class="flex-1 overflow-y-auto p-4 flex flex-col items-center justify-center text-center">
-<div class="w-12 h-12 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center mb-3">
-<span class="material-symbols-outlined text-slate-300 dark:text-slate-600">inbox</span>
-</div>
-<p class="text-sm font-medium text-slate-500">No conversations found</p>
-<p class="text-xs text-slate-400 mt-1">When students message you, they'll appear here.</p>
-</div>
-</div>
-<div class="flex-1 flex flex-col items-center justify-center p-12 bg-slate-50/50 dark:bg-slate-900/50">
-<div class="max-w-md w-full flex flex-col items-center text-center">
-<div class="relative mb-8">
-<div class="w-32 h-32 bg-indigo-50 dark:bg-indigo-900/20 rounded-full flex items-center justify-center">
-<span class="material-symbols-outlined text-primary text-6xl">forum</span>
-</div>
-<div class="absolute -bottom-2 -right-2 w-12 h-12 bg-white dark:bg-slate-800 rounded-full shadow-lg flex items-center justify-center">
-<span class="material-symbols-outlined text-emerald-500">chat_bubble</span>
-</div>
-</div>
-<h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-4">Connect with your students</h3>
-<p class="text-slate-500 leading-relaxed mb-8">
-                            Once students enroll in your courses and reach out, their messages will appear here. Build engagement and provide support directly through Tacliimi messaging.
-                        </p>
-<div class="flex items-center gap-4 text-sm text-slate-400">
-<div class="flex items-center gap-1.5">
-<span class="material-symbols-outlined text-base">verified_user</span>
-                                Encrypted
+        <!-- Two-panel layout -->
+        <div class="flex flex-1 mx-4 md:mx-8 mb-6 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm min-h-0" style="height: calc(100vh - 160px);">
+
+            <!-- LEFT PANEL: Conversation list -->
+            <div class="w-full md:w-80 lg:w-96 border-r border-slate-200 dark:border-slate-800 flex flex-col shrink-0" id="conversation-list-panel">
+                <!-- Search -->
+                <div class="p-4 border-b border-slate-100 dark:border-slate-800 shrink-0">
+                    <div class="relative">
+                        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
+                        <input id="search-input" class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none" placeholder="Search students..." type="text"/>
+                    </div>
+                </div>
+
+                <!-- List area -->
+                <div class="flex-1 overflow-y-auto custom-scroll" id="conversation-list">
+                    <!-- Loading state -->
+                    <div id="list-loading" class="flex flex-col items-center justify-center py-16 gap-3">
+                        <div class="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                        <p class="text-sm text-slate-400">Loading conversations...</p>
+                    </div>
+                    <!-- Empty state (hidden by default) -->
+                    <div id="list-empty" class="hidden flex flex-col items-center justify-center py-16 px-6 text-center gap-3">
+                        <div class="w-14 h-14 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                            <span class="material-symbols-outlined text-slate-400 dark:text-slate-600 text-2xl">inbox</span>
+                        </div>
+                        <p class="text-sm font-medium text-slate-500">No conversations yet</p>
+                        <p class="text-xs text-slate-400">Students who book sessions will appear here.</p>
+                    </div>
+                    <!-- Items injected by JS -->
+                    <div id="list-items"></div>
+                </div>
+            </div>
+
+            <!-- RIGHT PANEL: Chat pane -->
+            <div class="flex-1 flex flex-col min-w-0" id="chat-pane">
+
+                <!-- Placeholder when no student selected -->
+                <div id="chat-placeholder" class="flex-1 flex flex-col items-center justify-center p-12 bg-slate-50/50 dark:bg-slate-900/50">
+                    <div class="max-w-sm w-full flex flex-col items-center text-center">
+                        <div class="relative mb-8">
+                            <div class="w-28 h-28 bg-indigo-50 dark:bg-indigo-900/20 rounded-full flex items-center justify-center">
+                                <span class="material-symbols-outlined text-primary" style="font-size:56px;font-variation-settings:'FILL' 0">forum</span>
                             </div>
-<div class="w-1 h-1 bg-slate-300 rounded-full"></div>
-<div class="flex items-center gap-1.5">
-<span class="material-symbols-outlined text-base">bolt</span>
-                                Real-time
+                            <div class="absolute -bottom-2 -right-2 w-10 h-10 bg-white dark:bg-slate-800 rounded-full shadow-lg flex items-center justify-center border border-slate-200 dark:border-slate-700">
+                                <span class="material-symbols-outlined text-emerald-500 text-lg">chat_bubble</span>
                             </div>
+                        </div>
+                        <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-3">Select a conversation</h3>
+                        <p class="text-slate-500 text-sm leading-relaxed">Choose a student from the left panel to view and continue your conversation across all sessions.</p>
+                        <div class="flex items-center gap-4 mt-6 text-xs text-slate-400">
+                            <div class="flex items-center gap-1.5"><span class="material-symbols-outlined text-sm">verified_user</span>Encrypted</div>
+                            <div class="w-1 h-1 bg-slate-300 rounded-full"></div>
+                            <div class="flex items-center gap-1.5"><span class="material-symbols-outlined text-sm">bolt</span>Real-time</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Active chat view (hidden until student selected) -->
+                <div id="chat-active" class="hidden flex-1 flex flex-col min-h-0">
+                    <!-- Chat header -->
+                    <div class="h-16 px-5 flex items-center gap-3 border-b border-slate-200 dark:border-slate-800 shrink-0 bg-white dark:bg-slate-900">
+                        <!-- Mobile back button -->
+                        <button id="btn-back-to-list" class="md:hidden p-1.5 text-slate-500 hover:text-primary transition-colors rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
+                            <span class="material-symbols-outlined">arrow_back</span>
+                        </button>
+                        <!-- Avatar -->
+                        <div class="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-indigo-100 dark:bg-indigo-900/40" id="chat-header-avatar-wrap">
+                            <span class="material-symbols-outlined w-full h-full flex items-center justify-center text-indigo-400">person</span>
+                        </div>
+                        <!-- Name + sessions count -->
+                        <div class="flex-1 min-w-0">
+                            <p class="font-semibold text-slate-900 dark:text-white truncate" id="chat-header-name">Student Name</p>
+                            <p class="text-xs text-slate-400" id="chat-header-meta">Loading sessions...</p>
+                        </div>
+                    </div>
+
+                    <!-- Messages area -->
+                    <div class="flex-1 overflow-y-auto custom-scroll p-5 space-y-1 bg-slate-50 dark:bg-slate-950/30" id="messages-area">
+                        <!-- Loading -->
+                        <div id="msgs-loading" class="flex items-center justify-center py-16">
+                            <div class="w-7 h-7 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                        </div>
+                        <!-- Empty thread state -->
+                        <div id="msgs-empty" class="hidden flex flex-col items-center justify-center py-16 text-center gap-3">
+                            <span class="material-symbols-outlined text-slate-300 dark:text-slate-600 text-5xl">chat</span>
+                            <p class="text-sm text-slate-400">No messages yet in any session.<br>Start the conversation below!</p>
+                        </div>
+                        <!-- Message items injected by JS -->
+                        <div id="messages-list"></div>
+                    </div>
+
+                    <!-- Message input -->
+                    <div class="shrink-0 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+                        <div class="flex items-end gap-3">
+                            <textarea
+                                id="msg-input"
+                                rows="1"
+                                class="flex-1 resize-none bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all leading-relaxed"
+                                placeholder="Type a message..."
+                                style="max-height: 120px; min-height: 44px;"
+                            ></textarea>
+                            <button id="btn-send" class="flex-shrink-0 w-11 h-11 bg-primary hover:bg-indigo-600 text-white rounded-xl flex items-center justify-center transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                                <span class="material-symbols-outlined text-base" style="font-variation-settings:'FILL' 1">send</span>
+                            </button>
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-2 pl-1" id="send-session-info">Messages are sent to the most recent active session.</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
 </div>
-</div>
-</div>
-</div>
-<footer class="mt-8 py-6 border-t border-slate-200 dark:border-slate-800 text-center">
-<p class="text-[10px] text-slate-400 font-mono uppercase tracking-widest">Instructor Communication Hub Â© Tacliimi Learn</p>
-<div class="flex items-center justify-center gap-4 mt-2 text-xs text-slate-500">
-<span>Network Status: <span class="text-emerald-500 font-medium uppercase">Secured</span></span>
-<span class="text-slate-300 dark:text-slate-700">|</span>
-<a class="text-primary hover:underline" href="#">Message Policy</a>
-<span class="text-slate-300 dark:text-slate-700">|</span>
-<a class="text-primary hover:underline" href="#">Direct Support</a>
-</div>
-</footer>
-</div>
-</main>
-</div>
-<!-- Router Logic -->
+
+<!-- Router / sidebar script -->
 <script src="/src/utils/js/instructor-app.js" type="module"></script>
 <script type="module" src="/src/pages/instructor/instructor-mentorship/mentorship.js"></script>
+
+<!-- Mobile sidebar toggle -->
 <script>
 (function() {
     var btn = document.getElementById('instructor-mobile-menu-btn');
@@ -216,21 +303,398 @@
         overlay.classList.add('hidden');
     });
 })();
-</script>
-<script>
-// Defer sidebar transition to avoid slide-in animation on desktop page load
 window.addEventListener('load', function() {
     var sidebar = document.getElementById('instructor-sidebar');
-    if (sidebar) {
-        // Only enable transition on mobile (below lg=1024px)
-        if (window.innerWidth < 1024) {
-            sidebar.classList.add('transition-transform', 'duration-300');
-        }
-        // No transition on desktop � already at lg:translate-x-0, nothing to animate
+    if (sidebar && window.innerWidth < 1024) {
+        sidebar.classList.add('transition-transform', 'duration-300');
     }
 });
 </script>
+
+<!-- Communications logic -->
+<script type="module">
+import { AuthService } from '/src/services/authService.js';
+import { getConversationList, getStudentThread, sendMessage, subscribeToThread } from '/src/services/communicationsService.js';
+
+// ─── State ───────────────────────────────────────────────────────────────────
+let currentMentorId = null;
+let currentStudentId = null;
+let currentLatestSessionId = null;
+let activeChannel = null;
+let allConversations = []; // full list for search filtering
+
+// ─── DOM refs ─────────────────────────────────────────────────────────────────
+const listLoading   = document.getElementById('list-loading');
+const listEmpty     = document.getElementById('list-empty');
+const listItems     = document.getElementById('list-items');
+const searchInput   = document.getElementById('search-input');
+
+const chatPlaceholder = document.getElementById('chat-placeholder');
+const chatActive      = document.getElementById('chat-active');
+const chatHeaderName  = document.getElementById('chat-header-name');
+const chatHeaderMeta  = document.getElementById('chat-header-meta');
+const chatHeaderAvWrap = document.getElementById('chat-header-avatar-wrap');
+
+const msgsLoading  = document.getElementById('msgs-loading');
+const msgsEmpty    = document.getElementById('msgs-empty');
+const messagesList = document.getElementById('messages-list');
+const msgInput     = document.getElementById('msg-input');
+const btnSend      = document.getElementById('btn-send');
+const sendSessionInfo = document.getElementById('send-session-info');
+const btnBackToList = document.getElementById('btn-back-to-list');
+const convListPanel = document.getElementById('conversation-list-panel');
+const chatPane      = document.getElementById('chat-pane');
+
+// ─── Utils ────────────────────────────────────────────────────────────────────
+function getInitials(name) {
+    if (!name) return '?';
+    return name.split(' ').map(p => p[0]).join('').substring(0, 2).toUpperCase();
+}
+
+const gradients = [
+    'from-indigo-400 to-purple-500',
+    'from-blue-400 to-cyan-500',
+    'from-emerald-400 to-teal-500',
+    'from-rose-400 to-pink-500',
+    'from-amber-400 to-orange-500',
+];
+function getGradient(name) {
+    let h = 0;
+    for (let i = 0; i < (name || '').length; i++) h = (h * 31 + name.charCodeAt(i)) & 0xfffffff;
+    return gradients[h % gradients.length];
+}
+
+function buildAvatarHTML(avatarUrl, name, sizeClass = 'w-10 h-10') {
+    if (avatarUrl) {
+        return `<img src="${avatarUrl}" alt="${name}" class="${sizeClass} rounded-full object-cover" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                <div class="${sizeClass} rounded-full bg-gradient-to-br ${getGradient(name)} items-center justify-center text-white font-bold text-sm hidden">
+                    ${getInitials(name)}
+                </div>`;
+    }
+    return `<div class="${sizeClass} rounded-full bg-gradient-to-br ${getGradient(name)} flex items-center justify-center text-white font-bold text-sm">
+                ${getInitials(name)}
+            </div>`;
+}
+
+function relativeTime(dateStr) {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    const now = new Date();
+    const diff = Math.floor((now - d) / 1000);
+    if (diff < 60) return 'just now';
+    if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+    if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+    if (diff < 604800) return Math.floor(diff / 86400) + 'd ago';
+    return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+}
+
+function formatMsgTime(dateStr) {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    return d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+}
+
+function formatSessionDate(dateStr) {
+    if (!dateStr) return '';
+    return new Date(dateStr).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+// ─── Render conversation list ──────────────────────────────────────────────────
+function renderConversationList(conversations) {
+    listLoading.classList.add('hidden');
+
+    if (!conversations || conversations.length === 0) {
+        listEmpty.classList.remove('hidden');
+        listItems.innerHTML = '';
+        return;
+    }
+
+    listEmpty.classList.add('hidden');
+    listItems.innerHTML = conversations.map(conv => {
+        const lastMsgPreview = conv.last_message
+            ? (conv.last_message.length > 45 ? conv.last_message.substring(0, 45) + '…' : conv.last_message)
+            : '<span class="italic text-slate-400">No messages yet</span>';
+
+        const timeStr = relativeTime(conv.last_message_at);
+        const sessionBadge = conv.session_count > 1
+            ? `<span class="ml-auto flex-shrink-0 text-[10px] font-semibold bg-indigo-100 dark:bg-indigo-900/40 text-primary px-1.5 py-0.5 rounded-full">${conv.session_count} sessions</span>`
+            : '';
+
+        return `
+        <div class="convo-item" data-student-id="${conv.student_id}" data-student-name="${conv.student_name}" data-avatar="${conv.avatar_url || ''}">
+            <div class="flex-shrink-0 w-11 h-11 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800 relative">
+                ${buildAvatarHTML(conv.avatar_url, conv.student_name, 'w-11 h-11')}
+            </div>
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-1">
+                    <span class="font-medium text-slate-900 dark:text-white text-sm truncate flex-1">${conv.student_name}</span>
+                    ${sessionBadge}
+                    ${timeStr ? `<span class="text-[10px] text-slate-400 flex-shrink-0 ml-1">${timeStr}</span>` : ''}
+                </div>
+                <p class="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">${lastMsgPreview}</p>
+            </div>
+        </div>`;
+    }).join('');
+
+    // Attach click handlers
+    listItems.querySelectorAll('.convo-item').forEach(el => {
+        el.addEventListener('click', () => {
+            const sid = el.dataset.studentId;
+            const sname = el.dataset.studentName;
+            const savatar = el.dataset.avatar;
+            openStudentThread(sid, sname, savatar);
+
+            // Active state
+            listItems.querySelectorAll('.convo-item').forEach(i => i.classList.remove('active'));
+            el.classList.add('active');
+        });
+    });
+}
+
+// ─── Open thread ──────────────────────────────────────────────────────────────
+async function openStudentThread(studentId, studentName, avatarUrl) {
+    currentStudentId = studentId;
+    window._currentStudentName = studentName || '?';
+    window._currentStudentAvatarUrl = avatarUrl || '';
+    window._instructorAvatarUrl = '';
+    window._instructorName = '';
+    // Try to grab instructor's own avatar from the top navbar
+    const navImg = document.querySelector('.nav-avatar img, header img[alt], #mentor-nav-avatar img');
+    if (navImg) window._instructorAvatarUrl = navImg.src;
+    const navName = document.querySelector('.nav-user-name, .user-display-name, #mentor-nav-name');
+    if (navName) window._instructorName = navName.textContent.trim();
+
+    // Mobile: hide list, show chat
+    convListPanel.classList.add('mobile-hide');
+    chatPane.classList.add('mobile-open');
+
+    // Show active chat panel
+    chatPlaceholder.classList.add('hidden');
+    chatActive.classList.remove('hidden');
+    chatActive.classList.add('flex');
+
+    // Header
+    chatHeaderName.textContent = studentName;
+    chatHeaderMeta.textContent = 'Loading sessions…';
+    chatHeaderAvWrap.innerHTML = buildAvatarHTML(avatarUrl, studentName, 'w-10 h-10');
+
+    // Reset messages
+    messagesList.innerHTML = '';
+    msgsLoading.classList.remove('hidden');
+    msgsEmpty.classList.add('hidden');
+    btnSend.disabled = true;
+
+    // Unsubscribe previous realtime channel
+    if (activeChannel) {
+        activeChannel.unsubscribe();
+        activeChannel = null;
+    }
+
+    try {
+        const { items, latestActiveSessionId, sessions } = await getStudentThread(currentMentorId, studentId);
+        currentLatestSessionId = latestActiveSessionId;
+
+        msgsLoading.classList.add('hidden');
+
+        // Header meta
+        const sessionCount = sessions.length;
+        chatHeaderMeta.textContent = sessionCount === 1 ? '1 session' : `${sessionCount} sessions total`;
+
+        // Render items
+        const msgItems = items.filter(i => i.type === 'message');
+        if (msgItems.length === 0 && items.length <= sessions.length) {
+            msgsEmpty.classList.remove('hidden');
+        }
+
+        renderThreadItems(items);
+
+        // Enable input if there's an active session
+        if (currentLatestSessionId) {
+            btnSend.disabled = false;
+            sendSessionInfo.textContent = 'Sending to most recent active session';
+        } else {
+            sendSessionInfo.textContent = 'No active session — cannot send messages';
+        }
+
+        // Scroll to bottom
+        scrollToBottom();
+
+        // Subscribe to realtime
+        if (currentLatestSessionId) {
+            const sessionIds = sessions.map(s => s.id);
+            activeChannel = subscribeToThread(sessionIds, (newMsg) => {
+                // Don't duplicate if we sent it (sender_role = mentor)
+                appendRealtimeMessage(newMsg);
+                scrollToBottom();
+            });
+        }
+    } catch (err) {
+        console.error('Error loading thread:', err);
+        msgsLoading.classList.add('hidden');
+        messagesList.innerHTML = `<div class="text-center py-8 text-sm text-red-400">Failed to load messages. Please refresh.</div>`;
+    }
+}
+
+// ─── Render thread items (dividers + messages) ─────────────────────────────────
+function renderThreadItems(items) {
+    messagesList.innerHTML = '';
+
+    for (const item of items) {
+        if (item.type === 'session_divider') {
+            const { session } = item;
+            const statusColor = session.status === 'completed' ? 'text-emerald-500'
+                : session.status === 'cancelled' ? 'text-red-400'
+                : session.status === 'upcoming' || session.status === 'confirmed' ? 'text-blue-500'
+                : 'text-slate-400';
+
+            const divider = document.createElement('div');
+            divider.className = 'session-divider';
+            divider.innerHTML = `
+                <div class="line"></div>
+                <div class="label">
+                    <span class="font-semibold text-slate-500 dark:text-slate-400">#${session.serial_id}</span>
+                    ${session.topic ? `· ${session.topic}` : ''}
+                    <span class="mx-1">·</span>
+                    <span class="${statusColor} font-medium capitalize">${session.status}</span>
+                    <span class="mx-1">·</span>
+                    ${formatSessionDate(session.scheduled_at)}
+                </div>
+                <div class="line"></div>`;
+            messagesList.appendChild(divider);
+        } else if (item.type === 'message') {
+            appendMessageEl(item.message);
+        }
+    }
+}
+
+function appendMessageEl(msg) {
+    const isMentor = msg.sender_role === 'mentor';
+    const wrapper = document.createElement('div');
+    wrapper.className = `flex ${isMentor ? 'justify-end' : 'justify-start'} mb-3 gap-2`;
+    wrapper.dataset.msgId = msg.id;
+
+    // Instructor (mentor) avatar — right side
+    const instrSrc = window._instructorAvatarUrl || '';
+    const instrInitials = (window._instructorName || 'M').split(' ').map(p=>p[0]).join('').substring(0,2).toUpperCase();
+    const instructorAvatarHtml = instrSrc
+        ? `<img src="${instrSrc}" class="w-7 h-7 rounded-full object-cover flex-shrink-0">`
+        : `<div class="w-7 h-7 rounded-full bg-primary flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">${instrInitials}</div>`;
+
+    // Student avatar — left side
+    const studSrc = window._currentStudentAvatarUrl || '';
+    const studInitials = (window._currentStudentName || '?').split(' ').map(p=>p[0]).join('').substring(0,2).toUpperCase();
+    const studentAvatarHtml = studSrc
+        ? `<img src="${studSrc}" class="w-7 h-7 rounded-full object-cover flex-shrink-0">`
+        : `<div class="w-7 h-7 rounded-full bg-slate-300 flex items-center justify-center text-slate-700 text-[10px] font-bold flex-shrink-0">${studInitials}</div>`;
+
+    wrapper.innerHTML = `
+        ${!isMentor ? studentAvatarHtml : ''}
+        <div class="${isMentor ? 'items-end' : 'items-start'} flex flex-col gap-1" style="max-width:75%">
+            <div class="${isMentor ? 'msg-bubble-mentor' : 'msg-bubble-student'}" style="display:inline-block; white-space:pre-wrap; overflow-wrap:anywhere;">
+                ${escapeHtml(msg.message_text)}
+            </div>
+            <span class="text-[10px] text-slate-400 px-1">${formatMsgTime(msg.created_at)}</span>
+        </div>
+        ${isMentor ? instructorAvatarHtml : ''}`;
+
+    messagesList.appendChild(wrapper);
+}
+
+function appendRealtimeMessage(msg) {
+    // Avoid duplicating if already in list (sent by self)
+    if (messagesList.querySelector(`[data-msg-id="${msg.id}"]`)) return;
+    appendMessageEl(msg);
+}
+
+function scrollToBottom() {
+    const area = document.getElementById('messages-area');
+    if (area) area.scrollTop = area.scrollHeight;
+}
+
+function escapeHtml(text) {
+    return (text || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+}
+
+// ─── Send message ─────────────────────────────────────────────────────────────
+async function handleSend() {
+    const text = msgInput.value.trim();
+    if (!text || !currentLatestSessionId || !currentMentorId) return;
+
+    btnSend.disabled = true;
+    msgInput.value = '';
+    msgInput.style.height = '44px';
+
+    try {
+        const msg = await sendMessage(currentLatestSessionId, currentMentorId, text);
+        // Append immediately (realtime may also fire, appendRealtimeMessage deduplicates)
+        appendMessageEl(msg);
+        scrollToBottom();
+
+        // Update last message in sidebar
+        const activeItem = listItems.querySelector(`.convo-item[data-student-id="${currentStudentId}"]`);
+        if (activeItem) {
+            const preview = activeItem.querySelector('p');
+            if (preview) preview.textContent = text.length > 45 ? text.substring(0, 45) + '…' : text;
+        }
+    } catch (err) {
+        console.error('Send failed:', err);
+        msgInput.value = text; // restore
+        alert('Failed to send message. Please try again.');
+    } finally {
+        btnSend.disabled = false;
+        msgInput.focus();
+    }
+}
+
+// ─── Search ────────────────────────────────────────────────────────────────────
+function handleSearch(query) {
+    const q = query.toLowerCase().trim();
+    const filtered = q ? allConversations.filter(c => c.student_name.toLowerCase().includes(q)) : allConversations;
+    renderConversationList(filtered);
+}
+
+// ─── Auto-resize textarea ──────────────────────────────────────────────────────
+msgInput.addEventListener('input', function() {
+    this.style.height = '44px';
+    this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+    btnSend.disabled = !this.value.trim() || !currentLatestSessionId;
+});
+
+msgInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        handleSend();
+    }
+});
+
+btnSend.addEventListener('click', handleSend);
+searchInput.addEventListener('input', e => handleSearch(e.target.value));
+
+// Mobile back button
+btnBackToList.addEventListener('click', () => {
+    convListPanel.classList.remove('mobile-hide');
+    chatPane.classList.remove('mobile-open');
+    chatPane.style.display = '';
+});
+
+// ─── Init ──────────────────────────────────────────────────────────────────────
+async function init() {
+    try {
+        const session = await AuthService.getSession();
+        if (!session) return;
+        currentMentorId = session.user.id;
+
+        // Load conversations
+        allConversations = await getConversationList(currentMentorId);
+        renderConversationList(allConversations);
+    } catch (err) {
+        console.error('Init error:', err);
+        listLoading.innerHTML = `<div class="text-center py-8 text-sm text-red-400">Failed to load. Please refresh.</div>`;
+    }
+}
+
+init();
+</script>
+
 </body>
 </html>
-
-

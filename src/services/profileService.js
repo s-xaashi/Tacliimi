@@ -1,5 +1,12 @@
 import { supabase } from './supabaseClient.js';
+import { AuthService } from './authService.js';
 import { PayoutService } from './payoutService.js';
+
+// File validation constants
+const ALLOWED_AVATAR_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const MAX_AVATAR_BYTES = 5 * 1024 * 1024; // 5 MB
+const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm'];
+const MAX_VIDEO_BYTES = 200 * 1024 * 1024; // 200 MB
 
 export const ProfileService = {
     /**
@@ -68,9 +75,13 @@ export const ProfileService = {
     },
 
     /**
-     * Updates the main instructor profiles table
+     * Updates the main instructor profiles table.
+     * SECURITY: userId is sourced from the authenticated session — not from caller.
      */
-    async updatePersonalInfo(userId, profileData) {
+    async updatePersonalInfo(profileData) {
+        const session = await AuthService.getSession();
+        if (!session) throw new Error('Unauthorized: No active session');
+
         const { data, error } = await supabase
             .from('profiles')
             .update({
@@ -82,7 +93,7 @@ export const ProfileService = {
                 city: profileData.city,
                 updated_at: new Date()
             })
-            .eq('id', userId)
+            .eq('id', session.user.id)
             .select()
             .maybeSingle();
 
@@ -91,9 +102,13 @@ export const ProfileService = {
     },
 
     /**
-     * Upserts teaching profile data
+     * Upserts teaching profile data.
+     * SECURITY: userId is sourced from the authenticated session — not from caller.
      */
-    async saveTeachingProfile(userId, teachingData, expertiseList) {
+    async saveTeachingProfile(teachingData, expertiseList) {
+        const session = await AuthService.getSession();
+        if (!session) throw new Error('Unauthorized: No active session');
+        const userId = session.user.id;
         // 1. Save Teaching Profile row
         const { error: teachingErr } = await supabase
             .from('teaching_profiles')
@@ -190,13 +205,17 @@ export const ProfileService = {
     },
 
     /**
-     * Mark onboarding as complete to drop dashboard locks
+     * Mark onboarding as complete to drop dashboard locks.
+     * SECURITY: userId is sourced from the authenticated session — not from caller.
      */
-    async markProfileCompleted(userId) {
+    async markProfileCompleted() {
+        const session = await AuthService.getSession();
+        if (!session) throw new Error('Unauthorized: No active session');
+
         const { data, error } = await supabase
             .from('profiles')
             .update({ profile_completed: true, updated_at: new Date() })
-            .eq('id', userId)
+            .eq('id', session.user.id)
             .select()
             .maybeSingle();
 
@@ -205,11 +224,23 @@ export const ProfileService = {
     },
 
     /**
-     * Upload Avatar to Storage and update Profile
+     * Upload Avatar to Storage and update Profile.
+     * SECURITY: userId from session. File type and size validated before upload.
      */
-    async uploadAvatar(userId, fileObject) {
-        // FileObject should be a File/Blob, not base64
-        const fileExt = fileObject.name.split('.').pop();
+    async uploadAvatar(fileObject) {
+        const session = await AuthService.getSession();
+        if (!session) throw new Error('Unauthorized: No active session');
+        const userId = session.user.id;
+
+        // SECURITY: Validate file type and size
+        if (!ALLOWED_AVATAR_TYPES.includes(fileObject.type)) {
+            throw new Error('Invalid file type. Only JPEG, PNG, WebP, and GIF are allowed.');
+        }
+        if (fileObject.size > MAX_AVATAR_BYTES) {
+            throw new Error('File too large. Maximum avatar size is 5MB.');
+        }
+
+        const fileExt = fileObject.name.split('.').pop().toLowerCase();
         const filePath = `${userId}/profile_${Date.now()}.${fileExt}`;
 
         const { error: uploadError } = await supabase.storage
@@ -218,10 +249,8 @@ export const ProfileService = {
 
         if (uploadError) throw uploadError;
 
-        // Get public URL
         const { data: publicUrlData } = supabase.storage.from('avatars').getPublicUrl(filePath);
 
-        // Update profile
         const { data, error } = await supabase
             .from('profiles')
             .update({ avatar_url: publicUrlData.publicUrl, updated_at: new Date() })
@@ -234,14 +263,27 @@ export const ProfileService = {
     },
 
     /**
-     * Upload Intro Video to Storage
+     * Upload Intro Video to Storage.
+     * SECURITY: userId from session. File type and size validated before upload.
      */
-    async uploadVideo(userId, fileObject) {
-        const fileExt = fileObject.name.split('.').pop();
+    async uploadVideo(fileObject) {
+        const session = await AuthService.getSession();
+        if (!session) throw new Error('Unauthorized: No active session');
+        const userId = session.user.id;
+
+        // SECURITY: Validate file type and size
+        if (!ALLOWED_VIDEO_TYPES.includes(fileObject.type)) {
+            throw new Error('Invalid video type. Only MP4 and WebM are allowed.');
+        }
+        if (fileObject.size > MAX_VIDEO_BYTES) {
+            throw new Error('Video file too large. Maximum size is 200MB.');
+        }
+
+        const fileExt = fileObject.name.split('.').pop().toLowerCase();
         const filePath = `${userId}/intro_${Date.now()}.${fileExt}`;
 
         const { error: uploadError } = await supabase.storage
-            .from('intro_videos') // Correct bucket name
+            .from('intro_videos')
             .upload(filePath, fileObject, { upsert: true });
 
         if (uploadError) throw uploadError;

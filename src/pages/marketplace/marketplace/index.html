@@ -92,24 +92,33 @@
             </button>
 
             <!-- Logo (Center on mobile, Left on desktop) -->
-            <a href="/index.html" class="flex items-center gap-2 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 lg:static lg:top-auto lg:left-0 lg:transform-none z-10 hover:opacity-80 transition-opacity shrink-0">
+            <a href="/index.html" class="flex items-center gap-2 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 md:static md:top-auto md:left-auto md:transform-none z-10 hover:opacity-80 transition-opacity shrink-0">
                 <img src="/public/assets/images/IMG_7454.png" alt="Tacliimi Learn" class="h-10 md:h-11 w-auto object-contain">
             </a>
 
-            <div class="flex-grow max-w-2xl hidden md:block mx-8 z-0">
+            <div class="flex-grow max-w-2xl hidden md:block mx-4 z-0">
                 <div class="relative group">
                     <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 group-focus-within:text-primary transition-colors">
                         <span class="material-symbols-outlined text-xl">search</span>
                     </span>
-                    <input id="marketplace-search" class="block w-full pl-10 pr-3 py-2 border border-gray-200 dark:border-gray-700 rounded-full bg-gray-50 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm" placeholder="Search for courses, instructors, or skills..." type="text" />
+                    <input class="marketplace-search-input block w-full pl-10 pr-3 py-2 border border-gray-200 dark:border-gray-700 rounded-full bg-gray-50 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm" placeholder="Search for courses, instructors, or skills..." type="text" />
                 </div>
             </div>
             
-            <div class="flex items-center gap-6 flex-shrink-0 z-10 hidden lg:flex">
+            <div class="flex items-center gap-6 flex-shrink-0 z-10 hidden md:flex">
                 <div class="flex items-center gap-4 text-sm font-medium">
                     <a class="hover:text-primary transition-colors whitespace-nowrap" href="/src/pages/instructor/become-instructor/">Teach on Tacliimi</a>
                 </div>
                 <!-- Global Profile Injected Below via JS -->
+            </div>
+        </div>
+        <!-- Mobile Search Dropdown Area -->
+        <div class="md:hidden px-4 pb-3 block border-t border-gray-100 dark:border-gray-800 pt-3">
+            <div class="relative group">
+                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 group-focus-within:text-primary transition-colors">
+                    <span class="material-symbols-outlined text-xl">search</span>
+                </span>
+                <input class="marketplace-search-input block w-full pl-10 pr-3 py-2 border border-gray-200 dark:border-gray-700 rounded-full bg-gray-50 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm" placeholder="Search for courses, instructors, or skills..." type="text" />
             </div>
         </div>
         <!-- Mobile Menu -->
@@ -129,18 +138,37 @@
 
     <!-- Middle: Navigation Links -->
     <div class="flex flex-col space-y-5 flex-1">
-        <a class="flex items-center gap-3 text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/index.html">
-            <span class="material-symbols-outlined text-xl text-slate-400">home</span> Home
-        </a>
-        <a class="flex items-center gap-3 text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/src/pages/marketplace/marketplace/">
-            <span class="material-symbols-outlined text-xl text-slate-400">explore</span> Marketplace Courses
-        </a>
-        <a class="flex items-center gap-3 text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/src/pages/mentorship/mentor-marketplace/index.html">
-            <span class="material-symbols-outlined text-xl text-slate-400">supervisor_account</span> Find a Mentor
-        </a>
         <a class="flex items-center gap-3 text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/src/pages/student/student-dashboard/index.html">
             <span class="material-symbols-outlined text-xl text-slate-400">dashboard</span> Dashboard
         </a>
+        <details class="group">
+            <summary class="flex items-center justify-between text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined text-xl text-slate-400">explore</span> Marketplace Courses
+                </div>
+                <span class="material-symbols-outlined text-sm group-open:-rotate-180 transition-transform duration-300">expand_more</span>
+            </summary>
+            <div class="flex flex-col pl-9 mt-4 space-y-4">
+                <a href="/src/pages/marketplace/marketplace/?category=Business%20%26%20Finance" class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">Business & Finance</a>
+                <a href="/src/pages/marketplace/marketplace/?category=Computer%20Science" class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">Computer Science</a>
+                <a href="/src/pages/marketplace/marketplace/?category=Design" class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">Design</a>
+                <a href="/src/pages/marketplace/marketplace/" class="text-sm font-bold text-primary transition-colors">View All Courses</a>
+            </div>
+        </details>
+        <details class="group">
+            <summary class="flex items-center justify-between text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined text-xl text-slate-400">supervisor_account</span> Find a Mentor
+                </div>
+                <span class="material-symbols-outlined text-sm group-open:-rotate-180 transition-transform duration-300">expand_more</span>
+            </summary>
+            <div class="flex flex-col pl-9 mt-4 space-y-4">
+                <a href="/src/pages/mentorship/mentor-marketplace/index.html?city=Burco" class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">Mentors in Burco</a>
+                <a href="/src/pages/mentorship/mentor-marketplace/index.html?city=Hargeisa" class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">Mentors in Hargeisa</a>
+                <a href="/src/pages/mentorship/mentor-marketplace/index.html?city=Muqdisho" class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">Mentors in Muqdisho</a>
+                <a href="/src/pages/mentorship/mentor-marketplace/index.html" class="text-sm font-bold text-primary transition-colors">View All Mentors</a>
+            </div>
+        </details>
         <a class="flex items-center gap-3 text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/src/pages/instructor/become-instructor/">
             <span class="material-symbols-outlined text-xl text-slate-400">school</span> Teach on Tacliimi
         </a>
@@ -426,13 +454,24 @@
             }
         };
 
-        const themeToggle = document.getElementById('themeToggle');
-        themeToggle.addEventListener('click', () => {
-            document.documentElement.classList.toggle('dark');
-        });
-        if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        // --- Theme persistence (must match all other pages) ---
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
         }
+
+        function applyThemeToggle() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        }
+
+        const themeToggle = document.getElementById('themeToggle');
+        if (themeToggle) themeToggle.addEventListener('click', applyThemeToggle);
+
+        const mobileThemeToggle = document.getElementById('mobile-theme-toggle');
+        if (mobileThemeToggle) mobileThemeToggle.addEventListener('click', applyThemeToggle);
 
         const urlParams = new URLSearchParams(window.location.search);
 
@@ -518,18 +557,25 @@
         });
 
         // Search listener
-        const searchInput = document.getElementById('marketplace-search');
-        if (filters.search) {
-            searchInput.value = filters.search;
-        }
+        const searchInputs = document.querySelectorAll('.marketplace-search-input');
+        
+        searchInputs.forEach(searchInput => {
+            if (filters.search) {
+                searchInput.value = filters.search;
+            }
 
-        if (searchInput) searchInput.addEventListener('input', (e) => {
-            filters.search = e.target.value;
-            // Debounce search
-            clearTimeout(window.searchTimeout);
-            window.searchTimeout = setTimeout(() => {
-                renderCourses();
-            }, 500);
+            searchInput.addEventListener('input', (e) => {
+                filters.search = e.target.value;
+                // Sync the other input to match
+                searchInputs.forEach(input => {
+                    if (input !== e.target) input.value = e.target.value;
+                });
+                // Debounce search
+                clearTimeout(window.searchTimeout);
+                window.searchTimeout = setTimeout(() => {
+                    renderCourses();
+                }, 500);
+            });
         });
 
         // Clear filters listener
@@ -545,8 +591,8 @@
             
             // Clear search filter as well
             filters.search = '';
-            if (searchInput) {
-                searchInput.value = '';
+            if (typeof searchInputs !== 'undefined') {
+                searchInputs.forEach(i => i.value = '');
             }
 
             // Also clear the URL parameters

@@ -3,11 +3,14 @@ import { AuthService } from '../../../services/authService.js';
 
 let allMentors = [];
 let expandedDomains = new Set(); // Track which domain groups are open
+const urlParams = new URLSearchParams(window.location.search);
+const filterCity = urlParams.get('city');
+
 let activeFilters = {
     search: '',
     category: 'all',
     country: 'all',
-    city: 'all'
+    city: filterCity || 'all'
 };
 
 let currentUser = null;
@@ -155,7 +158,7 @@ async function initMarketplace() {
 
         await populateFilters(allMentors);
         setupEventListeners();
-        renderMentors(allMentors);
+        applyFilters(); // Use applyFilters() so URL params like ?city= are applied on first render
 
     } catch (err) {
         grid.removeAttribute('aria-busy');
@@ -253,7 +256,8 @@ async function populateFilters(mentors) {
 
 function updateCityOptions(mentors) {
     const citySelect = document.getElementById('city-filter');
-    const currentVal = citySelect.value;
+    // Use activeFilters.city so that URL params (e.g. ?city=Burco) are honoured.
+    const desiredCity = activeFilters.city;
     citySelect.innerHTML = '<option value="all">All Cities</option>';
     
     const cities = new Set(mentors.map(m => m.city).filter(Boolean));
@@ -263,7 +267,15 @@ function updateCityOptions(mentors) {
         opt.textContent = c;
         citySelect.appendChild(opt);
     });
-    citySelect.value = cities.has(currentVal) ? currentVal : 'all';
+
+    // Apply the desired city filter (from URL param or previous selection)
+    if (desiredCity !== 'all' && cities.has(desiredCity)) {
+        citySelect.value = desiredCity;
+    } else {
+        citySelect.value = 'all';
+        // If a city was requested via URL but not found in data, reset filter
+        if (desiredCity !== 'all') activeFilters.city = 'all';
+    }
 }
 
 function setActiveCategory(selectedCategory) {

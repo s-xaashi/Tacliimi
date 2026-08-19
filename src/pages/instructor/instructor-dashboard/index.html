@@ -161,7 +161,25 @@
                             const missingFields = !profile || !profile.short_bio || !profile.professional_title;
                             const isInstructor = profile ? profile.role === 'instructor' : true; // Assume instructor if missing but we are on instructor dashboard
 
-                            if (isInstructor && missingFields) {
+                            if (!navigator.onLine) {
+                                const blocker = document.getElementById('mandatory-profile-blocker');
+                                if (blocker) {
+                                    blocker.innerHTML = `
+                                        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-8 max-w-lg w-full mx-4 shadow-2xl text-center">
+                                            <div class="w-16 h-16 bg-red-50 dark:bg-red-900/30 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                                                <span class="material-symbols-outlined text-3xl">wifi_off</span>
+                                            </div>
+                                            <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-3">No Internet Connection</h2>
+                                            <p class="text-slate-500 dark:text-slate-400 mb-8">
+                                                Please connect to the internet to access your instructor dashboard.
+                                            </p>
+                                        </div>
+                                    `;
+                                    blocker.classList.remove('hidden');
+                                    blocker.classList.add('flex');
+                                    document.body.style.overflow = 'hidden';
+                                }
+                            } else if (isInstructor && missingFields) {
                                 const blocker = document.getElementById('mandatory-profile-blocker');
                                 if (blocker) {
                                     blocker.classList.remove('hidden');

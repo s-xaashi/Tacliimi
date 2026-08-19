@@ -5,6 +5,7 @@ import './uiUtils.js';
 export const GlobalProfile = {
     async init() {
         this.initTheme();
+        this.monitorNetwork();
         document.addEventListener('DOMContentLoaded', () => {
             this.applyProfile();
             this.bindThemeToggles();
@@ -49,6 +50,54 @@ export const GlobalProfile = {
                 });
             }
         });
+    },
+
+    monitorNetwork() {
+        const handleOffline = () => {
+            if (document.getElementById('global-offline-overlay')) return;
+            const overlay = document.createElement('div');
+            overlay.id = 'global-offline-overlay';
+            // Use extremely high z-index to cover sidebars, modals, and headers
+            overlay.className = 'fixed inset-0 z-[10000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-sm transition-opacity duration-300 pointer-events-auto';
+            overlay.innerHTML = `
+                <div class="bg-white dark:bg-slate-900 max-w-sm w-full rounded-2xl p-8 border border-slate-200 dark:border-slate-800 shadow-2xl text-center shadow-[0_0_50px_rgba(239,68,68,0.15)]">
+                    <div class="w-20 h-20 bg-red-50 dark:bg-red-900/30 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <span class="material-symbols-outlined text-[2.5rem]">wifi_off</span>
+                    </div>
+                    <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-3">No Internet Connection</h2>
+                    <p class="text-slate-500 dark:text-slate-400 mb-6">
+                        You have lost your connection to the internet. Please check your network to continue using Tacliimi.
+                    </p>
+                    <div class="flex items-center justify-center gap-2 text-sm text-slate-400 font-medium">
+                        <span class="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse relative top-px"></span> Offline Mode
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+            document.body.style.overflow = 'hidden';
+        };
+
+        const handleOnline = () => {
+            const overlay = document.getElementById('global-offline-overlay');
+            if (overlay) {
+                overlay.style.opacity = '0';
+                setTimeout(() => {
+                    overlay.remove();
+                    document.body.style.overflow = '';
+                }, 300);
+            }
+        };
+
+        window.addEventListener('offline', handleOffline);
+        window.addEventListener('online', handleOnline);
+
+        if (!navigator.onLine) {
+            if (document.body) {
+                handleOffline();
+            } else {
+                window.addEventListener('DOMContentLoaded', handleOffline, { once: true });
+            }
+        }
     },
 
     async applyProfile() {
@@ -270,17 +319,18 @@ export const GlobalProfile = {
 
         const isPublicPage = !window.location.pathname.includes('dashboard') && !window.location.pathname.includes('settings') && !window.location.pathname.includes('profile') && !window.location.pathname.includes('admin');
 
-        const picHtml = avatarUrl
-            ? `<img src="${avatarUrl}" class="w-full h-full object-cover rounded-full pointer-events-none" />`
-            : `<span class="material-symbols-outlined text-2xl relative top-0.5 pointer-events-none">account_circle</span>`;
+        // Static-only HTML — NOTE: picHtml is built from avatarUrl here but
+        // overwritten safely via setAttribute below after injection.
+        const picHtml = `<span class="material-symbols-outlined text-2xl relative top-0.5 pointer-events-none">account_circle</span>`;
 
         // Determine if we should show a dropdown or a simple profile block
         // Admins want a simplified view (no dropdown, just info)
+        // SECURITY: All text slots use empty placeholders — filled via textContent below
         const profileDisplayHtml = isAdmin ? `
             <div class="flex items-center gap-3" id="global-admin-profile-header">
                 <div class="hidden sm:block text-right">
-                    <p class="user-display-name text-sm font-bold text-slate-900 dark:text-white capitalize">${fullName}</p>
-                    <p class="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">${(profile?.admin_role || 'administrator').replace('_', ' ')}</p>
+                    <p class="user-display-name text-sm font-bold text-slate-900 dark:text-white capitalize"></p>
+                    <p class="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest" id="gp-admin-role-label"></p>
                 </div>
                 <div class="h-10 w-10 shrink-0 rounded-xl bg-slate-200 dark:bg-slate-700 flex items-center justify-center border-2 border-white dark:border-slate-800 shadow-sm overflow-hidden" data-role="profile-image">
                     ${picHtml}
@@ -289,7 +339,7 @@ export const GlobalProfile = {
         ` : `
             <div class="relative group flex items-center gap-3 cursor-pointer" id="global-profile-dropdown">
                 <div class="hidden sm:block text-right group-hover:opacity-80 transition-opacity">
-                    <p class="user-display-name text-sm font-semibold text-slate-900 dark:text-white capitalize pointer-events-none">${fullName}</p>
+                    <p class="user-display-name text-sm font-semibold text-slate-900 dark:text-white capitalize pointer-events-none"></p>
                 </div>
                 <div class="h-10 w-10 shrink-0 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center border-2 border-primary/20 text-slate-400 overflow-hidden pointer-events-none" data-role="profile-image">
                     ${picHtml}
@@ -297,8 +347,8 @@ export const GlobalProfile = {
             
                 <div class="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-slate-800 rounded-xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[100] overflow-hidden text-left cursor-default">
                     <div class="p-4 border-b border-slate-100 dark:border-slate-700">
-                        <p class="text-sm font-semibold text-slate-900 dark:text-white">${fullName}</p>
-                        <p class="text-xs text-slate-500">${session.user.email || roleName}</p>
+                        <p class="text-sm font-semibold text-slate-900 dark:text-white" id="gp-dropdown-name"></p>
+                        <p class="text-xs text-slate-500" id="gp-dropdown-email"></p>
                     </div>
                     <a href="${dashboardLink}" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:text-primary transition-colors border-b border-slate-100 dark:border-slate-700/50">
                         <span class="material-symbols-outlined text-lg">dashboard</span> Dashboard
@@ -352,6 +402,39 @@ export const GlobalProfile = {
         if (!container.querySelector('.tacliimi-injected-profile')) {
             container.insertAdjacentHTML('beforeend', headerControlsHtml);
         }
+
+        // SECURITY: Apply all user-controlled text via textContent AFTER injection.
+        // The HTML template above uses empty placeholders — user data never touches innerHTML.
+        const nameEls = container.querySelectorAll('.user-display-name');
+        nameEls.forEach(el => { el.textContent = fullName; });
+
+        const adminRoleLabel = container.querySelector('#gp-admin-role-label');
+        if (adminRoleLabel) {
+            adminRoleLabel.textContent = (profile?.admin_role || 'administrator').replace('_', ' ');
+        }
+
+        const dropdownNameEl = container.querySelector('#gp-dropdown-name');
+        if (dropdownNameEl) dropdownNameEl.textContent = fullName;
+
+        const dropdownEmailEl = container.querySelector('#gp-dropdown-email');
+        if (dropdownEmailEl) dropdownEmailEl.textContent = session.user.email || roleName;
+
+        // SECURITY: Set avatar image via setAttribute — never injected into innerHTML
+        if (avatarUrl) {
+            container.querySelectorAll('[data-role="profile-image"]').forEach(wrapper => {
+                let img = wrapper.querySelector('img');
+                if (!img) {
+                    // Replace the icon span with an img
+                    wrapper.innerHTML = '';
+                    img = document.createElement('img');
+                    img.className = 'w-full h-full object-cover rounded-full pointer-events-none';
+                    img.alt = '';
+                    wrapper.appendChild(img);
+                }
+                img.setAttribute('src', avatarUrl);
+            });
+        }
+
         // Remove elements to replace
         elementsToRemove.forEach(el => {
             if (el && el.parentNode) {

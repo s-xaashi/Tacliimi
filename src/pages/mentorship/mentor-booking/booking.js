@@ -429,7 +429,7 @@ async function confirmBooking() {
         }
 
         // Block instructors/mentors from booking
-        if (isNonStudentRole(session)) {
+        if (await isNonStudentRole()) {
             showStudentOnlyModal();
             return;
         }

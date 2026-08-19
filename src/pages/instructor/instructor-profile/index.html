@@ -1095,7 +1095,7 @@
                     const session = await AuthService.getSession();
                     if (!session) throw new Error("No active session");
 
-                    const updatedProfile = await ProfileService.uploadAvatar(session.user.id, file);
+                    const updatedProfile = await ProfileService.uploadAvatar(file);
 
                     if (window.currentProfile) {
                         window.currentProfile.avatar_url = updatedProfile.avatar_url;
@@ -1103,7 +1103,12 @@
 
                     const mainProfileNode = document.querySelector('.size-24');
                     if (mainProfileNode) {
-                        mainProfileNode.innerHTML = `<img src="${updatedProfile.avatar_url}" class="w-full h-full object-cover rounded-full" />`;
+                        // SECURITY: set src via setAttribute, not innerHTML
+                        const img = document.createElement('img');
+                        img.className = 'w-full h-full object-cover rounded-full';
+                        img.setAttribute('src', updatedProfile.avatar_url);
+                        mainProfileNode.innerHTML = '';
+                        mainProfileNode.appendChild(img);
                         mainProfileNode.classList.add('overflow-hidden');
                     }
 
@@ -1346,7 +1351,12 @@
                 if (profile.avatar_url) {
                     const mainProfileNode = document.querySelector('.size-24');
                     if (mainProfileNode) {
-                        mainProfileNode.innerHTML = `<img src="${profile.avatar_url}" class="w-full h-full object-cover rounded-full" />`;
+                        // SECURITY: set src via setAttribute, not innerHTML
+                        const img = document.createElement('img');
+                        img.className = 'w-full h-full object-cover rounded-full';
+                        img.setAttribute('src', profile.avatar_url);
+                        mainProfileNode.innerHTML = '';
+                        mainProfileNode.appendChild(img);
                         mainProfileNode.classList.add('overflow-hidden');
                     }
                 }
@@ -1440,9 +1450,9 @@
                         const userId = window.currentSession.user.id;
                         try {
                             if (activeTab === 'panel-personal') {
-                                await ProfileService.updatePersonalInfo(userId, { full_name: '', professional_title: '', short_bio: '', social_links: null });
+                                await ProfileService.updatePersonalInfo({ full_name: '', professional_title: '', short_bio: '', social_links: null });
                             } else if (activeTab === 'panel-teaching') {
-                                await ProfileService.saveTeachingProfile(userId, { introVideo: '', experience: '', education: '[]', languages: '[]' }, []);
+                                await ProfileService.saveTeachingProfile({ introVideo: '', experience: '', education: '[]', languages: '[]' }, []);
                             } else if (activeTab === 'panel-payout') {
                                 await supabase.from('payout_methods').delete().eq('instructor_id', userId);
                             }
@@ -1687,7 +1697,7 @@
                     const userId = window.currentSession.user.id;
 
                     if (activeTabId === 'panel-personal') {
-                        await ProfileService.updatePersonalInfo(userId, updates);
+                        await ProfileService.updatePersonalInfo(updates);
                         if (isSetupMode && updates.setup_progress) {
                             await AuthService.updateProfile({ setup_progress: updates.setup_progress });
                         }
@@ -1697,7 +1707,7 @@
 
                         if (videoInput && videoInput.files.length > 0) {
                             saveBtn.innerHTML = `<span class="material-symbols-outlined text-[18px] animate-spin">refresh</span> Uploading Video`;
-                            finalVideoUrl = await ProfileService.uploadVideo(userId, videoInput.files[0]);
+                            finalVideoUrl = await ProfileService.uploadVideo(videoInput.files[0]);
                             saveBtn.innerHTML = `<span class="material-symbols-outlined text-[18px] animate-spin">refresh</span> Saving`;
                         }
 
@@ -1708,7 +1718,7 @@
                             education: JSON.stringify(updates.education_list),
                             languages: JSON.stringify(updates.language_list)
                         };
-                        await ProfileService.saveTeachingProfile(userId, teachingData, updates.expertise_list);
+                        await ProfileService.saveTeachingProfile(teachingData, updates.expertise_list);
                         if (isSetupMode && updates.setup_progress) {
                             await AuthService.updateProfile({ setup_progress: updates.setup_progress });
                         }

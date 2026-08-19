@@ -1,3 +1,5 @@
+import { sanitizeUrl } from '../utils/js/sanitize.js';
+
 /**
  * uiUtils.js
  * ===========================================================
@@ -40,10 +42,17 @@ export function showToast(message, type = 'success') {
         ${colors[type] || colors.success}
     `;
 
-    toast.innerHTML = `
-        <span class="material-symbols-outlined text-xl">${icons[type] || icons.success}</span>
-        <p class="text-sm font-bold tracking-tight">${message}</p>
-    `;
+    // SECURITY: Use DOM API instead of innerHTML to prevent XSS
+    const iconEl = document.createElement('span');
+    iconEl.className = 'material-symbols-outlined text-xl';
+    iconEl.textContent = icons[type] || icons.success;
+
+    const msgEl = document.createElement('p');
+    msgEl.className = 'text-sm font-bold tracking-tight';
+    msgEl.textContent = message; // textContent escapes all HTML
+
+    toast.appendChild(iconEl);
+    toast.appendChild(msgEl);
 
     container.appendChild(toast);
 
@@ -255,10 +264,14 @@ export function renderSocialIconsHtml(links, iconColor = 'ffffff', iconClasses =
     platforms.forEach(p => {
         const url = links[p.key];
         if (url && url.trim() !== '') {
-            const fullUrl = url.startsWith('http') ? url : `https://${url}`;
+            const rawUrl = url.startsWith('http') ? url : `https://${url}`;
+            // SECURITY: Validate URL protocol — only allow http/https
+            const safeUrl = sanitizeUrl(rawUrl);
+            if (!safeUrl) return; // skip unsafe protocols (javascript:, data:, etc.)
+
             const iconUrl = `https://cdn.simpleicons.org/${p.icon}/${iconColor}`;
             html += `
-                <a href="${fullUrl}" target="_blank" class="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center hover:bg-slate-700 transition-all group" onclick="event.stopPropagation()">
+                <a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center hover:bg-slate-700 transition-all group" onclick="event.stopPropagation()">
                     <img src="${iconUrl}" class="${iconClasses} opacity-80 group-hover:opacity-100" alt="${p.key}">
                 </a>
             `;

@@ -1,12 +1,18 @@
 import { supabase } from './supabaseClient.js';
+import { AuthService } from './authService.js';
 import { ProfileService } from './profileService.js';
 
 export const MentorService = {
     /**
      * Push normal setup profile data to the Mentorship Profiles index
      * Makes the user available in generic Marketplace scans
+     * SECURITY: userId sourced from session, not caller.
      */
-    async publishMentorshipProfile(userId) {
+    async publishMentorshipProfile() {
+        const session = await AuthService.getSession();
+        if (!session) throw new Error('Unauthorized: No active session');
+        const userId = session.user.id;
+
         // Fetch source of truth data needed for mentoring
         const { data: globalProfile, error: pErr } = await supabase
             .from('profiles')
@@ -22,15 +28,13 @@ export const MentorService = {
 
         if (pErr || tErr) throw new Error("Incomplete profile data preventing mentorship publishing.");
 
-
-
         const { error } = await supabase
             .from('mentorship_profiles')
             .upsert({
                 instructor_id: userId,
                 headline: globalProfile.professional_title,
                 bio: globalProfile.short_bio,
-                introduction_video_url: teachingProfile?.introduction_video_url, // Synchronize video URL
+                introduction_video_url: teachingProfile?.introduction_video_url,
                 is_public: true
             }, { onConflict: 'instructor_id' });
 
@@ -40,12 +44,16 @@ export const MentorService = {
 
     /**
      * Hide completely from Marketplace
+     * SECURITY: userId sourced from session, not caller.
      */
-    async hideProfile(userId) {
+    async hideProfile() {
+        const session = await AuthService.getSession();
+        if (!session) throw new Error('Unauthorized: No active session');
+
         const { error } = await supabase
             .from('mentorship_profiles')
             .update({ is_public: false })
-            .eq('instructor_id', userId);
+            .eq('instructor_id', session.user.id);
 
         if (error) throw error;
         return true;
@@ -53,9 +61,12 @@ export const MentorService = {
 
     /**
      * Apply for mentorship program
-     * Saves application data and publishes the profile
+     * SECURITY: userId sourced from session, not caller.
      */
-    async applyForMentorship(userId, applicationData) {
+    async applyForMentorship(applicationData) {
+        const session = await AuthService.getSession();
+        if (!session) throw new Error('Unauthorized: No active session');
+        const userId = session.user.id;
         // 1. Update the global profile with name and gender
         const { error: pErr } = await supabase
             .from('profiles')
@@ -92,8 +103,12 @@ export const MentorService = {
 
     /**
      * Save availability slots and meeting type preferences for a mentor
+     * SECURITY: userId sourced from session, not caller.
      */
-    async saveAvailability(userId, { slots, meetingTypes }) {
+    async saveAvailability({ slots, meetingTypes }) {
+        const session = await AuthService.getSession();
+        if (!session) throw new Error('Unauthorized: No active session');
+        const userId = session.user.id;
         // 1. Update meeting types in mentorship_profiles
         const { error: mErr } = await supabase
             .from('mentorship_profiles')
@@ -156,8 +171,12 @@ export const MentorService = {
 
     /**
      * Update mentorship pricing
+     * SECURITY: userId sourced from session, not caller.
      */
-    async updatePricing(userId, rate, monthlyRate, currency = 'USD') {
+    async updatePricing(rate, monthlyRate, currency = 'USD') {
+        const session = await AuthService.getSession();
+        if (!session) throw new Error('Unauthorized: No active session');
+
         const { error } = await supabase
             .from('mentorship_profiles')
             .update({ 
@@ -165,7 +184,7 @@ export const MentorService = {
                 monthly_rate: monthlyRate,
                 currency: currency
             })
-            .eq('instructor_id', userId);
+            .eq('instructor_id', session.user.id);
 
         if (error) throw error;
         return true;
@@ -221,6 +240,9 @@ export const MentorService = {
                 .is('deleted_at', null)
                 .eq('profile.account_status', 'active')
                 .eq('profile.instructor.approval_status', 'approved');
+
+            if (error) throw error;
+            if (!data) return [];
 
             // ── Query 2: Rating stats (Aggregated from source table) ──────
             // This bypasses the unreliable mentor_rating_stats view.

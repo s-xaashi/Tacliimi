@@ -4,6 +4,8 @@
  * Shows a friendly modal prompting instructors/mentors to switch accounts.
  */
 
+import { supabase } from './supabaseClient.js';
+
 const MODAL_ID = 'role-guard-modal';
 
 function injectModalIfNeeded() {
@@ -38,13 +40,26 @@ function injectModalIfNeeded() {
 /**
  * Checks if the current user is an instructor or mentor.
  * Returns true if they should be blocked (i.e. are NOT a student).
- * @param {object} session - Supabase session object
- * @returns {boolean}
+ * SECURITY: Role is read from the `profiles` table (server-authoritative),
+ * NOT from session.user.user_metadata.role which is client-writable.
+ * @returns {Promise<boolean>}
  */
-export function isNonStudentRole(session) {
-    if (!session) return false;
-    const role = session.user?.user_metadata?.role || '';
-    return role === 'instructor' || role === 'mentor';
+export async function isNonStudentRole() {
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return false;
+
+        const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .maybeSingle();
+
+        if (error || !profile) return false;
+        return profile.role === 'instructor' || profile.role === 'mentor';
+    } catch {
+        return false;
+    }
 }
 
 /**

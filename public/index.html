@@ -172,18 +172,37 @@
 
     <!-- Middle: Navigation Links -->
     <div class="flex flex-col space-y-5 flex-1">
-        <a class="flex items-center gap-3 text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/index.html">
-            <span class="material-symbols-outlined text-xl text-slate-400">home</span> Home
-        </a>
-        <a class="flex items-center gap-3 text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/src/pages/marketplace/marketplace/">
-            <span class="material-symbols-outlined text-xl text-slate-400">explore</span> Marketplace Courses
-        </a>
-        <a class="flex items-center gap-3 text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/src/pages/mentorship/mentor-marketplace/index.html">
-            <span class="material-symbols-outlined text-xl text-slate-400">supervisor_account</span> Find a Mentor
-        </a>
         <a class="flex items-center gap-3 text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/src/pages/student/student-dashboard/index.html">
             <span class="material-symbols-outlined text-xl text-slate-400">dashboard</span> Dashboard
         </a>
+        <details class="group">
+            <summary class="flex items-center justify-between text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined text-xl text-slate-400">explore</span> Marketplace Courses
+                </div>
+                <span class="material-symbols-outlined text-sm group-open:-rotate-180 transition-transform duration-300">expand_more</span>
+            </summary>
+            <div class="flex flex-col pl-9 mt-4 space-y-4">
+                <a href="/src/pages/marketplace/marketplace/?category=Business%20%26%20Finance" class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">Business & Finance</a>
+                <a href="/src/pages/marketplace/marketplace/?category=Computer%20Science" class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">Computer Science</a>
+                <a href="/src/pages/marketplace/marketplace/?category=Design" class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">Design</a>
+                <a href="/src/pages/marketplace/marketplace/" class="text-sm font-bold text-primary transition-colors">View All Courses</a>
+            </div>
+        </details>
+        <details class="group">
+            <summary class="flex items-center justify-between text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined text-xl text-slate-400">supervisor_account</span> Find a Mentor
+                </div>
+                <span class="material-symbols-outlined text-sm group-open:-rotate-180 transition-transform duration-300">expand_more</span>
+            </summary>
+            <div class="flex flex-col pl-9 mt-4 space-y-4">
+                <a href="/src/pages/mentorship/mentor-marketplace/index.html?city=Burco" class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">Mentors in Burco</a>
+                <a href="/src/pages/mentorship/mentor-marketplace/index.html?city=Hargeisa" class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">Mentors in Hargeisa</a>
+                <a href="/src/pages/mentorship/mentor-marketplace/index.html?city=Muqdisho" class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">Mentors in Muqdisho</a>
+                <a href="/src/pages/mentorship/mentor-marketplace/index.html" class="text-sm font-bold text-primary transition-colors">View All Mentors</a>
+            </div>
+        </details>
         <a class="flex items-center gap-3 text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/src/pages/instructor/become-instructor/">
             <span class="material-symbols-outlined text-xl text-slate-400">school</span> Teach on Tacliimi
         </a>
