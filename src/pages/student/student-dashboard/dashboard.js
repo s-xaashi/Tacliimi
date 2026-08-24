@@ -1456,7 +1456,7 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 submitReviewBtn.disabled = true;
                 submitReviewBtn.innerText = 'Submitting...';
-                await MentorService.submitReview(currentReviewMentorId, userId, currentRating, comment);
+                await MentorService.submitReview(currentReviewMentorId, currentRating, comment);
                 window.showToast('Thank you for your feedback!', 'success');
                 document.getElementById('mentorship-review-modal').classList.add('hidden');
             } catch (err) {

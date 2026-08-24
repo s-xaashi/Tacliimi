@@ -462,20 +462,25 @@ async function markLessonComplete(lessonId, type = 'manual') {
     if (type === 'video') state.video = true;
     if (type === 'quiz') state.quiz = true;
 
-    // Persist partial progress
+    // Prevent un-completing a lesson that is already completed in completedLessonIds
+    const wasCompleted = completedLessonIds.has(lessonId);
+    const isNowCompleted = state.video && state.quiz;
+    const finalCompleted = wasCompleted || isNowCompleted;
+
+    // Persist progress
     try {
         await supabase.from('lesson_progress').upsert({
             student_id: currentUser.id,
             lesson_id: lessonId,
-            completed: state.video && state.quiz,
-            completed_at: (state.video && state.quiz) ? new Date().toISOString() : null,
+            completed: finalCompleted,
+            completed_at: finalCompleted ? new Date().toISOString() : null,
             progress_data: state
         }, { onConflict: 'student_id, lesson_id' });
     } catch (e) {
         console.error("Error saving progress:", e);
     }
 
-    if (state.video && state.quiz && !completedLessonIds.has(lessonId)) {
+    if (finalCompleted && !wasCompleted) {
         completedLessonIds.add(lessonId);
         updateProgressUI();
         await syncCourseProgress();
@@ -749,12 +754,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const existingProgress = enrollmentResult.data?.progress_percentage || 0;
             const alreadyCompleted = enrollmentResult.data?.completed_at != null || existingProgress === 100;
+            window._cachedEnrollment = enrollmentResult.data;
 
             if (progressResult.data) {
                 progressResult.data.forEach(p => {
                     if (p.completed) completedLessonIds.add(p.lesson_id);
-                    // Restore partial progress so we don't wipe existing state
-                    if (p.progress_data && !p.completed) {
+                    // Always restore partial progress (even if completed),
+                    // so that checking a quiz again on a completed lesson
+                    // doesn't reset video progress to false.
+                    if (p.progress_data) {
                         sessionProgress.set(p.lesson_id, {
                             video: !!p.progress_data.video,
                             quiz: !!p.progress_data.quiz
@@ -838,7 +846,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         }));
         totalLessonCount = validCount;
         updateProgressUI();
-        maybeShowCertificateButton();
+        
+        let alreadyCompleted = false;
+        if (currentUser) {
+            const existingProgress = window._cachedEnrollment?.progress_percentage || 0;
+            alreadyCompleted = window._cachedEnrollment?.completed_at != null || existingProgress === 100;
+        }
+        maybeShowCertificateButton(alreadyCompleted);
 
         currentCourseData.course_sections = sortedSections;
         sortedSections.forEach(s => {

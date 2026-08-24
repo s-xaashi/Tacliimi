@@ -548,17 +548,24 @@ export const MentorService = {
         }
     },
 
-    async updatePrivacy(userId, isPublic) {
+    async updatePrivacy(isPublic) {
+        const session = await AuthService.getSession();
+        if (!session) throw new Error("Not authenticated");
+        
         const { error } = await supabase
             .from('mentorship_profiles')
             .update({ is_public: isPublic })
-            .eq('instructor_id', userId);
+            .eq('instructor_id', session.user.id);
 
         if (error) throw error;
         return true;
     },
 
-    async submitReview(mentorId, studentId, rating, comment) {
+    async submitReview(mentorId, rating, comment) {
+        const session = await AuthService.getSession();
+        if (!session) throw new Error("Not authenticated");
+        const studentId = session.user.id;
+
         // Double check role even if UI hides the button
         const { data: profile, error: pErr } = await supabase
             .from('profiles')
@@ -827,6 +834,9 @@ export const MentorService = {
      * Update session status
      */
     async updateSessionStatus(sessionId, status, rejectionNote = null) {
+        const session = await AuthService.getSession();
+        if (!session) throw new Error("Not authenticated");
+
         // Map new booking_status values to legacy status column values
         // The legacy status column only accepts: pending, confirmed, negotiating, upcoming, completed, cancelled
         const legacyStatusMap = {
@@ -852,7 +862,8 @@ export const MentorService = {
         const { error } = await supabase
             .from('mentorship_sessions')
             .update(updateData)
-            .eq('id', sessionId);
+            .eq('id', sessionId)
+            .eq('mentor_id', session.user.id);
 
         if (error) throw error;
 
@@ -882,10 +893,14 @@ export const MentorService = {
      * Delete a mentorship session
      */
     async deleteSession(sessionId) {
+        const session = await AuthService.getSession();
+        if (!session) throw new Error("Not authenticated");
+
         const { error } = await supabase
             .from('mentorship_sessions')
             .delete()
-            .eq('id', sessionId);
+            .eq('id', sessionId)
+            .or(`mentor_id.eq.${session.user.id},student_id.eq.${session.user.id}`);
 
         if (error) throw error;
         return true;

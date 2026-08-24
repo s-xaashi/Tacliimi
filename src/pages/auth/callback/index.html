@@ -33,21 +33,40 @@
     </style>
 </head>
 
-<body class="bg-[#F8FAFC] min-h-screen flex items-center justify-center">
+<body class="bg-[#F8FAFC] dark:bg-slate-900 min-h-screen flex items-center justify-center transition-colors">
     <div class="text-center">
         <div class="spinner mx-auto mb-6"></div>
-        <h2 class="text-2xl font-bold text-slate-900 mb-2" id="status-title">Authenticating...</h2>
-        <p class="text-slate-500" id="status-message">Please wait while we log you in.</p>
+        <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-2" id="status-title">Authenticating...</h2>
+        <p class="text-slate-500 dark:text-slate-400" id="status-message">Please wait while we log you in.</p>
         <button id="error-btn" onclick="window.location.href='/src/pages/auth/login-select/index.html'"
-            class="hidden mt-6 bg-slate-900 text-white px-6 py-2 rounded-xl text-sm font-semibold hover:bg-slate-800 transition">Return
+            class="hidden mt-6 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 px-6 py-2 rounded-xl text-sm font-semibold hover:bg-slate-800 dark:hover:bg-white transition">Return
             to Login</button>
     </div>
 
-    <!-- Load Supabase first -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Configure Tailwind for Dark Mode -->
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#4F46E5",
+                        "brand-purple": "#7c3aed",
+                    }
+                }
+            }
+        };
+        // Apply theme from localStorage immediately to avoid flash
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
 
     <script type="module">
         import { supabase } from '/src/services/supabaseClient.js';
+
+        // Deduplication flag to prevent both getSession and onAuthStateChange from triggering the callback
+        let initialized = false;
 
         function showError(msg) {
             document.getElementById('status-title').textContent = 'Authentication Failed';
@@ -57,30 +76,34 @@
             document.getElementById('error-btn').classList.remove('hidden');
         }
 
-        async function handleCallback() {
-            try {
-                // Supabase automatically parses the URL hash on load
-                const { data: { session }, error } = await supabase.auth.getSession();
+        async function handleCallback(session) {
+            if (initialized) return;
+            initialized = true;
 
-                if (error) throw error;
+            try {
                 if (!session) throw new Error("No active session found.");
 
-                // 1. Determine intended role
-                const pendingRole = localStorage.getItem('tacliimi_pending_role') || 'student';
-                localStorage.removeItem('tacliimi_pending_role'); // Clean up
+                // 1. New users default to 'student' to prevent privilege escalation.
+                // Privileged roles must be created via trusted backend API flows, not raw OAuth metadata.
+                const pendingRole = 'student';
+                    
+                localStorage.removeItem('tacliimi_pending_role'); // Clean up unused legacy key
 
-                // 2. Check if user already has a profile
+                // 2. Fetch authoritative profile from the database
                 const { data: existingProfile, error: profileError } = await supabase
                     .from('profiles')
-                    .select('*')
+                    .select('role')
                     .eq('id', session.user.id)
-                    .single();
+                    .maybeSingle();
 
-                let actualRole = pendingRole;
+                let actualRole;
 
-                if (profileError && profileError.code === 'PGRST116') {
-                    // Profile does not exist yet. Create it.
-                    // (Ensure your triggers allow this or use this exclusively)
+                if (profileError && profileError.code !== 'PGRST116') {
+                     throw new Error("Unable to verify user profile.");
+                }
+
+                if (!existingProfile) {
+                    // Profile does not exist yet. Create it using the pendingRole intent.
                     const { error: insertError } = await supabase
                         .from('profiles')
                         .insert([{
@@ -93,24 +116,26 @@
 
                     if (insertError) {
                         console.error("Profile insertion failed:", insertError);
-                        // We continue anyway, they might be blocked later but they are authenticated.
+                        window.location.replace('/src/pages/auth/login-select/index.html?error=profile_creation_failed');
+                        return;
                     }
-                } else if (existingProfile) {
-                    // Respect their existing role
+                    actualRole = pendingRole;
+                } else {
+                    // Existing user - DB role ALWAYS wins. Never trust localStorage/metadata over DB.
                     actualRole = existingProfile.role;
                 }
 
-                // 3. Route to correct dashboard
                 document.getElementById('status-title').textContent = 'Success!';
-                document.getElementById('status-message').textContent = 'Redirecting you to your dashboard...';
+                document.getElementById('status-message').textContent = 'Redirecting to your dashboard...';
 
-                setTimeout(() => {
-                    if (actualRole === 'instructor') {
-                        window.location.replace('/src/pages/instructor/instructor-dashboard/index.html');
-                    } else {
-                        window.location.replace('/src/pages/student/student-dashboard/index.html');
-                    }
-                }, 500);
+                // 3. Route to correct dashboard instantly
+                if (actualRole === 'instructor' || actualRole === 'mentor') {
+                    window.location.replace('/src/pages/instructor/instructor-dashboard/index.html');
+                } else if (actualRole === 'admin') {
+                    window.location.replace('/src/pages/admin/dashboard/index.html');
+                } else {
+                    window.location.replace('/src/pages/student/student-dashboard/index.html');
+                }
 
             } catch (err) {
                 console.error("Callback handling error:", err);
@@ -118,8 +143,17 @@
             }
         }
 
-        // Delay execution slightly to ensure Supabase client has processed the URL hash
-        setTimeout(handleCallback, 500);
+        // Try getting session immediately
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session) handleCallback(session);
+        });
+
+        // Fallback or catch the intent if getSession happens too early
+        supabase.auth.onAuthStateChange((event, session) => {
+            if (event === 'SIGNED_IN' && session) {
+                handleCallback(session);
+            }
+        });
     </script>
 </body>
 

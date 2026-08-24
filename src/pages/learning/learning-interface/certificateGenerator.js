@@ -1,120 +1,259 @@
 import { supabase } from '/src/services/supabaseClient.js';
 import { CourseService } from '/src/services/courseService.js';
 
-const CANVAS_W = 2800, CANVAS_H = 1980;
+// ─── Canvas dimensions ────────────────────────────────────────────────────────
+// The background PNG is drawn at the exact canvas size to preserve
+// border framing, the watermark, corner marks, and top logos perfectly.
+const CANVAS_W  = 2800;
+const CANVAS_H  = 1980;
 
-const FIELD_COORDS = {
-    studentPhoto:        { x: 1002, y: 504, r: 58 },
-    studentName:         { x: 1476, y: 504, font: "italic 500 80px Fraunces, serif",       color: "#0B2D57", align: "center" },
-    courseName:          { x: 1400, y: 671, font: "600 50px Fraunces, serif",               color: "#0B2D57", align: "center" },
-    dateCompleted:       { x: 1161, y: 1246, font: "600 36px Fraunces, serif",               color: "#0B2D57", align: "center" },
-    quizScore:           { x: 1440, y: 1246, font: "600 36px Fraunces, serif",               color: "#0B2D57", align: "center" },
-    instructorSignature: { x: 1080, y: 1393, font: "500 60px Caveat, cursive",       color: "#0B2D57", align: "center" },
-    instructorName:      { x: 1080, y: 1466, font: "600 24px Inter, sans-serif",             color: "#0B2D57", align: "center" },
-    verificationCode:    { x: 182, y: 1902, font: "500 25px 'IBM Plex Mono', monospace",    color: "#0B2D57", align: "left" },
-    dateIssued:          { x: 2618, y: 1904, font: "500 23px Inter, sans-serif",             color: "#0B2D57", align: "right" },
+// ─── Accent colours ───────────────────────────────────────────────────────────
+const GOLD = '#C9A84C';
+const NAVY = '#0B2D57';
+
+// ─── Text field coordinates ───────────────────────────────────────────────────
+// These coordinates are perfectly calibrated with the background image
+// (no zoom/crop is applied here to preserve the corner flames and top logo).
+const ORIG = {
+    // 508 aligns directly with the "NAME" position vertically
+    photoX: 1002, photoY: 508,  photoR: 68,
+    nameY:  508,
+    
+    // Course title exactly centered over the "congratulations" paragraph
+    courseX: 1400, courseY: 696,
+    
+    // Stats row perfectly centered horizontally above the light grey labels
+    dateCX: 1080, dateCY: 1256,
+    scoreX: 1680, scoreY: 1256,
+    
+    // Signature placing over the dotted signature line
+    instrSigX: 1080,  instrSigY: 1400,
+    instrNmX:  1080,  instrNmY:  1480,
+    
+    // Verification corner labels
+    verX: 180,   verY:  1900,
+    issuedX: 2620, issuedY: 1900,
 };
 
+// ─── Font sizes ────────────────────────────────────────────────────────ــــ───
+const FS = {
+    name:    120,   // italic student name
+    course:  78,    // course name
+    date:    54,    // date / score
+    sig:     88,    // caveat signature
+    instrNm: 36,    // instructor name label
+    ver:     34,    // verification code mono
+    issued:  32,    // date issued
+};
+
+// Gap between photo right-edge and name left-edge
+const PHOTO_NAME_GAP = 44;
+
+// ─── Font preload ──────────────────────────────────────────────────────────────
 async function loadFonts() {
     await Promise.all([
-        document.fonts.load("italic 500 80px Fraunces"),
-        document.fonts.load("600 50px Fraunces"),
-        document.fonts.load("500 60px Caveat"),
-        document.fonts.load("500 25px 'IBM Plex Mono'"),
-        document.fonts.load("500 23px Inter"),
+        document.fonts.load(`italic 600 ${FS.name}px Fraunces`),
+        document.fonts.load(`700 ${FS.course}px Fraunces`),
+        document.fonts.load(`600 ${FS.date}px Fraunces`),
+        document.fonts.load(`500 ${FS.sig}px Caveat`),
+        document.fonts.load(`600 ${FS.instrNm}px Inter`),
+        document.fonts.load(`500 ${FS.ver}px 'IBM Plex Mono'`),
+        document.fonts.load(`500 ${FS.issued}px Inter`),
     ]).catch(() => {});
     await document.fonts.ready;
 }
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 function loadImage(src) {
     return new Promise((resolve, reject) => {
         const img = new Image();
         img.crossOrigin = 'anonymous';
-        img.onload = () => resolve(img);
+        img.onload  = () => resolve(img);
         img.onerror = () => reject(new Error(`Failed to load image: ${src}`));
         img.src = src;
     });
 }
 
-function drawCircularPhoto(ctx, img, field) {
+/** Draw a circular photo with a decorative gold ring border. */
+function drawCircularPhoto(ctx, img, cx, cy, r) {
     ctx.save();
     ctx.beginPath();
-    ctx.arc(field.x, field.y, field.r, 0, Math.PI * 2);
-    ctx.closePath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
     ctx.clip();
-    ctx.drawImage(img, field.x - field.r, field.y - field.r, field.r * 2, field.r * 2);
+    ctx.drawImage(img, cx - r, cy - r, r * 2, r * 2);
+    ctx.restore();
+    
+    // Gold ring border
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, cy, r + 7, 0, Math.PI * 2);
+    ctx.strokeStyle = GOLD;
+    ctx.lineWidth   = 9;
+    ctx.stroke();
     ctx.restore();
 }
 
-function drawText(ctx, text, field) {
-    ctx.font = field.font;
-    ctx.fillStyle = field.color;
-    ctx.textAlign = field.align;
-    ctx.textBaseline = 'middle';
-    ctx.fillText(text, field.x, field.y);
+/** Draw placeholder ring when no avatar available. */
+function drawPhotoPlaceholder(ctx, cx, cy, r) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fillStyle = '#F5F0E8';
+    ctx.fill();
+    ctx.restore();
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, cy, r + 7, 0, Math.PI * 2);
+    ctx.strokeStyle = GOLD;
+    ctx.lineWidth   = 9;
+    ctx.stroke();
+    ctx.restore();
 }
 
-const PHOTO_NAME_GAP = 40; // px gap between photo right edge and name left edge
+function drawText(ctx, text, x, y, font, color, align = 'center') {
+    ctx.font         = font;
+    ctx.fillStyle    = color;
+    ctx.textAlign    = align;
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, x, y);
+}
 
-function drawStudentPhotoAndName(ctx, name, photoImg, nameField, photoField) {
-    // Photo is drawn at the FIXED coordinate so it aligns with the
-    // pre-drawn circle border on the certificate background image.
+/**
+ * Draw photo + name as a horizontally centred group.
+ */
+function drawStudentPhotoAndName(ctx, name, photoImg, r) {
+    ctx.font = `italic 600 ${FS.name}px Fraunces, serif`;
+    const nameWidth  = ctx.measureText(name).width;
+    // Calculate total width of avatar group + gap + text
+    const groupW     = r * 2 + PHOTO_NAME_GAP + nameWidth;
+    const groupStart = (CANVAS_W - groupW) / 2;
+    const photoCX    = groupStart + r;
+    const nameCY     = ORIG.nameY;
+
     if (photoImg) {
-        drawCircularPhoto(ctx, photoImg, photoField);
+        drawCircularPhoto(ctx, photoImg, photoCX, nameCY, r);
+    } else {
+        drawPhotoPlaceholder(ctx, photoCX, nameCY, r);
     }
 
-    // Name starts to the right of the photo circle, with the gap.
-    const nameLeftEdge = photoField.x + photoField.r + PHOTO_NAME_GAP;
-    ctx.font = nameField.font;
-    ctx.fillStyle = nameField.color;
-    ctx.textAlign = 'left';
+    ctx.font         = `italic 600 ${FS.name}px Fraunces, serif`;
+    ctx.fillStyle    = NAVY;
+    ctx.textAlign    = 'left';
     ctx.textBaseline = 'middle';
-    ctx.fillText(name, nameLeftEdge, nameField.y);
+    ctx.fillText(name, groupStart + r * 2 + PHOTO_NAME_GAP, nameCY);
 }
 
+// ─── Main certificate generator ───────────────────────────────────────────────
 window.generateCertificate = async function () {
     const btn = document.getElementById('li-certificate-btn');
     if (btn) { btn.disabled = true; btn.textContent = 'Generating…'; }
     try {
         const studentId = window.currentUser?.id;
-        const courseId = window.currentCourseData?.id;
+        const courseId  = window.currentCourseData?.id;
 
         const [cert, studentProfile] = await Promise.all([
             CourseService.generateCertificate(studentId, courseId),
-            supabase.from('profiles').select('full_name, avatar_url').eq('id', studentId).single().then(r => r.data)
+            supabase.from('profiles').select('full_name, avatar_url').eq('id', studentId).single().then(r => r.data),
         ]);
 
         await loadFonts();
         const bg = await loadImage('/public/assets/images/certificate-background.png');
 
-        const canvas = document.createElement('canvas');
-        canvas.width = CANVAS_W;
-        canvas.height = CANVAS_H;
-        const ctx = canvas.getContext('2d');
+        const canvas   = document.createElement('canvas');
+        canvas.width   = CANVAS_W;
+        canvas.height  = CANVAS_H;
+        const ctx      = canvas.getContext('2d');
+
+        // Draw full unaffected background so corner flames / edge markers stay put perfectly
         ctx.drawImage(bg, 0, 0, CANVAS_W, CANVAS_H);
 
         let photoImg = null;
         if (studentProfile?.avatar_url) {
             try { photoImg = await loadImage(studentProfile.avatar_url); }
-            catch { /* no photo available */ }
+            catch { /* no avatar — placeholder ring will be drawn */ }
         }
 
         const dateCompleted = new Date(cert.completed_at_snapshot).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-        const dateIssued = new Date(cert.issued_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        const dateIssued    = new Date(cert.issued_at).toLocaleDateString('en-US',             { year: 'numeric', month: 'long', day: 'numeric' });
 
-        drawStudentPhotoAndName(ctx, studentProfile?.full_name || 'Student', photoImg, FIELD_COORDS.studentName, FIELD_COORDS.studentPhoto);
-        drawText(ctx, window.currentCourseData?.title || 'Course', FIELD_COORDS.courseName);
-        drawText(ctx, dateCompleted, FIELD_COORDS.dateCompleted);
-        drawText(ctx, `${cert.quiz_score_snapshot}%`, FIELD_COORDS.quizScore);
-        drawText(ctx, window.currentCourseData?.instructor?.full_name || 'Instructor', FIELD_COORDS.instructorSignature);
-        drawText(ctx, window.currentCourseData?.instructor?.full_name || 'Instructor', FIELD_COORDS.instructorName);
-        drawText(ctx, cert.verification_code, FIELD_COORDS.verificationCode);
-        drawText(ctx, `${dateIssued} · Verify at tacliimi.com/verify`, FIELD_COORDS.dateIssued);
+        drawStudentPhotoAndName(
+            ctx,
+            studentProfile?.full_name || 'Student',
+            photoImg,
+            ORIG.photoR
+        );
+
+        // Course name — centred
+        drawText(ctx,
+            window.currentCourseData?.title || 'Course',
+            CANVAS_W / 2,
+            ORIG.courseY,
+            `700 ${FS.course}px Fraunces, serif`,
+            NAVY
+        );
+
+        // Date completed (left block)
+        drawText(ctx,
+            dateCompleted,
+            ORIG.dateCX,
+            ORIG.dateCY,
+            `600 ${FS.date}px Fraunces, serif`,
+            NAVY
+        );
+
+        // Quiz score (right block)
+        drawText(ctx,
+            `${cert.quiz_score_snapshot}%`,
+            ORIG.scoreX,
+            ORIG.scoreY,
+            `600 ${FS.date}px Fraunces, serif`,
+            NAVY
+        );
+
+        // Instructor cursive signature
+        const instrName = window.currentCourseData?.instructor?.full_name || 'Instructor';
+        drawText(ctx,
+            instrName,
+            ORIG.instrSigX,
+            ORIG.instrSigY,
+            `500 ${FS.sig}px Caveat, cursive`,
+            NAVY
+        );
+
+        // Instructor name label (below signature line)
+        drawText(ctx,
+            instrName,
+            ORIG.instrNmX,
+            ORIG.instrNmY,
+            `600 ${FS.instrNm}px Inter, sans-serif`,
+            NAVY
+        );
+
+        // Verification code (bottom left)
+        drawText(ctx,
+            cert.verification_code,
+            ORIG.verX,
+            ORIG.verY,
+            `500 ${FS.ver}px 'IBM Plex Mono', monospace`,
+            NAVY,
+            'left'
+        );
+
+        // Date issued (bottom right)
+        drawText(ctx,
+            `${dateIssued} · Verify at tacliimi.com/verify`,
+            ORIG.issuedX,
+            ORIG.issuedY,
+            `500 ${FS.issued}px Inter, sans-serif`,
+            NAVY,
+            'right'
+        );
 
         canvas.toBlob((blob) => {
             const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
+            const a   = document.createElement('a');
+            a.href     = url;
             a.download = `Tacliimi-Certificate-${cert.verification_code}.png`;
             a.click();
             URL.revokeObjectURL(url);

@@ -63,14 +63,7 @@
                 <img src="/public/assets/images/IMG_7454.png" alt="Tacliimi Learn" class="h-10 md:h-11 w-auto object-contain">
             </a>
 
-            <div class="flex-grow max-w-2xl hidden md:block mx-8 z-0">
-                <div class="relative group">
-                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 group-focus-within:text-primary transition-colors">
-                        <span class="material-symbols-outlined text-xl">search</span>
-                    </span>
-                    <input id="marketplace-search-nav" class="block w-full pl-10 pr-3 py-2 border border-gray-200 dark:border-gray-700 rounded-full bg-gray-50 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm" placeholder="Search for courses, instructors, or skills..." type="text" />
-                </div>
-            </div>
+
             
             <div class="flex items-center gap-6 flex-shrink-0 z-10 hidden lg:flex">
                 <div class="flex items-center gap-4 text-sm font-medium">
@@ -449,24 +442,7 @@
             });
         })();
     </script>
-    <script>
-        // Sync the desktop nav search bar with the primary hero search
-        (function() {
-            const navSearch = document.getElementById('marketplace-search-nav');
-            const mainSearch = document.getElementById('marketplace-search');
-            if (navSearch && mainSearch) {
-                navSearch.addEventListener('input', () => {
-                    mainSearch.value = navSearch.value;
-                    mainSearch.dispatchEvent(new Event('input'));
-                });
-                mainSearch.addEventListener('input', () => {
-                    if (document.activeElement !== navSearch) {
-                        navSearch.value = mainSearch.value;
-                    }
-                });
-            }
-        })();
-    </script>
+
 </body>
 
 </html>

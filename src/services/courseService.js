@@ -273,11 +273,23 @@ export const CourseService = {
             courseData.slug = this.generateSlug(courseData.title);
         }
 
-        const payload = { ...courseData, instructor_id: session.user.id };
-        delete payload.id;
-        delete payload.sections;
-        delete payload.coupons;
-        delete payload.category;
+        // 🔴 SECURITY FIX: Strict Field Allowlist
+        // Prevent mass assignment (e.g., injecting status, version_status, is_latest_published, etc.)
+        const allowedFields = [
+            'title', 'subtitle', 'description', 'thumbnail_url', 'intro_video_url',
+            'category_id', 'level', 'price', 'price_type', 'currency', 'is_public',
+            'language', 'total_duration_minutes', 'what_you_learn', 'requirements',
+            'slug', 'certificate_enabled'
+        ];
+
+        const payload = {};
+        for (const field of allowedFields) {
+            if (courseData[field] !== undefined) {
+                payload[field] = courseData[field];
+            }
+        }
+        // Force the instructor ID to the authenticated user on every save
+        payload.instructor_id = session.user.id;
 
         // Keep price as null if not set — do NOT default to 0
         if (payload.price === undefined || payload.price === '' || isNaN(payload.price)) {

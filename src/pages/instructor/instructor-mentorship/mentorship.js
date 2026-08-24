@@ -714,7 +714,7 @@ async function bindPrivacyInteractions(container, userId) {
                 saveBtn.disabled = true;
                 saveBtn.innerHTML = '<span class="animate-spin mr-2">⌛</span> Saving...';
 
-                await MentorService.updatePrivacy(userId, isPublic);
+                await MentorService.updatePrivacy(isPublic);
                 window.showToast("Visibility settings updated successfully!", "success");
             } catch (err) {
                 console.error(err);

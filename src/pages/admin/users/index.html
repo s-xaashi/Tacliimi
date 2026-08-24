@@ -539,7 +539,6 @@
             try {
                 if (action === 'delete') {
                     const { error } = await supabase.rpc('admin_delete_student', {
-                        p_admin_id: adminId,
                         p_user_id: userId
                     });
                     if (error) throw error;

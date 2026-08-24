@@ -259,7 +259,7 @@
         // ─── Fetch ───────────────────────────────────────────────────────────────────
         async function fetchInstructors() {
             try {
-                const { data, error } = await supabase.rpc('admin_get_all_instructors', { p_admin_id: adminId });
+                const { data, error } = await supabase.rpc('admin_get_all_instructors', {});
                 if (error) throw error;
                 allInstructors = data || [];
                 updateStats();
@@ -466,8 +466,7 @@
             try {
                 if (action === 'delete') {
                     const { error } = await supabase.rpc('admin_delete_instructor', {
-                        p_user_id: userId,
-                        p_admin_id: adminId
+                        p_user_id: userId
                     });
                     if (error) throw error;
                 } else if (action === 'approve' || action === 'unsuspend') {

@@ -48,18 +48,10 @@
         }
     </style>
 <script type="module">
-        import { AuthService } from '/src/services/authService.js';
+        import { requireRole } from '/src/services/dashboardGuard.js';
 
-        // If the URL contains an access token from an email link or OAuth, do not prematurely redirect
-        const isOAuthRedirect = window.location.hash.includes('access_token=') ||
-            window.location.search.includes('access_token=') ||
-            window.location.hash.includes('type=signup');
-
-        if (!isOAuthRedirect) {
-            AuthService.getSession().then(session => {
-                if (!session) window.location.replace('/src/pages/auth/login-select/index.html');
-            });
-        }
+        // Blocks rendering until role is verified
+        requireRole('instructor');
     </script>
 </head>
 <body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 transition-colors duration-200"><div class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[50] hidden lg:hidden" id="sidebar-overlay"></div>
@@ -159,7 +151,8 @@
                             const profile = await AuthService.getCurrentProfile();
                             // If profile doesn't exist yet (brand new registration) or missing key fields
                             const missingFields = !profile || !profile.short_bio || !profile.professional_title;
-                            const isInstructor = profile ? profile.role === 'instructor' : true; // Assume instructor if missing but we are on instructor dashboard
+                            // FIXED: fail closed — no profile means no guarantee of instructor
+                            const isInstructor = profile?.role === 'instructor';
 
                             if (!navigator.onLine) {
                                 const blocker = document.getElementById('mandatory-profile-blocker');

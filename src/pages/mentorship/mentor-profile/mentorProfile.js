@@ -375,7 +375,7 @@ function renderProfile(mentor) {
                 submitReviewBtn.disabled = true;
                 submitReviewBtn.innerHTML = '<span class="material-symbols-outlined animate-spin text-lg">sync</span> Submitting...';
 
-                await MentorService.submitReview(mentor.instructor_id, user.id, currentRating, comment);
+                await MentorService.submitReview(mentor.instructor_id, currentRating, comment);
                 
                 alert("Review submitted successfully!");
                 closeReviewModal();

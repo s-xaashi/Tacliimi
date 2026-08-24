@@ -568,8 +568,7 @@
             window.toggleSuspension = async (targetId) => {
                 const session = await AuthService.getSession();
                 const { error } = await supabase.rpc('admin_toggle_suspension', {
-                    p_target_id: targetId,
-                    p_caller_id: session.user.id
+                    p_target_id: targetId
                 });
                 if (error) alert("Action failed: " + error.message);
                 else fetchAdmins();
@@ -579,8 +578,7 @@
                 if (!confirm("Are you sure you want to decommission this administrative node?")) return;
                 const session = await AuthService.getSession();
                 const { error } = await supabase.rpc('admin_delete_account', {
-                    p_target_id: targetId,
-                    p_caller_id: session.user.id
+                    p_target_id: targetId
                 });
                 if (error) alert("Decommission failed: " + error.message);
                 else fetchAdmins();
@@ -652,8 +650,7 @@
                     if (currentVerificationAction.type === 'show_pwd') {
                         const session = await AuthService.getSession();
                         const { data, error } = await supabase.rpc('admin_get_backup_password', {
-                            p_target_id: currentVerificationAction.targetId,
-                            p_caller_id: session.user.id
+                            p_target_id: currentVerificationAction.targetId
                         });
                         if (error) throw error;
                         const [username, password] = data.split(':');

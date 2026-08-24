@@ -215,6 +215,11 @@ async function initConfirmation() {
 
     } catch (err) {
         console.error("Error loading confirmation details:", err);
+    } finally {
+        const skeletonLoader = document.getElementById('skeleton-loader');
+        const contentContainer = document.getElementById('content-container');
+        if (skeletonLoader) skeletonLoader.classList.add('hidden');
+        if (contentContainer) contentContainer.classList.remove('hidden');
     }
 }
 

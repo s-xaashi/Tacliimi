@@ -4,6 +4,7 @@ import './uiUtils.js';
 
 export const GlobalProfile = {
     async init() {
+        this.injectGlobalCSS();
         this.initTheme();
         this.monitorNetwork();
         document.addEventListener('DOMContentLoaded', () => {
@@ -16,6 +17,26 @@ export const GlobalProfile = {
             this.applyProfile();
             this.bindThemeToggles();
         }
+    },
+
+    injectGlobalCSS() {
+        if (document.getElementById('tacliimi-global-css')) return;
+        const style = document.createElement('style');
+        style.id = 'tacliimi-global-css';
+        style.textContent = `
+            /* Fix native button styling inheritance causing white backgrounds in iOS/Safari */
+            button, select, input[type="submit"], input[type="button"] {
+                -webkit-appearance: none !important;
+                appearance: none !important;
+            }
+            /* Explicit fallback for dark mode logos since PNG has artifacts */
+            html.dark img[src*="IMG_7454.png"], html.dark img[src*="IMG_7448.png"] {
+                background-color: white;
+                padding: 4px;
+                border-radius: 8px;
+            }
+        `;
+        document.head.appendChild(style);
     },
 
     initTheme() {
@@ -204,12 +225,14 @@ export const GlobalProfile = {
                 const href = el.getAttribute('href') || el.getAttribute('onclick') || '';
                 const html = el.innerHTML || '';
                 if (el.id === 'mobile-menu' || el.closest('#mobile-menu') || el.children.length > 3) return false;
+                const txt = (el.innerText || '').toLowerCase();
                 const isLoginLink = (href.includes('/src/pages/auth/login') && !href.includes('instructor-login') && !href.includes('login-select')) || 
                                     href.includes('user-login') || 
-                                    (el.tagName === 'BUTTON' && (el.innerText.toLowerCase().includes('log in') || el.innerText.toLowerCase().includes('sign up')));
-                const isPlaceholderProfile = (html.includes('account_circle') || html.includes('Student Name') || html.includes('Instructor account') || html.includes('Admin Account') || html.includes('ID: ') || html.includes('JD') || html.includes('User Profile') || html.includes('Student Profile') || html.includes('Admin Profile')) &&
-                    (el.tagName === 'DIV' || el.tagName === 'BUTTON' || el.tagName === 'A');
-                return isLoginLink || isPlaceholderProfile;
+                                    (el.tagName === 'BUTTON' && (txt.includes('log in') || txt.includes('sign up')));
+                const isLogoutLink = (el.tagName === 'BUTTON' || el.tagName === 'A' || el.tagName === 'DIV') && (txt.includes('logout') || txt.includes('log out') || html.includes('logout'));
+                const isPlaceholderProfile = (html.includes('account_circle') || html.includes('Student Name') || html.includes('Instructor account') || html.includes('Admin Account') || html.includes('ID: ') || html.includes('JD') || html.includes('User Profile') || html.includes('Student Profile') || html.includes('Admin Profile') || el.classList.contains('user-display-name') || el.querySelector('.user-display-name') || txt.includes('student') || (fullName && txt === fullName.toLowerCase())) &&
+                    (el.tagName === 'DIV' || el.tagName === 'BUTTON' || el.tagName === 'A' || el.tagName === 'SPAN');
+                return isLoginLink || isLogoutLink || isPlaceholderProfile;
             });
         });
 
@@ -328,19 +351,12 @@ export const GlobalProfile = {
         // SECURITY: All text slots use empty placeholders — filled via textContent below
         const profileDisplayHtml = isAdmin ? `
             <div class="flex items-center gap-3" id="global-admin-profile-header">
-                <div class="hidden sm:block text-right">
-                    <p class="user-display-name text-sm font-bold text-slate-900 dark:text-white capitalize"></p>
-                    <p class="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest" id="gp-admin-role-label"></p>
-                </div>
                 <div class="h-10 w-10 shrink-0 rounded-xl bg-slate-200 dark:bg-slate-700 flex items-center justify-center border-2 border-white dark:border-slate-800 shadow-sm overflow-hidden" data-role="profile-image">
                     ${picHtml}
                 </div>
             </div>
         ` : `
             <div class="relative group flex items-center gap-3 cursor-pointer" id="global-profile-dropdown">
-                <div class="hidden sm:block text-right group-hover:opacity-80 transition-opacity">
-                    <p class="user-display-name text-sm font-semibold text-slate-900 dark:text-white capitalize pointer-events-none"></p>
-                </div>
                 <div class="h-10 w-10 shrink-0 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center border-2 border-primary/20 text-slate-400 overflow-hidden pointer-events-none" data-role="profile-image">
                     ${picHtml}
                 </div>
@@ -382,16 +398,9 @@ export const GlobalProfile = {
             </button>
         `;
 
-        const logoutHtml = `
-            <button id="global-logout" class="p-2 text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 dark:hover:text-red-400 rounded-full flex items-center justify-center transition-colors !outline-none" title="Log Out">
-                <span class="material-symbols-outlined text-[20px] pointer-events-none">logout</span>
-            </button>
-        `;
-
         const headerControlsHtml = `
             <div class="hidden md:flex items-center gap-1 tacliimi-injected-profile">
                 ${themeToggleHtml}
-                ${(!isPublicPage || isAdmin) ? logoutHtml : ''}
 
                 <div class="flex items-center justify-end pl-3 ml-2 border-l border-slate-200 dark:border-slate-700">
                     ${profileDisplayHtml}
@@ -439,8 +448,13 @@ export const GlobalProfile = {
         elementsToRemove.forEach(el => {
             if (el && el.parentNode) {
                 const sibling = el.previousElementSibling;
-                if (sibling && (sibling.innerText.includes(fullName) || sibling.innerText.includes('Student Name') || sibling.innerText.includes('Instructor Account') || sibling.innerText.includes('ID:'))) {
-                    sibling.remove();
+                // Try grabbing sibling text properly
+                if (sibling) {
+                    const siblingTxt = (sibling.innerText || sibling.textContent || '').toLowerCase();
+                    const n = fullName ? fullName.toLowerCase() : '';
+                    if (n && siblingTxt.includes(n) || siblingTxt.includes('student name') || siblingTxt.includes('instructor account') || siblingTxt.includes('id:') || siblingTxt.includes('logout')) {
+                        sibling.remove();
+                    }
                 }
                 el.remove();
             }
@@ -543,13 +557,27 @@ export const GlobalProfile = {
             }
         }
 
-        // Hide instructor CTA links for logged-in instructors
+        // Handle Instructor CTA Links
         if (isInstructor) {
+            // Hide for logged-in instructors
             document.querySelectorAll('a, button').forEach(el => {
                 const attr = el.getAttribute('href') || el.getAttribute('onclick') || '';
                 const txt = (el.innerText || '').toLowerCase();
                 if (attr.includes('/src/pages/instructor/become-instructor/') || txt.includes('become a teacher') || txt.includes('teach on tacliimi')) {
                     el.style.display = 'none';
+                }
+            });
+        } else {
+            // Un-squeeze for others by shrinking padding/text
+            document.querySelectorAll('a, button').forEach(el => {
+                const attr = el.getAttribute('href') || el.getAttribute('onclick') || '';
+                const txt = (el.innerText || '').toLowerCase();
+                if ((attr.includes('/src/pages/instructor/become-instructor/') || txt.includes('become a teacher')) && (el.closest('nav') || el.closest('header'))) {
+                    el.classList.remove('whitespace-nowrap', 'px-4', 'py-2');
+                    el.classList.add('px-3', 'py-1.5', 'text-[13px]');
+                    if (txt.includes('become a teacher')) {
+                        el.innerHTML = el.innerHTML.replace(/Become a Teacher/gi, 'Teach');
+                    }
                 }
             });
         }
