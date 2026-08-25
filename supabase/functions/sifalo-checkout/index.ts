@@ -6,26 +6,34 @@ interface CreateCheckoutPayload {
   type: 'course' | 'booking' | 'boost' | 'banner' | 'boost_and_banner';
   entityType?: 'course' | 'mentorship_sessions';
   referenceId: string;
-  amount: number;
+  // For course/booking only — amount is client-provided for these types.
+  // For boost/banner/boost_and_banner, amount is IGNORED; canonical price
+  // comes exclusively from create_promotion_order (which reads platform_settings).
+  amount?: number;
   currency?: string;
-  // Only needed for boost_and_banner or banner
+  // Required for boost/banner types
   bannerText?: string;
   planDays?: number;
+  // Required for boost/banner types: server-created order ID from create_promotion_order
+  promotionOrderId?: string;
 }
 
 interface DirectPaymentPayload {
   type: 'course' | 'booking' | 'boost' | 'banner' | 'boost_and_banner';
-  entityType?: 'course' | 'mentorship_sessions'; // for boosts
+  // For boost/banner: entity type is 'course' or 'mentor' (not 'mentorship_sessions')
+  entityType?: 'course' | 'mentor' | 'mentorship_sessions';
   bannerText?: string;
   planDays?: number;
-  // For boost_and_banner: individual amounts for earnings attribution
-  boostAmount?: number;
-  bannerAmount?: number;
   referenceId: string;
-  amount: number;
+  // For course/booking: client provides amount.
+  // For boost/banner/boost_and_banner: amount is IGNORED — canonical price
+  // comes from the server-side promotion order.
+  amount?: number;
   currency?: string;
   gateway: 'waafi' | 'edahab' | 'pbwallet';
   account: string;
+  // Required for boost/banner types: server-created order ID from create_promotion_order
+  promotionOrderId?: string;
 }
 
 interface VerifyPayload {
@@ -152,10 +160,10 @@ async function createCheckout(userId: string, payload: CreateCheckoutPayload): P
   return json({ checkout_url: checkoutUrl, order_id: orderId });
 }
 
-async function createDirectPayment(userId: string, payload: DirectPaymentPayload): Promise<Response> {
+async function createDirectPayment(userId: string, token: string, payload: DirectPaymentPayload): Promise<Response> {
   const { type, referenceId, amount, currency = 'USD', gateway, account } = payload;
-  if (!type || !referenceId || amount === undefined || !gateway || !account) {
-    return err('Missing required fields: type, referenceId, amount, gateway, account');
+  if (!type || !referenceId || !gateway || !account) {
+    return err('Missing required fields: type, referenceId, gateway, account');
   }
 
   const supabase = adminClient();
@@ -175,9 +183,19 @@ async function createDirectPayment(userId: string, payload: DirectPaymentPayload
 
   const orderId  = generateOrderId();
 
+  // For boost/banner types, the canonical amount comes from the server-side promotion order
+  // (already created by create_promotion_order before payment was initiated).
+  // For course/booking, amount is client-provided (same as before).
+  let effectiveAmount = amount ?? 0;
+  if ((type === 'boost' || type === 'banner' || type === 'boost_and_banner') && !payload.promotionOrderId) {
+    return err('promotionOrderId is required for boost/banner payments', 400);
+  }
+
   let result: Awaited<ReturnType<typeof sifaloPost>>;
   try {
-    result = await sifaloPost({ account, gateway, amount: amount.toFixed(2), currency, order_id: orderId });
+    // For course/booking: use client-provided amount. For boost/banner: amount comes from canonical_amount
+    // which was previously obtained from create_promotion_order by the client before initiating payment.
+    result = await sifaloPost({ account, gateway, amount: effectiveAmount.toFixed(2), currency, order_id: orderId });
   } catch (e) {
     return err('Payment gateway unreachable.', 502);
   }
@@ -192,7 +210,7 @@ async function createDirectPayment(userId: string, payload: DirectPaymentPayload
   }
 
   const paymentRow: Record<string, unknown> = {
-    student_id: userId, amount, currency,
+    student_id: userId, amount: effectiveAmount, currency,
     payment_provider: `sifalo_${gateway}`, payment_status: 'paid',
     order_id: orderId, sifalo_sid: sid, gateway: `sifalo_${gateway}`,
     verification_status: 'verified', transaction_reference: orderId,
@@ -213,13 +231,13 @@ async function createDirectPayment(userId: string, payload: DirectPaymentPayload
   }
   const safePaymentId = insertedPayment.id;
 
-  // Fetch settings for direct payment (which skips verifyTransaction)
+  // Fetch settings for direct payment (commission calculation)
   const { data: settings } = await supabase.rpc('get_platform_settings');
   const commEnabled = settings?.commission_enabled === true;
   const pPct = commEnabled ? (settings?.platform_percentage || 0) : 0;
   const iPct = commEnabled ? (settings?.instructor_percentage || 100) : 100;
-  const fee = (amount * pPct) / 100;
-  const share = (amount * iPct) / 100;
+  const fee = (effectiveAmount * pPct) / 100;
+  const share = (effectiveAmount * iPct) / 100;
 
   if (type === 'course') {
     await supabase.from('enrollments').upsert(
@@ -248,69 +266,40 @@ async function createDirectPayment(userId: string, payload: DirectPaymentPayload
 
     return json({ status: 'success', type: 'booking', referenceId, sid, order_id: orderId });
   } else if (type === 'boost' || type === 'banner' || type === 'boost_and_banner') {
-    // Execute the Postgres RPC(s) to grant the feature(s)
-    const entityT = payload.entityType || 'course';
-    const planDays = payload.planDays || 1;
-
-    if (type === 'boost_and_banner') {
-      const boostAmount = payload.boostAmount ?? (amount / 2);
-      const bannerAmount = payload.bannerAmount ?? (amount / 2);
-      const { error: atomicErr } = await supabase.rpc('purchase_boost_and_banner_atomic', {
-        p_entity_type: entityT,
-        p_entity_id: referenceId,
-        p_instructor_id: userId,
-        p_plan_days: planDays,
-        p_boost_amount_paid: boostAmount,
-        p_banner_amount_paid: bannerAmount,
-        p_banner_text: payload.bannerText || '',
-        p_payment_id: safePaymentId
-      });
-      if (atomicErr) {
-        console.error('Failed to create atomic boost/banner record:', atomicErr);
-        await supabase.from('payments').update({
-           verification_status: 'needs_manual_grant',
-           gateway_response: { ...data, rpc_error: atomicErr }
-        }).eq('id', safePaymentId);
-        return err('Payment was captured but boost/banner could not be granted automatically. It has been flagged for admin review.', 500, atomicErr);
-      }
-    } else if (type === 'boost') {
-      const { error: boostErr } = await supabase.rpc('purchase_boost', {
-        p_entity_type: entityT,
-        p_entity_id: referenceId,
-        p_instructor_id: userId,
-        p_plan_days: planDays,
-        p_amount_paid: amount,
-        p_payment_id: safePaymentId
-      });
-      if (boostErr) {
-        console.error('Failed to create boost record:', boostErr);
-        await supabase.from('payments').update({
-           verification_status: 'needs_manual_grant',
-           gateway_response: { ...data, rpc_error: boostErr }
-        }).eq('id', safePaymentId);
-        return err('Payment was captured but boost could not be granted automatically. It has been flagged for admin review.', 500, boostErr);
-      }
-    } else if (type === 'banner') {
-      const { error: bannerErr } = await supabase.rpc('purchase_promo_banner', {
-        p_entity_type: entityT,
-        p_entity_id: referenceId,
-        p_instructor_id: userId,
-        p_banner_text: payload.bannerText || '',
-        p_plan_days: planDays,
-        p_amount_paid: amount,
-        p_payment_id: safePaymentId
-      });
-      if (bannerErr) {
-        console.error('Failed to create banner record:', bannerErr);
-        await supabase.from('payments').update({
-           verification_status: 'needs_manual_grant',
-           gateway_response: { ...data, rpc_error: bannerErr }
-        }).eq('id', safePaymentId);
-        return err('Payment was captured but banner could not be granted automatically. It has been flagged for admin review.', 500, bannerErr);
-      }
+    // SECURE PATH: Consume the pre-created server-side promotion order.
+    // The canonical price was locked in by create_promotion_order (called by the
+    // client BEFORE initiating payment). The client cannot manipulate pricing here.
+    const promotionOrderId = payload.promotionOrderId;
+    if (!promotionOrderId) {
+      // If the payment was already captured but no order ID provided, flag for manual review.
+      await supabase.from('payments').update({
+        verification_status: 'needs_manual_grant',
+        gateway_response: { ...data, error: 'Missing promotionOrderId in payload' }
+      }).eq('id', safePaymentId);
+      return err('Missing promotionOrderId. Payment captured but boost not granted — flagged for admin review.', 400);
     }
 
-    return json({ status: 'success', type, referenceId, sid, order_id: orderId });
+    // consume_promotion_order validates ownership, payment status, amount match,
+    // and replay protection atomically — then inserts boost/banner grants.
+    // Must be called with the user's JWT so auth.uid() resolves correctly.
+    const userClient = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY') ?? '', {
+      global: { headers: { Authorization: `Bearer ${token}` } }
+    });
+    const { data: consumeResult, error: consumeErr } = await userClient.rpc('consume_promotion_order', {
+      p_order_id: promotionOrderId,
+      p_payment_id: safePaymentId
+    });
+
+    if (consumeErr) {
+      console.error('Failed to consume promotion order:', consumeErr);
+      await supabase.from('payments').update({
+        verification_status: 'needs_manual_grant',
+        gateway_response: { ...data, rpc_error: consumeErr }
+      }).eq('id', safePaymentId);
+      return err('Payment was captured but boost/banner could not be granted automatically. It has been flagged for admin review.', 500, consumeErr);
+    }
+
+    return json({ status: 'success', type, referenceId, sid, order_id: orderId, grant: consumeResult });
   }
 
   return json({ status: 'failed', message: 'Unknown type' });
@@ -441,7 +430,7 @@ Deno.serve(async (req: Request) => {
   const { action, payload } = body;
   switch (action) {
     case 'createCheckout':      return createCheckout(user.id, payload);
-    case 'createDirectPayment': return createDirectPayment(user.id, payload);
+    case 'createDirectPayment': return createDirectPayment(user.id, token, payload);
     case 'verifyTransaction':   return verifyTransaction(user.id, payload);
     default:                    return err(`Unknown action: ${action}`);
   }

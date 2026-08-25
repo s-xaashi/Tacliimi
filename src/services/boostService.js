@@ -83,36 +83,21 @@ export const boostService = {
     },
 
     /**
-     * Purchase a boost
+     * Create a server-authoritative promotion order before initiating payment.
+     * Returns { order_id, canonical_amount, product_type, entity_type, entity_id, plan_days }.
+     * The canonical_amount from the server is the ONLY price that should be sent to Sifalo.
+     * Client-provided amounts are ignored by the RPC.
      */
-    purchaseBoost: async ({ entityType, entityId, planDays, amountPaid, courseId = null, mentorshipId = null }) => {
-        const { data, error } = await supabase.rpc('purchase_boost', {
-            p_entity_type: entityType,
+    createPromotionOrder: async ({ productType, entityType, entityId, planDays, bannerText = null }) => {
+        const { data, error } = await supabase.rpc('create_promotion_order', {
+            p_product_type: productType,   // 'boost' | 'banner' | 'boost_and_banner'
+            p_entity_type: entityType,     // 'course' | 'mentor'
             p_entity_id: entityId,
             p_plan_days: planDays,
-            p_amount_paid: amountPaid,
-            p_course_id: courseId,
-            p_mentorship_id: mentorshipId
+            p_banner_text: bannerText
         });
         if (error) throw error;
-        return data;
-    },
-
-    /**
-     * Purchase a promo banner
-     */
-    purchasePromoBanner: async ({ entityType, entityId, bannerText, planDays, amountPaid, courseId = null, mentorshipId = null }) => {
-        const { data, error } = await supabase.rpc('purchase_promo_banner', {
-            p_entity_type: entityType,
-            p_entity_id: entityId,
-            p_banner_text: bannerText,
-            p_plan_days: planDays,
-            p_amount_paid: amountPaid,
-            p_course_id: courseId,
-            p_mentorship_id: mentorshipId
-        });
-        if (error) throw error;
-        return data;
+        return data; // { order_id, canonical_amount, currency, product_type, entity_type, entity_id, plan_days }
     },
 
     /**
