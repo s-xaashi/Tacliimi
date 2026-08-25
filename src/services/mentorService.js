@@ -269,10 +269,10 @@ export const MentorService = {
                 try {
                     const { data: vRatings } = await supabase
                         .from('mentor_rating_stats')
-                        .select('instructor_id, avg_rating, review_count');
+                        .select('mentor_id, avg_rating, review_count');
                     if (vRatings) {
                         vRatings.forEach(r => {
-                            ratingMap[r.instructor_id] = { 
+                            ratingMap[r.mentor_id] = { 
                                 avg: r.avg_rating ?? '0.0', 
                                 count: r.review_count ?? 0 
                             };
@@ -410,7 +410,7 @@ export const MentorService = {
                 supabase
                     .from('mentor_rating_stats')
                     .select('avg_rating, review_count')
-                    .eq('instructor_id', mentorId)
+                    .eq('mentor_id', mentorId)
                     .maybeSingle(),
                 supabase
                     .from('mentor_profile_reviews_view')
