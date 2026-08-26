@@ -1104,7 +1104,8 @@ async function bindBoostInteractions(container, userId) {
                              planDays: paymentRes.planDays,
                              bannerText: paymentRes.bannerText,
                              boostAmount: paymentRes.boostAmount,
-                             bannerAmount: paymentRes.bannerAmount
+                             bannerAmount: paymentRes.bannerAmount,
+                             promotionOrderId: paymentRes.promotionOrderId
                          });
                     }
                 } catch (err) {

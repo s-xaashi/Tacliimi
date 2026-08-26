@@ -89,9 +89,12 @@ export const PaymentService = {
    * Initiate a boost payment (Courses/Mentors).
    */
   async startBoostPayment(entityType, entityId, amount, planDays, currency = 'USD') {
+    const { boostService } = await import('./boostService.js');
+    const order = await boostService.createPromotionOrder({ productType: 'boost', entityType, entityId, planDays });
+    
     const isSomali = await PaymentService.isSomaliUser();
-    if (isSomali) return { method: 'ewallet', entityType, entityId, amount, planDays, currency };
-    const result = await callEdgeFn('createCheckout', { type: 'boost', referenceId: entityId, entityType, planDays, amount, currency });
+    if (isSomali) return { method: 'ewallet', entityType, entityId, amount: order.canonical_amount, planDays, currency, promotionOrderId: order.order_id };
+    const result = await callEdgeFn('createCheckout', { type: 'boost', referenceId: entityId, entityType, planDays, amount: order.canonical_amount, currency, promotionOrderId: order.order_id });
     if (!result.checkout_url) throw new Error('No checkout URL returned from gateway.');
     window.location.href = result.checkout_url;
     return { method: 'redirect' };
@@ -101,9 +104,12 @@ export const PaymentService = {
    * Initiate a banner payment (Courses/Mentors).
    */
   async startBannerPayment(entityType, entityId, amount, planDays, bannerText, currency = 'USD') {
+    const { boostService } = await import('./boostService.js');
+    const order = await boostService.createPromotionOrder({ productType: 'banner', entityType, entityId, planDays, bannerText });
+
     const isSomali = await PaymentService.isSomaliUser();
-    if (isSomali) return { method: 'ewallet', entityType, entityId, amount, planDays, bannerText, currency };
-    const result = await callEdgeFn('createCheckout', { type: 'banner', referenceId: entityId, entityType, planDays, bannerText, amount, currency });
+    if (isSomali) return { method: 'ewallet', entityType, entityId, amount: order.canonical_amount, planDays, bannerText, currency, promotionOrderId: order.order_id };
+    const result = await callEdgeFn('createCheckout', { type: 'banner', referenceId: entityId, entityType, planDays, bannerText, amount: order.canonical_amount, currency, promotionOrderId: order.order_id });
     if (!result.checkout_url) throw new Error('No checkout URL returned from gateway.');
     window.location.href = result.checkout_url;
     return { method: 'redirect' };
@@ -114,16 +120,21 @@ export const PaymentService = {
    * boostAmount + bannerAmount must add up to totalAmount.
    */
   async startBoostAndBannerPayment(entityType, entityId, boostAmount, bannerAmount, planDays, bannerText, currency = 'USD') {
-    const totalAmount = boostAmount + bannerAmount;
+    const { boostService } = await import('./boostService.js');
+    const order = await boostService.createPromotionOrder({ productType: 'boost_and_banner', entityType, entityId, planDays, bannerText });
+    
+    const totalAmount = order.canonical_amount;
     const isSomali = await PaymentService.isSomaliUser();
     if (isSomali) return {
       method: 'ewallet', entityType, entityId,
       amount: totalAmount, planDays, bannerText, currency,
       boostAmount, bannerAmount,
+      promotionOrderId: order.order_id
     };
     const result = await callEdgeFn('createCheckout', {
       type: 'boost_and_banner', referenceId: entityId, entityType,
       planDays, bannerText, amount: totalAmount, currency,
+      promotionOrderId: order.order_id
     });
     if (!result.checkout_url) throw new Error('No checkout URL returned from gateway.');
     window.location.href = result.checkout_url;
@@ -134,8 +145,8 @@ export const PaymentService = {
    * Process a direct e-wallet payment (Somali users).
    * No redirect — result is returned immediately.
    */
-  async createDirectPayment({ type, referenceId, amount, currency = 'USD', gateway, account, entityType, planDays, bannerText }) {
-    return callEdgeFn('createDirectPayment', { type, referenceId, amount, currency, gateway, account, entityType, planDays, bannerText });
+  async createDirectPayment({ type, referenceId, amount, currency = 'USD', gateway, account, entityType, planDays, bannerText, promotionOrderId }) {
+    return callEdgeFn('createDirectPayment', { type, referenceId, amount, currency, gateway, account, entityType, planDays, bannerText, promotionOrderId });
   },
 
   /**

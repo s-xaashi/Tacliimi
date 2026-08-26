@@ -258,7 +258,7 @@ export function injectSecureWalletModal() {
     document.body.insertAdjacentHTML('beforeend', modalHtml);
 
     // Current payment context
-    window._pmContext = { type: null, referenceId: null, amount: 0, currency: 'USD', gateway: null, bannerText: null, planDays: null };
+    window._pmContext = { type: null, referenceId: null, amount: 0, currency: 'USD', gateway: null, bannerText: null, planDays: null, promotionOrderId: null };
 
     // Standard DOM global logic
     window.showPaymentModal = function (amount, currency, context) {
@@ -425,6 +425,7 @@ export function injectSecureWalletModal() {
                 currency: ctx.currency,
                 gateway: ctx.gateway,
                 account: phone,
+                promotionOrderId: ctx.promotionOrderId
             });
 
             if (result.status === 'success') {

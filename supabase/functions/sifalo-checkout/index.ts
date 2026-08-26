@@ -117,9 +117,23 @@ async function createCheckout(userId: string, payload: CreateCheckoutPayload): P
   const orderId  = generateOrderId();
   const returnUrl = `${RETURN_URL_BASE}/src/pages/payment/return/index.html?order_id=${orderId}`;
 
+  let effectiveAmount = amount ?? 0;
+  if (type === 'boost' || type === 'banner' || type === 'boost_and_banner') {
+    if (!payload.promotionOrderId) return err('promotionOrderId is required for boost/banner payments', 400);
+    const { data: order, error: orderErr } = await supabase
+      .from('promotion_orders')
+      .select('canonical_amount, status, payer_id')
+      .eq('id', payload.promotionOrderId)
+      .single();
+    if (orderErr || !order) return err('Invalid promotion order', 404);
+    if (order.payer_id !== userId) return err('Unauthorized promotion order', 403);
+    if (order.status !== 'pending') return err(`Promotion order status is ${order.status}`, 400);
+    effectiveAmount = order.canonical_amount;
+  }
+
   let result: Awaited<ReturnType<typeof sifaloPost>>;
   try {
-    result = await sifaloPost({ amount: amount.toFixed(2), gateway: 'checkout', currency, return_url: returnUrl });
+    result = await sifaloPost({ amount: effectiveAmount.toFixed(2), gateway: 'checkout', currency, return_url: returnUrl });
   } catch (e) {
     return err('Payment gateway unreachable. Please try again.', 502);
   }
@@ -136,7 +150,7 @@ async function createCheckout(userId: string, payload: CreateCheckoutPayload): P
   const checkoutUrl = `${SIFALO_CHECKOUT_PAGE}?key=${encodeURIComponent(key)}&token=${encodeURIComponent(token)}`;
 
   const paymentRow: Record<string, unknown> = {
-    student_id: userId, amount, currency,
+    student_id: userId, amount: effectiveAmount, currency,
     payment_provider: 'sifalo_checkout', payment_status: 'pending',
     order_id: orderId, gateway: 'sifalo_checkout',
     verification_status: 'unverified', transaction_reference: orderId,
@@ -183,12 +197,20 @@ async function createDirectPayment(userId: string, token: string, payload: Direc
 
   const orderId  = generateOrderId();
 
-  // For boost/banner types, the canonical amount comes from the server-side promotion order
-  // (already created by create_promotion_order before payment was initiated).
-  // For course/booking, amount is client-provided (same as before).
+  // For boost/banner types, fetch the canonical amount from promotion_orders.
+  // We do NOT trust the client provided amount here.
   let effectiveAmount = amount ?? 0;
-  if ((type === 'boost' || type === 'banner' || type === 'boost_and_banner') && !payload.promotionOrderId) {
-    return err('promotionOrderId is required for boost/banner payments', 400);
+  if (type === 'boost' || type === 'banner' || type === 'boost_and_banner') {
+    if (!payload.promotionOrderId) return err('promotionOrderId is required for boost/banner payments', 400);
+    const { data: order, error: orderErr } = await supabase
+      .from('promotion_orders')
+      .select('canonical_amount, status, payer_id')
+      .eq('id', payload.promotionOrderId)
+      .single();
+    if (orderErr || !order) return err('Invalid promotion order', 404);
+    if (order.payer_id !== userId) return err('Unauthorized promotion order', 403);
+    if (order.status !== 'pending') return err(`Promotion order status is ${order.status}`, 400);
+    effectiveAmount = order.canonical_amount;
   }
 
   let result: Awaited<ReturnType<typeof sifaloPost>>;
