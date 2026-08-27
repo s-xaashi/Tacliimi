@@ -338,7 +338,8 @@ export const AuthService = {
         const SAFE_FIELDS = [
             'full_name', 'short_bio', 'professional_title', 'country', 'city',
             'social_links', 'phone_number', 'gender', 'learning_interests',
-            'avatar_url', 'setup_progress', 'notification_preferences'
+            'avatar_url', 'setup_progress', 'notification_preferences',
+            'agreed_to_instructor_tos'
         ];
         const safeUpdates = Object.fromEntries(
             Object.entries(updates).filter(([k]) => SAFE_FIELDS.includes(k))

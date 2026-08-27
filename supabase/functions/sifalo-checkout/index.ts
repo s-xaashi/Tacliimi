@@ -6,33 +6,25 @@ interface CreateCheckoutPayload {
   type: 'course' | 'booking' | 'boost' | 'banner' | 'boost_and_banner';
   entityType?: 'course' | 'mentorship_sessions';
   referenceId: string;
-  // For course/booking only — amount is client-provided for these types.
-  // For boost/banner/boost_and_banner, amount is IGNORED; canonical price
-  // comes exclusively from create_promotion_order (which reads platform_settings).
+  couponCode?: string;
   amount?: number;
   currency?: string;
-  // Required for boost/banner types
   bannerText?: string;
   planDays?: number;
-  // Required for boost/banner types: server-created order ID from create_promotion_order
   promotionOrderId?: string;
 }
 
 interface DirectPaymentPayload {
   type: 'course' | 'booking' | 'boost' | 'banner' | 'boost_and_banner';
-  // For boost/banner: entity type is 'course' or 'mentor' (not 'mentorship_sessions')
   entityType?: 'course' | 'mentor' | 'mentorship_sessions';
   bannerText?: string;
   planDays?: number;
   referenceId: string;
-  // For course/booking: client provides amount.
-  // For boost/banner/boost_and_banner: amount is IGNORED — canonical price
-  // comes from the server-side promotion order.
+  couponCode?: string;
   amount?: number;
   currency?: string;
   gateway: 'waafi' | 'edahab' | 'pbwallet';
   account: string;
-  // Required for boost/banner types: server-created order ID from create_promotion_order
   promotionOrderId?: string;
 }
 
@@ -94,9 +86,43 @@ async function sifaloPost(body: Record<string, unknown>): Promise<{ ok: boolean;
   return { ok: res.ok, data, rawText };
 }
 
+async function getCanonicalPrice(supabase: any, type: string, referenceId: string, userId: string, payload: any): Promise<number | null> {
+  if (type === 'course') {
+    const { data: course, error } = await supabase.from('courses').select('price').eq('id', referenceId).single();
+    if (error || !course) return null;
+    let basePrice = Number(course.price);
+
+    if (payload.couponCode) {
+      const { data: couponValid, error: couponErr } = await supabase.rpc('validate_course_coupon', {
+        p_course_id: referenceId,
+        p_code: payload.couponCode,
+        p_student_id: userId
+      });
+      if (!couponErr && couponValid && Array.isArray(couponValid) && couponValid[0]?.valid) {
+         let dp = Number(couponValid[0].discount_percent || 0);
+         basePrice = basePrice * (1 - (dp / 100));
+      }
+    }
+    return basePrice;
+  } else if (type === 'booking') {
+    const { data: session, error } = await supabase.from('mentorship_sessions').select('price, booking_status').eq('id', referenceId).single();
+    if (error || !session) return null;
+    // ensure booking hasn't been paid already/is in valid state (pending or pending_payment)
+    if (session.booking_status !== 'pending' && session.booking_status !== 'pending_payment') return null;
+    return Number(session.price);
+  } else if (type === 'boost' || type === 'banner' || type === 'boost_and_banner') {
+    if (!payload.promotionOrderId) return null;
+    const { data: order, error: orderErr } = await supabase.from('promotion_orders').select('canonical_amount, status, payer_id').eq('id', payload.promotionOrderId).single();
+    if (orderErr || !order) return null;
+    if (order.payer_id !== userId || order.status !== 'pending') return null;
+    return Number(order.canonical_amount);
+  }
+  return null;
+}
+
 async function createCheckout(userId: string, payload: CreateCheckoutPayload): Promise<Response> {
-  const { type, referenceId, amount, currency = 'USD' } = payload;
-  if (!type || !referenceId || amount === undefined) return err('Missing required fields: type, referenceId, amount');
+  const { type, referenceId, currency = 'USD' } = payload;
+  if (!type || !referenceId) return err('Missing required fields: type, referenceId');
   if (!RETURN_URL_BASE) return err('Server misconfiguration: RETURN_URL_BASE not set', 500);
 
   const supabase = adminClient();
@@ -117,19 +143,12 @@ async function createCheckout(userId: string, payload: CreateCheckoutPayload): P
   const orderId  = generateOrderId();
   const returnUrl = `${RETURN_URL_BASE}/src/pages/payment/return/index.html?order_id=${orderId}`;
 
-  let effectiveAmount = amount ?? 0;
-  if (type === 'boost' || type === 'banner' || type === 'boost_and_banner') {
-    if (!payload.promotionOrderId) return err('promotionOrderId is required for boost/banner payments', 400);
-    const { data: order, error: orderErr } = await supabase
-      .from('promotion_orders')
-      .select('canonical_amount, status, payer_id')
-      .eq('id', payload.promotionOrderId)
-      .single();
-    if (orderErr || !order) return err('Invalid promotion order', 404);
-    if (order.payer_id !== userId) return err('Unauthorized promotion order', 403);
-    if (order.status !== 'pending') return err(`Promotion order status is ${order.status}`, 400);
-    effectiveAmount = order.canonical_amount;
-  }
+  // ==========================================
+  // CRITICAL PHASE 5 FIX: CANONICAL PRICE 
+  // No longer trusts payload.amount blindly
+  // ==========================================
+  let effectiveAmount = await getCanonicalPrice(supabase, type, referenceId, userId, payload);
+  if (effectiveAmount === null) return err('Invalid product pricing or coupon verification failed', 400);
 
   let result: Awaited<ReturnType<typeof sifaloPost>>;
   try {
@@ -155,14 +174,14 @@ async function createCheckout(userId: string, payload: CreateCheckoutPayload): P
     order_id: orderId, gateway: 'sifalo_checkout',
     verification_status: 'unverified', transaction_reference: orderId,
   };
+  if (payload.couponCode && type === 'course') {
+    paymentRow.gateway_response = { couponCode: payload.couponCode };
+  }
   if (type === 'course') {
     paymentRow.course_id = referenceId;
   } else if (type === 'booking') {
     paymentRow.mentorship_session_id = referenceId;
     await supabase.from('mentorship_sessions').update({ booking_status: 'pending_payment' }).eq('id', referenceId);
-  } else if (type === 'boost' || type === 'banner') {
-    // Boosts do not map to course_id / mentorship_session_id on the payment table
-    // (We link strictly via the boosts/promo_banners table)
   }
 
   const { error: payErr } = await supabase.from('payments').insert(paymentRow);
@@ -175,7 +194,7 @@ async function createCheckout(userId: string, payload: CreateCheckoutPayload): P
 }
 
 async function createDirectPayment(userId: string, token: string, payload: DirectPaymentPayload): Promise<Response> {
-  const { type, referenceId, amount, currency = 'USD', gateway, account } = payload;
+  const { type, referenceId, currency = 'USD', gateway, account } = payload;
   if (!type || !referenceId || !gateway || !account) {
     return err('Missing required fields: type, referenceId, gateway, account');
   }
@@ -197,26 +216,15 @@ async function createDirectPayment(userId: string, token: string, payload: Direc
 
   const orderId  = generateOrderId();
 
-  // For boost/banner types, fetch the canonical amount from promotion_orders.
-  // We do NOT trust the client provided amount here.
-  let effectiveAmount = amount ?? 0;
-  if (type === 'boost' || type === 'banner' || type === 'boost_and_banner') {
-    if (!payload.promotionOrderId) return err('promotionOrderId is required for boost/banner payments', 400);
-    const { data: order, error: orderErr } = await supabase
-      .from('promotion_orders')
-      .select('canonical_amount, status, payer_id')
-      .eq('id', payload.promotionOrderId)
-      .single();
-    if (orderErr || !order) return err('Invalid promotion order', 404);
-    if (order.payer_id !== userId) return err('Unauthorized promotion order', 403);
-    if (order.status !== 'pending') return err(`Promotion order status is ${order.status}`, 400);
-    effectiveAmount = order.canonical_amount;
-  }
+  // ==========================================
+  // CRITICAL PHASE 5 FIX: CANONICAL PRICE 
+  // No longer trusts payload.amount blindly
+  // ==========================================
+  let effectiveAmount = await getCanonicalPrice(supabase, type, referenceId, userId, payload);
+  if (effectiveAmount === null) return err('Invalid product pricing or coupon verification failed', 400);
 
   let result: Awaited<ReturnType<typeof sifaloPost>>;
   try {
-    // For course/booking: use client-provided amount. For boost/banner: amount comes from canonical_amount
-    // which was previously obtained from create_promotion_order by the client before initiating payment.
     result = await sifaloPost({ account, gateway, amount: effectiveAmount.toFixed(2), currency, order_id: orderId });
   } catch (e) {
     return err('Payment gateway unreachable.', 502);
@@ -242,8 +250,6 @@ async function createDirectPayment(userId: string, token: string, payload: Direc
     paymentRow.course_id = referenceId;
   } else if (type === 'booking') {
     paymentRow.mentorship_session_id = referenceId;
-  } else if (type === 'boost' || type === 'banner') {
-    // Safe to leave course_id / mentorship_session_id NULL to avoid FK violations
   }
 
   const { data: insertedPayment, error: payErr } = await supabase.from('payments').insert(paymentRow).select('id').single();
@@ -253,7 +259,6 @@ async function createDirectPayment(userId: string, token: string, payload: Direc
   }
   const safePaymentId = insertedPayment.id;
 
-  // Fetch settings for direct payment (commission calculation)
   const { data: settings } = await supabase.rpc('get_platform_settings');
   const commEnabled = settings?.commission_enabled === true;
   const pPct = commEnabled ? (settings?.platform_percentage || 0) : 0;
@@ -267,11 +272,22 @@ async function createDirectPayment(userId: string, token: string, payload: Direc
       { onConflict: 'student_id,course_id', ignoreDuplicates: true }
     );
 
+    if (payload.couponCode) {
+      const { data: coupon } = await supabase.from('course_coupons').select('id').eq('code', payload.couponCode.toUpperCase()).single();
+      if (coupon?.id) {
+         await supabase.from('course_update_offers')
+           .update({ redeemed_at: new Date().toISOString() })
+           .eq('coupon_id', coupon.id)
+           .eq('student_id', userId)
+           .is('redeemed_at', null);
+      }
+    }
+
     const { data: course } = await supabase.from('courses').select('instructor_id').eq('id', referenceId).single();
     if (course?.instructor_id) {
        await supabase.from('instructor_earnings').upsert({
-         instructor_id: course.instructor_id, payment_id: paymentRow.id || (await supabase.from('payments').select('id').eq('order_id', orderId).single()).data?.id, course_id: referenceId,
-         earning_type: 'course', gross_amount: amount, platform_fee: fee, instructor_share: share, instructor_percentage_snapshot: iPct, platform_percentage_snapshot: pPct, currency
+         instructor_id: course.instructor_id, payment_id: safePaymentId, course_id: referenceId,
+         earning_type: 'course', gross_amount: effectiveAmount, platform_fee: fee, instructor_share: share, instructor_percentage_snapshot: iPct, platform_percentage_snapshot: pPct, currency
        }, { onConflict: 'payment_id' });
     }
 
@@ -281,29 +297,21 @@ async function createDirectPayment(userId: string, token: string, payload: Direc
     const { data: session } = await supabase.from('mentorship_sessions').select('mentor_id').eq('id', referenceId).single();
     if (session?.mentor_id) {
         await supabase.from('instructor_earnings').upsert({
-           instructor_id: session.mentor_id, payment_id: paymentRow.id || (await supabase.from('payments').select('id').eq('order_id', orderId).single()).data?.id, mentorship_session_id: referenceId,
-           earning_type: 'mentorship', gross_amount: amount, platform_fee: fee, instructor_share: share, instructor_percentage_snapshot: iPct, platform_percentage_snapshot: pPct, currency
+           instructor_id: session.mentor_id, payment_id: safePaymentId, mentorship_session_id: referenceId,
+           earning_type: 'mentorship', gross_amount: effectiveAmount, platform_fee: fee, instructor_share: share, instructor_percentage_snapshot: iPct, platform_percentage_snapshot: pPct, currency
         }, { onConflict: 'payment_id' });
     }
 
     return json({ status: 'success', type: 'booking', referenceId, sid, order_id: orderId });
   } else if (type === 'boost' || type === 'banner' || type === 'boost_and_banner') {
-    // SECURE PATH: Consume the pre-created server-side promotion order.
-    // The canonical price was locked in by create_promotion_order (called by the
-    // client BEFORE initiating payment). The client cannot manipulate pricing here.
     const promotionOrderId = payload.promotionOrderId;
     if (!promotionOrderId) {
-      // If the payment was already captured but no order ID provided, flag for manual review.
       await supabase.from('payments').update({
         verification_status: 'needs_manual_grant',
         gateway_response: { ...data, error: 'Missing promotionOrderId in payload' }
       }).eq('id', safePaymentId);
       return err('Missing promotionOrderId. Payment captured but boost not granted — flagged for admin review.', 400);
     }
-
-    // consume_promotion_order validates ownership, payment status, amount match,
-    // and replay protection atomically — then inserts boost/banner grants.
-    // Must be called with the user's JWT so auth.uid() resolves correctly.
     const userClient = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY') ?? '', {
       global: { headers: { Authorization: `Bearer ${token}` } }
     });
@@ -332,23 +340,19 @@ async function verifyTransaction(_userId: string, payload: VerifyPayload): Promi
   const supabase = adminClient();
   const { data: payment, error: fetchErr } = await supabase
     .from('payments')
-    .select('id, student_id, course_id, mentorship_session_id, amount, payment_status, verification_status')
+    .select('id, student_id, course_id, mentorship_session_id, amount, payment_status, verification_status, gateway_response')
     .eq('order_id', orderId)
     .single();
 
   if (fetchErr || !payment) return err('Payment record not found', 404);
   
-  // Note: boosts/banners don't set course_id/mentorship_session_id mapped on payment
   const determineTypeFromPayment = () => {
     if (payment.course_id) return 'course';
     if (payment.mentorship_session_id) return 'booking';
-    // Without altering payments schema more deeply for redirect flow, if it's neither of those 2, we return boost or banner 
-    // Usually redirect isn't used for boosts anyway, they mostly use EWallet / direct. But if they do we support ignoring mapping 
     return 'boost_or_banner'; 
   };
   
   const resolvedType = determineTypeFromPayment();
-
   if (payment.verification_status === 'verified' && payment.payment_status === 'paid') {
     return json({ status: 'success', type: resolvedType, referenceId: payment.course_id || payment.mentorship_session_id || 'unlinked_boost' });
   }
@@ -377,7 +381,6 @@ async function verifyTransaction(_userId: string, payload: VerifyPayload): Promi
       gateway_response: verifyData, verification_status: 'verified',
     }).eq('id', payment.id);
 
-    // Fetch dynamic platform settings
     const { data: settings } = await supabase.rpc('get_platform_settings');
     const commEnabled = settings?.commission_enabled === true;
     const pPct = commEnabled ? (settings?.platform_percentage || 0) : 0;
@@ -389,7 +392,18 @@ async function verifyTransaction(_userId: string, payload: VerifyPayload): Promi
     if (resolvedType === 'course') {
        await supabase.from('enrollments').upsert({ student_id: payment.student_id, course_id: payment.course_id }, { onConflict: 'student_id,course_id' });
        
-       // Record instructor earnings for course
+       const couponCode = (payment.gateway_response as Record<string, unknown>)?.couponCode as string | undefined;
+       if (couponCode) {
+         const { data: coupon } = await supabase.from('course_coupons').select('id').eq('code', couponCode.toUpperCase()).single();
+         if (coupon?.id) {
+            await supabase.from('course_update_offers')
+              .update({ redeemed_at: new Date().toISOString() })
+              .eq('coupon_id', coupon.id)
+              .eq('student_id', payment.student_id)
+              .is('redeemed_at', null);
+         }
+       }
+       
        const { data: course } = await supabase.from('courses').select('instructor_id').eq('id', payment.course_id).single();
        if (course?.instructor_id) {
           await supabase.from('instructor_earnings').upsert({
@@ -409,7 +423,6 @@ async function verifyTransaction(_userId: string, payload: VerifyPayload): Promi
     } else if (resolvedType === 'booking') {
       await supabase.from('mentorship_sessions').update({ booking_status: 'paid_waiting_review' }).eq('id', payment.mentorship_session_id);
       
-      // Record instructor earnings for mentorship
       const { data: session } = await supabase.from('mentorship_sessions').select('mentor_id').eq('id', payment.mentorship_session_id).single();
       if (session?.mentor_id) {
           await supabase.from('instructor_earnings').upsert({
@@ -427,9 +440,6 @@ async function verifyTransaction(_userId: string, payload: VerifyPayload): Promi
       }
       return json({ status: 'success', type: 'booking', referenceId: payment.mentorship_session_id });
     } else if (resolvedType === 'boost_or_banner') {
-       // Since the payload for createCheckout redirect doesn't pass up `bannerText` or `entityType` easily via callback directly yet, 
-       // Ideally we don't dispatch redirect checkouts for boosts yet. E-Wallet handles it perfectly via direct params.
-       // It just succeeds as 'paid' via Sifalo so the admin can verify.
        return json({ status: 'success', type: 'boost_or_banner', referenceId: 'unlinked_boost_redirect' });
     }
     return json({ status: 'success' });

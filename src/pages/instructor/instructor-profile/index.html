@@ -12,7 +12,47 @@
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
         rel="stylesheet" />
     
-    
+    <style>
+        /* Skeleton loader — applied until profile data loads */
+        .skeleton-node {
+            position: relative;
+            color: transparent !important;
+            background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+            background-size: 200% 100%;
+            animation: skeleton-shimmer 1.5s infinite;
+            border-color: transparent !important;
+            border-radius: 0.5rem;
+            pointer-events: none;
+            user-select: none;
+        }
+        .skeleton-node::placeholder { color: transparent !important; }
+        @keyframes skeleton-shimmer {
+            0%   { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        html.dark .skeleton-node {
+            background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+            background-size: 200% 100%;
+            animation: skeleton-shimmer 1.5s infinite;
+        }
+        /* Skeleton for select elements */
+        .skeleton-node-select {
+            color: transparent !important;
+            background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%) !important;
+            background-size: 200% 100% !important;
+            animation: skeleton-shimmer 1.5s infinite !important;
+            border-color: transparent !important;
+            pointer-events: none;
+        }
+        html.dark .skeleton-node-select {
+            background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%) !important;
+            background-size: 200% 100% !important;
+            animation: skeleton-shimmer 1.5s infinite !important;
+        }
+        /* Validation error helper text */
+        .field-error { display:block; margin-top:4px; font-size:0.72rem; color:#ef4444; }
+    </style>
+
     <script type="module" src="/src/services/globalProfile.js"></script>
     <script>
         // Removed synchronous Auth check
@@ -179,7 +219,7 @@
                                         <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Full
                                             Name</label>
                                         <input id="fullName"
-                                            class="h-12 rounded-lg border border-slate-200 px-4 text-slate-900 focus:border-primary focus:ring-1 focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white placeholder:opacity-40 placeholder:font-light"
+                                            class="h-12 rounded-lg border border-slate-200 px-4 text-slate-900 focus:border-primary focus:ring-1 focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white placeholder:opacity-40 placeholder:font-light skeleton-node"
                                             placeholder="Enter your full name" type="text" />
                                     </div>
                                     <div class="flex flex-col gap-2">
@@ -187,7 +227,7 @@
                                             for="professionalTitle">Professional
                                             Title</label>
                                         <input id="professionalTitle"
-                                            class="h-12 rounded-lg border border-slate-200 px-4 text-slate-900 focus:border-primary focus:ring-1 focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white placeholder:opacity-40 placeholder:font-light"
+                                            class="h-12 rounded-lg border border-slate-200 px-4 text-slate-900 focus:border-primary focus:ring-1 focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white placeholder:opacity-40 placeholder:font-light skeleton-node"
                                             placeholder="e.g. Senior Software Engineer" type="text" />
                                     </div>
                                     <div class="col-span-full flex flex-col gap-2">
@@ -198,7 +238,7 @@
                                             <span class="text-xs text-slate-400">142 / 500 characters</span>
                                         </div>
                                         <textarea id="shortBio"
-                                            class="rounded-lg border border-slate-200 p-4 text-slate-900 focus:border-primary focus:ring-1 focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white placeholder:opacity-40 placeholder:font-light"
+                                            class="rounded-lg border border-slate-200 p-4 text-slate-900 focus:border-primary focus:ring-1 focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white placeholder:opacity-40 placeholder:font-light skeleton-node"
                                             placeholder="Briefly describe your background and expertise"
                                             rows="4"></textarea>
                                     </div>
@@ -206,14 +246,14 @@
                                         <label class="text-sm font-semibold text-slate-700 dark:text-slate-300"
                                             for="country">Country</label>
                                         <input id="country"
-                                            class="h-12 rounded-lg border border-slate-200 px-4 text-slate-900 focus:border-primary focus:ring-1 focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white placeholder:opacity-40 placeholder:font-light"
+                                            class="h-12 rounded-lg border border-slate-200 px-4 text-slate-900 focus:border-primary focus:ring-1 focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white placeholder:opacity-40 placeholder:font-light skeleton-node"
                                             placeholder="e.g. Somalia" type="text" />
                                     </div>
                                     <div class="flex flex-col gap-2">
                                         <label class="text-sm font-semibold text-slate-700 dark:text-slate-300"
                                             for="city">City</label>
                                         <input id="city"
-                                            class="h-12 rounded-lg border border-slate-200 px-4 text-slate-900 focus:border-primary focus:ring-1 focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white placeholder:opacity-40 placeholder:font-light"
+                                            class="h-12 rounded-lg border border-slate-200 px-4 text-slate-900 focus:border-primary focus:ring-1 focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white placeholder:opacity-40 placeholder:font-light skeleton-node"
                                             placeholder="e.g. Hargeisa" type="text" />
                                     </div>
                                 </div>
@@ -232,9 +272,8 @@
                                             <label class="text-xs font-bold uppercase text-slate-400">LinkedIn
                                                 Profile</label>
                                             <input id="linkedinUrl"
-                                                class="mt-1 h-11 w-full rounded-lg border border-slate-200 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white placeholder:opacity-40 placeholder:font-light"
-                                                placeholder="https://linkedin.com/in/username" type="url"
-                                                value="https://linkedin.com/in/alex-richardson" />
+                                                class="mt-1 h-11 w-full rounded-lg border border-slate-200 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white placeholder:opacity-40 placeholder:font-light skeleton-node"
+                                                placeholder="https://linkedin.com/in/username" type="url" />
                                         </div>
                                     </div>
                                     <div class="flex items-center gap-3">
@@ -249,9 +288,8 @@
                                             <label class="text-xs font-bold uppercase text-slate-400">Twitter / X
                                                 Profile</label>
                                             <input id="twitterUrl"
-                                                class="mt-1 h-11 w-full rounded-lg border border-slate-200 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white placeholder:opacity-40 placeholder:font-light"
-                                                placeholder="https://twitter.com/username" type="url"
-                                                value="https://twitter.com/alexcloud" />
+                                                class="mt-1 h-11 w-full rounded-lg border border-slate-200 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white placeholder:opacity-40 placeholder:font-light skeleton-node"
+                                                placeholder="https://twitter.com/username" type="url" />
                                         </div>
                                     </div>
                                     <div class="flex items-center gap-3">
@@ -263,9 +301,8 @@
                                             <label class="text-xs font-bold uppercase text-slate-400">Facebook
                                                 Profile</label>
                                             <input id="facebookUrl"
-                                                class="mt-1 h-11 w-full rounded-lg border border-slate-200 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white placeholder:opacity-40 placeholder:font-light"
-                                                placeholder="https://facebook.com/username" type="url"
-                                                value="https://facebook.com/alex.richardson.teach" />
+                                                class="mt-1 h-11 w-full rounded-lg border border-slate-200 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white placeholder:opacity-40 placeholder:font-light skeleton-node"
+                                                placeholder="https://facebook.com/username" type="url" />
                                         </div>
                                     </div>
                                     <div class="flex items-center gap-3">
@@ -279,7 +316,7 @@
                                         <div class="flex-1">
                                             <label class="text-xs font-bold uppercase text-slate-400">GitHub Profile</label>
                                             <input id="githubUrl"
-                                                class="mt-1 h-11 w-full rounded-lg border border-slate-200 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white placeholder:opacity-40 placeholder:font-light"
+                                                class="mt-1 h-11 w-full rounded-lg border border-slate-200 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white placeholder:opacity-40 placeholder:font-light skeleton-node"
                                                 placeholder="https://github.com/username" type="url" />
                                         </div>
                                     </div>
@@ -303,9 +340,9 @@
                             <section
                                 class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-background-dark">
                                 <h3 class="text-sm font-bold text-slate-900 dark:text-white mb-2">Introduction Video
-                                </h3>
-                                <p class="mb-4 text-xs text-slate-500">Upload a short (1-3 minute) video introducing
-                                    yourself to students. This builds trust and increases bookings.</p>
+                                </h3>                                 <p class="mb-4 text-xs text-slate-500">Upload a short (1-3 minute) video introducing
+                                    yourself to students. This builds trust and increases bookings.
+                                    <span class="font-semibold text-primary">Max 150 MB</span>.</p>
                                 <div id="video-dropzone"
                                     class="mt-2 flex justify-center rounded-xl border-2 border-dashed border-slate-300 px-6 py-10 transition-colors hover:border-primary/50 dark:border-slate-700 dark:hover:border-primary/50 bg-slate-50 dark:bg-background-dark relative group">
                                     <div class="text-center">
@@ -320,12 +357,13 @@
                                                 for="video-upload">
                                                 <span>Upload a video</span>
                                                 <input class="sr-only" id="video-upload" name="video-upload" type="file"
-                                                    accept="video/mp4,video/x-m4v,video/*" />
+                                                    accept="video/mp4,video/x-m4v,video/webm,video/quicktime"
+                                                    onchange="handleVideoUploadValidation(event)" />
                                             </label>
                                             <p class="pl-1">or drag and drop</p>
                                         </div>
-                                        <p class="text-xs leading-5 text-slate-500 dark:text-slate-500 mt-2">MP4, WebM
-                                            up to 50MB</p>
+                                        <p id="video-size-label" class="text-xs leading-5 text-slate-500 dark:text-slate-500 mt-2">MP4, WebM up to 150 MB</p>
+                                        <p id="video-error-msg" class="hidden text-xs font-semibold text-red-500 mt-2"></p>
                                     </div>
                                 </div>
                             </section>
@@ -358,16 +396,12 @@
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div>
                                             <label class="mb-4 block text-sm font-bold text-slate-900 dark:text-white" for="experience">Teaching Experience</label>
-                                            <select class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white" id="experience">
+                                            <select class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white skeleton-node-select" id="experience">
                                                 <option value="">Select experience</option>
                                                 <option value="1-3">1-3 years</option>
                                                 <option value="3-5">3-5 years</option>
                                                 <option value="5+">5+ years</option>
                                             </select>
-                                        </div>
-                                        <div>
-                                            <label class="mb-4 block text-sm font-bold text-slate-900 dark:text-white" for="mentorshipStyle">Mentorship Style</label>
-                                            <textarea class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white" id="mentorshipStyle" rows="3" placeholder="How do you mentor students?..."></textarea>
                                         </div>
                                     </div>
                             </div>
@@ -381,14 +415,14 @@
                                             <label class="mb-2 block text-xs font-medium text-slate-500"
                                                 for="university">University / Institution</label>
                                             <input
-                                                class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                                                class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white skeleton-node"
                                                 id="university" placeholder="e.g. Stanford University" type="text" />
                                         </div>
                                         <div>
                                             <label class="mb-2 block text-xs font-medium text-slate-500"
                                                 for="degree">Degree</label>
                                             <input
-                                                class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                                                class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white skeleton-node"
                                                 id="degree" placeholder="e.g. Master of Computer Science" type="text" />
                                         </div>
                                     </div>
@@ -509,7 +543,7 @@
                                                 <label class="mb-2 block text-xs font-bold uppercase text-slate-500"
                                                     for="mm-provider">Provider</label>
                                                 <select id="mm-provider"
-                                                    class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white">
+                                                    class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white skeleton-node-select">
                                                     <option value="">Select Provider</option>
                                                     <option value="zaad">Zaad Service</option>
                                                     <option value="edahab">eDahab</option>
@@ -523,7 +557,7 @@
                                                 <label class="mb-2 block text-xs font-bold uppercase text-slate-500"
                                                     for="mm-phone">Phone Number</label>
                                                 <input id="mm-phone" type="tel"
-                                                    class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                                                    class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white skeleton-node"
                                                     placeholder="+252 6X XXXXXXX" />
                                                 <span id="mm-phone-error" class="hidden text-xs text-red-500 mt-1"></span>
                                             </div>
@@ -539,29 +573,32 @@
                                                 <label class="mb-2 block text-xs font-bold uppercase text-slate-500"
                                                     for="cod-address">Street Address</label>
                                                 <input id="cod-address" type="text"
-                                                    class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                                                    class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white skeleton-node"
                                                     placeholder="123 Main St, Apartment 4B" />
+                                                 <span id="cod-address-error" class="hidden text-xs text-red-500 mt-1"></span>
                                             </div>
                                             <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
                                                 <div>
                                                     <label class="mb-2 block text-xs font-bold uppercase text-slate-500"
                                                         for="cod-city">City</label>
                                                     <input id="cod-city" type="text"
-                                                        class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                                                        class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white skeleton-node"
                                                         placeholder="Hargeisa" />
+                                                     <span id="cod-city-error" class="hidden text-xs text-red-500 mt-1"></span>
                                                 </div>
                                                 <div>
                                                     <label class="mb-2 block text-xs font-bold uppercase text-slate-500"
                                                         for="cod-country">Country</label>
                                                     <input id="cod-country" type="text"
-                                                        class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                                                        class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white skeleton-node"
                                                         placeholder="Somalia" />
+                                                     <span id="cod-country-error" class="hidden text-xs text-red-500 mt-1"></span>
                                                 </div>
                                                 <div>
                                                     <label class="mb-2 block text-xs font-bold uppercase text-slate-500"
                                                         for="cod-phone">Contact Phone</label>
                                                     <input id="cod-phone" type="tel"
-                                                        class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                                                        class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white skeleton-node"
                                                         placeholder="+252 6X XXXXXXX" />
                                                     <span id="cod-phone-error" class="hidden text-xs text-red-500 mt-1"></span>
                                                 </div>
@@ -593,22 +630,26 @@
                                                 </tr>
                                             </thead>
                                             <tbody id="payout-history-tbody">
-                                                <tr class="h-64" id="payout-empty-state">
-                                                    <td class="px-6 py-10" colspan="5">
-                                                        <div
-                                                            class="flex flex-col items-center justify-center text-center">
-                                                            <div
-                                                                class="mb-4 flex size-16 items-center justify-center rounded-full bg-slate-50 text-slate-300 dark:bg-slate-800/50">
-                                                                <span
-                                                                    class="material-symbols-outlined text-4xl">history</span>
-                                                            </div>
-                                                            <p
-                                                                class="text-base font-semibold text-slate-900 dark:text-white">
-                                                                No transactions yet</p>
-                                                            <p class="mt-1 text-sm text-slate-500">Your earnings history
-                                                                will appear here.</p>
-                                                        </div>
-                                                    </td>
+                                                <tr class="animate-pulse border-b border-slate-100 dark:border-slate-800">
+                                                    <td class="px-6 py-4"><div class="h-4 w-20 rounded bg-slate-200 dark:bg-slate-700"></div></td>
+                                                    <td class="px-6 py-4"><div class="h-4 w-24 rounded bg-slate-200 dark:bg-slate-700"></div></td>
+                                                    <td class="px-6 py-4"><div class="h-4 w-32 rounded bg-slate-200 dark:bg-slate-700"></div></td>
+                                                    <td class="px-6 py-4 text-right"><div class="ml-auto h-4 w-16 rounded bg-slate-200 dark:bg-slate-700"></div></td>
+                                                    <td class="px-6 py-4"><div class="h-6 w-16 rounded-full bg-slate-200 dark:bg-slate-700"></div></td>
+                                                </tr>
+                                                <tr class="animate-pulse border-b border-slate-100 dark:border-slate-800">
+                                                    <td class="px-6 py-4"><div class="h-4 w-20 rounded bg-slate-200 dark:bg-slate-700"></div></td>
+                                                    <td class="px-6 py-4"><div class="h-4 w-24 rounded bg-slate-200 dark:bg-slate-700"></div></td>
+                                                    <td class="px-6 py-4"><div class="h-4 w-32 rounded bg-slate-200 dark:bg-slate-700"></div></td>
+                                                    <td class="px-6 py-4 text-right"><div class="ml-auto h-4 w-16 rounded bg-slate-200 dark:bg-slate-700"></div></td>
+                                                    <td class="px-6 py-4"><div class="h-6 w-16 rounded-full bg-slate-200 dark:bg-slate-700"></div></td>
+                                                </tr>
+                                                <tr class="animate-pulse">
+                                                    <td class="px-6 py-4"><div class="h-4 w-20 rounded bg-slate-200 dark:bg-slate-700"></div></td>
+                                                    <td class="px-6 py-4"><div class="h-4 w-24 rounded bg-slate-200 dark:bg-slate-700"></div></td>
+                                                    <td class="px-6 py-4"><div class="h-4 w-32 rounded bg-slate-200 dark:bg-slate-700"></div></td>
+                                                    <td class="px-6 py-4 text-right"><div class="ml-auto h-4 w-16 rounded bg-slate-200 dark:bg-slate-700"></div></td>
+                                                    <td class="px-6 py-4"><div class="h-6 w-16 rounded-full bg-slate-200 dark:bg-slate-700"></div></td>
                                                 </tr>
                                             </tbody>
                                         </table>
@@ -656,6 +697,7 @@
                                         <input
                                             class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                                             id="new-password" placeholder="Min. 8 characters" type="password" />
+                                        <span id="new-password-error" class="hidden text-xs text-red-500 mt-1"></span>
                                     </div>
                                     <div>
                                         <label
@@ -828,6 +870,20 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
+            window.containsUrl = function(v) {
+                return new RegExp('https?:\\/\\/|www\\.|ftp:\\/\\/|javascript:', 'i').test(v);
+            };
+            window.hasSQLInjection = function(v) {
+                return new RegExp("(['\"`]|--|[/][*]|[*][/]|\\bUNION\\b|\\bSELECT\\b|\\bDROP\\b|\\bINSERT\\b|\\bDELETE\\b|\\bUPDATE\\b|\\bEXEC\\b)", 'i').test(v);
+            };
+            window.isTextDirty = function(v) {
+                return v && (window.containsUrl(v) || window.hasSQLInjection(v));
+            };
+
+
+                    
+
+
             // Video Drag and Drop
             const videoDropzone = document.getElementById('video-dropzone');
             const videoInput = document.getElementById('video-upload');
@@ -1135,6 +1191,43 @@
                 }
             }
         }
+        window.handleVideoUploadValidation = function(event) {
+            const file = event.target.files[0];
+            const errEl   = document.getElementById('video-error-msg');
+            const labelEl = document.getElementById('video-size-label');
+            const MAX_BYTES = 150 * 1024 * 1024; // 150 MB
+            const ALLOWED_TYPES = ['video/mp4', 'video/x-m4v', 'video/webm', 'video/quicktime'];
+
+            if (!file) return;
+
+            // Reset error state
+            if (errEl) { errEl.textContent = ''; errEl.classList.add('hidden'); }
+
+            // Check MIME type
+            if (!ALLOWED_TYPES.includes(file.type)) {
+                if (errEl) { errEl.textContent = 'Invalid file type. Please upload an MP4, WebM or MOV video.'; errEl.classList.remove('hidden'); }
+                event.target.value = '';
+                return;
+            }
+
+            // Check file size
+            if (file.size > MAX_BYTES) {
+                const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
+                if (errEl) {
+                    errEl.textContent = `File too large (${sizeMB} MB). For a 1-3 min intro video, please keep it under 150 MB.`;
+                    errEl.classList.remove('hidden');
+                }
+                event.target.value = '';
+                return;
+            }
+
+            // All good — show selected file name
+            if (labelEl) {
+                labelEl.textContent = `Selected: ${file.name} (${(file.size / (1024 * 1024)).toFixed(1)} MB)`;
+                labelEl.classList.add('text-primary', 'font-bold');
+                labelEl.classList.remove('text-slate-500');
+            }
+        };
     </script>
 
     <script type="module">
@@ -1158,9 +1251,24 @@
                 if (discardBtnEl) discardBtnEl.id = 'discard-profile-btn';
             }
 
+            // --- Reveal skeletons: remove skeleton-node after data arrives ---
+            const revealSkeletons = () => {
+                document.querySelectorAll('.skeleton-node').forEach(el => {
+                    el.classList.remove('skeleton-node');
+                    el.style.pointerEvents = '';
+                    el.style.userSelect = '';
+                });
+                document.querySelectorAll('.skeleton-node-select').forEach(el => {
+                    el.classList.remove('skeleton-node-select');
+                    el.style.pointerEvents = '';
+                });
+            };
+
             // Function to populate form
             const populateForm = (profile) => {
-                if (!profile) return;
+                const tos = document.getElementById('tos-checkbox');
+                if (tos && profile.agreed_to_instructor_tos !== undefined) { tos.checked = profile.agreed_to_instructor_tos; }
+                if (!profile) { revealSkeletons(); return; }
 
                 // Personal
                 if (profile.full_name) document.getElementById('fullName').value = profile.full_name;
@@ -1178,7 +1286,6 @@
 
                 // Teaching
                 if (profile.teaching_experience) document.getElementById('experience').value = profile.teaching_experience;
-                if (profile.mentorship_style) document.getElementById('mentorshipStyle').value = profile.mentorship_style;
 
                 // Expertise Tags — clear ALL existing tags (including HTML placeholders) then repopulate
                 const expCont = document.getElementById('expertise-container');
@@ -1324,6 +1431,8 @@
                         mainProfileNode.classList.add('overflow-hidden');
                     }
                 }
+                // Reveal skeletons once data is populated
+                revealSkeletons();
             };
 
             // Load profile on start
@@ -1338,9 +1447,10 @@
                     // Also fire off payout history loader
                     instructorEarningsService.getWithdrawalHistory(session.user.id).then(withdrawals => {
                         const tb = document.getElementById('payout-history-tbody');
-                        if (tb && withdrawals.length > 0) {
-                             tb.innerHTML = '';
-                             withdrawals.forEach(item => {
+                        if (tb) {
+                            if (withdrawals.length > 0) {
+                                 tb.innerHTML = '';
+                                 withdrawals.forEach(item => {
                                  const reqDateStr = new Date(item.created_at).toLocaleDateString();
                                  let statusClass = 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400';
                                  let statusTitle = '';
@@ -1368,6 +1478,21 @@
                                  `;
                                  tb.appendChild(row);
                              });
+                            } else {
+                                tb.innerHTML = `
+                                    <tr class="h-64" id="payout-empty-state">
+                                        <td class="px-6 py-10" colspan="5">
+                                            <div class="flex flex-col items-center justify-center text-center">
+                                                <div class="mb-4 flex size-16 items-center justify-center rounded-full bg-slate-50 text-slate-300 dark:bg-slate-800/50">
+                                                    <span class="material-symbols-outlined text-4xl">history</span>
+                                                </div>
+                                                <p class="text-base font-semibold text-slate-900 dark:text-white">No transactions yet</p>
+                                                <p class="mt-1 text-sm text-slate-500">Your earnings history will appear here.</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                `;
+                            }
                         }
                     });
                     
@@ -1464,30 +1589,89 @@
                 let updates = {};
 
                 if (activeTabId === 'panel-personal') {
-                    const fullNameInput = document.getElementById('fullName');
-                    const titleInput = document.getElementById('professionalTitle');
-                    const bioInput = document.getElementById('shortBio');
+                    const fullNameInput   = document.getElementById('fullName');
+                    const titleInput     = document.getElementById('professionalTitle');
+                    const bioInput       = document.getElementById('shortBio');
+                    const countryInput   = document.getElementById('country');
+                    const cityInput      = document.getElementById('city');
+                    const linkedinInput  = document.getElementById('linkedinUrl');
+                    const twitterInput   = document.getElementById('twitterUrl');
+                    const facebookInput  = document.getElementById('facebookUrl');
+                    const githubInput    = document.getElementById('githubUrl');
 
-                    const fullName = fullNameInput.value.trim();
-                    const title = titleInput.value.trim();
-                    const bio = bioInput.value.trim();
+                    const fullName   = fullNameInput.value.trim();
+                    const title      = titleInput.value.trim();
+                    const bio        = bioInput.value.trim();
+                    const country    = countryInput ? countryInput.value.trim() : '';
+                    const city       = cityInput ? cityInput.value.trim() : '';
+                    const linkedinUrl  = linkedinInput  ? linkedinInput.value.trim()  : '';
+                    const twitterUrl   = twitterInput   ? twitterInput.value.trim()   : '';
+                    const facebookUrl  = facebookInput  ? facebookInput.value.trim()  : '';
+                    const githubUrl    = githubInput    ? githubInput.value.trim()    : '';
 
-                    [fullNameInput, titleInput, bioInput].forEach(el => el.classList.remove('border-red-500', 'ring-1', 'ring-red-500'));
+                    // Clear previous error states
+                    [fullNameInput, titleInput, bioInput, countryInput, cityInput, linkedinInput, twitterInput, facebookInput, githubInput].forEach(el => {
+                        if (el) { el.classList.remove('border-red-500', 'ring-1', 'ring-red-500'); }
+                    });
+                    document.querySelectorAll('.field-error').forEach(e => e.remove());
 
-                    // For instructor setup, they need an avatar, but profile logic gets complex. We check for full name, title, bio as required
-                    if (!fullName || !title || !bio) {
-                        if (!fullName) fullNameInput.classList.add('border-red-500', 'ring-1', 'ring-red-500');
-                        if (!title) titleInput.classList.add('border-red-500', 'ring-1', 'ring-red-500');
-                        if (!bio) bioInput.classList.add('border-red-500', 'ring-1', 'ring-red-500');
+                    // ── Validation helpers ────────────────────────────────────────────────
+                    // Block URLs / injection patterns in plain-text fields
+                    
+                    // Sanitise for typical SQL injection patterns
+
+                    // Social URL validators
+                    const socialRules = [
+                        { input: linkedinInput,  value: linkedinUrl,  regex: /^https?:\/\/(www\.)?linkedin\.com\/.*$/i,  label: 'LinkedIn' },
+                        { input: twitterInput,   value: twitterUrl,   regex: /^https?:\/\/(www\.)?(twitter|x)\.com\/.*$/i, label: 'Twitter/X' },
+                        { input: facebookInput,  value: facebookUrl,  regex: /^https?:\/\/(www\.)?facebook\.com\/.*$/i, label: 'Facebook' },
+                        { input: githubInput,    value: githubUrl,    regex: /^https?:\/\/(www\.)?github\.com\/.*$/i,    label: 'GitHub' },
+                    ];
+
+                    const showFieldError = (inputEl, msg) => {
+                        if (!inputEl) return;
+                        inputEl.classList.add('border-red-500', 'ring-1', 'ring-red-500');
+                        const err = document.createElement('span');
+                        err.className = 'field-error';
+                        err.textContent = msg;
+                        inputEl.parentNode.appendChild(err);
                         tabValid = false;
-                    } else {
-                        const linkedinUrl = document.getElementById('linkedinUrl')?.value.trim();
-                        const twitterUrl = document.getElementById('twitterUrl')?.value.trim();
-                        const facebookUrl = document.getElementById('facebookUrl')?.value.trim();
-                        const githubUrl = document.getElementById('githubUrl')?.value.trim();
-                        const country = document.getElementById('country')?.value.trim();
-                        const city = document.getElementById('city')?.value.trim();
+                    };
 
+                    // ── Text field checks ─────────────────────────────────────────────────
+                    if (!fullName) {
+                        showFieldError(fullNameInput, 'Full name is required.');
+                    } else if (window.containsUrl(fullName) || window.hasSQLInjection(fullName)) {
+                        showFieldError(fullNameInput, 'Name cannot contain links or special characters.');
+                    }
+
+                    if (!title) {
+                        showFieldError(titleInput, 'Professional title is required.');
+                    } else if (window.containsUrl(title) || window.hasSQLInjection(title)) {
+                        showFieldError(titleInput, 'Title cannot contain links or special characters.');
+                    }
+
+                    if (!bio) {
+                        showFieldError(bioInput, 'Short bio is required.');
+                    } else if (window.containsUrl(bio) || window.hasSQLInjection(bio)) {
+                        showFieldError(bioInput, 'Bio cannot contain links or injection patterns.');
+                    }
+
+                    if (country && (window.containsUrl(country) || window.hasSQLInjection(country))) {
+                        showFieldError(countryInput, 'Country cannot contain links or special characters.');
+                    }
+                    if (city && (window.containsUrl(city) || window.hasSQLInjection(city))) {
+                        showFieldError(cityInput, 'City cannot contain links or special characters.');
+                    }
+
+                    // ── Social URL checks ─────────────────────────────────────────────────
+                    socialRules.forEach(({ input, value, regex, label }) => {
+                        if (value && !regex.test(value)) {
+                            showFieldError(input, `Please enter a valid ${label} profile URL (e.g. https://${label.toLowerCase().replace('/x','')}.com/username).`);
+                        }
+                    });
+
+                    if (tabValid) {
                         updates = {
                             full_name: fullName,
                             professional_title: title,
@@ -1495,10 +1679,10 @@
                             country: country,
                             city: city,
                             social_links: { 
-                                linkedin: linkedinUrl, 
-                                twitter: twitterUrl, 
-                                facebook: facebookUrl,
-                                github: githubUrl
+                                linkedin: linkedinUrl  || null, 
+                                twitter: twitterUrl   || null, 
+                                facebook: facebookUrl || null,
+                                github: githubUrl     || null
                             }
                         };
                     }
@@ -1506,6 +1690,20 @@
                     const expertiseContainer = document.getElementById('expertise-container');
                     const expertiseInputWrapper = expertiseContainer.parentElement;
                     expertiseInputWrapper.classList.remove('border-red-500', 'ring-1', 'ring-red-500');
+                    document.querySelectorAll('.field-error').forEach(e => e.remove());
+
+                    // Shared validation helpers (same rules as personal tab)
+
+                    
+const showTFieldError = (inputEl, msg) => {
+                        if (!inputEl) return;
+                        inputEl.classList.add('border-red-500', 'ring-1', 'ring-red-500');
+                        const err = document.createElement('span');
+                        err.className = 'field-error';
+                        err.textContent = msg;
+                        inputEl.parentNode.appendChild(err);
+                        tabValid = false;
+                    };
 
                     // Collect expertise tags — use .expertise-tag class to skip "Add" button
                     const expertiseTags = expertiseContainer.querySelectorAll('span.expertise-tag');
@@ -1521,11 +1719,35 @@
                             return textNode ? textNode.textContent.trim() : span.childNodes[0]?.textContent?.trim() || '';
                         }).filter(Boolean);
 
+                        // Validate expertise tags for injections
+                        let expertiseDirty = false;
+                        expertiseList.forEach(exp => {
+                            if (window.isTextDirty(exp)) expertiseDirty = true;
+                        });
+                        if (expertiseDirty) {
+                            expertiseInputWrapper.classList.add('border-red-500', 'ring-1', 'ring-red-500', 'p-2', 'rounded-lg');
+                            const err = document.createElement('p');
+                            err.className = 'field-error mt-2';
+                            err.textContent = 'Expertise tags contain invalid characters or links.';
+                            expertiseInputWrapper.parentElement.appendChild(err);
+                            tabValid = false;
+                        }
+
+                        // Education fields — collect and validate
                         const educationList = [];
                         document.querySelectorAll('.education-item').forEach(item => {
-                            const uni = item.querySelector('input[id^="university"]')?.value.trim();
-                            const deg = item.querySelector('input[id^="degree"]')?.value.trim();
-                            if (uni && deg) educationList.push({ university: uni, degree: deg });
+                            const uniInput = item.querySelector('input[id^="university"]');
+                            const degInput = item.querySelector('input[id^="degree"]');
+                            const uni = uniInput?.value.trim();
+                            const deg = degInput?.value.trim();
+
+                            if (uni && window.isTextDirty(uni)) {
+                                showTFieldError(uniInput, 'Institution name cannot contain links or special characters.');
+                            } else if (deg && window.isTextDirty(deg)) {
+                                showTFieldError(degInput, 'Degree cannot contain links or special characters.');
+                            } else if (uni && deg) {
+                                educationList.push({ university: uni, degree: deg });
+                            }
                         });
 
                         // Collect language tags — use .lang-tag class, read only text nodes
@@ -1535,41 +1757,51 @@
                             return textNode ? textNode.textContent.trim() : '';
                         }).filter(Boolean);
 
-                        const mentorshipStyle = document.getElementById('mentorshipStyle').value.trim();
-
-                        updates = {
-                            teaching_experience: experience,
-                            mentorship_style: mentorshipStyle,
-                            expertise_list: expertiseList,
-                            education_list: educationList,
-                            language_list: languageList
-                        };
+                        if (tabValid) {
+                            updates = {
+                                teaching_experience: experience,
+                                expertise_list: expertiseList,
+                                education_list: educationList,
+                                language_list: languageList
+                            };
+                        }
                     }
                 } else if (activeTabId === 'panel-payout') {
                     const selectedMethod = document.getElementById('selectedPayoutMethod').value;
                     const mmProviderInput = document.getElementById('mm-provider');
-                    const mmPhoneInput = document.getElementById('mm-phone');
+                    const mmPhoneInput    = document.getElementById('mm-phone');
                     const codAddressInput = document.getElementById('cod-address');
-                    const codCityInput = document.getElementById('cod-city');
-                    const codPhoneInput = document.getElementById('cod-phone');
+                    const codCityInput    = document.getElementById('cod-city');
+                    const codPhoneInput   = document.getElementById('cod-phone');
                     const codCountryInput = document.getElementById('cod-country');
 
+                    // Reset all error states
                     [mmProviderInput, mmPhoneInput, codAddressInput, codCityInput, codPhoneInput, codCountryInput].forEach(el => {
                         if (el) el.classList.remove('border-red-500', 'ring-1', 'ring-red-500');
                     });
-                    
-                    const mmErr = document.getElementById('mm-phone-error');
-                    const codErr = document.getElementById('cod-phone-error');
-                    if (mmErr) { mmErr.textContent = ''; mmErr.classList.add('hidden'); }
-                    if (codErr) { codErr.textContent = ''; codErr.classList.add('hidden'); }
+                    ['mm-phone-error','cod-phone-error','cod-address-error','cod-city-error','cod-country-error'].forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el) { el.textContent = ''; el.classList.add('hidden'); }
+                    });
 
-                    // Always extract all fields so we don't lose data when the user switches tabs
-                    const mmProvider = mmProviderInput.value;
-                    const mmPhone = mmPhoneInput.value.trim();
-                    const address = codAddressInput.value.trim();
-                    const city = codCityInput.value.trim();
-                    const phone = codPhoneInput.value.trim();
-                    const country = codCountryInput ? codCountryInput.value.trim() : '';
+                    // ── Payout-specific validation helpers ────────────────────────────
+                    // Phone: allow digits, +, spaces, dashes, parentheses — 7 to 15 digits total
+                    const isValidPhone   = (v) => /^[\+\d][\d\s\-\(\)]{5,18}$/.test(v) && v.replace(/\D/g,'').length >= 7;
+
+                    const showPayoutError = (inputEl, spanId, msg) => {
+                        if (inputEl) inputEl.classList.add('border-red-500', 'ring-1', 'ring-red-500');
+                        const span = document.getElementById(spanId);
+                        if (span) { span.textContent = msg; span.classList.remove('hidden'); }
+                        tabValid = false;
+                    };
+
+                    // Always extract values
+                    const mmProvider = mmProviderInput ? mmProviderInput.value : '';
+                    const mmPhone    = mmPhoneInput    ? mmPhoneInput.value.trim()    : '';
+                    const address    = codAddressInput ? codAddressInput.value.trim() : '';
+                    const city       = codCityInput    ? codCityInput.value.trim()    : '';
+                    const phone      = codPhoneInput   ? codPhoneInput.value.trim()   : '';
+                    const country    = codCountryInput ? codCountryInput.value.trim() : '';
 
                     if (!selectedMethod || selectedMethod === 'bank') {
                         document.querySelectorAll('.payout-method-btn').forEach(btn => {
@@ -1578,28 +1810,58 @@
                         });
                         tabValid = false;
                     } else if (selectedMethod === 'mm') {
-                        if (!mmProvider || !mmPhone) {
-                            if (!mmProvider) mmProviderInput.classList.add('border-red-500', 'ring-1', 'ring-red-500');
-                            if (!mmPhone) mmPhoneInput.classList.add('border-red-500', 'ring-1', 'ring-red-500');
+                        // Required: provider & phone
+                        if (!mmProvider) {
+                            showPayoutError(mmProviderInput, 'mm-phone-error', '');
+                            mmProviderInput.classList.add('border-red-500', 'ring-1', 'ring-red-500');
                             tabValid = false;
-                        } else {
-                            updates = { 
-                                payout_method: 'Mobile Money', 
-                                payout_details: { provider: mmProvider, mm_phone: mmPhone, address, city, cod_phone: phone, country } 
+                        }
+                        if (!mmPhone) {
+                            showPayoutError(mmPhoneInput, 'mm-phone-error', 'Phone number is required.');
+                        } else if (!isValidPhone(mmPhone)) {
+                            showPayoutError(mmPhoneInput, 'mm-phone-error', 'Enter a valid phone number (digits, +, spaces only).');
+                        } else if (window.isTextDirty(mmPhone)) {
+                            showPayoutError(mmPhoneInput, 'mm-phone-error', 'Phone number contains invalid characters.');
+                        }
+
+                        if (tabValid) {
+                            updates = {
+                                payout_method: 'Mobile Money',
+                                payout_details: { provider: mmProvider, mm_phone: mmPhone, address, city, cod_phone: phone, country }
                             };
                         }
                     } else if (selectedMethod === 'cod') {
-                        if (!address || !city || !phone || !country) {
-                            if (!address) codAddressInput.classList.add('border-red-500', 'ring-1', 'ring-red-500');
-                            if (!city) codCityInput.classList.add('border-red-500', 'ring-1', 'ring-red-500');
-                            if (!phone) codPhoneInput.classList.add('border-red-500', 'ring-1', 'ring-red-500');
-                            if (!country && codCountryInput) codCountryInput.classList.add('border-red-500', 'ring-1', 'ring-red-500');
-                            tabValid = false;
-                        } else {
-                            // If they selected COD, maybe they also had MM fields filled.
-                            updates = { 
-                                payout_method: 'Cash on Delivery', 
-                                payout_details: { address, city, cod_phone: phone, country, provider: mmProvider, mm_phone: mmPhone } 
+                        // Required: address, city, phone, country
+                        if (!address) {
+                            showPayoutError(codAddressInput, 'cod-address-error', 'Street address is required.');
+                        } else if (window.isTextDirty(address)) {
+                            showPayoutError(codAddressInput, 'cod-address-error', 'Address cannot contain links or special characters.');
+                        }
+
+                        if (!city) {
+                            showPayoutError(codCityInput, 'cod-city-error', 'City is required.');
+                        } else if (window.isTextDirty(city)) {
+                            showPayoutError(codCityInput, 'cod-city-error', 'City cannot contain links or special characters.');
+                        }
+
+                        if (!country) {
+                            showPayoutError(codCountryInput, 'cod-country-error', 'Country is required.');
+                        } else if (window.isTextDirty(country)) {
+                            showPayoutError(codCountryInput, 'cod-country-error', 'Country cannot contain links or special characters.');
+                        }
+
+                        if (!phone) {
+                            showPayoutError(codPhoneInput, 'cod-phone-error', 'Contact phone is required.');
+                        } else if (!isValidPhone(phone)) {
+                            showPayoutError(codPhoneInput, 'cod-phone-error', 'Enter a valid phone number (digits, +, spaces only).');
+                        } else if (window.isTextDirty(phone)) {
+                            showPayoutError(codPhoneInput, 'cod-phone-error', 'Phone number contains invalid characters.');
+                        }
+
+                        if (tabValid) {
+                            updates = {
+                                payout_method: 'Cash on Delivery',
+                                payout_details: { address, city, cod_phone: phone, country, provider: mmProvider, mm_phone: mmPhone }
                             };
                         }
                     }
@@ -1612,16 +1874,71 @@
                         tabValid = false;
                     }
                     
-                    const newPw = document.getElementById('new-password').value;
-                    const confirmPw = document.getElementById('confirm-password').value;
-                    document.getElementById('confirm-password').classList.remove('border-red-500', 'ring-1', 'ring-red-500');
-                    if (newPw && newPw !== confirmPw) {
-                        document.getElementById('confirm-password').classList.add('border-red-500', 'ring-1', 'ring-red-500');
-                        tabValid = false;
-                        const securityErr = document.getElementById('security-error-msg');
-                        if (securityErr) {
-                            securityErr.textContent = "New password and confirm password do not match.";
+                    const securityErr = document.getElementById('security-error-msg');
+                    securityErr.classList.add('hidden');
+                    
+                    ['current-password', 'new-password', 'confirm-password'].forEach(id => {
+                        const input = document.getElementById(id);
+                        input.classList.remove('border-red-500', 'ring-1', 'ring-red-500');
+                        const err = document.getElementById(id + '-error');
+                        if (err) err.classList.add('hidden');
+                    });
+
+                    const currPwInput = document.getElementById('current-password');
+                    const newPwInput = document.getElementById('new-password');
+                    const confirmPwInput = document.getElementById('confirm-password');
+                    
+                    const currPw = currPwInput.value;
+                    const newPw = newPwInput.value;
+                    const confirmPw = confirmPwInput.value;
+                    
+                    // Strict rate limit: 3 attempts, then wait 30 seconds
+                    const now = Date.now();
+                    window.passwordAttempts = window.passwordAttempts || [];
+                    
+                    // Filter out any attempts older than 30 seconds to refresh the quota
+                    window.passwordAttempts = window.passwordAttempts.filter(time => now - time < 30000);
+                    
+                    if (currPw || newPw) {
+                        if (window.passwordAttempts.length >= 3) {
+                            tabValid = false;
+                            const oldestAttempt = window.passwordAttempts[0];
+                            const remainingSeconds = Math.ceil((30000 - (now - oldestAttempt)) / 1000);
+                            securityErr.textContent = `Too many attempts. Please wait ${remainingSeconds} seconds before trying again.`;
                             securityErr.classList.remove('hidden');
+                            return;
+                        }
+                        // Log this new attempt
+                        window.passwordAttempts.push(now);
+                    }
+
+                    updates.agreed_to_instructor_tos = tosCheckbox.checked;
+
+                    // Local helper for password field errors - mirrors showPayoutError but uses per-field error spans
+                    const showSecurityError = (inputEl, spanId, msg) => {
+                        if (inputEl) inputEl.classList.add('border-red-500', 'ring-1', 'ring-red-500');
+                        const span = document.getElementById(spanId);
+                        if (span) { span.textContent = msg; span.classList.remove('hidden'); }
+                        tabValid = false;
+                    };
+
+                    if (newPw || confirmPw) {
+                        if (!currPw) {
+                            showSecurityError(currPwInput, 'current-password-error', 'Current password is required to set a new one.');
+                        } else if (window.isTextDirty(currPw)) {
+                            showSecurityError(currPwInput, 'current-password-error', 'Invalid characters detected.');
+                        }
+                        
+                        if (!newPw) {
+                            showSecurityError(newPwInput, 'new-password-error', 'New password is required.');
+                        } else if (window.isTextDirty(newPw)) {
+                            showSecurityError(newPwInput, 'new-password-error', 'Invalid characters detected in new password.');
+                        } else if (!/^(?=.*[A-Za-z])(?=.*\d).{8,}$/.test(newPw)) {
+                            showSecurityError(newPwInput, 'new-password-error', 'Must be at least 8 chars long with letters and numbers.');
+                        }
+                        
+                        if (newPw !== confirmPw) {
+                            showSecurityError(confirmPwInput, 'confirm-password-error', 'Passwords do not match.');
                         }
                     }
                 }
@@ -1864,6 +2181,7 @@
 <script>
     // Instructor settings menu specific toggling logic
     document.addEventListener('DOMContentLoaded', () => {
+
         const _mBtn = document.getElementById('mobile-menu-btn');
         const _sBar = document.getElementById('settings-sidebar');
         const _over = document.getElementById('sidebar-overlay');
