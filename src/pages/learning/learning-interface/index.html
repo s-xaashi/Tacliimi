@@ -238,6 +238,8 @@
                     mobileCertBtn.className = desktopCertBtn.className
                         .replace('hidden ', '')
                         .replace('mt-4 w-full', 'w-full');
+                    mobileCertBtn.style.background = desktopCertBtn.style.background;
+                    mobileCertBtn.style.boxShadow = desktopCertBtn.style.boxShadow;
                 } else {
                     mobileCertContainer.classList.add('hidden');
                 }

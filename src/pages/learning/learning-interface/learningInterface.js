@@ -216,7 +216,7 @@ async function saveAnswer(quizId, questionId, optionId, isCorrect) {
 // LESSON NAVIGATION + PROGRESS
 // ---------------------------------------------------------------
 
-window.playLesson = function (sIdx, lIdx) {
+window.playLesson = async function (sIdx, lIdx) {
     if (!currentCourseData) return;
     const sourceCurriculum = currentCourseData.course_sections || [];
     const section = sourceCurriculum[sIdx];
@@ -236,12 +236,29 @@ window.playLesson = function (sIdx, lIdx) {
 
     document.getElementById('li-lesson-title').textContent = `${currentGlobalIndex}. ${lesson.title || 'Untitled Lesson'}`;
 
-    // Video — detect embed URLs (YouTube/Vimeo) and render as iframe
+    // Video playback logic
     const videoPlayer = document.getElementById('main-video-player');
     const videoContainer = videoPlayer.parentElement.parentElement; // outer aspect-video wrapper
-    if (lesson.video_url) {
+    const innerVideoDiv = videoPlayer.parentElement; // the actual black wrapper
+    
+    if (lesson.video_provider === 'r2' || lesson.video_storage_key) {
+        let oldIframe = innerVideoDiv.querySelector('#embed-iframe');
+        if (oldIframe) oldIframe.remove();
+        if (activePlayer) { try { activePlayer.destroy(); } catch (_) {} activePlayer = null; }
+        
+        videoPlayer.style.display = 'block';
+        videoContainer.classList.remove('hidden');
+        videoPlayer.src = ''; // reset immediately
+        
+        try {
+            const pbUrl = await CourseService.getR2PlaybackUrl(currentCourseData.id, lesson.id, 'lesson');
+            videoPlayer.src = pbUrl;
+        } catch(e) {
+            console.error("Failed to load secure video:", e);
+            if (typeof showToast === 'function') showToast("Error loading secure video.", true);
+        }
+    } else if (lesson.video_url) {
         const embedSrc = getEmbedUrl(lesson.video_url);
-        const innerVideoDiv = videoPlayer.parentElement; // the actual black wrapper
         if (embedSrc) {
             // External embed: replace <video> with an <iframe>
             videoPlayer.style.display = 'none';
@@ -305,7 +322,7 @@ window.playLesson = function (sIdx, lIdx) {
         } else {
             if (activePlayer) { try { activePlayer.destroy(); } catch (_) {} activePlayer = null; }
             // Direct video file
-            const existingIframe = innerVideoDiv.querySelector('#embed-iframe');
+            let existingIframe = innerVideoDiv.querySelector('#embed-iframe');
             if (existingIframe) existingIframe.style.display = 'none';
             videoPlayer.style.display = 'block';
             videoPlayer.src = lesson.video_url;
@@ -315,7 +332,7 @@ window.playLesson = function (sIdx, lIdx) {
         if (activePlayer) { try { activePlayer.destroy(); } catch (_) {} activePlayer = null; }
         videoPlayer.src = '';
         videoPlayer.style.display = 'block';
-        const existingIframe = videoContainer.querySelector('#embed-iframe');
+        let existingIframe = videoContainer.querySelector('#embed-iframe');
         if (existingIframe) existingIframe.style.display = 'none';
         videoContainer.classList.add('hidden');
     }
@@ -467,17 +484,19 @@ async function markLessonComplete(lessonId, type = 'manual') {
     const isNowCompleted = state.video && state.quiz;
     const finalCompleted = wasCompleted || isNowCompleted;
 
-    // Persist progress
+    // Persist progress authoritatively via RPC
     try {
-        await supabase.from('lesson_progress').upsert({
-            student_id: currentUser.id,
-            lesson_id: lessonId,
-            completed: finalCompleted,
-            completed_at: finalCompleted ? new Date().toISOString() : null,
-            progress_data: state
-        }, { onConflict: 'student_id, lesson_id' });
+        const { error } = await supabase.rpc('mark_lesson_complete', {
+            p_lesson_id: lessonId,
+            p_progress_data: state
+        });
+        if (error) {
+            console.error("Server denied completion:", error.message);
+            return; // Abort local completion if server rejects it
+        }
     } catch (e) {
         console.error("Error saving progress:", e);
+        return;
     }
 
     if (finalCompleted && !wasCompleted) {
@@ -555,12 +574,16 @@ function maybeShowCertificateButton(isComplete = false) {
         // Unlock: gold styling, clickable
         btn.disabled = false;
         btn.title = 'Click to generate your certificate!';
-        btn.className = 'mt-4 w-full flex items-center justify-center gap-2 px-4 py-3 bg-accent-gold hover:brightness-95 text-white font-bold rounded-xl transition-all shadow-lg shadow-accent-gold/20 cursor-pointer';
+        btn.className = 'mt-4 w-full flex items-center justify-center gap-2 px-4 py-3 text-white font-bold rounded-xl transition-all cursor-pointer';
+        btn.style.background = '#D4A017';
+        btn.style.boxShadow = '0 4px 24px 0 rgba(212,160,23,0.35)';
     } else {
         // Locked: grayed out, not clickable
         btn.disabled = true;
         btn.title = 'Complete all lessons to unlock your certificate';
         btn.className = 'mt-4 w-full flex items-center justify-center gap-2 px-4 py-3 font-bold rounded-xl transition-all opacity-40 cursor-not-allowed bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400';
+        btn.style.background = '';
+        btn.style.boxShadow = '';
     }
 }
 
@@ -748,12 +771,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             const [progressResult, enrollmentResult] = await Promise.all([
                 supabase.from('lesson_progress').select('lesson_id, completed, progress_data')
                     .eq('student_id', currentUser.id).in('lesson_id', lessonIds),
-                supabase.from('enrollments').select('last_accessed_lesson_id, progress_percentage, completed_at')
+                supabase.from('enrollments').select('last_accessed_lesson_id, progress_percentage, completed_at, status')
                     .eq('student_id', currentUser.id).eq('course_id', courseId).maybeSingle()
             ]);
 
-            const existingProgress = enrollmentResult.data?.progress_percentage || 0;
-            const alreadyCompleted = enrollmentResult.data?.completed_at != null || existingProgress === 100;
+            const existingProgress = Number(enrollmentResult.data?.progress_percentage || 0);
+            const alreadyCompleted = enrollmentResult.data?.completed_at != null
+                || enrollmentResult.data?.status === 'completed'
+                || existingProgress >= 100;
             window._cachedEnrollment = enrollmentResult.data;
 
             if (progressResult.data) {
@@ -813,13 +838,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const paddedIdx = String(itemIndex).padStart(2, '0');
 
                     let metaIconsHtml = '';
-                    if (lesson.video_url) metaIconsHtml += `<div class="flex items-center gap-1 font-semibold text-primary"><span class="material-symbols-outlined text-[15px]">play_circle</span></div>`;
-                    if (lesson.quizzes?.length) metaIconsHtml += `<div class="flex items-center gap-1 font-bold text-amber-500"><span class="material-symbols-outlined text-[15px]">quiz</span><span class="text-[10px] bg-amber-100 dark:bg-amber-900/40 px-1.5 rounded-full">${lesson.quizzes.length}</span></div>`;
-                    if (lesson.lesson_resources?.length) metaIconsHtml += `<div class="flex items-center gap-1 font-bold text-emerald-500"><span class="material-symbols-outlined text-[15px]">attachment</span><span class="text-[10px] bg-emerald-100 dark:bg-emerald-900/40 px-1.5 rounded-full">${lesson.lesson_resources.length}</span></div>`;
+                    if (lesson.video_url) metaIconsHtml += `<div class="flex items-center gap-[4px] text-primary"><span class="material-symbols-outlined text-[14px] leading-none">play_circle</span></div>`;
+                    if (lesson.quizzes?.length) metaIconsHtml += `<div class="flex items-center gap-[4px] text-amber-500"><span class="material-symbols-outlined text-[14px] leading-none">quiz</span><div class="h-[15px] min-w-[15px] px-[3px] flex items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/40"><span class="text-[9px] font-bold leading-none mt-[1px]">${lesson.quizzes.length}</span></div></div>`;
+                    if (lesson.lesson_resources?.length) metaIconsHtml += `<div class="flex items-center gap-[4px] text-emerald-500"><span class="material-symbols-outlined text-[14px] leading-none">attachment</span><div class="h-[15px] min-w-[15px] px-[3px] flex items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/40"><span class="text-[9px] font-bold leading-none mt-[1px]">${lesson.lesson_resources.length}</span></div></div>`;
 
                     const completedHtml = isCompleted
-                        ? `<div class="shrink-0 flex items-center justify-center w-6 h-6 relative"><span class="li-lesson-numeral material-symbols-outlined text-emerald-500 text-[20px]">check_circle</span><div class="lesson-active-dot absolute left-[-16px] top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-transparent transition-colors"></div></div>`
-                        : `<div class="shrink-0 flex items-center justify-center w-6 h-6 relative"><span class="li-lesson-numeral font-serif text-slate-300 dark:text-slate-600 text-[15px] italic group-hover:text-primary transition-colors">${paddedIdx}</span><div class="lesson-active-dot absolute left-[-16px] top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-transparent transition-colors"></div></div>`;
+                        ? `<div class="shrink-0 flex items-center justify-center w-5 h-5 relative"><span class="li-lesson-numeral material-symbols-outlined text-emerald-500 text-[18px] leading-none">check_circle</span><div class="lesson-active-dot absolute left-[-20px] top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-transparent transition-colors"></div></div>`
+                        : `<div class="shrink-0 flex items-center justify-center w-5 h-5 relative"><span class="li-lesson-numeral font-serif text-slate-300 dark:text-slate-600 text-[14px] italic group-hover:text-primary transition-colors leading-none">${paddedIdx}</span><div class="lesson-active-dot absolute left-[-20px] top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-transparent transition-colors"></div></div>`;
 
                     html += `
                     <button id="sidebar-btn-s${sIdx}-l${lIdx}" onclick="window.playLesson(${sIdx}, ${lIdx})"

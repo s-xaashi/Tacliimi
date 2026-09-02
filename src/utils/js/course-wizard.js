@@ -96,13 +96,44 @@ window.applyVideoUploadGating = function(settings) {
     
     // Gating for Modal Lesson Video
     const modalVideoUploader = document.getElementById('modal-file-upload-section');
+    const modalVideoUrlSection = document.getElementById('modal-video-url-section');
     const modalVideoGuidance = document.getElementById('modal-youtube-guidance');
-    if (modalVideoUploader && modalVideoGuidance) {
+    const modalProviderToggle = document.getElementById('modal-video-provider-toggle');
+    
+    if (modalVideoUploader && modalVideoGuidance && modalProviderToggle) {
         if (isLegacyVideosEnabled) {
-            modalVideoUploader.classList.remove('hidden');
+            modalProviderToggle.classList.remove('hidden');
             modalVideoGuidance.classList.add('hidden');
+            
+            // Initial state based on checked radio
+            const selectedProvider = document.querySelector('input[name="modal-provider-radio"]:checked')?.value || 'youtube';
+            if (selectedProvider === 'r2') {
+                modalVideoUploader.classList.remove('hidden');
+                modalVideoUrlSection.classList.add('hidden');
+            } else {
+                modalVideoUploader.classList.add('hidden');
+                modalVideoUrlSection.classList.remove('hidden');
+            }
+            
+            // Listen to radio changes
+            document.querySelectorAll('input[name="modal-provider-radio"]').forEach(radio => {
+                // Ensure we don't bind multiple times
+                radio.removeEventListener('change', window._modalRadioHandler);
+                window._modalRadioHandler = (e) => {
+                    if (e.target.value === 'r2') {
+                        modalVideoUploader.classList.remove('hidden');
+                        modalVideoUrlSection.classList.add('hidden');
+                    } else {
+                        modalVideoUploader.classList.add('hidden');
+                        modalVideoUrlSection.classList.remove('hidden');
+                    }
+                };
+                radio.addEventListener('change', window._modalRadioHandler);
+            });
         } else {
+            modalProviderToggle.classList.add('hidden');
             modalVideoUploader.classList.add('hidden');
+            modalVideoUrlSection.classList.remove('hidden');
             modalVideoGuidance.classList.remove('hidden');
         }
     }
@@ -757,21 +788,54 @@ async function setupEventListeners() {
             if (e.target.files && e.target.files[0]) {
                 const file = e.target.files[0];
                 const btn = document.getElementById('btn-upload-video');
-                if (btn) { btn.setAttribute('data-orig', btn.innerText); btn.innerText = 'Uploading...'; btn.disabled = true; }
+                const progressContainer = document.getElementById('intro-upload-progress-container');
+                const progressBar = document.getElementById('intro-upload-progress-bar');
+                const percentText = document.getElementById('intro-upload-percent');
+
+                if (btn) { btn.setAttribute('data-orig', btn.innerText); btn.innerText = 'Initializing...'; btn.disabled = true; }
+                if (progressContainer) {
+                    progressContainer.classList.remove('hidden');
+                    progressBar.style.width = '0%';
+                    percentText.innerText = '0%';
+                }
 
                 try {
                     // Ensure we have a course ID before uploading
                     if (!window.courseDraft.id) await performSave(true);
-                    const url = await CourseService.uploadCourseVideo(window.courseDraft.id, file);
-                    window.courseDraft.intro_video_url = url;
-                    showVideoPreview(url, file.name);
+                    
+                    if (btn) btn.innerText = 'Uploading...';
+                    
+                    window.introUploadAbortController = new AbortController();
+                    
+                    const cancelBtn = document.getElementById('modal-upload-cancel');
+                    if (cancelBtn) {
+                        cancelBtn.onclick = () => {
+                            if (window.introUploadAbortController) {
+                                window.introUploadAbortController.abort();
+                            }
+                        };
+                    }
+
+                    const uploadResult = await CourseService.uploadToR2(window.courseDraft.id, null, 'intro', file, (percent) => {
+                        if (progressBar) progressBar.style.width = `${percent}%`;
+                        if (percentText) percentText.innerText = `${Math.round(percent)}%`;
+                    }, window.introUploadAbortController.signal);
+
+                    window.courseDraft.intro_video_provider = 'r2';
+                    window.courseDraft.intro_video_storage_key = uploadResult.objectKey;
+                    window.courseDraft.intro_video_url = null; // Clear old URL
+
+                    // We can't generate a stable playback URL here without invoking the R2 presigned GET, 
+                    // so we just show the filename. The learning interface handles GET URLs.
+                    showVideoPreview('', file.name);
                     window.saveDraft(true);
                 } catch (err) {
                     console.error('Video upload error:', err);
                     alert('Upload failed: ' + err.message);
-                    if (btn) btn.innerText = btn.getAttribute('data-orig') || 'Upload Video';
                 } finally {
+                    if (btn) btn.innerText = btn.getAttribute('data-orig') || 'Choose File';
                     if (btn) btn.disabled = false;
+                    setTimeout(() => { if (progressContainer) progressContainer.classList.add('hidden'); }, 2000);
                 }
             }
         });
@@ -799,7 +863,10 @@ async function setupEventListeners() {
             if (errEl) errEl.classList.add('hidden');
             
             if (!window.courseDraft.id) await performSave(true);
+            window.courseDraft.intro_video_provider = 'youtube';
             window.courseDraft.intro_video_url = url;
+            window.courseDraft.intro_video_storage_key = null; // Clear R2 key
+
             showVideoPreview(url, "Embedded Video");
             window.saveDraft(true);
             introUrlInput.value = '';
@@ -810,10 +877,77 @@ async function setupEventListeners() {
     // Modal File Uploads
     const modalVidUpload = document.getElementById('modal-video-upload');
     if (modalVidUpload) {
-        modalVidUpload.addEventListener('change', function (e) {
+        modalVidUpload.addEventListener('change', async function (e) {
             if (e.target.files && e.target.files[0]) {
+                const file = e.target.files[0];
                 const display = document.getElementById('modal-video-name-display');
-                if (display) display.innerText = e.target.files[0].name;
+                if (display) display.innerText = file.name;
+                
+                // Discard any previously staged upload before starting a new one
+                if (window.lessonStagedUpload || window.lessonUploadPhase === 'uploading') {
+                    if (window.lessonUploadAbortController) window.lessonUploadAbortController.abort();
+                    if (window.lessonStagedUpload) {
+                        await CourseService.discardStagedUpload(
+                            window.courseDraft.id, 
+                            window.lessonStagedUpload.objectKey
+                        );
+                    }
+                    window.lessonStagedUpload = null;
+                }
+
+                if (activeModalItemIdx === -1) return;
+                const item = window.courseDraft.curriculum[activeModalSectionIdx].items[activeModalItemIdx];
+                
+                const progressContainer = document.getElementById('modal-upload-progress-container');
+                const progressBar = document.getElementById('modal-upload-progress-bar');
+                const percentText = document.getElementById('modal-upload-percent');
+
+                if (progressContainer) {
+                    progressContainer.classList.remove('hidden');
+                    progressBar.style.width = '0%';
+                    percentText.innerText = '0%';
+                }
+
+                window.lessonUploadAbortController = new AbortController();
+                window.lessonUploadPhase = 'uploading';
+                
+                const cancelBtn = document.getElementById('modal-upload-cancel');
+                if (cancelBtn) {
+                    cancelBtn.onclick = () => {
+                        if (window.lessonUploadAbortController) {
+                            window.lessonUploadAbortController.abort();
+                        }
+                    };
+                }
+
+                try {
+                    const uploadResult = await CourseService.uploadToR2(window.courseDraft.id, item.id, 'lesson', file, (percent) => {
+                        if (progressBar) progressBar.style.width = `${percent}%`;
+                        if (percentText) percentText.innerText = `${Math.round(percent)}%`;
+                    }, window.lessonUploadAbortController.signal);
+
+                    window.lessonStagedUpload = {
+                        objectKey: uploadResult.objectKey,
+                        file_size: file.size
+                    };
+                    window.lessonUploadPhase = 'completed_pending_save';
+                    if (percentText) percentText.innerText = 'Upload complete! Click Save Video';
+                    if (progressBar) progressBar.style.width = '100%';
+                    const errEl = document.getElementById('modal-video-url-error');
+                    if (errEl) errEl.classList.add('hidden');
+                } catch (err) {
+                    if (err.message !== 'Upload cancelled') {
+                        console.error('Modal upload failed:', err);
+                    }
+                    const errEl = document.getElementById('modal-video-url-error');
+                    if (errEl) {
+                        errEl.textContent = err.message === 'Upload cancelled' ? 'Upload cancelled by user.' : 'Upload failed: ' + err.message;
+                        errEl.classList.remove('hidden');
+                    }
+                    if (progressContainer) progressContainer.classList.add('hidden');
+                    window.lessonUploadPhase = 'idle';
+                    window.lessonStagedUpload = null;
+                }
             }
         });
     }
@@ -1255,43 +1389,143 @@ function closeModal(modalId) {
 }
 
 async function wizardSaveModalVideo() {
-    const fileEl = document.getElementById('modal-video-upload');
+    const provider = document.querySelector('input[name="modal-provider-radio"]:checked')?.value || 'youtube';
     const embedUrl = document.getElementById('modal-video-embed-url')?.value;
     const title = document.getElementById('modal-video-title')?.value || 'Video Lecture';
+    
+    if (activeModalItemIdx === -1) return;
+    const item = window.courseDraft.curriculum[activeModalSectionIdx].items[activeModalItemIdx];
+    
+    // Disable save button to prevent double-clicks
+    const saveBtn = document.querySelector('#modal-add-video-content button:last-child');
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.innerText = 'Saving...';
+    }
 
-    let uploadedUrl = null;
-    if (fileEl && fileEl.files && fileEl.files[0]) {
-        try {
-            const lessonId = window.courseDraft.curriculum[activeModalSectionIdx].items[activeModalItemIdx].id;
-            uploadedUrl = await CourseService.uploadLessonVideo(lessonId, fileEl.files[0]);
-        } catch (e) { alert('Upload failed: ' + e.message); return; }
-    } else if (embedUrl) {
-        const embedSrc = getEmbedUrl(embedUrl);
-        if (!embedSrc) {
-            const errEl = document.getElementById('modal-video-url-error');
-            if (errEl) {
-                errEl.textContent = 'Please enter a valid YouTube or Vimeo URL.';
-                errEl.classList.remove('hidden');
-            } else {
-                alert('Please enter a valid YouTube or Vimeo URL.');
+    try {
+        if (provider === 'r2') {
+            if (window.lessonUploadPhase === 'uploading') {
+                alert("Upload is still in progress. Please wait or cancel.");
+                return;
             }
-            return;
+
+            if (!window.lessonStagedUpload) {
+                const errEl = document.getElementById('modal-video-url-error');
+                if (errEl) {
+                    errEl.textContent = 'Please select a video file and wait for it to upload.';
+                    errEl.classList.remove('hidden');
+                }
+                return;
+            }
+
+            window.lessonUploadPhase = 'saving';
+
+            // Commit the uploaded object to generate DB asset records
+            await CourseService.commitR2Upload(
+                window.courseDraft.id,
+                item.id,
+                'lesson',
+                window.lessonStagedUpload.objectKey,
+                window.lessonStagedUpload.file_size
+            );
+
+            item.content_type = 'video';
+            item.video_provider = 'r2';
+            item.video_storage_key = window.lessonStagedUpload.objectKey;
+            item.video = { title: title, url: null };
+            item.description = title;
+
+            // Clear state
+            window.lessonStagedUpload = null;
+            window.lessonUploadPhase = 'saved';
+
+        } else { // youtube
+            if (embedUrl) {
+                const embedSrc = getEmbedUrl(embedUrl);
+                if (!embedSrc) {
+                    const errEl = document.getElementById('modal-video-url-error');
+                    if (errEl) {
+                        errEl.textContent = 'Please enter a valid YouTube or Vimeo URL.';
+                        errEl.classList.remove('hidden');
+                    }
+                    return;
+                }
+                const errEl = document.getElementById('modal-video-url-error');
+                if (errEl) errEl.classList.add('hidden');
+                
+                item.content_type = 'video';
+                item.video_provider = 'youtube';
+                item.video_storage_key = null;
+                item.video = { title: title, url: embedUrl };
+                item.description = title;
+            } else {
+                const errEl = document.getElementById('modal-video-url-error');
+                if (errEl) {
+                    errEl.textContent = 'Please enter a valid URL.';
+                    errEl.classList.remove('hidden');
+                }
+                return;
+            }
         }
-        const errEl = document.getElementById('modal-video-url-error');
-        if (errEl) errEl.classList.add('hidden');
-        uploadedUrl = embedUrl;
+
+        window.saveDraft(true);
+        renderCurriculum();
+        closeModalVideoClean();
+    } catch (e) {
+        console.error('Save error', e);
+        alert("Error saving video: " + e.message);
+        window.lessonUploadPhase = window.lessonStagedUpload ? 'completed_pending_save' : 'idle';
+    } finally {
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.innerText = 'Save Video';
+        }
+    }
+}
+
+function closeModalVideoClean() {
+    const progressContainer = document.getElementById('modal-upload-progress-container');
+    if (progressContainer) progressContainer.classList.add('hidden');
+    
+    // Clear the file input
+    const fileEl = document.getElementById('modal-video-upload');
+    if (fileEl) fileEl.value = '';
+    const display = document.getElementById('modal-video-name-display');
+    if (display) display.innerText = 'Click or drag video to upload';
+    
+    // Reset state
+    window.lessonStagedUpload = null;
+    window.lessonUploadPhase = 'idle';
+
+    closeModal('modal-add-video');
+}
+
+async function discardAndCloseModalVideo() {
+    const saveBtn = document.querySelector('#modal-add-video-content button:last-child');
+    if (saveBtn && saveBtn.disabled && window.lessonUploadPhase === 'saving') {
+        // We are currently saving. Discard is ignored to avoid race conditions.
+        return;
     }
 
-    if (activeModalItemIdx !== -1) {
-        const item = window.courseDraft.curriculum[activeModalSectionIdx].items[activeModalItemIdx];
-        item.content_type = 'video';
-        item.video = { title: title, url: uploadedUrl };
-        // Sync the video title to the lesson description for DB persistence
-        item.description = title;
+    if (window.lessonUploadPhase === 'uploading' && window.lessonUploadAbortController) {
+        window.lessonUploadAbortController.abort();
     }
-    window.saveDraft(true);
-    renderCurriculum();
-    closeModal('modal-add-video');
+
+    if (window.lessonStagedUpload) {
+        // Discard completed staged upload
+        try {
+            await CourseService.discardStagedUpload(
+                window.courseDraft.id, 
+                window.lessonStagedUpload.objectKey, 
+                window.lessonUploadPhase === 'uploading' ? window.lessonStagedUpload.uploadId : null
+            );
+        } catch (e) {
+            console.error('Error discarding upload:', e);
+        }
+    }
+
+    closeModalVideoClean();
 }
 
 async function saveModalResource() {
@@ -2074,6 +2308,7 @@ function registerGlobals() {
         updateSectionTitle,
         updateItemTitle,
         saveModalVideo: wizardSaveModalVideo,
+        discardAndCloseModalVideo,
         toggleResourceForm,
         saveModalResource,
         deleteResource,

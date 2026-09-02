@@ -346,6 +346,11 @@ async function verifyTransaction(_userId: string, payload: VerifyPayload): Promi
 
   if (fetchErr || !payment) return err('Payment record not found', 404);
   
+  if (payment.student_id !== _userId) {
+    console.warn(`Unauthorized verification attempt: User ${_userId} tried to verify payment owned by ${payment.student_id}`);
+    return err('Unauthorized: You do not own this transaction', 403);
+  }
+  
   const determineTypeFromPayment = () => {
     if (payment.course_id) return 'course';
     if (payment.mentorship_session_id) return 'booking';

@@ -277,6 +277,7 @@ export const CourseService = {
         // Prevent mass assignment (e.g., injecting status, version_status, is_latest_published, etc.)
         const allowedFields = [
             'title', 'subtitle', 'description', 'thumbnail_url', 'intro_video_url',
+            'intro_video_provider', 'intro_video_storage_key',
             'category_id', 'level', 'price', 'price_type', 'currency', 'is_public',
             'language', 'total_duration_minutes', 'what_you_learn', 'requirements',
             'slug', 'certificate_enabled'
@@ -1409,9 +1410,332 @@ export const CourseService = {
 
         const { error } = await supabase
             .from('course_update_offers')
-            .update({ redeemed_at: new Date().toISOString() })
             .eq('id', offerId);
         if (error) throw error;
+    },
+
+    /** CLOUDFLARE R2 VIDEO INTEGRATION */
+
+    async uploadToR2(courseId, lessonId, type, file, onProgress, signal) {
+        const session = await AuthService.getSession();
+        if (!session) throw new Error("Not authenticated");
+
+        // Telemetry instrumentation
+        const telemetry = {
+            fileSize: file.size,
+            startTime: performance.now(),
+            createAuthDuration: 0,
+            createDuration: 0,
+            presignTimings: [],
+            partUploadTimings: [],
+            completeDuration: 0,
+            partCount: 0,
+            partSize: 0,
+            firstPartUploadStart: null,
+            lastPartUploadFinish: null,
+            concurrency: 0,
+            clientProcessingNote: "No client-side video processing, hashing, converting or compressing is performed before/during upload. Raw file object from input is uploaded."
+        };
+
+        const t0_create = performance.now();
+        // 1. Create Multipart Upload
+        const createRes = await supabase.functions.invoke('r2-multipart-create', {
+            body: { 
+                course_id: courseId, 
+                lesson_id: lessonId, 
+                type: type, 
+                content_type: file.type,
+                file_size: file.size
+            }
+        });
+        telemetry.createDuration = performance.now() - t0_create;
+        
+        if (createRes.error) throw new Error(`Init upload failed: ${createRes.error.message}`);
+        
+        const { uploadId, objectKey, partCount, partSize } = createRes.data;
+        telemetry.partCount = partCount;
+        telemetry.partSize = partSize;
+
+        // Configuration
+        const MAX_RETRIES = 3;
+        const CONCURRENCY_LIMIT = 4;
+        telemetry.concurrency = Math.min(CONCURRENCY_LIMIT, partCount);
+        const parts = [];
+        let totalUploadedBytes = 0;
+
+        // Exponential Backoff Delay
+        const delay = (ms) => new Promise(res => setTimeout(res, ms));
+
+        // Part uploader function
+        const uploadPart = async (partNumber) => {
+            const startByte = (partNumber - 1) * partSize;
+            const endByte = Math.min(partNumber * partSize, file.size);
+            const chunk = file.slice(startByte, endByte);
+            const chunkSize = endByte - startByte;
+            let attempt = 0;
+
+            const partTelemetry = {
+                partNumber,
+                size: chunkSize,
+                presignDuration: 0,
+                uploadStart: null,
+                uploadEnd: null,
+                duration: 0,
+                retryCount: 0,
+                httpStatus: null,
+                errs: []
+            };
+
+            while (attempt <= MAX_RETRIES) {
+                if (signal && signal.aborted) throw new Error('Upload cancelled');
+                partTelemetry.retryCount = attempt;
+                
+                try {
+                    const t0_presign = performance.now();
+                    // Get presigned URL for this part
+                    const preRes = await supabase.functions.invoke('r2-multipart-presign', {
+                        body: {
+                            course_id: courseId,
+                            upload_id: uploadId,
+                            object_key: objectKey,
+                            part_numbers: [partNumber]
+                        }
+                    });
+                    const t1_presign = performance.now();
+                    partTelemetry.presignDuration += (t1_presign - t0_presign);
+
+                    if (preRes.error) throw new Error(`Presign failed: ${preRes.error.message}`);
+                    const presignedUrl = preRes.data.presignedUrls[0].url;
+
+                    // Upload chunk
+                    const partResult = await new Promise((resolve, reject) => {
+                        const xhr = new XMLHttpRequest();
+                        xhr.open('PUT', presignedUrl, true);
+                        
+                        partTelemetry.uploadStart = performance.now();
+                        if (!telemetry.firstPartUploadStart || partTelemetry.uploadStart < telemetry.firstPartUploadStart) {
+                            telemetry.firstPartUploadStart = partTelemetry.uploadStart;
+                        }
+
+                        const handleAbort = () => {
+                            xhr.abort();
+                            reject(new Error('Upload cancelled'));
+                        };
+                        
+                        if (signal) signal.addEventListener('abort', handleAbort);
+                        
+                        let currentLoaded = 0;
+                        
+                        xhr.upload.onprogress = (e) => {
+                            if (e.lengthComputable && onProgress) {
+                                const delta = e.loaded - currentLoaded;
+                                currentLoaded = e.loaded;
+                                totalUploadedBytes += delta;
+                                const percentComplete = (totalUploadedBytes / file.size) * 100;
+                                onProgress(Math.min(percentComplete, 99.9));
+                            }
+                        };
+                        
+                        xhr.onload = () => {
+                            partTelemetry.uploadEnd = performance.now();
+                            partTelemetry.duration = partTelemetry.uploadEnd - partTelemetry.uploadStart;
+                            partTelemetry.httpStatus = xhr.status;
+                            if (signal) signal.removeEventListener('abort', handleAbort);
+                            
+                            if (!telemetry.lastPartUploadFinish || partTelemetry.uploadEnd > telemetry.lastPartUploadFinish) {
+                                telemetry.lastPartUploadFinish = partTelemetry.uploadEnd;
+                            }
+
+                            if (xhr.status >= 200 && xhr.status < 300) {
+                                const etag = xhr.getResponseHeader('ETag') || xhr.getResponseHeader('etag') || `"part-${partNumber}"`;
+                                resolve({ PartNumber: partNumber, ETag: etag });
+                            } else {
+                                reject(new Error(`Chunk upload failed: ${xhr.statusText}`));
+                            }
+                        };
+                        xhr.onerror = () => {
+                            if (signal) signal.removeEventListener('abort', handleAbort);
+                            reject(new Error('Network error during chunk upload'));
+                        };
+                        xhr.send(chunk);
+                    });
+
+                    telemetry.partUploadTimings.push(partTelemetry);
+                    return partResult;
+                } catch (err) {
+                    partTelemetry.errs.push(err.message);
+                    attempt++;
+                    if (attempt > MAX_RETRIES) {
+                        telemetry.partUploadTimings.push(partTelemetry);
+                        throw err;
+                    }
+                    await delay(Math.pow(2, attempt) * 1000); // 2s, 4s, 8s
+                }
+            }
+        };
+
+        // Queue processing
+        let currentIndex = 1;
+        let hasError = false;
+        let globalError = null;
+
+        const worker = async () => {
+            while (currentIndex <= partCount && !hasError) {
+                if (signal && signal.aborted) {
+                    hasError = true;
+                    globalError = new Error('Upload cancelled');
+                    return;
+                }
+                const partNumber = currentIndex++;
+                try {
+                    const result = await uploadPart(partNumber);
+                    parts.push(result);
+                } catch (err) {
+                    hasError = true;
+                    globalError = err;
+                }
+            }
+        };
+
+        try {
+            // Start workers
+            const workers = Array(Math.min(CONCURRENCY_LIMIT, partCount)).fill(null).map(() => worker());
+            await Promise.all(workers);
+
+            if (hasError) throw globalError;
+
+            // Complete upload (assembles R2 object, NO DB WRITES)
+            const t0_complete = performance.now();
+            const completeRes = await supabase.functions.invoke('r2-multipart-complete', {
+                body: {
+                    course_id: courseId,
+                    upload_id: uploadId,
+                    object_key: objectKey,
+                    parts: parts
+                }
+            });
+            const t1_complete = performance.now();
+            telemetry.completeDuration = t1_complete - t0_complete;
+
+            if (completeRes.error) throw new Error(`Completion failed: ${completeRes.error.message}`);
+            
+            if (onProgress) onProgress(100);
+            
+            const totalEndTime = performance.now();
+            telemetry.totalDuration = totalEndTime - telemetry.startTime;
+            
+            const actualR2TransferMs = telemetry.lastPartUploadFinish - telemetry.firstPartUploadStart;
+            const fileSizeMb = telemetry.fileSize / (1024 * 1024);
+            const actualR2TransferSecs = actualR2TransferMs / 1000;
+            const avgThroughput = fileSizeMb / actualR2TransferSecs;
+            const uiDelay = totalEndTime - t1_complete;
+
+            console.group('=== TEMPORARY R2 MULTIPART UPLOAD TELEMETRY ===');
+            console.log(`File size: ${fileSizeMb.toFixed(2)} MB`);
+            console.log(`Parts: ${telemetry.partCount}`);
+            console.log(`Part size: ${(telemetry.partSize / (1024*1024)).toFixed(2)} MB`);
+            console.log(`Concurrency requested/actual: ${CONCURRENCY_LIMIT} / ${telemetry.concurrency}`);
+            console.log(`Total Upload Duration: ${(telemetry.totalDuration / 1000).toFixed(2)} sec`);
+            console.log(`r2-multipart-create: ${telemetry.createDuration.toFixed(2)} ms`);
+            console.log(`r2-multipart-complete: ${telemetry.completeDuration.toFixed(2)} ms`);
+            
+            let totalPresignDuration = 0;
+            telemetry.partUploadTimings.forEach(p => totalPresignDuration += p.presignDuration);
+            console.log(`Avg Presign per part: ${(totalPresignDuration / telemetry.partUploadTimings.length).toFixed(2)} ms`);
+            
+            console.log(`Time from first part upload starting to last part finishing (Actual R2 Transfer): ${actualR2TransferSecs.toFixed(2)} sec`);
+            console.log(`Effective upload speed (R2 Transfer only): ${avgThroughput.toFixed(2)} MB/s`);
+            console.log(`Time between upload completion and UI return (UI Delay): ${uiDelay.toFixed(2)} ms`);
+            console.log(`Client Processing Note: ${telemetry.clientProcessingNote}`);
+            
+            console.groupCollapsed('Individual Part Timings');
+            telemetry.partUploadTimings.sort((a,b) => a.partNumber - b.partNumber).forEach(p => {
+                console.log(`Part ${p.partNumber}: Size ${(p.size / (1024*1024)).toFixed(2)} MB | Presign: ${p.presignDuration.toFixed(2)} ms | Upload Transfer: ${p.duration.toFixed(2)} ms | Retries: ${p.retryCount} | Status: ${p.httpStatus}`);
+            });
+            console.groupEnd();
+            console.groupEnd();
+
+            return { objectKey: objectKey };
+
+        } catch (err) {
+            // Abort the multipart upload logic (if in progress)
+            await supabase.functions.invoke('r2-multipart-abort', {
+                body: { course_id: courseId, upload_id: uploadId, object_key: objectKey }
+            });
+            throw err;
+        }
+    },
+
+    async commitR2Upload(courseId, lessonId, type, objectKey, fileSize) {
+        const session = await AuthService.getSession();
+        if (!session) throw new Error("Not authenticated");
+
+        const { data, error } = await supabase.rpc('commit_r2_video_upload', {
+            p_course_id: courseId,
+            p_lesson_id: lessonId,
+            p_upload_type: type,
+            p_object_key: objectKey,
+            p_file_size: fileSize
+        });
+
+        if (error) throw new Error(`Commit failed: ${error.message}`);
+        return data;
+    },
+
+    async discardStagedUpload(courseId, objectKey, uploadId = null) {
+        const session = await AuthService.getSession();
+        if (!session) throw new Error("Not authenticated");
+
+        // If we have an uploadId, it means it was still in progress (multipart abort)
+        if (uploadId) {
+            await supabase.functions.invoke('r2-multipart-abort', {
+                body: { course_id: courseId, upload_id: uploadId, object_key: objectKey }
+            });
+        }
+
+        // Always attempt to delete the object in case Complete was called before Cancel hit
+        // The endpoint is idempotent if the object doesn't exist
+        const { error } = await supabase.functions.invoke('r2-discard-staged', {
+            body: { course_id: courseId, object_key: objectKey }
+        });
+
+        if (error) {
+            console.error('Failed to discard staged upload:', error);
+            // Non-critical, cleanup worker will catch it later if it really failed
+        }
+        return true;
+    },
+
+    async getR2PlaybackUrl(courseId, lessonId, playbackType = 'lesson') {
+        const session = await AuthService.getSession();
+        if (!session) throw new Error("Not authenticated");
+
+        const { data, error } = await supabase.functions.invoke('r2-video-playback', {
+            body: { 
+                course_id: courseId,
+                lesson_id: lessonId,
+                playback_type: playbackType
+            }
+        });
+
+        if (error) throw error;
+        return data.playbackUrl;
+    },
+
+    async deleteR2Video(courseId, lessonId, deleteType = 'lesson') {
+        const session = await AuthService.getSession();
+        if (!session) throw new Error("Not authenticated");
+
+        const { data, error } = await supabase.functions.invoke('r2-delete-video', {
+            body: { 
+                course_id: courseId, 
+                lesson_id: lessonId,
+                delete_type: deleteType
+            }
+        });
+
+        if (error) throw error;
+        return data;
     }
 };
 

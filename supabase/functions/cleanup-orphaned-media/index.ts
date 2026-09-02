@@ -1,4 +1,5 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { S3Client, DeleteObjectCommand, ListMultipartUploadsCommand, AbortMultipartUploadCommand } from 'npm:@aws-sdk/client-s3';
 
 // Called monthly by pg_cron via pg_net.
 // verify_jwt is false because the caller is the Supabase service role (pg_net)
@@ -43,8 +44,21 @@ Deno.serve(async (req: Request) => {
           .from('course-videos')
           .remove([asset.storage_path]);
         if (storageError) throw storageError;
+      } else if (asset.storage_provider === 'r2') {
+        const s3Client = new S3Client({
+          region: 'auto',
+          endpoint: Deno.env.get('R2_ENDPOINT') ?? '',
+          credentials: {
+            accessKeyId: Deno.env.get('R2_ACCESS_KEY_ID') ?? '',
+            secretAccessKey: Deno.env.get('R2_SECRET_ACCESS_KEY') ?? '',
+          },
+        });
+        const command = new DeleteObjectCommand({
+          Bucket: Deno.env.get('R2_BUCKET_NAME') ?? '',
+          Key: asset.storage_path,
+        });
+        await s3Client.send(command);
       } else {
-        // Future: S3 / R2 provider dispatch (same interface, different SDK call)
         console.warn(`Provider '${asset.storage_provider}' deletion not yet implemented — skipping ${asset.id}`);
         continue;
       }
@@ -66,7 +80,44 @@ Deno.serve(async (req: Request) => {
   }
 
   console.log(`Cleanup complete. Cleaned: ${cleaned}, Failed: ${failed}`);
-  return new Response(JSON.stringify({ cleaned, failed, total: orphans?.length ?? 0 }), {
+
+  // 3. Abort stale multipart uploads (older than 2 days)
+  let abortedMultiparts = 0;
+  try {
+    const s3Client = new S3Client({
+      region: 'auto',
+      endpoint: Deno.env.get('R2_ENDPOINT') ?? '',
+      credentials: {
+        accessKeyId: Deno.env.get('R2_ACCESS_KEY_ID') ?? '',
+        secretAccessKey: Deno.env.get('R2_SECRET_ACCESS_KEY') ?? '',
+      },
+    });
+
+    const listCommand = new ListMultipartUploadsCommand({
+      Bucket: Deno.env.get('R2_BUCKET_NAME') ?? '',
+    });
+    
+    const uploads = await s3Client.send(listCommand);
+    const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
+    
+    if (uploads.Uploads) {
+      for (const upload of uploads.Uploads) {
+        if (upload.Initiated && new Date(upload.Initiated) < twoDaysAgo) {
+          const abortCommand = new AbortMultipartUploadCommand({
+            Bucket: Deno.env.get('R2_BUCKET_NAME') ?? '',
+            Key: upload.Key,
+            UploadId: upload.UploadId,
+          });
+          await s3Client.send(abortCommand);
+          abortedMultiparts++;
+        }
+      }
+    }
+  } catch (mpError) {
+    console.error('Failed to cleanup stale multipart uploads:', mpError);
+  }
+
+  return new Response(JSON.stringify({ cleaned, failed, total: orphans?.length ?? 0, abortedMultiparts }), {
     headers: { 'Content-Type': 'application/json' }
   });
 });

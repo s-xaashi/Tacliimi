@@ -194,30 +194,61 @@
 </div>
 </div>
 <div class="flex-1 min-w-[200px] space-y-4">
-<!-- FILE UPLOAD (hidden when self-hosted uploads are disabled) -->
-<div id="intro-video-upload-section">
-<p class="text-sm text-slate-600 dark:text-slate-400 mb-3 leading-relaxed">Add a short preview
-                                clip (1-2 minutes) to introduce your course to potential students. Supported formats: .mp4,
-                                .mov</p>
-<input accept="video/mp4,video/quicktime" class="hidden" id="video-upload" type="file"/>
-<button class="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-6 py-2 rounded-lg font-semibold text-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition" id="btn-upload-video" onclick="document.getElementById('video-upload').click()">Upload
-                                Video</button>
-<span class="ml-4 text-xs text-slate-500 font-medium" id="video-filename-display"></span>
-</div>
-<!-- URL INPUT (always visible when uploads are disabled; shown below upload when enabled) -->
-<div class="space-y-2" id="intro-video-url-section">
-<label class="text-xs font-bold text-slate-500 uppercase tracking-widest">Or paste a YouTube / Vimeo URL</label>
-<input class="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus:ring-2 focus:ring-primary focus:border-transparent transition-all dark:text-white" id="intro-video-embed-url" placeholder="https://www.youtube.com/watch?v=..." type="text"/>
-<!-- YouTube Unlisted guidance -->
-<div class="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800/30" id="youtube-unlisted-guidance">
-<span class="material-symbols-outlined text-blue-500 text-base flex-shrink-0 mt-0.5">info</span>
-<p class="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
-<span class="font-bold">Set this video's visibility to “Unlisted” on YouTube</span> (not Public or Private) before pasting the link. Unlisted videos are only viewable via their direct link, keeping your content behind Tacliimi's access controls while remaining free to host.
-                                    <span class="block mt-1 text-blue-500 dark:text-blue-400 italic">Note: Tacliimi does not technically verify your YouTube visibility setting — this is instructional guidance only.</span>
-</p>
-</div>
-<p class="text-xs text-red-500 font-medium hidden" id="intro-video-url-error"></p>
-</div>
+                            <!-- PROVIDER TOGGLE (hidden if self-hosted uploads disabled) -->
+                            <div id="intro-video-provider-toggle" class="flex items-center gap-4 mb-2 hidden">
+                                <label class="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300 cursor-pointer">
+                                    <input type="radio" name="intro-provider-radio" value="youtube" checked class="text-primary focus:ring-primary h-4 w-4">
+                                    YouTube / Vimeo
+                                </label>
+                                <label class="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300 cursor-pointer">
+                                    <input type="radio" name="intro-provider-radio" value="r2" class="text-primary focus:ring-primary h-4 w-4">
+                                    Direct Upload
+                                </label>
+                            </div>
+
+                            <!-- FILE UPLOAD SECTION -->
+                            <div id="intro-video-upload-section" class="hidden">
+                                <p class="text-sm text-slate-600 dark:text-slate-400 mb-2 leading-relaxed">Add a short preview
+                                clip (1-2 minutes) to introduce your course. Supported formats: .mp4, .mov</p>
+                                <input accept="video/mp4,video/quicktime" class="hidden" id="video-upload" type="file" />
+                                
+                                <div class="flex items-center gap-4">
+                                    <button class="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-6 py-2 rounded-lg font-semibold text-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition"
+                                        id="btn-upload-video" onclick="document.getElementById('video-upload').click()">Choose File</button>
+                                    <span class="text-xs text-slate-500 font-medium truncate max-w-[150px]" id="video-filename-display"></span>
+                                </div>
+                                
+                                <!-- R2 Upload Progress -->
+                                <div id="intro-upload-progress-container" class="hidden mt-3 max-w-sm">
+                                    <div class="flex justify-between text-xs text-slate-500 mb-1">
+                                        <span>Uploading...</span>
+                                        <span id="intro-upload-percent">0%</span>
+                                    </div>
+                                    <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1.5">
+                                        <div id="intro-upload-progress-bar" class="bg-primary h-1.5 rounded-full" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- URL INPUT SECTION -->
+                            <div class="space-y-2" id="intro-video-url-section">
+                                <label class="text-xs font-bold text-slate-500 uppercase tracking-widest hidden" id="intro-url-label">Or paste a YouTube / Vimeo URL</label>
+                                <div class="flex gap-2">
+                                    <input class="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus:ring-2 focus:ring-primary focus:border-transparent transition-all dark:text-white"
+                                        id="intro-video-embed-url" type="text" placeholder="https://www.youtube.com/watch?v=..." />
+                                    <button id="btn-save-intro-url" class="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-sm font-semibold transition shrink-0 border border-slate-200 dark:border-slate-700">Save</button>
+                                </div>
+                                
+                                <!-- YouTube Unlisted guidance -->
+                                <div class="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800/30"
+                                    id="youtube-unlisted-guidance">
+                                    <span class="material-symbols-outlined text-blue-500 text-base flex-shrink-0 mt-0.5">info</span>
+                                    <p class="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
+                                        <span class="font-bold">Set this video's visibility to “Unlisted” on YouTube</span> (not Public or Private). Unlisted videos keep your content behind Tacliimi's access controls.
+                                    </p>
+                                </div>
+                                <p class="text-xs text-red-500 font-medium hidden" id="intro-video-url-error"></p>
+                            </div>
 </div>
 </div>
 </div>
@@ -512,46 +543,65 @@
 <h2 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
 <span class="material-symbols-outlined text-primary">videocam</span> Add Video
                 </h2>
-<button class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition" onclick="closeModal('modal-add-video')">
+<button class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition" onclick="discardAndCloseModalVideo()">
 <span class="material-symbols-outlined">close</span>
 </button>
 </div>
 <div class="p-6">
-<div class="space-y-4">
-<!-- FILE UPLOAD AREA (hidden when self-hosted uploads disabled) -->
-<div id="modal-file-upload-section">
-<div class="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl p-10 flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-800/30 hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors cursor-pointer relative overflow-hidden" id="video-upload-area-modal">
-<input accept="video/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" id="modal-video-upload" type="file"/>
-<div class="w-16 h-16 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-<span class="material-symbols-outlined text-4xl text-primary">cloud_upload</span>
-</div>
-<p class="text-slate-900 dark:text-white font-semibold mb-1" id="modal-video-name-display">Click or drag video to upload</p>
-<p class="text-slate-500 dark:text-slate-400 text-sm">MP4, MOV, or AVI (Max 2GB)</p>
-</div>
-<div class="relative flex items-center py-2">
-<div class="flex-grow border-t border-slate-200 dark:border-slate-800"></div>
-<span class="flex-shrink mx-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Or</span>
-<div class="flex-grow border-t border-slate-200 dark:border-slate-800"></div>
-</div>
-</div>
-<!-- URL INPUT (always visible) -->
-<div class="space-y-1.5">
-<label class="text-sm font-semibold text-slate-700 dark:text-slate-300">YouTube / Vimeo URL</label>
-<input class="w-full rounded-lg border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:ring-accent focus:border-accent text-sm" id="modal-video-embed-url" placeholder="Paste link here..." type="text"/>
-<p class="text-xs text-red-500 font-medium hidden" id="modal-video-url-error"></p>
-<!-- YouTube Unlisted guidance (shown when file uploads are disabled) -->
-<div class="hidden flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800/30 mt-2" id="modal-youtube-guidance">
-<span class="material-symbols-outlined text-blue-500 text-base flex-shrink-0 mt-0.5">info</span>
-<p class="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
-<span class="font-bold">Set this video's visibility to “Unlisted” on YouTube</span> before pasting the link. Unlisted videos are only viewable via their direct link, keeping your content behind Tacliimi's access controls.
-                                <span class="block mt-1 text-blue-500 dark:text-blue-400 italic">Note: Tacliimi does not verify your YouTube visibility setting — this is guidance only.</span>
-</p>
-</div>
-</div>
-</div>
+                            <!-- PROVIDER TOGGLE (hidden if self-hosted uploads disabled) -->
+                            <div id="modal-video-provider-toggle" class="flex items-center gap-4 mb-2 hidden">
+                                <label class="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300 cursor-pointer">
+                                    <input type="radio" name="modal-provider-radio" value="youtube" checked class="text-primary focus:ring-primary h-4 w-4">
+                                    YouTube / Vimeo
+                                </label>
+                                <label class="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300 cursor-pointer">
+                                    <input type="radio" name="modal-provider-radio" value="r2" class="text-primary focus:ring-primary h-4 w-4">
+                                    Direct Upload
+                                </label>
+                            </div>
+
+                            <!-- FILE UPLOAD AREA (hidden by default) -->
+                            <div id="modal-file-upload-section" class="hidden">
+                                <div class="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl p-10 flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-800/30 hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors cursor-pointer relative overflow-hidden" id="video-upload-area-modal">
+                                    <input type="file" id="modal-video-upload" accept="video/mp4,video/quicktime" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                                    <div class="w-16 h-16 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                                        <span class="material-symbols-outlined text-4xl text-primary">cloud_upload</span>
+                                    </div>
+                                    <p class="text-slate-900 dark:text-white font-semibold mb-1" id="modal-video-name-display">Click or drag video to upload</p>
+                                    <p class="text-slate-500 dark:text-slate-400 text-sm">MP4 or MOV (Max 500MB)</p>
+                                </div>
+                                
+                                <!-- R2 Upload Progress -->
+                                <div id="modal-upload-progress-container" class="hidden mt-3">
+                                    <div class="flex justify-between text-xs text-slate-500 mb-1">
+                                        <span>Uploading to Secure Storage...</span>
+                                        <div class="flex items-center gap-3">
+                                            <button type="button" id="modal-upload-cancel" class="text-red-500 hover:text-red-700 font-medium cursor-pointer">Cancel</button>
+                                            <span id="modal-upload-percent">0%</span>
+                                        </div>
+                                    </div>
+                                    <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
+                                        <div id="modal-upload-progress-bar" class="bg-primary h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- URL INPUT (visible by default) -->
+                            <div class="space-y-1.5" id="modal-video-url-section">
+                                <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">YouTube / Vimeo URL</label>
+                                <input type="text" id="modal-video-embed-url" class="w-full rounded-lg border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:ring-accent focus:border-accent text-sm" placeholder="Paste link here..." />
+                                <p class="text-xs text-red-500 font-medium hidden" id="modal-video-url-error"></p>
+                                
+                                <div class="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800/30 mt-2" id="modal-youtube-guidance">
+                                    <span class="material-symbols-outlined text-blue-500 text-base flex-shrink-0 mt-0.5">info</span>
+                                    <p class="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
+                                        <span class="font-bold">Set this video's visibility to “Unlisted” on YouTube</span> to keep it private but playable.
+                                    </p>
+                                </div>
+                            </div>
 </div>
 <div class="px-6 py-4 bg-slate-50/50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3">
-<button class="px-6 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 font-semibold hover:bg-slate-200 dark:hover:bg-slate-700 transition text-sm" onclick="closeModal('modal-add-video')">Cancel</button>
+<button class="px-6 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 font-semibold hover:bg-slate-200 dark:hover:bg-slate-700 transition text-sm" onclick="discardAndCloseModalVideo()">Cancel</button>
 <button class="px-8 py-2.5 bg-accent hover:bg-purple-700 text-white rounded-lg font-bold transition shadow-lg shadow-purple-500/20 text-sm" onclick="saveModalVideo()">Save
                     Video</button>
 </div>
@@ -639,14 +689,14 @@
 <div class="p-6 overflow-y-auto space-y-8" id="quiz-packages-container">
 <!-- Dynamic Quiz Packages injected here -->
 </div>
-<div class="p-6 border-t border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/30">
-<button class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl font-bold text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition shadow-sm" onclick="addAnotherQuizPackage()">
+<div class="p-6 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row justify-between items-center gap-4 sm:gap-0 bg-slate-50 dark:bg-slate-800/30">
+<button class="w-full sm:w-auto flex justify-center items-center gap-2 px-4 py-3 sm:py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl font-bold text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition shadow-sm" onclick="addAnotherQuizPackage()">
 <span class="material-symbols-outlined text-lg">library_add</span> Add Another Quiz
                 </button>
-<div class="flex gap-3">
-<button class="px-6 py-2.5 rounded-xl font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition text-sm" onclick="closeModal('modal-add-quiz')">Cancel</button>
-<button class="bg-accent hover:bg-purple-700 text-white flex items-center gap-2 px-8 py-2.5 rounded-xl font-bold transition transform active:scale-95 shadow-lg shadow-purple-500/20 text-sm" onclick="saveModalQuiz()">
-                        Save All Quizzes <span class="material-symbols-outlined text-sm">check_circle</span>
+<div class="flex gap-3 w-full sm:w-auto">
+<button class="w-1/3 sm:w-auto px-4 sm:px-6 py-3 sm:py-2.5 rounded-xl font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition text-sm bg-slate-200/50 sm:bg-transparent" onclick="closeModal('modal-add-quiz')">Cancel</button>
+<button class="w-2/3 sm:w-auto bg-accent hover:bg-purple-700 text-white flex items-center justify-center gap-1 sm:gap-2 px-4 sm:px-8 py-3 sm:py-2.5 rounded-xl font-bold transition transform active:scale-95 shadow-lg shadow-purple-500/20 text-sm" onclick="saveModalQuiz()">
+                        Save <span class="hidden sm:inline">All Quizzes </span> <span class="material-symbols-outlined text-sm">check_circle</span>
 </button>
 </div>
 </div>
