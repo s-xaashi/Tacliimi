@@ -2661,22 +2661,22 @@ function renderCourseCoupons() {
     let html = '';
     window.courseDraft.pricing.coupons.forEach((cp, idx) => {
         html += `
-        <div class="flex items-center gap-3 p-3 border border-slate-200 dark:border-slate-700 rounded-lg bg-slate-50 dark:bg-slate-800/50">
-            <div class="flex-1 grid grid-cols-3 gap-3">
-                <div>
+        <div class="flex items-start sm:items-center p-3 border border-slate-200 dark:border-slate-700 rounded-lg bg-slate-50 dark:bg-slate-800/50 relative">
+            <div class="flex-1 grid grid-cols-2 sm:grid-cols-3 gap-3 pr-8 sm:pr-0">
+                <div class="col-span-1">
                     <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Coupon Code</label>
-                    <input id="cp-code-${idx}" class="w-full text-sm uppercase rounded bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:ring-accent focus:border-accent" value="${cp.code || cp.coupon_code || ''}" placeholder="SUMMER20" />
+                    <input id="cp-code-${idx}" class="w-full text-sm uppercase rounded bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:ring-accent focus:border-accent" value="${cp.code || cp.coupon_code || ''}" placeholder="SUMMER20" maxlength="50" autocomplete="off" spellcheck="false" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9\-_]/g,'').slice(0,50)" />
                 </div>
-                <div>
+                <div class="col-span-1">
                     <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Discount (%)</label>
                     <input id="cp-pct-${idx}" type="number" min="1" max="100" class="w-full text-sm rounded bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:ring-accent focus:border-accent" value="${cp.percent || cp.discount_percent || ''}" placeholder="20" />
                 </div>
-                <div>
+                <div class="col-span-2 sm:col-span-1">
                     <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Expiration</label>
                     <input id="cp-exp-${idx}" type="date" class="w-full text-sm rounded bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:ring-accent focus:border-accent" value="${(cp.expiry || cp.expires_at || '').split('T')[0]}" />
                 </div>
             </div>
-            <button onclick="removeCourseCoupon(${idx})" class="p-2 mt-4 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition shrink-0">
+            <button onclick="removeCourseCoupon(${idx})" class="absolute top-2 right-2 sm:static sm:p-2 sm:ml-4 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition shrink-0">
                 <span class="material-symbols-outlined text-[20px]">delete</span>
             </button>
         </div>`;
@@ -2693,8 +2693,11 @@ function syncCourseCoupons() {
         const expInput = document.getElementById(`cp-exp-${idx}`);
         
         if (codeInput && pctInput) {
+            // SECURITY: strip anything that isn't A-Z, 0-9, hyphen, or underscore.
+            // Prevents HTML injection and keeps codes to valid coupon format.
+            const rawCode = (codeInput.value || '').toUpperCase().replace(/[^A-Z0-9\-_]/g, '').slice(0, 50).trim();
             synced.push({
-                code: codeInput.value.toUpperCase().trim(),
+                code: rawCode,
                 percent: parseInt(pctInput.value) || null,
                 expiry: expInput.value || null
             });

@@ -313,15 +313,13 @@ export const CourseService = {
      * SECURITY: Only the owning instructor can submit their course.
      */
     async submitForReview(courseId) {
-        const session = await AuthService.getSession();
-        if (!session) throw new Error('Unauthorized: No active session');
-
-        const { error } = await supabase
-            .from('courses')
-            .update({ status: 'pending_review', version_status: 'pending_review' })
-            .eq('id', courseId)
-            .eq('instructor_id', session.user.id); // SECURITY: ownership guard
-        if (error) throw error;
+        // SECURITY: Use a server-authoritative SECURITY DEFINER RPC instead of a
+        // direct PATCH. The RPC validates ownership and allowed state transitions
+        // server-side, so instructors cannot bypass status guards.
+        const { error } = await supabase.rpc('submit_course_for_review', {
+            p_course_id: courseId
+        });
+        if (error) throw new Error(error.message);
     },
 
     /**

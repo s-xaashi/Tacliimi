@@ -262,15 +262,15 @@
 <div class="wizard-step hidden space-y-8" id="step-3-container">
 <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
 <div class="p-8 space-y-8">
-<div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800 gap-4">
 <div>
 <h4 class="font-bold text-slate-900 dark:text-white">Course Tier</h4>
 <p class="text-sm text-slate-500 dark:text-slate-400">Choose if this course is free or
                                 requires payment.</p>
 </div>
-<div class="flex items-center bg-slate-200 dark:bg-slate-700 rounded-lg p-1" id="pricing-tier-toggle">
-<button class="px-6 py-2 rounded-md text-sm font-bold bg-white dark:bg-slate-600 shadow-sm text-slate-900 dark:text-white transition" id="btn-tier-free" onclick="setPricingTier('free')">Free</button>
-<button class="px-6 py-2 rounded-md text-sm font-bold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white transition" id="btn-tier-paid" onclick="setPricingTier('paid')">Paid</button>
+<div class="flex items-center self-start sm:self-auto bg-slate-200 dark:bg-slate-700 rounded-lg p-1 w-full sm:w-auto" id="pricing-tier-toggle">
+<button class="flex-1 sm:flex-none px-4 sm:px-6 py-1.5 sm:py-2 rounded-md text-sm font-bold bg-white dark:bg-slate-600 shadow-sm text-slate-900 dark:text-white transition" id="btn-tier-free" onclick="setPricingTier('free')">Free</button>
+<button class="flex-1 sm:flex-none px-4 sm:px-6 py-1.5 sm:py-2 rounded-md text-sm font-bold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white transition" id="btn-tier-paid" onclick="setPricingTier('paid')">Paid</button>
 </div>
 </div>
 <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="pricing-details-container" style="opacity: 0.5; pointer-events: none;">
@@ -293,12 +293,12 @@
 </div>
 </div>
 <div class="space-y-4 md:col-span-2 mt-4 pt-4 border-t border-slate-100 dark:border-slate-800/50">
-<div class="flex items-center justify-between">
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 <div>
 <h4 class="font-bold text-slate-900 dark:text-white">Coupons (Optional)</h4>
 <p class="text-sm text-slate-500 dark:text-slate-400">Offer discounts to your students.</p>
 </div>
-<button class="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-lg text-sm font-bold transition flex items-center gap-2 dark:text-white" onclick="addCourseCoupon()" type="button">
+<button class="self-start sm:self-auto px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-lg text-sm font-bold transition flex items-center gap-2 dark:text-white" onclick="addCourseCoupon()" type="button">
 <span class="material-symbols-outlined text-[18px]">add</span> Add Coupon
                                 </button>
 </div>
@@ -485,17 +485,17 @@
 </div>
 <!-- Navigation Buttons -->
 <div class="flex justify-between items-center py-6 mt-6 border-t border-slate-200 dark:border-slate-800" id="bottom-nav">
-<button class="flex items-center gap-2 px-6 py-3 text-slate-400 dark:text-slate-600 font-bold opacity-50 cursor-not-allowed transition" disabled="" id="btn-prev">
-<span class="material-icons">arrow_back</span>
+<button class="flex items-center gap-1 sm:gap-2 px-3 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base whitespace-nowrap text-slate-400 dark:text-slate-600 font-bold opacity-50 cursor-not-allowed transition" disabled="" id="btn-prev">
+<span class="material-icons text-sm sm:text-base">arrow_back</span>
                 Previous
             </button>
-<button class="bg-primary hover:bg-blue-700 text-white flex items-center gap-2 px-10 py-3 rounded-xl font-bold transition transform active:scale-95 shadow-lg shadow-blue-500/20" id="btn-next">
+<button class="bg-primary hover:bg-blue-700 text-white flex items-center gap-1 sm:gap-2 px-4 sm:px-10 py-2.5 sm:py-3 text-sm sm:text-base whitespace-nowrap rounded-xl font-bold transition transform active:scale-95 shadow-lg shadow-blue-500/20" id="btn-next">
                 Next Step
-                <span class="material-icons">arrow_forward</span>
+                <span class="material-icons text-sm sm:text-base">arrow_forward</span>
 </button>
-<button class="hidden bg-green-600 hover:bg-green-700 text-white flex items-center gap-2 px-10 py-3 rounded-xl font-bold transition transform active:scale-95 shadow-lg shadow-green-500/20" id="btn-publish">
+<button class="hidden bg-green-600 hover:bg-green-700 text-white flex items-center gap-1 sm:gap-2 px-4 sm:px-10 py-2.5 sm:py-3 text-sm sm:text-base whitespace-nowrap rounded-xl font-bold transition transform active:scale-95 shadow-lg shadow-green-500/20" id="btn-publish">
                 Publish Course
-                <span class="material-icons">check_circle</span>
+                <span class="material-icons text-sm sm:text-base">check_circle</span>
 </button>
 </div>
 <!-- STEP 5 CONTAINER: SUBMITTED FOR REVIEW -->
@@ -558,17 +558,21 @@
                                     <div class="w-16 h-16 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                                         <span class="material-symbols-outlined text-4xl text-primary">cloud_upload</span>
                                     </div>
-                                    <p class="text-slate-900 dark:text-white font-semibold mb-1" id="modal-video-name-display">Click or drag video to upload</p>
+                                    <p class="text-slate-900 dark:text-white font-semibold mb-1 truncate w-full max-w-[220px] sm:max-w-md mx-auto text-center" id="modal-video-name-display">Click or drag video to upload</p>
                                     <p class="text-slate-500 dark:text-slate-400 text-sm">MP4 or MOV (Max 500MB)</p>
                                 </div>
                                 
                                 <!-- R2 Upload Progress -->
                                 <div id="modal-upload-progress-container" class="hidden mt-3">
-                                    <div class="flex justify-between text-xs text-slate-500 mb-1">
-                                        <span>Uploading to Secure Storage...</span>
-                                        <div class="flex items-center gap-3">
-                                            <button type="button" id="modal-upload-cancel" class="text-red-500 hover:text-red-700 font-medium cursor-pointer">Cancel</button>
-                                            <span id="modal-upload-percent">0%</span>
+                                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between text-xs text-slate-500 mb-1 pt-1 gap-2 sm:gap-1">
+                                        <div class="flex items-center justify-between">
+                                            <span class="hidden sm:inline">Uploading to Secure Storage...</span>
+                                            <span class="sm:hidden font-medium">Uploading...</span>
+                                            <button type="button" id="modal-upload-cancel" class="text-red-500 hover:text-red-700 font-medium cursor-pointer shrink-0 sm:hidden">Cancel</button>
+                                        </div>
+                                        <div class="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
+                                            <button type="button" class="hidden sm:block text-red-500 hover:text-red-700 font-medium cursor-pointer shrink-0" onclick="document.getElementById('modal-upload-cancel').click()">Cancel</button>
+                                            <span id="modal-upload-percent" class="truncate text-right flex-1 sm:flex-none font-medium">0%</span>
                                         </div>
                                     </div>
                                     <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">

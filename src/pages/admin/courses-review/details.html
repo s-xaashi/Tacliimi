@@ -398,7 +398,28 @@
             const vidElement = document.getElementById('course-video');
             const noVidElement = document.getElementById('no-video-fallback');
             
-            if(course.intro_video_url) {
+            const isIntroR2 = course.intro_video_provider === 'r2' || !!course.intro_video_storage_key;
+
+            if (isIntroR2) {
+                vidElement.classList.remove('hidden');
+                noVidElement.classList.add('hidden');
+                
+                (async () => {
+                    try {
+                        const signedUrl = await CourseService.getR2PlaybackUrl(currentCourse.id, null, 'course');
+                        vidElement.src = `${signedUrl}#t=1`;
+                    } catch (e) {
+                        console.error('Failed to load intro video:', e);
+                        noVidElement.querySelector('span').innerText = 'error';
+                        const errText = document.createElement('p');
+                        errText.className = 'text-xs text-rose-500 mt-2 font-bold';
+                        errText.innerText = 'Error loading video';
+                        noVidElement.appendChild(errText);
+                        vidElement.classList.add('hidden');
+                        noVidElement.classList.remove('hidden');
+                    }
+                })();
+            } else if(course.intro_video_url) {
                 let url = course.intro_video_url;
                 const embedSrc = getEmbedUrl(url);
 
@@ -606,7 +627,8 @@
             const { icon, color, bg } = iconMap[contentType] || iconMap.text;
 
             // Determine if this lesson has expandable content
-            const hasVideo     = !!les.video_url;
+            // R2-stored videos have video_provider='r2' and may not have a file extension in video_url
+            const hasVideo     = !!(les.video_url || les.video_storage_key);
             const hasQuizzes   = les.quizzes && les.quizzes.length > 0;
             const hasResources = les.lesson_resources && les.lesson_resources.length > 0;
             const hasDesc      = les.description && les.description.trim();
@@ -679,23 +701,53 @@
                     videoSection.className = 'space-y-3';
                     videoSection.innerHTML = `<p class="text-[10px] font-black uppercase tracking-widest text-indigo-600 mb-2">Lesson Video</p>`;
 
-                    // Use shared embed utility — if it's a YouTube/Vimeo URL, get embed src.
-                    // If it's a direct video file or unrecognised URL, keep as-is.
-                    const resolvedEmbedUrl = getEmbedUrl(les.video_url) || les.video_url;
+                    const videoUrl = les.video_url || '';
+                    // A video is direct (not an embed iframe) if:
+                    // 1. It has a file extension (.mp4, .webm etc.), OR
+                    // 2. It was uploaded to R2 storage (video_provider === 'r2' or video_storage_key exists)
+                    const isR2 = les.video_provider === 'r2' || !!les.video_storage_key;
+                    const isDirectVideo = /\.(mp4|webm|ogg|mov)(\?|$)/i.test(videoUrl);
 
-                    const isDirectVideo = /\.(mp4|webm|ogg|mov)(\?|$)/i.test(les.video_url);
-                    if (isDirectVideo) {
+                    if (isR2) {
                         const videoEl = document.createElement('video');
                         videoEl.controls = true;
+                        videoEl.preload = 'metadata';
                         videoEl.className = 'w-full max-h-72 rounded-2xl bg-black shadow-lg border border-slate-200 dark:border-slate-700';
-                        videoEl.innerHTML = `<source src="${les.video_url}" type="video/mp4">Your browser does not support the video tag.`;
                         videoSection.appendChild(videoEl);
-                    } else {
-                        // External URL — show as styled iframe
+
+                        (async () => {
+                            try {
+                                const signedUrl = await CourseService.getR2PlaybackUrl(currentCourse.id, les.id, 'lesson');
+                                videoEl.innerHTML = `<source src="${signedUrl}#t=1" type="video/mp4">Your browser does not support the video tag.`;
+                                videoEl.load();
+                            } catch (e) {
+                                console.error('Failed to load lesson video:', e);
+                                const errEl = document.createElement('p');
+                                errEl.className = 'text-xs text-rose-500 italic mt-2 font-bold';
+                                errEl.innerText = 'Error loading video from storage.';
+                                videoEl.replaceWith(errEl);
+                            }
+                        })();
+                    } else if (isDirectVideo && videoUrl) {
+                        const videoEl = document.createElement('video');
+                        videoEl.controls = true;
+                        videoEl.preload = 'metadata';
+                        videoEl.className = 'w-full max-h-72 rounded-2xl bg-black shadow-lg border border-slate-200 dark:border-slate-700';
+                        videoEl.innerHTML = `<source src="${videoUrl}#t=1" type="video/mp4">Your browser does not support the video tag.`;
+                        videoSection.appendChild(videoEl);
+                    } else if (videoUrl) {
+                        // External URL (YouTube, Vimeo etc.) — show as styled iframe
+                        const resolvedEmbedUrl = getEmbedUrl(videoUrl) || videoUrl;
                         const iframeContainer = document.createElement('div');
                         iframeContainer.className = 'w-full aspect-video rounded-2xl bg-black shadow-lg border border-slate-200 dark:border-slate-700 overflow-hidden relative';
                         iframeContainer.innerHTML = `<iframe src="${resolvedEmbedUrl}" class="absolute inset-0 w-full h-full" allowfullscreen="true" frameborder="0"></iframe>`;
                         videoSection.appendChild(iframeContainer);
+                    } else {
+                        // Edge case 
+                        const msgEl = document.createElement('p');
+                        msgEl.className = 'text-xs text-slate-400 italic';
+                        msgEl.innerText = 'Video unavailable.';
+                        videoSection.appendChild(msgEl);
                     }
                     panel.appendChild(videoSection);
                 }
