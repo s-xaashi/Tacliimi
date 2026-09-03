@@ -122,7 +122,7 @@ export const CourseService = {
                 course_sections(
                     id, title, order_index,
                     course_lessons(
-                        id, title, description, video_url, content_type, is_preview, order_index,
+                        id, title, description, video_url, video_storage_key, video_provider, content_type, is_preview, order_index,
                         lesson_resources(id, title, file_url, file_type),
                         quizzes(
                             id, title, description,
@@ -522,6 +522,14 @@ export const CourseService = {
                 }
             }
 
+            // Persist R2 video key so it survives page refresh
+            if (lessonData.video_storage_key) {
+                dbPayload.video_storage_key = lessonData.video_storage_key;
+            }
+            if (lessonData.video_provider) {
+                dbPayload.video_provider = lessonData.video_provider;
+            }
+
 
             // Include the ID (even client-generated UUIDs) so upsert can match
             // existing rows. This avoids the false-positive where a client UUID passes
@@ -682,11 +690,17 @@ export const CourseService = {
     },
 
     async uploadCourseThumbnail(courseId, file) {
-        const fileName = `${courseId ? courseId : 'new'}/thumb_${Date.now()}`;
+        const session = await AuthService.getSession();
+        if (!session?.user?.id) throw new Error("Not authenticated");
+        
+        const fileName = `${session.user.id}/${courseId ? courseId : 'new'}/thumb_${Date.now()}`;
         return await this.uploadFile('course_thumbnails', fileName, file, ALLOWED_IMAGE_TYPES, MAX_IMAGE_BYTES);
     },
 
     async uploadCourseVideo(courseId, file) {
+        const session = await AuthService.getSession();
+        if (!session?.user?.id) throw new Error("Not authenticated");
+
         // SERVICE-LAYER GUARD: blocks the UI and direct calls to this service function.
         // Note: this does not enforce at the Supabase Storage RLS level — a caller
         // that bypasses this service and calls the Supabase storage client directly
@@ -699,11 +713,14 @@ export const CourseService = {
         if (settingsRow && settingsRow.self_hosted_video_uploads_enabled === false) {
             throw new Error('Self-hosted video uploads are currently disabled. Please use a YouTube URL instead.');
         }
-        const fileName = `${courseId ? courseId : 'new'}/video_${Date.now()}`;
+        const fileName = `${session.user.id}/${courseId ? courseId : 'new'}/video_${Date.now()}`;
         return await this.uploadFile('intro_videos', fileName, file, ALLOWED_VIDEO_TYPES, MAX_COURSE_VIDEO_BYTES);
     },
 
     async uploadLessonVideo(lessonId, file) {
+        const session = await AuthService.getSession();
+        if (!session?.user?.id) throw new Error("Not authenticated");
+
         // SERVICE-LAYER GUARD (same boundary as uploadCourseVideo — see note above)
         const { data: settingsRow } = await supabase
             .from('platform_settings')
@@ -713,7 +730,7 @@ export const CourseService = {
         if (settingsRow && settingsRow.self_hosted_video_uploads_enabled === false) {
             throw new Error('Self-hosted video uploads are currently disabled. Please use a YouTube URL instead.');
         }
-        const fileName = `lessons/${lessonId ? lessonId : 'new'}/video_${Date.now()}`;
+        const fileName = `${session.user.id}/${lessonId ? lessonId : 'new'}/video_${Date.now()}`;
         const publicUrl = await this.uploadFile('course_videos', fileName, file, ALLOWED_VIDEO_TYPES, MAX_LESSON_VIDEO_BYTES);
 
         // Register in media assets
@@ -728,7 +745,10 @@ export const CourseService = {
     },
 
     async uploadLessonResource(lessonId, file) {
-        const fileName = `resources/${lessonId ? lessonId : 'new'}/${Date.now()}_${file.name}`;
+        const session = await AuthService.getSession();
+        if (!session?.user?.id) throw new Error("Not authenticated");
+
+        const fileName = `${session.user.id}/${lessonId ? lessonId : 'new'}/${Date.now()}_${file.name}`;
         return await this.uploadFile('course_resources', fileName, file, ALLOWED_RESOURCE_TYPES, MAX_RESOURCE_BYTES);
     },
 

@@ -43,8 +43,8 @@
 <span class="hidden sm:inline">Save Draft</span>
 </button>
 <!-- Exit Button -->
-<button class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-4 py-2 rounded-lg font-bold text-xs hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:text-red-400 transition flex items-center gap-2" onclick="exitWizard()" title="Exit Wizard">
-<span class="material-symbols-outlined text-sm">logout</span>
+<button id="btn-wizard-exit" class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-4 py-2 rounded-lg font-bold text-xs hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:text-red-400 transition flex items-center gap-2" onclick="exitWizard()" title="Exit Wizard">
+<span class="material-symbols-outlined text-sm">exit_to_app</span>
 <span class="hidden sm:inline">Exit</span>
 </button>
 <!-- Global profile injects ONLY into this dedicated div -->
@@ -53,23 +53,14 @@
 </div>
 </div>
 
-<!-- Mobile Menu Overlay -->
-<div id="mobile-menu-overlay" class="fixed inset-0 bg-slate-900/50 z-[45] hidden lg:hidden backdrop-blur-sm transition-opacity opacity-0"></div>
-
-<!-- Mobile Menu Drawer (Side) -->
-<div id="wizard-mobile-menu" class="fixed inset-y-0 left-0 w-[240px] bg-white dark:bg-slate-900 z-50 transform -translate-x-full transition-transform duration-300 shadow-2xl flex flex-col hidden lg:hidden">
-    <div class="p-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
-        <span class="font-bold text-slate-700 dark:text-slate-200 block">Menu</span>
-        <button id="close-mobile-menu-btn" class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition">
-            <span class="material-symbols-outlined">close</span>
-        </button>
-    </div>
-    <div class="p-4 space-y-3 overflow-y-auto flex-1">
+<!-- Mobile Menu Dropdown -->
+<div id="wizard-mobile-menu" class="absolute top-16 left-4 w-48 bg-white dark:bg-slate-900 z-50 rounded-xl shadow-xl border border-slate-200 dark:border-slate-800 transform opacity-0 scale-95 transition-all duration-200 hidden lg:hidden">
+    <div id="mobile-menu" class="p-2 flex flex-col space-y-1">
         <button class="flex items-center gap-3 w-full px-4 py-3 text-sm font-bold text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors border border-slate-200 dark:border-slate-700" onclick="saveDraftManual()">
             <span class="material-symbols-outlined text-indigo-500">save</span> Save Draft
         </button>
         <button class="flex items-center gap-3 w-full px-4 py-3 text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-lg transition-colors" onclick="exitWizard()">
-            <span class="material-symbols-outlined text-red-500">logout</span> Exit Wizard
+            <span class="material-symbols-outlined text-red-500">exit_to_app</span> Exit
         </button>
     </div>
 </div>
@@ -543,7 +534,7 @@
 <h2 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
 <span class="material-symbols-outlined text-primary">videocam</span> Add Video
                 </h2>
-<button class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition" onclick="discardAndCloseModalVideo()">
+<button class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition" onclick="closeModalVideoClean()">
 <span class="material-symbols-outlined">close</span>
 </button>
 </div>
@@ -709,34 +700,44 @@
 (function() {
     var btn = document.getElementById('wizard-mobile-menu-btn');
     var menu = document.getElementById('wizard-mobile-menu');
-    var overlay = document.getElementById('mobile-menu-overlay');
-    var closeBtn = document.getElementById('close-mobile-menu-btn');
 
-    if (!btn || !menu || !overlay) return;
+    if (!btn || !menu) return;
+
+    var isOpen = false;
 
     function openMenu(e) {
         if(e) e.stopPropagation();
         menu.classList.remove('hidden');
-        overlay.classList.remove('hidden');
         // Small timeout for css transitions
         setTimeout(() => {
-            menu.classList.remove('-translate-x-full');
-            overlay.classList.remove('opacity-0');
+            menu.classList.remove('opacity-0', 'scale-95');
+            menu.classList.add('opacity-100', 'scale-100');
         }, 10);
+        isOpen = true;
     }
 
     function closeMenu() {
-        menu.classList.add('-translate-x-full');
-        overlay.classList.add('opacity-0');
+        menu.classList.remove('opacity-100', 'scale-100');
+        menu.classList.add('opacity-0', 'scale-95');
         setTimeout(() => {
             menu.classList.add('hidden');
-            overlay.classList.add('hidden');
-        }, 300);
+        }, 200);
+        isOpen = false;
     }
 
-    btn.addEventListener('click', openMenu);
-    if(closeBtn) closeBtn.addEventListener('click', closeMenu);
-    overlay.addEventListener('click', closeMenu);
+    btn.addEventListener('click', function(e) {
+        if (isOpen) {
+            closeMenu();
+        } else {
+            openMenu(e);
+        }
+    });
+
+    document.addEventListener('click', function(e) {
+        if (isOpen && btn && menu && !btn.contains(e.target) && !menu.contains(e.target)) {
+            closeMenu();
+        }
+    });
 })();
 </script>
 </body>

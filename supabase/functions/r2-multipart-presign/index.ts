@@ -48,6 +48,7 @@ Deno.serve(async (req) => {
         accessKeyId: Deno.env.get('R2_ACCESS_KEY_ID') ?? '',
         secretAccessKey: Deno.env.get('R2_SECRET_ACCESS_KEY') ?? '',
       },
+      requestChecksumCalculation: "WHEN_REQUIRED",
     });
 
     const bucketName = Deno.env.get('R2_BUCKET_NAME') ?? '';

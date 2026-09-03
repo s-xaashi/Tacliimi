@@ -7,6 +7,7 @@ import { financeSettingsService } from '/src/services/financeSettingsService.js'
 import { getEmbedUrl } from '/src/utils/js/videoEmbed.js';
 
 // Global state
+window.sessionUploadedFiles = window.sessionUploadedFiles || [];
 window.courseDraft = {
     title: '',
     subtitle: '',
@@ -35,6 +36,45 @@ window.totalSteps = 4;
 window.draggedSectionIdx = null;
 window.draggedItemInfo = null;
 window.categoriesList = [];
+
+/**
+ * Per-lesson video upload state registry.
+ * IMPORTANT: This is RUNTIME-ONLY state (cleared on page refresh).
+ * The DB / courseDraft remain authoritative for already-saved videos.
+ *
+ * Shape: lessonVideoState[lessonId] = {
+ *   phase: 'idle'|'uploading'|'completing'|'pending_save'|'saving'|'saved'|'cancelling'|'error',
+ *   progress: 0,          // 0–100
+ *   fileName: '',
+ *   fileSize: 0,
+ *   objectKey: null,      // R2 object key after multipart-complete
+ *   uploadId: null,       // multipart uploadId needed for mid-upload abort
+ *   abortController: null,
+ *   cancelAfterComplete: false, // race-condition flag: Cancel fired during 'completing'
+ *   prevSavedVideo: null, // snapshot of item.video before replacement starts
+ *   sIdx: -1,             // curriculum indices for card updates
+ *   iIdx: -1,
+ *   errorMessage: ''
+ * }
+ */
+window.lessonVideoState = {};
+
+/** Return or create an idle state entry for a lesson. */
+function getLessonVideoState(lessonId) {
+    if (!window.lessonVideoState[lessonId]) {
+        window.lessonVideoState[lessonId] = {
+            phase: 'idle', progress: 0,
+            fileName: '', fileSize: 0,
+            objectKey: null, uploadId: null,
+            abortController: null,
+            cancelAfterComplete: false,
+            prevSavedVideo: null,
+            sIdx: -1, iIdx: -1,
+            errorMessage: ''
+        };
+    }
+    return window.lessonVideoState[lessonId];
+}
 
 // Drag & drop + inline edit handlers (used in dynamically rendered HTML)
 // Note: Register globals at the end using registerGlobals()
@@ -228,8 +268,10 @@ async function loadDraft(courseId) {
                                 content_type: contentType,
                                 is_preview: les.is_preview || false,
                                 order_index: les.order_index ?? 0,
-                                video: (contentType === 'video' || les.video_url)
-                                    ? { url: les.video_url, title: les.description || 'Video Lecture' }
+                                video_storage_key: les.video_storage_key || null,
+                                video_provider: les.video_provider || null,
+                                video: (contentType === 'video' || les.video_url || les.video_storage_key)
+                                    ? { url: les.video_url || null, title: les.description || 'Video Lecture' }
                                     : null,
                                 resources: normalizeToArray(les.lesson_resources).map(r => ({
                                     id: r.id,
@@ -767,6 +809,7 @@ async function setupEventListeners() {
                     // Ensure we have a course ID before uploading
                     if (!window.courseDraft.id) await performSave(true);
                     const url = await CourseService.uploadCourseThumbnail(window.courseDraft.id, file);
+                    window.sessionUploadedFiles.push({ provider: 'supabase', bucket: 'course_thumbnails', url: url });
                     window.courseDraft.thumbnail_url = url;
                     showThumbnailPreview(url);
                     window.saveDraft(true);
@@ -820,6 +863,8 @@ async function setupEventListeners() {
                         if (progressBar) progressBar.style.width = `${percent}%`;
                         if (percentText) percentText.innerText = `${Math.round(percent)}%`;
                     }, window.introUploadAbortController.signal);
+                    
+                    window.sessionUploadedFiles.push({ provider: 'r2', key: uploadResult.objectKey });
 
                     window.courseDraft.intro_video_provider = 'r2';
                     window.courseDraft.intro_video_storage_key = uploadResult.objectKey;
@@ -880,24 +925,30 @@ async function setupEventListeners() {
         modalVidUpload.addEventListener('change', async function (e) {
             if (e.target.files && e.target.files[0]) {
                 const file = e.target.files[0];
-                const display = document.getElementById('modal-video-name-display');
-                if (display) display.innerText = file.name;
                 
-                // Discard any previously staged upload before starting a new one
-                if (window.lessonStagedUpload || window.lessonUploadPhase === 'uploading') {
-                    if (window.lessonUploadAbortController) window.lessonUploadAbortController.abort();
-                    if (window.lessonStagedUpload) {
-                        await CourseService.discardStagedUpload(
-                            window.courseDraft.id, 
-                            window.lessonStagedUpload.objectKey
-                        );
-                    }
-                    window.lessonStagedUpload = null;
-                }
-
                 if (activeModalItemIdx === -1) return;
                 const item = window.courseDraft.curriculum[activeModalSectionIdx].items[activeModalItemIdx];
-                
+                const st = getLessonVideoState(item.id);
+
+                if (st.phase === 'uploading' || st.phase === 'completing' || st.phase === 'saving') {
+                    alert("An upload is already in progress for this lesson. Please wait or cancel it first.");
+                    modalVidUpload.value = ''; // clear selection
+                    return;
+                }
+
+                // If replacing an existing saved video, snapshot it so we can restore on cancel
+                if (item.video_storage_key || (item.video && item.video.url)) {
+                    st.prevSavedVideo = JSON.parse(JSON.stringify({ 
+                        video: item.video, 
+                        video_storage_key: item.video_storage_key 
+                    }));
+                } else {
+                    st.prevSavedVideo = null;
+                }
+
+                const display = document.getElementById('modal-video-name-display');
+                if (display) display.innerText = file.name;
+
                 const progressContainer = document.getElementById('modal-upload-progress-container');
                 const progressBar = document.getElementById('modal-upload-progress-bar');
                 const percentText = document.getElementById('modal-upload-percent');
@@ -908,45 +959,70 @@ async function setupEventListeners() {
                     percentText.innerText = '0%';
                 }
 
-                window.lessonUploadAbortController = new AbortController();
-                window.lessonUploadPhase = 'uploading';
-                
-                const cancelBtn = document.getElementById('modal-upload-cancel');
-                if (cancelBtn) {
-                    cancelBtn.onclick = () => {
-                        if (window.lessonUploadAbortController) {
-                            window.lessonUploadAbortController.abort();
-                        }
-                    };
-                }
+                st.phase = 'uploading';
+                st.progress = 0;
+                st.fileName = file.name;
+                st.fileSize = file.size;
+                st.sIdx = activeModalSectionIdx;
+                st.iIdx = activeModalItemIdx;
+                st.abortController = new AbortController();
+                st.cancelAfterComplete = false;
+                st.errorMessage = '';
+
+                updateLessonVideoCardUI(st.sIdx, st.iIdx);
 
                 try {
-                    const uploadResult = await CourseService.uploadToR2(window.courseDraft.id, item.id, 'lesson', file, (percent) => {
-                        if (progressBar) progressBar.style.width = `${percent}%`;
-                        if (percentText) percentText.innerText = `${Math.round(percent)}%`;
-                    }, window.lessonUploadAbortController.signal);
+                    const uploadResult = await CourseService.uploadToR2(
+                        window.courseDraft.id, item.id, 'lesson', file, (percent) => {
+                            st.progress = percent;
+                            // Only update modal DOM if this modal is currently open and showing the active lesson
+                            if (activeModalItemIdx === st.iIdx && activeModalSectionIdx === st.sIdx) {
+                                if (progressBar) progressBar.style.width = `${percent}%`;
+                                if (percentText) percentText.innerText = `${Math.round(percent)}%`;
+                            }
+                            updateLessonVideoCardUI(st.sIdx, st.iIdx);
+                        }, st.abortController.signal
+                    );
+                    
+                    window.sessionUploadedFiles.push({ provider: 'r2', key: uploadResult.objectKey });
 
-                    window.lessonStagedUpload = {
-                        objectKey: uploadResult.objectKey,
-                        file_size: file.size
-                    };
-                    window.lessonUploadPhase = 'completed_pending_save';
-                    if (percentText) percentText.innerText = 'Upload complete! Click Save Video';
-                    if (progressBar) progressBar.style.width = '100%';
-                    const errEl = document.getElementById('modal-video-url-error');
-                    if (errEl) errEl.classList.add('hidden');
+                    // Race condition: if cancel clicked just as completion returns
+                    if (st.cancelAfterComplete) {
+                        st.phase = 'cancelling';
+                        await CourseService.discardStagedUpload(window.courseDraft.id, uploadResult.objectKey);
+                        throw new Error('Upload cancelled');
+                    }
+
+                    st.objectKey = uploadResult.objectKey;
+                    st.phase = 'pending_save';
+                    
+                    if (activeModalItemIdx === st.iIdx && activeModalSectionIdx === st.sIdx) {
+                        if (percentText) percentText.innerText = 'Upload complete! Click Save Video';
+                        if (progressBar) progressBar.style.width = '100%';
+                        const errEl = document.getElementById('modal-video-url-error');
+                        if (errEl) errEl.classList.add('hidden');
+                    }
+                    updateLessonVideoCardUI(st.sIdx, st.iIdx);
+
                 } catch (err) {
-                    if (err.message !== 'Upload cancelled') {
+                    if (err.message !== 'Upload cancelled' && st.phase !== 'cancelling') {
                         console.error('Modal upload failed:', err);
+                        st.phase = 'error';
+                        st.errorMessage = 'Upload failed: ' + err.message;
+                    } else {
+                        // User cancelled
+                        st.phase = 'idle';
                     }
-                    const errEl = document.getElementById('modal-video-url-error');
-                    if (errEl) {
-                        errEl.textContent = err.message === 'Upload cancelled' ? 'Upload cancelled by user.' : 'Upload failed: ' + err.message;
-                        errEl.classList.remove('hidden');
+                    
+                    if (activeModalItemIdx === st.iIdx && activeModalSectionIdx === st.sIdx) {
+                        const errEl = document.getElementById('modal-video-url-error');
+                        if (errEl) {
+                            errEl.textContent = st.errorMessage || 'Upload cancelled.';
+                            errEl.classList.remove('hidden');
+                        }
+                        if (progressContainer) progressContainer.classList.add('hidden');
                     }
-                    if (progressContainer) progressContainer.classList.add('hidden');
-                    window.lessonUploadPhase = 'idle';
-                    window.lessonStagedUpload = null;
+                    updateLessonVideoCardUI(st.sIdx, st.iIdx);
                 }
             }
         });
@@ -1026,7 +1102,153 @@ async function setupEventListeners() {
     }
 }
 
+// --- LESSON VIDEO STATE HELPERS ---
+
+/**
+ * Lightweight badge updater.
+ * Targets only the video-badge span for a single lesson — no full curriculum re-render.
+ */
+function updateLessonVideoCardUI(sIdx, iIdx) {
+    const item = window.courseDraft.curriculum[sIdx]?.items[iIdx];
+    if (!item) return;
+
+    const badge = document.getElementById(`lesson-video-badge-${item.id}`);
+    if (!badge) return; // Modal is open or card not rendered yet — fine, renderCurriculum handles it
+
+    const st = window.lessonVideoState[item.id];
+    const hasSavedVideo = !!(item.video_storage_key || (item.video && item.video.url));
+
+    let html = '';
+
+    if (st && st.phase === 'uploading') {
+        const pct = Math.round(st.progress);
+        html = `
+            <div class="flex flex-col items-start gap-1">
+                <span class="text-blue-500 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider">
+                    Uploading ${pct}%
+                </span>
+                <div class="w-full h-1 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                    <div class="h-full bg-blue-500 rounded-full transition-all" style="width:${pct}%"></div>
+                </div>
+            </div>`;
+    } else if (st && st.phase === 'completing') {
+        html = `<span class="text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider">
+                    Completing...
+                </span>`;
+    } else if (st && st.phase === 'pending_save') {
+        html = `<span class="flex items-center gap-1 text-amber-500 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider">
+                    <span class="material-symbols-outlined text-[12px]">check_circle</span>Ready — Save Video
+                </span>`;
+    } else if (st && st.phase === 'saving') {
+        html = `<span class="text-slate-400 bg-slate-50 dark:bg-slate-800 px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider">
+                    Saving...
+                </span>`;
+    } else if ((st && st.phase === 'saved') || hasSavedVideo) {
+        html = `<button onclick="previewLessonVideo('${item.id}', ${sIdx}, ${iIdx})"
+                    class="flex items-center gap-1 text-primary hover:text-blue-700 transition text-[11px] font-bold uppercase tracking-wider"
+                    title="Preview video">
+                    <span class="material-symbols-outlined text-[14px]">play_circle</span>
+                    Video
+                </button>`;
+    } else if (st && st.phase === 'error') {
+        html = `<span class="flex items-center gap-1 text-red-500 bg-red-50 dark:bg-red-900/20 px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider">
+                    <span class="material-symbols-outlined text-[12px]">error</span>Upload failed
+                    <button onclick="retryLessonVideoUpload(${sIdx},${iIdx})" class="ml-1 underline hover:no-underline">Retry</button>
+                </span>`;
+    } else {
+        html = `<span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">No video</span>`;
+    }
+
+    badge.innerHTML = html;
+}
+
+/**
+ * Secure video preview for a saved lesson video.
+ * Calls the r2-video-playback Edge Function and opens the URL in a lightweight player modal.
+ */
+async function previewLessonVideo(lessonId, sIdx, iIdx) {
+    const item = window.courseDraft.curriculum[sIdx]?.items[iIdx];
+    if (!item) return;
+
+    // YouTube/Vimeo embed path
+    if (item.video?.url && !item.video_storage_key) {
+        const embedSrc = getEmbedUrl(item.video.url);
+        if (embedSrc) {
+            openVideoPlayerModal(embedSrc, item.video.title || 'Lesson Video', true);
+            return;
+        }
+    }
+
+    // R2 secure path
+    try {
+        const btn = document.getElementById(`lesson-video-badge-${lessonId}`)?.querySelector('button');
+        if (btn) { btn.disabled = true; btn.innerHTML += ' <span class="material-symbols-outlined text-[10px] align-middle animate-spin" style="animation-duration:1s">progress_activity</span>'; }
+        const playbackUrl = await CourseService.getR2PlaybackUrl(window.courseDraft.id, lessonId, 'lesson');
+        if (btn) { btn.disabled = false; updateLessonVideoCardUI(sIdx, iIdx); }
+        openVideoPlayerModal(playbackUrl, item.video?.title || 'Lesson Video', false);
+    } catch (err) {
+        console.error('Playback URL fetch failed:', err);
+        if (typeof showToast === 'function') showToast('Could not load video preview: ' + err.message, true);
+        updateLessonVideoCardUI(sIdx, iIdx);
+    }
+}
+
+/** Opens a simple video player modal overlay. */
+function openVideoPlayerModal(src, title, isEmbed) {
+    let modal = document.getElementById('lesson-video-player-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'lesson-video-player-modal';
+        modal.className = 'fixed inset-0 z-[9999] bg-black/80 flex items-center justify-center p-4';
+        modal.onclick = (e) => { if (e.target === modal) closeVideoPlayerModal(); };
+        document.body.appendChild(modal);
+    }
+    const mediaHtml = isEmbed
+        ? `<iframe src="${src}" class="w-full aspect-video rounded-lg" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>`
+        : `<video src="${src}#t=1" class="w-full aspect-video rounded-lg bg-black" controls autoplay preload="metadata"></video>`;
+
+    modal.innerHTML = `
+        <div class="bg-slate-900 rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden">
+            <div class="flex items-center justify-between px-4 py-3 border-b border-slate-700">
+                <span class="text-sm font-bold text-white truncate">${title}</span>
+                <button onclick="closeVideoPlayerModal()" class="text-slate-400 hover:text-white transition">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="p-4">${mediaHtml}</div>
+        </div>`;
+    modal.classList.remove('hidden');
+}
+
+window.closeVideoPlayerModal = function() {
+    const modal = document.getElementById('lesson-video-player-modal');
+    if (modal) {
+        // Stop video/audio before closing
+        modal.querySelectorAll('video').forEach(v => { v.pause(); v.src = ''; });
+        modal.classList.add('hidden');
+        modal.innerHTML = '';
+    }
+};
+
+/**
+ * Retry entry point — reopens the video modal for the failed lesson.
+ */
+function retryLessonVideoUpload(sIdx, iIdx) {
+    const item = window.courseDraft.curriculum[sIdx]?.items[iIdx];
+    if (!item) return;
+    const st = window.lessonVideoState[item.id];
+    if (st) {
+        st.phase = 'idle';
+        st.progress = 0;
+        st.errorMessage = '';
+        st.objectKey = null;
+        st.uploadId = null;
+    }
+    wizardOpenModal('modal-add-video', sIdx, iIdx);
+}
+
 // --- CURRICULUM LOGIC ---
+
 
 function addSection() {
     window.courseDraft.curriculum.push({
@@ -1068,20 +1290,46 @@ function renderCurriculum() {
                             <div class="flex items-start sm:items-center gap-2 sm:gap-4 w-full flex-1 min-w-0">
                                 <span class="material-symbols-outlined text-slate-300 cursor-move group-hover:text-slate-400 mt-1 sm:mt-0">drag_handle</span>
                                 <div class="flex items-start sm:items-center gap-2 sm:gap-3 w-full flex-1 min-w-0">
-                                    <span class="material-symbols-outlined text-slate-400 mt-0.5 sm:mt-0">${icon}</span>
+                                    ${(function() {
+                                        if (item.content_type === 'video' && (item.video_storage_key || (item.video && item.video.url))) {
+                                            return `<div class="w-10 h-7 bg-slate-800 dark:bg-slate-950 rounded flex items-center justify-center flex-shrink-0 mt-0.5 sm:mt-0 relative overflow-hidden ring-1 ring-slate-700">
+                                                        <span class="material-symbols-outlined text-[16px] text-white">play_arrow</span>
+                                                    </div>`;
+                                        } else {
+                                            return `<span class="material-symbols-outlined text-slate-400 mt-0.5 sm:mt-0">${icon}</span>`;
+                                        }
+                                    })()}
                                     <div class="flex flex-col flex-1 min-w-0 text-left w-full">
                                         <input class="text-sm font-medium text-slate-900 dark:text-white leading-none bg-transparent border-none focus:ring-0 p-0 transition w-full mb-1 truncate" 
                                            value="${item.title}" onblur="updateItemTitle(${sIdx}, ${iIdx}, this.value)" />
                                         
                                         <!-- Scrollable container for Lesson Details -->
                                         <div class="flex flex-wrap items-center gap-2 mt-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                                            <span>${item.content_type.toUpperCase()}</span>
-                                            ${item.video ? `
-                                                <span class="flex items-center gap-1 text-blue-500 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded truncate max-w-[120px]">
-                                                    <span class="material-symbols-outlined text-[12px]">videocam</span> 
-                                                    <span class="truncate">${item.video.title || 'Video'}</span>
-                                                </span>
-                                            ` : ''}
+                                            <span id="lesson-video-badge-${item.id}">
+                                                ${(function() {
+                                                    const st = window.lessonVideoState ? window.lessonVideoState[item.id] : null;
+                                                    const hasSavedVideo = !!(item.video_storage_key || (item.video && item.video.url));
+                                                    if (st && st.phase === 'uploading') {
+                                                        const pct = Math.round(st.progress);
+                                                        return `<div class="flex flex-col items-start gap-1">
+                                                                    <span class="text-blue-500 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider">Uploading ${pct}%</span>
+                                                                    <div class="w-full h-1 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden"><div class="h-full bg-blue-500 rounded-full transition-all" style="width:${pct}%"></div></div>
+                                                                </div>`;
+                                                    } else if (st && st.phase === 'completing') {
+                                                        return `<span class="text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider">Completing...</span>`;
+                                                    } else if (st && st.phase === 'pending_save') {
+                                                        return `<span class="flex items-center gap-1 text-amber-500 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider"><span class="material-symbols-outlined text-[12px]">check_circle</span>Ready — Save Video</span>`;
+                                                    } else if (st && st.phase === 'saving') {
+                                                        return `<span class="text-slate-400 bg-slate-50 dark:bg-slate-800 px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider">Saving...</span>`;
+                                                    } else if ((st && st.phase === 'saved') || hasSavedVideo) {
+                                                        return `<button onclick="previewLessonVideo('${item.id}', ${sIdx}, ${iIdx})" class="flex items-center gap-1 text-primary hover:text-blue-700 transition text-[11px] font-bold uppercase tracking-wider" title="Preview video"><span class="material-symbols-outlined text-[14px]">play_circle</span>Video</button>`;
+                                                    } else if (st && st.phase === 'error') {
+                                                        return `<span class="flex items-center gap-1 text-red-500 bg-red-50 dark:bg-red-900/20 px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider"><span class="material-symbols-outlined text-[12px]">error</span>Failed <button onclick="retryLessonVideoUpload(${sIdx},${iIdx})" class="ml-1 underline hover:no-underline">Retry</button></span>`;
+                                                    }
+                                                    return `<span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">No video</span>`;
+                                                })()}
+                                            </span>
+
                                             ${(item.quiz && item.quiz.length > 0) ? `
                                                 <button onclick="wizardOpenModal('modal-add-quiz', ${sIdx}, ${iIdx})" class="flex items-center gap-1 text-amber-500 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded hover:bg-amber-100 dark:hover:bg-amber-900/40 transition">
                                                     <span class="material-symbols-outlined text-[12px]">quiz</span> 
@@ -1090,30 +1338,12 @@ function renderCurriculum() {
                                             ` : ''}
 
                                             ${(item.resources && item.resources.length > 0) ? `
-                                                <button onclick="wizardOpenModal('modal-add-resource', ${sIdx}, ${iIdx})" class="flex items-center gap-1 text-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition flex-shrink-0">
+                                                <button onclick="wizardOpenModal('modal-add-resource', ${sIdx}, ${iIdx})" class="flex items-center justify-center gap-1 text-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition flex-shrink-0 w-auto mt-0">
                                                     <span class="material-symbols-outlined text-[12px]">attachment</span> 
                                                     ${item.resources.length} Resource${item.resources.length !== 1 ? 's' : ''}
                                                 </button>
                                             ` : ''}
                                         </div>
-                                        
-                                        <!-- Video Preview for Lesson -->
-                                        ${item.video?.url ? `
-                                            <div class="mt-2 w-full max-w-xs rounded-lg overflow-hidden border border-slate-100 dark:border-slate-800 bg-black/5 flex items-center gap-3 p-2">
-                                                <div class="w-16 h-10 shrink-0 bg-black rounded flex items-center justify-center relative group-preview">
-                                                    <video class="w-full h-full object-cover">
-                                                        <source src="${item.video.url}#t=0.5" type="video/mp4">
-                                                    </video>
-                                                    <div class="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition">
-                                                        <span class="material-symbols-outlined text-white text-xs">play_arrow</span>
-                                                    </div>
-                                                </div>
-                                                <div class="flex flex-col min-w-0">
-                                                    <span class="text-[10px] text-slate-400 font-bold uppercase truncate">${item.video.title || 'Lesson Video'}</span>
-                                                    <a href="${item.video.url}" target="_blank" class="text-[9px] text-primary hover:underline truncate">View Original</a>
-                                                </div>
-                                            </div>
-                                        ` : ''}
                                     </div>
                                 </div>
                             </div>
@@ -1283,19 +1513,49 @@ function wizardOpenModal(modalId, sIdx, iIdx) {
         const embedUrlEl = document.getElementById('modal-video-embed-url');
         const fileEl = document.getElementById('modal-video-upload');
         const errEl = document.getElementById('modal-video-url-error');
+        const progressContainer = document.getElementById('modal-upload-progress-container');
+        const progressBar = document.getElementById('modal-upload-progress-bar');
+        const percentText = document.getElementById('modal-upload-percent');
 
-        // Always resync every field to THIS lesson's data — never leave a
-        // previous lesson's leftover value sitting in a shared input.
-        if (embedUrlEl) embedUrlEl.value = (lesson.video && lesson.video.url) ? lesson.video.url : '';
-        if (fileEl) fileEl.value = ''; // clear any leftover selected File object too
+        // Always resync every field
+        if (embedUrlEl) embedUrlEl.value = (lesson.video && lesson.video.url && !lesson.video_storage_key) ? lesson.video.url : '';
+        if (fileEl) fileEl.value = ''; // clear any leftover selected File
         if (errEl) errEl.classList.add('hidden');
+        if (progressContainer) progressContainer.classList.add('hidden');
 
-        if (lesson.video) {
-            if (titleEl) titleEl.value = lesson.video.title || '';
-            if (nameEl) nameEl.innerText = lesson.video.url ? 'Video attached' : 'Click or drag video to upload';
+        const st = getLessonVideoState(lesson.id);
+
+        if (st.phase === 'uploading' || st.phase === 'completing' || st.phase === 'saving') {
+            if (titleEl) titleEl.value = lesson.video?.title || '';
+            if (nameEl) nameEl.innerText = st.fileName || 'Uploading...';
+            if (progressContainer) {
+                progressContainer.classList.remove('hidden');
+                progressBar.style.width = (st.phase === 'completing' || st.phase === 'saving') ? '100%' : `${st.progress}%`;
+                
+                if (st.phase === 'completing') percentText.innerText = 'Completing...';
+                else if (st.phase === 'saving') percentText.innerText = 'Saving...';
+                else percentText.innerText = `${Math.round(st.progress)}%`;
+            }
+        } else if (st.phase === 'pending_save') {
+            if (titleEl) titleEl.value = lesson.video?.title || '';
+            if (nameEl) nameEl.innerText = st.fileName || 'Video Staged';
+            if (progressContainer) {
+                progressContainer.classList.remove('hidden');
+                progressBar.style.width = '100%';
+                percentText.innerText = 'Upload complete! Click Save Video';
+            }
+        } else if (st.phase === 'error') {
+            if (titleEl) titleEl.value = lesson.video?.title || '';
+            if (nameEl) nameEl.innerText = 'Upload failed';
+            if (errEl) {
+                errEl.textContent = st.errorMessage || 'Upload failed.';
+                errEl.classList.remove('hidden');
+            }
         } else {
-            if (titleEl) titleEl.value = '';
-            if (nameEl) nameEl.innerText = 'Click or drag video to upload';
+            // idle or saved
+            if (titleEl) titleEl.value = lesson.video?.title || '';
+            const hasSavedVideo = (lesson.video_storage_key || (lesson.video && lesson.video.url));
+            if (nameEl) nameEl.innerText = hasSavedVideo ? 'Video attached (upload new to replace)' : 'Click or drag video to upload';
         }
     } else if (modalId === 'modal-add-resource') {
         renderResourceList(sIdx, iIdx);
@@ -1395,6 +1655,7 @@ async function wizardSaveModalVideo() {
     
     if (activeModalItemIdx === -1) return;
     const item = window.courseDraft.curriculum[activeModalSectionIdx].items[activeModalItemIdx];
+    const st = getLessonVideoState(item.id);
     
     // Disable save button to prevent double-clicks
     const saveBtn = document.querySelector('#modal-add-video-content button:last-child');
@@ -1405,12 +1666,12 @@ async function wizardSaveModalVideo() {
 
     try {
         if (provider === 'r2') {
-            if (window.lessonUploadPhase === 'uploading') {
+            if (st.phase === 'uploading' || st.phase === 'completing') {
                 alert("Upload is still in progress. Please wait or cancel.");
                 return;
             }
 
-            if (!window.lessonStagedUpload) {
+            if (st.phase !== 'pending_save' || !st.objectKey) {
                 const errEl = document.getElementById('modal-video-url-error');
                 if (errEl) {
                     errEl.textContent = 'Please select a video file and wait for it to upload.';
@@ -1419,26 +1680,37 @@ async function wizardSaveModalVideo() {
                 return;
             }
 
-            window.lessonUploadPhase = 'saving';
+            st.phase = 'saving';
+            updateLessonVideoCardUI(st.sIdx, st.iIdx);
 
             // Commit the uploaded object to generate DB asset records
             await CourseService.commitR2Upload(
                 window.courseDraft.id,
                 item.id,
                 'lesson',
-                window.lessonStagedUpload.objectKey,
-                window.lessonStagedUpload.file_size
+                st.objectKey,
+                st.fileSize
             );
+
+            // Delete the OLD R2 object if this was a replacement, to avoid storage bloat.
+            // st.prevSavedVideo is snapshotted at upload-start time (line ~937).
+            if (st.prevSavedVideo?.video_storage_key) {
+                CourseService.discardStagedUpload(
+                    window.courseDraft.id,
+                    st.prevSavedVideo.video_storage_key
+                ).catch(err => console.warn('Old R2 cleanup failed (non-critical):', err));
+                st.prevSavedVideo = null;
+            }
 
             item.content_type = 'video';
             item.video_provider = 'r2';
-            item.video_storage_key = window.lessonStagedUpload.objectKey;
+            item.video_storage_key = st.objectKey;
             item.video = { title: title, url: null };
             item.description = title;
 
             // Clear state
-            window.lessonStagedUpload = null;
-            window.lessonUploadPhase = 'saved';
+            st.phase = 'saved';
+            updateLessonVideoCardUI(st.sIdx, st.iIdx);
 
         } else { // youtube
             if (embedUrl) {
@@ -1459,6 +1731,8 @@ async function wizardSaveModalVideo() {
                 item.video_storage_key = null;
                 item.video = { title: title, url: embedUrl };
                 item.description = title;
+                
+                st.phase = 'saved';
             } else {
                 const errEl = document.getElementById('modal-video-url-error');
                 if (errEl) {
@@ -1475,7 +1749,8 @@ async function wizardSaveModalVideo() {
     } catch (e) {
         console.error('Save error', e);
         alert("Error saving video: " + e.message);
-        window.lessonUploadPhase = window.lessonStagedUpload ? 'completed_pending_save' : 'idle';
+        st.phase = st.objectKey ? 'pending_save' : 'idle';
+        updateLessonVideoCardUI(st.sIdx, st.iIdx);
     } finally {
         if (saveBtn) {
             saveBtn.disabled = false;
@@ -1485,6 +1760,8 @@ async function wizardSaveModalVideo() {
 }
 
 function closeModalVideoClean() {
+    // This is the "Close via X / Click Outside" handler.
+    // It NO LONGER ABORTS uploads. It just hides the UI.
     const progressContainer = document.getElementById('modal-upload-progress-container');
     if (progressContainer) progressContainer.classList.add('hidden');
     
@@ -1493,36 +1770,50 @@ function closeModalVideoClean() {
     if (fileEl) fileEl.value = '';
     const display = document.getElementById('modal-video-name-display');
     if (display) display.innerText = 'Click or drag video to upload';
-    
-    // Reset state
-    window.lessonStagedUpload = null;
-    window.lessonUploadPhase = 'idle';
 
     closeModal('modal-add-video');
 }
 
 async function discardAndCloseModalVideo() {
-    const saveBtn = document.querySelector('#modal-add-video-content button:last-child');
-    if (saveBtn && saveBtn.disabled && window.lessonUploadPhase === 'saving') {
+    // This is the EXPLICIT CANCEL hit.
+    if (activeModalItemIdx === -1) {
+        closeModalVideoClean();
+        return;
+    }
+    const item = window.courseDraft.curriculum[activeModalSectionIdx].items[activeModalItemIdx];
+    const st = getLessonVideoState(item.id);
+
+    if (st.phase === 'saving') {
         // We are currently saving. Discard is ignored to avoid race conditions.
         return;
     }
 
-    if (window.lessonUploadPhase === 'uploading' && window.lessonUploadAbortController) {
-        window.lessonUploadAbortController.abort();
-    }
-
-    if (window.lessonStagedUpload) {
-        // Discard completed staged upload
+    if (st.phase === 'uploading' && st.abortController) {
+        st.abortController.abort();
+    } else if (st.phase === 'completing') {
+        // Special race-condition flag
+        st.cancelAfterComplete = true;
+    } else if (st.phase === 'pending_save' && st.objectKey) {
         try {
+            st.phase = 'cancelling';
+            updateLessonVideoCardUI(st.sIdx, st.iIdx);
             await CourseService.discardStagedUpload(
                 window.courseDraft.id, 
-                window.lessonStagedUpload.objectKey, 
-                window.lessonUploadPhase === 'uploading' ? window.lessonStagedUpload.uploadId : null
+                st.objectKey,
+                null // uploadId not needed for completed staged upload
             );
         } catch (e) {
             console.error('Error discarding upload:', e);
         }
+    }
+
+    if (st.phase !== 'completing') {
+        st.phase = 'idle';
+        st.objectKey = null;
+        st.progress = 0;
+        st.fileName = '';
+        st.errorMessage = '';
+        updateLessonVideoCardUI(st.sIdx, st.iIdx);
     }
 
     closeModalVideoClean();
@@ -1561,6 +1852,7 @@ async function saveModalResource() {
     if (fileEl && fileEl.files && fileEl.files[0]) {
         try {
             uploadedUrl = await CourseService.uploadLessonResource(window.courseDraft.id, fileEl.files[0]);
+            window.sessionUploadedFiles.push({ provider: 'supabase', bucket: 'course_resources', url: uploadedUrl });
         } catch (e) { 
             console.error("Resource upload failed:", e);
             showError('modal-resource-upload', 'Upload failed: ' + e.message);
@@ -1695,9 +1987,12 @@ function showVideoPreview(url, filename) {
             video.className = 'intro-preview-vid absolute inset-0 w-full h-full object-cover z-20';
             video.controls = true;
             video.muted = true;
+            video.preload = "metadata";
             container.appendChild(video);
         }
-        video.src = url;
+        
+        // Append #t=1 if it doesn't already have a hash, to force thumbnail frame
+        video.src = url.includes('#') ? url : url + '#t=1';
         
         if (icon) icon.classList.add('hidden');
         if (tick) {
@@ -2240,7 +2535,10 @@ async function saveDraftManual() {
 
     try {
         await saveCurrentStepData(true);
+        console.log("Draft saved perfectly:", window.courseDraft);
         showToast("Draft safely saved in Supabase.");
+        // Clear session tracking since these files are now permanently part of the saved draft
+        window.sessionUploadedFiles = [];
     } catch (e) {
         console.error("Manual save failed:", e);
         showToast("Failed to save draft.", true);
@@ -2252,9 +2550,33 @@ async function saveDraftManual() {
     }
 }
 
-function exitWizard() {
-    // Exit immediately without saving - any unsaved changes are discarded.
-    // Use "Save Draft" first if you want to keep your changes.
+async function exitWizard() {
+    const btn = document.getElementById('btn-wizard-exit');
+    if (btn) {
+        btn.innerHTML = '<span class="material-symbols-outlined text-sm animate-spin">sync</span> Exiting...';
+        btn.disabled = true;
+    }
+
+    // Discard any staged or newly uploaded files for this session that weren't saved to draft
+    if (window.sessionUploadedFiles && window.sessionUploadedFiles.length > 0) {
+        console.log("Cleaning up unsaved session files...", window.sessionUploadedFiles);
+        for (const file of window.sessionUploadedFiles) {
+            try {
+                if (file.provider === 'r2' && file.key) {
+                    await CourseService.discardStagedUpload(window.courseDraft.id, file.key);
+                } else if (file.provider === 'supabase' && file.url) {
+                    const pathParts = file.url.split('public/' + file.bucket + '/');
+                    if (pathParts.length > 1) {
+                        const path = decodeURIComponent(pathParts[1]);
+                        await supabase.storage.from(file.bucket).remove([path]);
+                    }
+                }
+            } catch (e) {
+                console.error("Cleanup failed for unsaved file", file, e);
+            }
+        }
+    }
+    
     window.location.href = '/src/pages/instructor/instructor-courses/index.html';
 }
 
@@ -2312,7 +2634,10 @@ function registerGlobals() {
         toggleResourceForm,
         saveModalResource,
         deleteResource,
-        calculatePayout: wizardCalculatePayout
+        calculatePayout: wizardCalculatePayout,
+        previewLessonVideo,
+        retryLessonVideoUpload,
+        closeModalVideoClean
     };
 
     for (const [key, val] of Object.entries(globals)) {
@@ -2390,3 +2715,7 @@ window.removeCourseCoupon = function(idx) {
     window.courseDraft.pricing.coupons.splice(idx, 1);
     renderCourseCoupons();
 };
+
+// Expose module-scoped functions to window so HTML onclick attributes can reach them
+window.saveDraftManual = saveDraftManual;
+window.exitWizard = exitWizard;
