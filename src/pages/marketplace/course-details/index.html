@@ -712,7 +712,8 @@
                             `;
 
                             lessons.forEach(lesson => {
-                                const hasVideo = !!lesson.video_url;
+                                const isR2 = lesson.video_provider === 'r2' || !!lesson.video_storage_key;
+                                const hasVideo = !!lesson.video_url || isR2;
                                 const isAccessible = lesson.is_preview || isEnrolled;
                                 const quizzes = Array.isArray(lesson.quizzes) ? lesson.quizzes : (lesson.quizzes ? [lesson.quizzes] : []);
                                 const resources = Array.isArray(lesson.lesson_resources) ? lesson.lesson_resources : (lesson.lesson_resources ? [lesson.lesson_resources] : []);
@@ -743,10 +744,13 @@
                                 // Video thumbnail or Locked Box (parallel version)
                                 let thumbHtml = '';
                                 if (hasVideo && isAccessible) {
+                                    const clickArgs = isR2 ? `'R2_PENDING', '${courseData.id}', '${lesson.id}', false` : `'${lesson.video_url}', null, null, false`;
+                                    const videoSrcAttr = isR2 ? '' : `src="${lesson.video_url}"`;
+                                    
                                     thumbHtml = `
                                     <div class="relative w-20 h-12 rounded-lg overflow-hidden bg-slate-900 shrink-0 cursor-pointer group/thumb border border-slate-700/50"
-                                        onclick="playLessonPreview('${lesson.video_url}')">
-                                        <video src="${lesson.video_url}" class="w-full h-full object-cover opacity-60" preload="metadata" muted></video>
+                                        onclick="playLessonPreview(${clickArgs})">
+                                        <video ${videoSrcAttr} class="w-full h-full object-cover opacity-60" preload="metadata" muted></video>
                                         <div class="absolute inset-0 flex items-center justify-center">
                                             <span class="material-icons-round text-white text-lg drop-shadow group-hover/thumb:scale-110 transition-transform">play_circle</span>
                                         </div>
@@ -1048,9 +1052,11 @@
                 const playPreviewBtn = document.getElementById('play-preview-btn');
                 if (playPreviewBtn) {
                     playPreviewBtn.addEventListener('click', () => {
-                        const videoUrl = courseData.intro_video_url;
-                        if (videoUrl) {
-                            window.playLessonPreview(videoUrl);
+                        const isR2 = courseData.intro_video_provider === 'r2' || !!courseData.intro_video_storage_key;
+                        const videoUrl = isR2 ? 'R2_PENDING' : courseData.intro_video_url;
+
+                        if (videoUrl || isR2) {
+                            window.playLessonPreview(videoUrl, courseData.id, null, true);
                         } else {
                             window.showToast('No preview video available.', 'error');
                         }
@@ -1075,35 +1081,44 @@
             }
         }
 
-        window.playLessonPreview = function (videoUrl) {
+        window.playLessonPreview = async function (videoUrl, courseId, lessonId, isIntro = false) {
             if (!videoUrl) return;
-            
-            // Check if it's a direct video format
-            const isDirectVideo = videoUrl.match(/\.(mp4|webm|ogg)$/i) || videoUrl.startsWith('blob:') || videoUrl.includes('supabase.co/storage') || videoUrl.includes('tacliimi-video');
             
             let finalUrl = videoUrl;
             let useIframe = false;
-            
-            try {
-                // Convert standard YouTube links to embed format
-                if (videoUrl.includes('youtube.com/watch?v=')) {
-                    const urlObj = new URL(videoUrl);
-                    const videoId = urlObj.searchParams.get('v');
-                    if (videoId) {
-                        finalUrl = `https://www.youtube.com/embed/${videoId}`;
-                        useIframe = true;
-                    }
-                } else if (videoUrl.includes('youtu.be/')) {
-                    const videoId = videoUrl.split('youtu.be/')[1].split('?')[0];
-                    if (videoId) {
-                        finalUrl = `https://www.youtube.com/embed/${videoId}`;
-                        useIframe = true;
-                    }
-                } else if (videoUrl.includes('youtube.com/embed') || videoUrl.includes('vimeo.com/video') || videoUrl.includes('iframe')) {
-                    useIframe = true;
+            const isDirectVideo = (videoUrl === 'R2_PENDING') || (videoUrl && (videoUrl.match(/\.(mp4|webm|ogg)$/i) || videoUrl.startsWith('blob:') || videoUrl.includes('supabase.co/storage') || videoUrl.includes('tacliimi-video')));
+
+            if (videoUrl === 'R2_PENDING') {
+                try {
+                    const type = isIntro ? 'intro' : 'lesson';
+                    finalUrl = await CourseService.getR2PlaybackUrl(courseId, isIntro ? null : lessonId, type);
+                } catch(e) {
+                    console.error("Failed to fetch R2 playback URL:", e);
+                    if(window.showToast) window.showToast("Failed to load secure video.", "error");
+                    return;
                 }
-            } catch (e) {
-                console.error("Error parsing video URL:", e);
+            } else {            
+                try {
+                    // Convert standard YouTube links to embed format
+                    if (videoUrl.includes('youtube.com/watch?v=')) {
+                        const urlObj = new URL(videoUrl);
+                        const videoId = urlObj.searchParams.get('v');
+                        if (videoId) {
+                            finalUrl = `https://www.youtube.com/embed/${videoId}`;
+                            useIframe = true;
+                        }
+                    } else if (videoUrl.includes('youtu.be/')) {
+                        const videoId = videoUrl.split('youtu.be/')[1].split('?')[0];
+                        if (videoId) {
+                            finalUrl = `https://www.youtube.com/embed/${videoId}`;
+                            useIframe = true;
+                        }
+                    } else if (videoUrl.includes('youtube.com/embed') || videoUrl.includes('vimeo.com/video') || videoUrl.includes('iframe')) {
+                        useIframe = true;
+                    }
+                } catch (e) {
+                    console.error("Error parsing video URL:", e);
+                }
             }
 
             // If it's a completely generic link and not an embed or direct video, open in new tab
