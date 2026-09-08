@@ -80,13 +80,11 @@
 </a>
 <div class="flex items-center gap-4 hidden lg:flex">
 <div class="flex items-center gap-3 pl-4 border-l border-slate-200 dark:border-slate-800 cursor-pointer hover:opacity-80 transition-opacity" id="global-profile-header-container" onclick="window.location.href='/src/pages/instructor/instructor-profile/index.html'">
-<div class="text-right hidden sm:block">
-<p class="user-display-name text-sm font-medium dark:text-white">Instructor account</p>
-<p class="text-xs text-slate-500" data-role="profile-meta">ID: 32342</p>
+<div class="text-right hidden sm:block space-y-1">
+<div class="h-4 w-28 bg-slate-200 dark:bg-slate-700 animate-pulse rounded"></div>
+<div class="h-3 w-16 bg-slate-200 dark:bg-slate-700 animate-pulse rounded ml-auto"></div>
 </div>
-<div class="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-slate-100 text-slate-400 dark:bg-slate-800 border-2 border-primary/20 hover:border-primary transition-colors">
-<span class="material-symbols-outlined text-2xl">account_circle</span>
-</div>
+<div class="h-10 w-10 rounded-full bg-slate-200 dark:bg-slate-700 animate-pulse border-2 border-primary/20 shrink-0 flex items-center justify-center" data-role="profile-image"></div>
 </div>
 </div>
 </header>
@@ -155,7 +153,7 @@
             </script>
 <div class="px-8 pb-8 pt-2 max-w-7xl mx-auto">
 <div class="mb-10">
-<h2 class="text-3xl font-bold dark:text-white">Welcome to Tacliimi, <span class="auto-welcome-name capitalize">Instructor</span>!</h2>
+<h2 class="text-3xl font-bold dark:text-white flex items-center gap-2 flex-wrap">Welcome to Tacliimi, <span class="auto-welcome-name capitalize inline-flex items-center"><span class="h-8 w-36 bg-slate-200 dark:bg-slate-700 animate-pulse rounded-lg inline-block"></span></span>!</h2>
 <p class="text-slate-500 mt-2 text-lg">Your dashboard provides an overview of your teaching success.
                     </p>
 </div>
@@ -169,8 +167,8 @@
 </div>
 <h3 class="font-semibold text-slate-500 dark:text-slate-400 text-sm">Total Earnings</h3>
 </div>
-<div class="text-3xl font-bold dark:text-white mb-1 h-9" id="total-earnings-metric">
-    <div class="h-8 w-24 bg-slate-200 dark:bg-slate-700 animate-pulse rounded inline-block"></div>
+<div class="text-3xl font-bold dark:text-white mb-1 h-9 flex items-center" id="total-earnings-metric">
+    <div class="h-8 w-24 bg-slate-200 dark:bg-slate-700 animate-pulse rounded-lg"></div>
 </div>
 <p class="text-slate-400 text-xs">All-time life revenue</p>
 </div>
@@ -182,8 +180,8 @@
 </div>
 <h3 class="font-semibold text-slate-500 dark:text-slate-400 text-sm">Total Courses</h3>
 </div>
-<div class="text-3xl font-bold dark:text-white mb-1 h-9" id="total-courses-metric">
-    <div class="h-8 w-16 bg-slate-200 dark:bg-slate-700 animate-pulse rounded inline-block"></div>
+<div class="text-3xl font-bold dark:text-white mb-1 h-9 flex items-center" id="total-courses-metric">
+    <div class="h-8 w-16 bg-slate-200 dark:bg-slate-700 animate-pulse rounded-lg"></div>
 </div>
 <p class="text-slate-400 text-xs" id="total-courses-desc">Your portfolio size</p>
 </div>
@@ -195,8 +193,8 @@
 </div>
 <h3 class="font-semibold text-slate-500 dark:text-slate-400 text-sm">Enrolled Students</h3>
 </div>
-<div class="text-3xl font-bold dark:text-white mb-1 h-9" id="total-students-metric">
-    <div class="h-8 w-16 bg-slate-200 dark:bg-slate-700 animate-pulse rounded inline-block"></div>
+<div class="text-3xl font-bold dark:text-white mb-1 h-9 flex items-center" id="total-students-metric">
+    <div class="h-8 w-16 bg-slate-200 dark:bg-slate-700 animate-pulse rounded-lg"></div>
 </div>
 <p class="text-slate-400 text-xs">Global reach</p>
 </div>
@@ -208,8 +206,8 @@
 </div>
 <h3 class="font-semibold text-slate-500 dark:text-slate-400 text-sm">Active Mentorship</h3>
 </div>
-<div class="text-3xl font-bold dark:text-white mb-1 h-9" id="mentorship-sessions-metric">
-    <div class="h-8 w-16 bg-slate-200 dark:bg-slate-700 animate-pulse rounded inline-block"></div>
+<div class="text-3xl font-bold dark:text-white mb-1 h-9 flex items-center" id="mentorship-sessions-metric">
+    <div class="h-8 w-16 bg-slate-200 dark:bg-slate-700 animate-pulse rounded-lg"></div>
 </div>
 <p class="text-slate-400 text-xs h-4" id="next-session-desc"></p>
 </div>
@@ -224,6 +222,7 @@
 <select class="bg-slate-50 dark:bg-slate-800 border border-transparent rounded-xl text-sm py-2.5 px-4 focus:ring-2 focus:ring-primary/20 dark:text-white w-full sm:w-auto" id="status-filter">
 <option value="all">All Statuses</option>
 <option value="published">Published</option>
+<option value="private">Private</option>
 <option value="pending_review">Pending Review</option>
 <option value="draft">Draft</option>
 <option value="rejected">Rejected</option>
@@ -423,7 +422,7 @@
             }
 
             function updateMetrics({ earnings, courses, students, sessions }) {
-                document.getElementById('total-earnings-metric').innerText = `$${parseFloat(earnings).toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
+                document.getElementById('total-earnings-metric').innerText = `$${parseFloat(earnings).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
                 document.getElementById('total-courses-metric').innerText = courses;
                 document.getElementById('total-students-metric').innerText = students;
                 document.getElementById('mentorship-sessions-metric').innerText = sessions;
@@ -576,8 +575,19 @@
                                 (course.serial_id || '').toLowerCase().includes(searchTerm) ||
                                 (course.category?.name || '').toLowerCase().includes(searchTerm);
 
+                            const isPrivate = course.is_public === false && (course.status === 'published' || course.status === 'approved');
                             const normalizedCourseStatus = course.status === 'approved' ? 'published' : course.status;
-                            const matchesStatus = statusValue === 'all' || normalizedCourseStatus === statusValue;
+
+                            let matchesStatus = false;
+                            if (statusValue === 'all') {
+                                matchesStatus = true;
+                            } else if (statusValue === 'published') {
+                                matchesStatus = normalizedCourseStatus === 'published' && !isPrivate;
+                            } else if (statusValue === 'private') {
+                                matchesStatus = isPrivate;
+                            } else {
+                                matchesStatus = normalizedCourseStatus === statusValue;
+                            }
 
                             return matchesSearch && matchesStatus;
                         });

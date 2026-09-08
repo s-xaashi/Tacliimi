@@ -1,53 +1,7 @@
 import { supabase } from '/src/services/supabaseClient.js';
 import { CourseService } from '/src/services/courseService.js';
 
-// ─── Canvas dimensions ────────────────────────────────────────────────────────
-// The background PNG is drawn at the exact canvas size to preserve
-// border framing, the watermark, corner marks, and top logos perfectly.
-const CANVAS_W  = 2800;
-const CANVAS_H  = 1980;
-
-// ─── Accent colours ───────────────────────────────────────────────────────────
-const GOLD = '#C9A84C';
-const NAVY = '#0B2D57';
-
-// ─── Text field coordinates ───────────────────────────────────────────────────
-// These coordinates are perfectly calibrated with the background image
-// (no zoom/crop is applied here to preserve the corner flames and top logo).
-const ORIG = {
-    // 508 aligns directly with the "NAME" position vertically
-    photoX: 1002, photoY: 508,  photoR: 68,
-    nameY:  508,
-    
-    // Course title exactly centered over the "congratulations" paragraph
-    courseX: 1400, courseY: 696,
-    
-    // Stats row perfectly centered horizontally above the light grey labels
-    dateCX: 1080, dateCY: 1256,
-    scoreX: 1680, scoreY: 1256,
-    
-    // Signature placing over the dotted signature line
-    instrSigX: 1080,  instrSigY: 1400,
-    instrNmX:  1080,  instrNmY:  1480,
-    
-    // Verification corner labels
-    verX: 180,   verY:  1900,
-    issuedX: 2620, issuedY: 1900,
-};
-
-// ─── Font sizes ────────────────────────────────────────────────────────ــــ───
-const FS = {
-    name:    120,   // italic student name
-    course:  78,    // course name
-    date:    54,    // date / score
-    sig:     88,    // caveat signature
-    instrNm: 36,    // instructor name label
-    ver:     34,    // verification code mono
-    issued:  32,    // date issued
-};
-
-// Gap between photo right-edge and name left-edge
-const PHOTO_NAME_GAP = 44;
+import { CANVAS_W, CANVAS_H, GOLD, NAVY, ORIG, FS, PHOTO_NAME_GAP } from './certFieldConfig.js';
 
 // ─── Font preload ──────────────────────────────────────────────────────────────
 async function loadFonts() {

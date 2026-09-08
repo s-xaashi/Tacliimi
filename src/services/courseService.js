@@ -173,6 +173,16 @@ export const CourseService = {
         return data;
     },
 
+    /** Increment views count for a course */
+    async incrementCourseViews(courseId) {
+        if (!courseId) return;
+        try {
+            await supabase.rpc('increment_course_views', { p_course_id: courseId });
+        } catch (err) {
+            console.warn("Failed to increment course views:", err);
+        }
+    },
+
     /** FOR MARKETPLACE */
     async getPublishedCourses(filters = {}) {
         let query = supabase

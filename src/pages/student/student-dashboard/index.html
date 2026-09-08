@@ -186,7 +186,7 @@
                                 class="px-6 py-3 bg-primary text-white font-bold rounded-xl hover:bg-purple-600 transition-all shadow-lg shadow-primary/20 flex items-center gap-2">
                                 <span class="material-symbols-outlined text-sm">rocket_launch</span> Explore Beginner Courses
                             </button>
-                            <button onclick="window.location.href='/src/pages/student/account-settings/index.html?tab=interests'"
+                            <button onclick="window.location.href='/src/pages/student/account-settings/index.html?tab=learning-interests'"
                                 class="px-6 py-3 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold rounded-xl hover:shadow-md transition-all border border-slate-200 dark:border-slate-700 flex items-center gap-2">
                                 <span class="material-symbols-outlined text-sm">settings_heart</span> Personalize Interests
                             </button>
@@ -195,14 +195,6 @@
                 </div>
             </div>
         </section>
-        <!-- Empty state for specific tabs if needed, but handled globally by dashboard.js -->
-        <div id="global-courses-empty-state" class="hidden py-12 text-center">
-            <div class="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <span class="material-symbols-outlined text-3xl text-slate-400">inventory_2</span>
-            </div>
-            <h3 class="text-xl font-bold dark:text-white">No courses enrolled yet</h3>
-            <p class="text-slate-500 mt-2">Browse the marketplace to find courses that interest you.</p>
-        </div>
         <!-- Sub-Navigation with horizontal scroll on mobile -->
         <div class="mb-6 border-b border-slate-200 dark:border-slate-800">
             <div class="flex items-end justify-between">
@@ -281,6 +273,13 @@
                     </div>
                 </div>
             </div>
+            <div id="global-courses-empty-state" class="hidden py-12 text-center">
+                <div class="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <span class="material-symbols-outlined text-3xl text-slate-400">inventory_2</span>
+                </div>
+                <h3 class="text-xl font-bold dark:text-white">No courses enrolled yet</h3>
+                <p class="text-slate-500 mt-2">Browse the marketplace to find courses that interest you.</p>
+            </div>
         </div>
 
         <div id="content-completed" class="hidden">
@@ -300,7 +299,7 @@
 
         <div id="content-communications" class="hidden">
             <!-- Two panel layout injected by communications.js -->
-            <div class="flex bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm w-full mx-auto" style="height: calc(100vh - 260px); min-height: 500px;" id="student-communications-wrapper">
+            <div class="flex bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm w-full mx-auto" style="height: 600px; max-height: 75vh; min-height: 420px;" id="student-communications-wrapper">
                 <!-- Injected via JS -->
             </div>
         </div>

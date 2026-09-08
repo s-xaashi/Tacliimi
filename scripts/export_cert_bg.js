@@ -9,19 +9,19 @@ const fs = require('fs');
     viewport: { width: 1400, height: 990 }
   });
   const page = await context.newPage();
-  
-  const filePath = path.resolve('tacliimi_certificate_v2 (1).html');
+
+  const filePath = path.resolve('public', 'assets', 'certificate-background.source.html');
   await page.goto('file://' + filePath, { waitUntil: 'load' });
-  
-  // Wait a bit for fonts to load
+
+  // Wait for web fonts (Fraunces / Caveat) to fully render
   await page.waitForTimeout(2000);
-  
+
   const fields = [
-    'studentPhoto', 'studentName', 'courseName', 'dateCompleted', 
-    'quizScore', 'instructorSignature', 'instructorName', 
+    'studentPhoto', 'studentName', 'courseName', 'dateCompleted',
+    'quizScore', 'instructorSignature', 'instructorName',
     'verificationCode', 'dateIssued'
   ];
-  
+
   // Extract coords
   const coords = await page.evaluate((fieldList) => {
     const data = {};
@@ -34,42 +34,36 @@ const fs = require('fs');
         const cy = (rect.top + rect.height / 2) * 2;
         data[f] = { x: Math.round(cx), y: Math.round(cy) };
         if (f === 'studentPhoto') {
-            data[f].r = Math.round((rect.width / 2) * 2);
+          data[f].r = Math.round((rect.width / 2) * 2);
         }
       }
     });
     return data;
   }, fields);
-  
-  console.log("EXTRACTED COORDS:");
+
+  console.log('EXTRACTED COORDS:');
   console.log(JSON.stringify(coords, null, 2));
 
-  // Blank out fields
+  // Blank out dynamic fields so the background PNG is clean
   await page.evaluate((fieldList) => {
     fieldList.forEach(f => {
       const el = document.querySelector(`[data-field="${f}"]`);
       if (el) {
-          if (el.tagName === 'IMG') {
-              el.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-          } else {
-              el.innerHTML = '';
-          }
+        if (el.tagName === 'IMG') {
+          el.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+        } else {
+          el.innerHTML = '';
+        }
       }
     });
-    // Turn off field guides if any
-    const guides = document.querySelectorAll('.field-guide-overlay');
-    guides.forEach(g => g.style.display = 'none');
   }, fields);
-  
-  const modifiedHtml = await page.content();
-  const sourceDest = path.resolve('public', 'assets', 'certificate-background.source.html');
-  fs.mkdirSync(path.dirname(sourceDest), { recursive: true });
-  fs.writeFileSync(sourceDest, modifiedHtml);
-  
+
   const imgDest = path.resolve('public', 'assets', 'images', 'certificate-background.png');
   fs.mkdirSync(path.dirname(imgDest), { recursive: true });
-  await page.screenshot({ path: imgDest, fullPage: true });
-  
+
+  // Screenshot only the cert wrap — no outer padding or body whitespace
+  await page.locator('#certWrap').screenshot({ path: imgDest });
+
   await browser.close();
   console.log('Exported certificate background to ' + imgDest);
 })();

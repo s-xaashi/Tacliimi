@@ -77,13 +77,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                         </div>
                     </td>
                     <td class="p-4 text-slate-700 dark:text-slate-300">${displayViews}</td>
+                    <td class="p-4">
+                        <div class="flex items-center gap-1">
+                            <span class="material-symbols-outlined text-rose-500 text-sm">favorite</span>
+                            <span class="text-slate-700 dark:text-slate-300 text-sm font-medium">${course.wishlists || 0}</span>
+                        </div>
+                    </td>
                 `;
                 tableBody.appendChild(tr);
             });
         } else {
             const tableBody = document.getElementById('top-courses-table-body');
             if (tableBody) {
-                tableBody.innerHTML = '<tr><td colspan="5" class="p-8 text-center text-slate-500">No course data available yet. Your performance metrics will appear here once you publish courses and students interact with them.</td></tr>';
+                tableBody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-slate-500">No course data available yet. Your performance metrics will appear here once you publish courses and students interact with them.</td></tr>';
             }
         }
         

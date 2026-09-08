@@ -32,6 +32,7 @@ export async function getConversationList(mentorId) {
             )
         `)
         .eq('mentor_id', mentorId)
+        .neq('student_id', mentorId)
         .order('created_at', { ascending: false });
 
     if (sessionsError) throw sessionsError;
@@ -222,19 +223,22 @@ export async function sendMessage(sessionId, senderId, text, role = 'mentor') {
 export function subscribeToThread(sessionIds, onMessage) {
     if (!sessionIds || sessionIds.length === 0) return null;
 
-    const filter = `booking_id=in.(${sessionIds.join(',')})`;
+    const sessionSet = new Set(sessionIds);
+    const channelName = `messages_thread_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+
     const channel = supabase
-        .channel(`messages:student_thread`)
+        .channel(channelName)
         .on(
             'postgres_changes',
             {
                 event: 'INSERT',
                 schema: 'public',
                 table: 'mentorship_booking_messages',
-                filter: filter,
             },
             (payload) => {
-                onMessage(payload.new);
+                if (payload.new && sessionSet.has(payload.new.booking_id)) {
+                    onMessage(payload.new);
+                }
             }
         )
         .subscribe();
@@ -260,6 +264,7 @@ export async function getMentorConversationList(studentId) {
             mentor:profiles!mentorship_sessions_mentor_id_fkey (id, full_name, avatar_url)
         `)
         .eq('student_id', studentId)
+        .neq('mentor_id', studentId)
         .order('created_at', { ascending: false });
 
     if (sessionsError) throw sessionsError;

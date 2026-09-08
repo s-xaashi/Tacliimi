@@ -108,11 +108,19 @@ function removeOverlay() {
  *   errorType: 'unauthenticated' | 'profile_not_found' | 'network_error'
  */
 async function fetchAuthorizedUser() {
-    // getUser() sends a request to Supabase Auth server — not derived from local storage
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    // Fast path: getSession() validates locally cached JWT instantly
+    let user = null;
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
-    if (userError || !user) {
-        return { error: userError, errorType: 'unauthenticated' };
+    if (session?.user) {
+        user = session.user;
+    } else {
+        // Fallback: getUser() queries Supabase Auth server if session isn't in memory
+        const { data: { user: authUser }, error: userError } = await supabase.auth.getUser();
+        if (userError || !authUser) {
+            return { error: userError || sessionError, errorType: 'unauthenticated' };
+        }
+        user = authUser;
     }
 
     try {
@@ -156,12 +164,6 @@ async function fetchAuthorizedUser() {
  * @returns {Promise<object>} - The authorized profile object
  */
 export async function requireRole(expectedRole, { maxRetries = 1 } = {}) {
-    // Show loading overlay immediately — page has not rendered yet
-    showOverlay({
-        type: 'loading',
-        message: 'Verifying your access...',
-    });
-
     let attempt = 0;
 
     while (attempt <= maxRetries) {
@@ -261,8 +263,6 @@ export async function requireRole(expectedRole, { maxRetries = 1 } = {}) {
  * @returns {Promise<object>} - The authorized profile object
  */
 export async function requireAnyRole(roles) {
-    showOverlay({ type: 'loading', message: 'Verifying your access...' });
-
     const result = await fetchAuthorizedUser();
 
     if (result.errorType === 'unauthenticated') {

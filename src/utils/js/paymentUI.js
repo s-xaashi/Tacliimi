@@ -266,10 +266,21 @@ export function injectSecureWalletModal() {
         document.getElementById('pm-price').textContent = '$' + parseFloat(amount).toFixed(2);
         
         // Dynamic Label Rendering
-        if (context.type === 'boost' || context.type === 'banner') {
-             document.getElementById('pm-summary-overline').textContent = 'Securing Add-on';
-             document.getElementById('pm-summary-title').textContent = context.type === 'banner' ? 'Promotional Banner Placement' : 'Premium Visibility Boost';
-             document.getElementById('pm-summary-footer').textContent = 'Boost activates immediately';
+        const isBoostType = context.type === 'boost' || context.type === 'banner' || context.type === 'boost_and_banner' || (typeof context.type === 'string' && context.type.includes('boost'));
+        
+        if (isBoostType) {
+             const isMentor = context.entityType === 'mentor';
+             document.getElementById('pm-summary-overline').textContent = isMentor ? 'Mentor Boosting' : 'Course Boosting';
+             
+             let defaultTitle = 'Premium Visibility Boost';
+             if (context.type === 'boost_and_banner') {
+                 defaultTitle = 'Visibility & Banner Boost';
+             } else if (context.type === 'banner') {
+                 defaultTitle = 'Promotional Banner Placement';
+             }
+             
+             document.getElementById('pm-summary-title').textContent = context.title || defaultTitle;
+             document.getElementById('pm-summary-footer').textContent = 'Instant boost after pay';
              document.getElementById('pm-summary-icon').textContent = 'rocket_launch';
         } else {
              document.getElementById('pm-summary-overline').textContent = 'Enrolling In';

@@ -119,6 +119,28 @@ window.switchDashboardTab = function (tabId) {
         }
     });
 
+    const continueSection = document.getElementById('continue-learning-section');
+    const newStudentSection = document.getElementById('new-student-section');
+    const footerEl = document.querySelector('footer');
+
+    if (tabId === 'communications') {
+        if (window.userActiveEnrollments && window.userActiveEnrollments.length > 0) {
+            if (continueSection) continueSection.classList.remove('hidden');
+        } else {
+            if (newStudentSection) newStudentSection.classList.remove('hidden');
+        }
+        if (footerEl) footerEl.classList.add('hidden');
+        document.body.classList.remove('overflow-hidden');
+    } else {
+        if (footerEl) footerEl.classList.remove('hidden');
+        document.body.classList.remove('overflow-hidden');
+        if (window.userActiveEnrollments && window.userActiveEnrollments.length > 0) {
+            if (continueSection) continueSection.classList.remove('hidden');
+        } else {
+            if (newStudentSection) newStudentSection.classList.remove('hidden');
+        }
+    }
+
     // Refresh data for the specific tab
     if (tabId === 'my-courses') loadMyCourses();
     else if (tabId === 'my-mentors') loadMentors();
@@ -1470,16 +1492,34 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 async function loadBeginnerCourses() {
-    const { data: beginnerCourses, error } = await supabase
-        .from('course_marketplace_view')
-        .select('*')
-        .eq('level', 'Beginner')
-        .limit(3);
-
     const newStudentSection = document.getElementById('new-student-section');
-    if (!beginnerCourses || beginnerCourses.length === 0) return;
+    if (!newStudentSection) return;
 
-    // Add a container for beginner courses if it doesn't exist
+    // Try each level in order until we find public courses to suggest
+    const levelFallbacks = ['Beginner', 'Intermediate', 'Advanced'];
+    let suggestedCourses = [];
+    let chosenLevel = null;
+
+    for (const level of levelFallbacks) {
+        const { data, error } = await supabase
+            .from('course_marketplace_view')
+            .select('*')
+            .eq('level', level)
+            .eq('is_public', true)
+            .eq('status', 'published')
+            .limit(3);
+
+        if (!error && data && data.length > 0) {
+            suggestedCourses = data;
+            chosenLevel = level;
+            break;
+        }
+    }
+
+    // Nothing to show across all levels — bail gracefully
+    if (suggestedCourses.length === 0) return;
+
+    // Build or reuse the container
     let coursesContainer = document.getElementById('beginner-courses-recommendations');
     if (!coursesContainer) {
         const div = document.createElement('div');
@@ -1489,9 +1529,10 @@ async function loadBeginnerCourses() {
         coursesContainer = div;
     }
 
-    let html = '<div class="col-span-full border-b border-primary/20 pb-4 mb-4"><h3 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-400">Popular Beginner Courses</h3></div>';
+    const levelLabel = `Popular ${chosenLevel} Courses`;
+    let html = `<div class="col-span-full border-b border-primary/20 pb-4 mb-4"><h3 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-400">${levelLabel}</h3></div>`;
     
-    beginnerCourses.forEach(course => {
+    suggestedCourses.forEach(course => {
         html += `
         <div onclick="window.location.href='/src/pages/marketplace/course-details/index.html?id=${encodeURIComponent(course.id)}'"
             class="flex flex-col group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer h-full relative">
@@ -1501,7 +1542,7 @@ async function loadBeginnerCourses() {
             </div>
             <div class="p-5 flex flex-col flex-1">
                 <div class="flex items-center gap-2 mb-3 shrink-0">
-                    <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-primary/10 text-primary">Beginner</span>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-primary/10 text-primary">${chosenLevel}</span>
                 </div>
                 <h4 class="font-bold text-slate-900 dark:text-white mb-2 line-clamp-2 leading-snug group-hover:text-primary transition-colors flex-1">${course.title}</h4>
                 <div class="flex items-center justify-between pt-4 mt-auto border-t border-slate-50 dark:border-slate-800/50">

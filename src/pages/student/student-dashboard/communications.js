@@ -35,7 +35,7 @@ const UI_TEMPLATE = `
     </div>
 
     <!-- RIGHT PANEL: Chat Pane -->
-    <div class="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden" id="student-chat-pane">
+    <div class="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden h-full" style="height: 100%;" id="student-chat-pane">
         <!-- Placeholder -->
         <div id="student-chat-placeholder" class="flex-1 flex flex-col items-center justify-center p-8 bg-slate-50/50 dark:bg-slate-900/50 text-center">
             <div class="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mb-4">
@@ -46,7 +46,7 @@ const UI_TEMPLATE = `
         </div>
 
         <!-- Active View -->
-        <div id="student-chat-active" class="hidden flex-col min-h-0 overflow-hidden bg-white dark:bg-slate-900" style="flex:1">
+        <div id="student-chat-active" class="hidden flex-col min-h-0 overflow-hidden bg-white dark:bg-slate-900 h-full" style="flex:1; height: 100%;">
             <!-- Header -->
             <div class="h-16 px-5 flex items-center gap-3 border-b border-slate-200 dark:border-slate-800 shrink-0">
                 <button id="student-chat-back" class="md:hidden p-1.5 -ml-2 text-slate-500 text-sm hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
@@ -91,24 +91,30 @@ styleInject.textContent = `
         background-color: #A855F7;
         color: white;
         border-radius: 1rem 1rem 0.25rem 1rem;
-        padding: 0.5rem 1rem;
+        padding: 0.5rem 0.875rem;
         display: inline-block;
+        width: fit-content;
         max-width: 100%;
         box-shadow: 0 1px 2px rgba(0,0,0,0.05);
         white-space: pre-wrap;
         overflow-wrap: anywhere;
+        word-break: break-word;
+        box-sizing: border-box;
     }
     .student-msg-bubble-other {
         background-color: white;
         color: #1e293b;
         border: 1px solid #e2e8f0;
         border-radius: 1rem 1rem 1rem 0.25rem;
-        padding: 0.5rem 1rem;
+        padding: 0.5rem 0.875rem;
         display: inline-block;
+        width: fit-content;
         max-width: 100%;
         box-shadow: 0 1px 2px rgba(0,0,0,0.05);
         white-space: pre-wrap;
         overflow-wrap: anywhere;
+        word-break: break-word;
+        box-sizing: border-box;
     }
     .dark .student-msg-bubble-other {
         background-color: #1e293b;
@@ -171,11 +177,10 @@ export async function initStudentCommunications() {
 
     // Load profile for avatar/name use in message bubbles
     try {
-        const { supabase } = await import('/src/services/supabaseClient.js');
-        const { data: prof } = await supabase.from('profiles').select('full_name, avatar_url').eq('id', currentStudentId).single();
-        if (prof) {
-            window._studentAvatarSrc = prof.avatar_url || '';
-            window._studentName = prof.full_name || '';
+        const profile = await AuthService.getCurrentProfile();
+        if (profile) {
+            window._studentAvatarSrc = profile.avatar_url || '';
+            window._studentName = profile.full_name || '';
         }
     } catch (_) {}
 
@@ -268,11 +273,14 @@ export async function initStudentCommunications() {
         // Store for use in appendMessage avatar rendering
         window._mentorAvatarSrc = avatar || '';
         window._mentorName = mentorName || '';
-        // Grab current student's profile info if already loaded
-        const profileImg = document.querySelector('[data-student-avatar]');
-        window._studentAvatarSrc = profileImg ? profileImg.src : '';
-        const profileName = document.querySelector('[data-student-name]');
-        window._studentName = profileName ? profileName.textContent : '';
+        
+        // Retain student avatar URL or check header profile image fallback
+        if (!window._studentAvatarSrc) {
+            const profileImg = document.querySelector('#global-profile-header-container img, [data-role="profile-image"] img');
+            if (profileImg && profileImg.src && !profileImg.src.includes('IMG_7448') && !profileImg.src.includes('IMG_7454')) {
+                window._studentAvatarSrc = profileImg.src;
+            }
+        }
         msgsList.innerHTML = '';
         document.getElementById('student-msgs-loading').classList.remove('hidden');
         document.getElementById('student-msgs-empty').classList.add('hidden');
@@ -350,11 +358,12 @@ export async function initStudentCommunications() {
             ? `<img src="${mentorAvatarSrc}" class="w-7 h-7 rounded-full object-cover flex-shrink-0">`
             : `<div class="w-7 h-7 rounded-full bg-slate-300 flex items-center justify-center text-slate-600 text-[10px] font-bold flex-shrink-0">${mentorInitials}</div>`;
 
+        const cleanText = (msg.message_text || '').trim();
         msgsList.insertAdjacentHTML('beforeend', `
             <div class="flex ${justify} gap-2 mb-3" data-msg-id="${msg.id}">
                 ${!isMe ? mentorAvatar : ''}
-                <div class="flex flex-col gap-0.5 ${align}" style="max-width:75%">
-                    <div class="${bubbleCls}">${escapeHtml(msg.message_text)}</div>
+                <div class="flex flex-col gap-0.5 ${align} max-w-[80%] sm:max-w-[70%]">
+                    <div class="${bubbleCls} ${isMe ? 'self-end' : 'self-start'} w-fit">${escapeHtml(cleanText)}</div>
                     <span class="text-[9px] text-slate-400 px-1">${formatMsgTime(msg.created_at)}</span>
                 </div>
                 ${isMe ? myAvatar : ''}

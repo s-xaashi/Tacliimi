@@ -5,6 +5,12 @@ export const AuthService = {
      * Register a new instructor account with Email Verification
      */
     async signUpInstructor(email, password, fullName) {
+        // Pre-check if email already exists before calling supabase.auth.signUp
+        const exists = await this.checkEmailExists(email);
+        if (exists) {
+            throw new Error("This email is already registered. Please log in or use a different email address.");
+        }
+
         const { data, error } = await supabase.auth.signUp({
             email,
             password,
@@ -23,9 +29,35 @@ export const AuthService = {
     },
 
     /**
+     * Check if an email address is already registered in Supabase auth.users or profiles
+     */
+    async checkEmailExists(email) {
+        if (!email || !email.trim()) return false;
+        try {
+            const { data, error } = await supabase.rpc('check_email_exists', {
+                p_email: email.trim()
+            });
+            if (error) {
+                console.warn('Error checking email existence:', error);
+                return false;
+            }
+            return !!data;
+        } catch (err) {
+            console.warn('Failed to execute check_email_exists:', err);
+            return false;
+        }
+    },
+
+    /**
      * Register a new student account with Email Verification
      */
     async signUpStudent(email, password, fullName) {
+        // Pre-check if email already exists before calling supabase.auth.signUp
+        const exists = await this.checkEmailExists(email);
+        if (exists) {
+            throw new Error("This email is already registered. Please log in or use a different email address.");
+        }
+
         const { data, error } = await supabase.auth.signUp({
             email,
             password,

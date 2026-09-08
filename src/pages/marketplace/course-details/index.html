@@ -473,6 +473,9 @@
                     return;
                 }
 
+                // Increment views count whenever a user views course details
+                CourseService.incrementCourseViews(courseId);
+
                 currentCourse = courseData;
                 window.currentCourseSerial = courseData.serial_id;
                 currentUser = session ? session.user : null;
