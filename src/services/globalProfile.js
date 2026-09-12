@@ -121,6 +121,41 @@ export const GlobalProfile = {
         }
     },
 
+    applyUnauthenticatedUI() {
+        const mobileMenu = document.getElementById('mobile-menu');
+        if (mobileMenu) {
+            const profileArea = mobileMenu.querySelector('#mobile-menu-profile');
+            const nameEl = mobileMenu.querySelector('.user-display-name');
+            const subEl = mobileMenu.querySelector('#mobile-menu-profile-sub');
+            const logoutBtn = mobileMenu.querySelector('#mobile-logout-btn');
+            const themeToggle = mobileMenu.querySelector('#mobile-theme-toggle');
+
+            if (nameEl) nameEl.innerText = 'Sign In / Register';
+            if (subEl) subEl.innerText = 'Access your account';
+            if (profileArea) {
+                profileArea.setAttribute('onclick', "window.location.href='/src/pages/auth/login-select/index.html'");
+            }
+            if (logoutBtn) {
+                logoutBtn.classList.add('hidden');
+                logoutBtn.classList.remove('flex');
+            }
+            if (themeToggle) {
+                themeToggle.classList.add('hidden');
+                themeToggle.classList.remove('flex');
+            }
+        }
+
+        const explicitContainer = document.getElementById('global-profile-header-container');
+        if (explicitContainer && !explicitContainer.querySelector('.tacliimi-injected-profile')) {
+            explicitContainer.innerHTML = `
+                <div class="hidden md:flex items-center gap-3 tacliimi-injected-profile">
+                    <a href="/src/pages/auth/login-select/index.html" class="px-4 py-2 text-sm font-bold text-primary hover:bg-primary/10 rounded-xl transition-colors">Sign In</a>
+                    <a href="/src/pages/auth/login-select/index.html" class="px-4 py-2 text-sm font-bold bg-primary text-white hover:bg-primary/90 rounded-xl shadow-md shadow-primary/20 transition-colors">Get Started</a>
+                </div>
+            `;
+        }
+    },
+
     async applyProfile() {
         let session = null;
         let profile = null;
@@ -134,7 +169,10 @@ export const GlobalProfile = {
             console.error("Error fetching session for global profile", e);
         }
 
-        if (!session) return;
+        if (!session) {
+            this.applyUnauthenticatedUI();
+            return;
+        }
 
         // --- ACCOUNT STATUS CHECK ---
         const accountStatus = profile?.account_status || 'active';
@@ -237,6 +275,8 @@ export const GlobalProfile = {
         });
 
         authElements = authElements.filter(el => {
+            if (el.closest('aside') || el.closest('#settings-sidebar')) return false;
+
             const isInsideHeader = el.closest('header') || el.closest('nav');
             if (!isInsideHeader) return false;
 

@@ -6,9 +6,23 @@
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title>Student Login | Tacliimi Learn</title>
     <link rel="stylesheet" href="/public/assets/css/tacliimi.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap"
-        rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&family=Material+Icons+Outlined&display=swap" rel="stylesheet" />
+    <style>
+        /* Security & UI: Prevent Material Icon/Symbol text ligatures from flashing unstyled text while loading */
+        .material-symbols-outlined, .material-icons-outlined {
+            font-display: block;
+            display: inline-block;
+            white-space: nowrap;
+            word-wrap: normal;
+            direction: ltr;
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
+            -moz-osx-font-smoothing: grayscale;
+            font-feature-settings: 'liga';
+        }
+    </style>
     <script type="module" src="/src/services/globalProfile.js"></script>
     <script type="module">
         import { AuthService } from '/src/services/authService.js';
@@ -26,8 +40,6 @@
             }
         });
     </script>
-    
-    
 </head>
 
 <body class="bg-background-light dark:bg-background-dark min-h-screen flex items-center justify-center p-4">
@@ -41,10 +53,8 @@
         <section class="hidden md:flex md:w-1/2 relative bg-primary items-center justify-center p-12 overflow-hidden">
             <div class="absolute inset-0 bg-pattern"></div>
             <div class="relative z-10 text-white max-w-md">
-                <div
-                    class="mb-8 inline-flex items-center space-x-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full border border-white/20">
-                    <span class="material-icons-outlined text-white">school</span>
-                    <span class="font-semibold tracking-wide uppercase text-sm">Tacliimi Learn</span>
+                <div class="mb-8 inline-flex items-center bg-white/95 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-white/30 shadow-lg cursor-pointer" onclick="window.location.href='/index.html'">
+                    <img src="/public/assets/images/IMG_7454.png" alt="Tacliimi" class="h-9 w-auto object-contain" />
                 </div>
                 <h1 class="text-5xl font-bold leading-tight mb-6">Empowering your learning journey.</h1>
                 <p class="text-indigo-100 text-lg mb-8 leading-relaxed">
@@ -66,9 +76,8 @@
         </section>
         <section class="w-full md:w-1/2 p-8 md:p-16 flex flex-col justify-center">
             <div class="max-w-md mx-auto w-full">
-                <div class="md:hidden flex items-center space-x-2 mb-8 text-primary">
-                    <span class="material-icons-outlined text-3xl">school</span>
-                    <span class="text-2xl font-bold tracking-tight">Tacliimi Learn</span>
+                <div class="md:hidden flex items-center mb-8 cursor-pointer" onclick="window.location.href='/index.html'">
+                    <img src="/public/assets/images/IMG_7454.png" alt="Tacliimi" class="h-10 w-auto" />
                 </div>
                 <div class="mb-10 text-center md:text-left">
                     <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Welcome Back, Student!</h2>
@@ -104,6 +113,13 @@
                             continue with email</span>
                     </div>
                 </div>
+
+                <!-- Styled Inline Error Alert Box -->
+                <div id="login-error-alert" class="hidden mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-sm font-medium flex items-start space-x-3 transition-all duration-200" role="alert">
+                    <span class="material-icons-outlined text-xl text-red-500 shrink-0 mt-0.5">error_outline</span>
+                    <span id="login-error-text" class="leading-relaxed"></span>
+                </div>
+
                 <form id="student-login-form" class="space-y-6">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5"
@@ -156,30 +172,147 @@
                     import { AuthService } from '/src/services/authService.js';
                     import { supabase } from '/src/services/supabaseClient.js';
 
-                    document.getElementById('student-login-form').addEventListener('submit', async (e) => {
+                    const errorAlert = document.getElementById('login-error-alert');
+                    const errorText = document.getElementById('login-error-text');
+                    const emailInput = document.getElementById('email');
+                    const loginForm = document.getElementById('student-login-form');
+                    const submitBtn = loginForm.querySelector('button[type="submit"]');
+
+                    let lockoutInterval = null;
+
+                    function showError(message) {
+                        if (errorText && errorAlert) {
+                            errorText.textContent = message;
+                            errorAlert.classList.remove('hidden');
+                        }
+                    }
+
+                    function hideError() {
+                        if (errorAlert) {
+                            errorAlert.classList.add('hidden');
+                        }
+                    }
+
+                    function startLockoutCountdown(seconds, email = '') {
+                        if (lockoutInterval) clearInterval(lockoutInterval);
+
+                        const expiresAt = Date.now() + (seconds * 1000);
+                        if (email) {
+                            localStorage.setItem('tacliimi_login_lockout', JSON.stringify({
+                                email: email.toLowerCase().trim(),
+                                expiresAt: expiresAt
+                            }));
+                        }
+
+                        let remaining = Math.ceil((expiresAt - Date.now()) / 1000);
+
+                        const updateUI = () => {
+                            if (remaining <= 0) {
+                                clearInterval(lockoutInterval);
+                                lockoutInterval = null;
+                                localStorage.removeItem('tacliimi_login_lockout');
+                                hideError();
+                                if (submitBtn) {
+                                    submitBtn.disabled = false;
+                                    submitBtn.innerText = 'Sign in to Student Dashboard';
+                                }
+                            } else {
+                                showError(`Account temporarily locked due to multiple failed login attempts. Please try again in ${remaining} seconds.`);
+                                if (submitBtn) {
+                                    submitBtn.disabled = true;
+                                    submitBtn.innerText = `Account Locked (${remaining}s)`;
+                                }
+                                remaining--;
+                            }
+                        };
+
+                        updateUI();
+                        lockoutInterval = setInterval(updateUI, 1000);
+                    }
+
+                    async function checkAndRestoreLockout(email = '') {
+                        const cleanEmail = (email || emailInput.value).toLowerCase().trim();
+
+                        // 1. Check client-side cached lockout in localStorage
+                        try {
+                            const cached = localStorage.getItem('tacliimi_login_lockout');
+                            if (cached) {
+                                const parsed = JSON.parse(cached);
+                                if (!cleanEmail || parsed.email === cleanEmail) {
+                                    const remSec = Math.ceil((parsed.expiresAt - Date.now()) / 1000);
+                                    if (remSec > 0) {
+                                        startLockoutCountdown(remSec, parsed.email);
+                                        return;
+                                    } else {
+                                        localStorage.removeItem('tacliimi_login_lockout');
+                                    }
+                                }
+                            }
+                        } catch (e) {
+                            console.warn('Lockout cache parse error:', e);
+                        }
+
+                        // 2. Check server-side authoritative status if email is present
+                        if (cleanEmail && cleanEmail.includes('@')) {
+                            const status = await AuthService.checkRateLimit(cleanEmail);
+                            if (status && status.allowed === false && status.retry_after_seconds > 0) {
+                                startLockoutCountdown(status.retry_after_seconds, cleanEmail);
+                            }
+                        }
+                    }
+
+                    // Restore lockout state on page load
+                    checkAndRestoreLockout();
+
+                    // Check rate limit status when user finishes typing email
+                    emailInput.addEventListener('blur', () => {
+                        checkAndRestoreLockout(emailInput.value.trim());
+                    });
+
+                    loginForm.addEventListener('submit', async (e) => {
                         e.preventDefault();
-                        const email = document.getElementById('email').value.trim();
+                        hideError();
+                        const email = emailInput.value.trim();
                         const password = document.getElementById('password').value;
-                        const btn = e.target.querySelector('button[type="submit"]');
 
                         try {
-                            btn.innerText = 'Signing in...';
-                            btn.disabled = true;
+                            submitBtn.innerText = 'Signing in...';
+                            submitBtn.disabled = true;
 
                             const data = await AuthService.login(email, password);
                             const profile = await AuthService.getCurrentProfile();
 
+                            // Clear any rate-limiting cache on successful login
+                            localStorage.removeItem('tacliimi_login_lockout');
+
+                            if (profile && profile.role === 'instructor') {
+                                await supabase.auth.signOut();
+                                showError("Instructor accounts cannot log in on the Student Login page. Redirecting you to the Instructor Login page...");
+                                submitBtn.innerText = 'Redirecting to Instructor Login...';
+                                submitBtn.disabled = true;
+                                setTimeout(() => {
+                                    window.location.href = '/src/pages/auth/instructor-login/index.html';
+                                }, 1500);
+                                return;
+                            }
+
                             if (profile && profile.role === 'admin') {
-                                btn.innerText = 'Admin Access Granted';
+                                submitBtn.innerText = 'Admin Access Granted';
                                 setTimeout(() => window.location.href = '/src/pages/admin/dashboard/index.html', 500);
                                 return;
                             }
 
-                            window.location.href = (profile && profile.role === 'instructor') ? '/src/pages/instructor/instructor-dashboard/index.html' : '/src/pages/student/student-dashboard/index.html';
+                            window.location.href = '/src/pages/student/student-dashboard/index.html';
                         } catch (err) {
-                            alert(err.message);
-                            btn.innerText = 'Sign in to Student Dashboard';
-                            btn.disabled = false;
+                            if (err.isRateLimit || (err.message && err.message.includes('Account temporarily locked'))) {
+                                const match = err.message.match(/in (\d+) seconds/);
+                                const seconds = match ? parseInt(match[1], 10) : (err.retryAfter || 30);
+                                startLockoutCountdown(seconds, email);
+                            } else {
+                                showError(err.message || 'An error occurred during sign in.');
+                                submitBtn.innerText = 'Sign in to Student Dashboard';
+                                submitBtn.disabled = false;
+                            }
                         }
                     });
                 </script>
@@ -209,4 +342,4 @@
 
 </body>
 
-</html>
+</html>

@@ -431,7 +431,7 @@ async function bindAvailabilityInteractions(container, userId) {
                     in_person: inPersonCheckbox?.checked ?? false
                 };
 
-                await MentorService.saveAvailability(userId, { slots, meetingTypes });
+                await MentorService.saveAvailability({ slots, meetingTypes });
                 window.showToast("Availability and meeting types updated successfully!", "success");
             } catch (err) {
                 console.error(err);
@@ -523,10 +523,19 @@ async function bindPricingInteractions(container, userId) {
     const monthlyInput = document.getElementById('monthly-rate-input');
 
     // Load current rates
-    const { data } = await supabase.from('mentorship_profiles').select('hourly_rate, monthly_rate').eq('instructor_id', userId).single();
-    if (data) {
-        if (rateInput) rateInput.value = (data.hourly_rate || 0).toFixed(2);
-        if (monthlyInput) monthlyInput.value = (data.monthly_rate || (data.hourly_rate * 20)).toFixed(2);
+    try {
+        const { data } = await supabase.from('mentorship_profiles').select('hourly_rate, monthly_rate').eq('instructor_id', userId).single();
+        if (data) {
+            if (rateInput) rateInput.value = (data.hourly_rate || 0).toFixed(2);
+            if (monthlyInput) monthlyInput.value = (data.monthly_rate || (data.hourly_rate * 20)).toFixed(2);
+        }
+    } catch (err) {
+        console.error("Error fetching pricing rates", err);
+    } finally {
+        const hourlySkeleton = container ? container.querySelector('#hourly-rate-skeleton') : document.getElementById('hourly-rate-skeleton');
+        const monthlySkeleton = container ? container.querySelector('#monthly-rate-skeleton') : document.getElementById('monthly-rate-skeleton');
+        if (hourlySkeleton) hourlySkeleton.remove();
+        if (monthlySkeleton) monthlySkeleton.remove();
     }
 
     if (saveBtn && rateInput) {
@@ -544,7 +553,7 @@ async function bindPricingInteractions(container, userId) {
                 saveBtn.disabled = true;
                 saveBtn.innerHTML = '<span class="animate-spin mr-2">⌛</span> Saving...';
 
-                await MentorService.updatePricing(userId, hourlyRate, monthlyRate, currency);
+                await MentorService.updatePricing(hourlyRate, monthlyRate, currency);
 
                 window.showToast("Mentorship pricing updated successfully!", "success");
             } catch (err) {
@@ -1132,41 +1141,41 @@ function buildSessionSkeleton(count = 3, layout = 'space') {
     const topicWidths = ['w-48', 'w-40', 'w-56', 'w-36', 'w-44'];
     return Array.from({ length: count }, (_, i) => `
         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 animate-pulse" aria-hidden="true">
-            <div class="flex flex-col md:flex-row gap-4 md:gap-8 items-start md:items-center">
-                <div class="flex items-center gap-4 w-full md:w-64 shrink-0">
-                    <div class="w-16 h-16 rounded-2xl bg-slate-200 dark:bg-slate-700 shrink-0"></div>
+            <div class="flex flex-col lg:flex-row gap-4 lg:gap-4 xl:gap-6 items-start lg:items-center">
+                <div class="flex items-center gap-4 w-full lg:w-44 xl:w-56 shrink-0">
+                    <div class="w-14 h-14 lg:w-16 lg:h-16 rounded-2xl bg-slate-200 dark:bg-slate-700 shrink-0"></div>
                     <div class="flex-1 space-y-2">
                         <div class="h-4 bg-slate-200 dark:bg-slate-700 rounded ${widths[i % widths.length]}"></div>
                         <div class="h-5 bg-slate-200 dark:bg-slate-700 rounded-full w-20"></div>
                     </div>
                 </div>
-                <div class="flex-1 flex flex-wrap items-center gap-x-10 gap-y-4 md:px-8 border-t md:border-t-0 md:border-l border-slate-100 dark:border-slate-800 pt-4 md:pt-0 min-w-0">
-                    <div class="flex items-center gap-3 w-44 shrink-0">
+                <div class="flex-1 flex flex-wrap items-center gap-x-6 gap-y-3 lg:px-4 xl:px-6 border-t lg:border-t-0 lg:border-l border-slate-100 dark:border-slate-800 pt-4 lg:pt-0 min-w-0">
+                    <div class="flex items-center gap-3 shrink-0 min-w-[130px]">
                         <div class="w-10 h-10 bg-slate-200 dark:bg-slate-700 rounded-xl shrink-0"></div>
                         <div class="space-y-1.5">
                             <div class="h-2.5 bg-slate-200 dark:bg-slate-700 rounded w-14"></div>
                             <div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-28"></div>
                         </div>
                     </div>
-                    <div class="flex-1 min-w-[180px] space-y-1.5">
+                    <div class="flex-1 min-w-[150px] space-y-1.5">
                         <div class="h-2.5 bg-slate-200 dark:bg-slate-700 rounded w-10"></div>
                         <div class="h-4 bg-slate-200 dark:bg-slate-700 rounded ${topicWidths[i % topicWidths.length]}"></div>
                     </div>
                 </div>
-                <div class="w-full md:w-fit flex flex-wrap md:flex-col gap-2 border-t md:border-t-0 border-slate-100 dark:border-slate-800 pt-4 md:pt-0">
-                    <div class="h-10 w-28 bg-slate-200 dark:bg-slate-700 rounded-xl"></div>
-                    <div class="h-10 w-28 bg-slate-200 dark:bg-slate-700 rounded-xl"></div>
+                <div class="w-full lg:w-48 shrink-0 flex flex-col gap-2 border-t lg:border-t-0 lg:border-l border-slate-100 dark:border-slate-800 pt-4 lg:pt-0 lg:pl-4 xl:pl-6">
+                    <div class="h-9 w-48 bg-slate-200 dark:bg-slate-700 rounded-xl"></div>
+                    <div class="h-9 w-full bg-slate-200 dark:bg-slate-700 rounded-xl"></div>
                 </div>
             </div>
         </div>`).join('');
 }
 
 /** Gold card wrapper classes for program mentorship */
-const GOLD_CARD_STYLE = 'border-2 rounded-2xl overflow-hidden transition-all group p-6 hover:shadow-xl relative'
+const GOLD_CARD_STYLE = 'border-2 rounded-2xl transition-all group p-6 hover:shadow-xl relative'
     + ' bg-gradient-to-br from-amber-50/60 to-white dark:from-amber-900/10 dark:to-slate-900'
     + ' border-yellow-400/60 dark:border-yellow-500/30';
 
-const DEFAULT_CARD_STYLE = 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden hover:shadow-lg transition-all group p-6';
+const DEFAULT_CARD_STYLE = 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl hover:shadow-lg transition-all group p-6';
 
 // Type filter state shared across render functions on requests tab
 let _requestsTypeFilter = 'all';
@@ -1251,78 +1260,84 @@ async function bindRequestsInteractions(container, userId) {
                 let actionsHtml = '';
 
                 if (status === 'pending_review') {
-                    statusBadge = `<span class="px-2 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-600 rounded text-[10px] font-bold uppercase tracking-wider">Pending Review</span>`;
+                    statusBadge = `<span class="px-2 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-600 rounded text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">Pending Review</span>`;
                     actionsHtml = `
-                        <div class="flex gap-2">
-                            <button class="accept-btn px-6 py-2.5 bg-primary text-white font-bold rounded-xl hover:bg-primary/90 transition-all text-sm whitespace-nowrap flex items-center gap-2 shadow-lg shadow-primary/20" data-id="${session.id}" data-type="${session.meeting_type}">
+                        <div class="flex flex-col gap-2 w-full">
+                            <button class="accept-btn w-full px-4 py-2.5 bg-primary text-white font-bold rounded-xl hover:bg-primary/90 transition-all text-sm flex items-center justify-center gap-2 shadow-lg shadow-primary/20" data-id="${session.id}" data-type="${session.meeting_type}">
                                 <span class="material-symbols-outlined text-[18px]">check_circle</span> Accept
                             </button>
-                            <button class="reject-btn px-6 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 text-red-500 font-bold rounded-xl hover:bg-red-50 dark:hover:bg-red-900/10 transition-all text-sm whitespace-nowrap flex items-center gap-2" data-id="${session.id}">
-                                <span class="material-symbols-outlined text-[18px]">cancel</span> Reject
-                            </button>
-                            <button class="message-btn px-4 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all text-sm flex items-center gap-2" data-id="${session.id}" data-name="${studentName}">
-                                <span class="material-symbols-outlined text-[18px]">forum</span>
-                            </button>
+                            <div class="flex items-center gap-2">
+                                <button class="reject-btn flex-1 px-3 py-2 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 text-red-500 font-bold rounded-xl hover:bg-red-50 dark:hover:bg-red-900/10 transition-all text-sm flex items-center justify-center gap-1.5" data-id="${session.id}">
+                                    <span class="material-symbols-outlined text-[18px]">cancel</span> Reject
+                                </button>
+                                <button class="message-btn p-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all text-sm flex items-center justify-center" data-id="${session.id}" data-name="${studentName}">
+                                    <span class="material-symbols-outlined text-[18px]">forum</span>
+                                </button>
+                            </div>
                         </div>
                     `;
                 } else if (status === 'paid_waiting_review') {
-                    statusBadge = `<span class="px-2 py-0.5 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 rounded text-[10px] font-bold uppercase tracking-wider">💳 Paid · Awaiting Review</span>`;
+                    statusBadge = `<span class="px-2 py-0.5 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 rounded text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">💳 Paid · Awaiting Review</span>`;
                     actionsHtml = `
-                        <div class="flex gap-2">
-                            <button class="accept-btn px-6 py-2.5 bg-primary text-white font-bold rounded-xl hover:bg-primary/90 transition-all text-sm whitespace-nowrap flex items-center gap-2 shadow-lg shadow-primary/20" data-id="${session.id}" data-type="${session.meeting_type}">
+                        <div class="flex flex-col gap-2 w-full">
+                            <button class="accept-btn w-full px-4 py-2.5 bg-primary text-white font-bold rounded-xl hover:bg-primary/90 transition-all text-sm flex items-center justify-center gap-2 shadow-lg shadow-primary/20" data-id="${session.id}" data-type="${session.meeting_type}">
                                 <span class="material-symbols-outlined text-[18px]">check_circle</span> Accept
                             </button>
-                            <button class="reject-btn px-6 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 text-red-500 font-bold rounded-xl hover:bg-red-50 dark:hover:bg-red-900/10 transition-all text-sm whitespace-nowrap flex items-center gap-2" data-id="${session.id}">
-                                <span class="material-symbols-outlined text-[18px]">cancel</span> Reject
-                            </button>
-                            <button class="message-btn px-4 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all text-sm flex items-center gap-2" data-id="${session.id}" data-name="${studentName}">
-                                <span class="material-symbols-outlined text-[18px]">forum</span>
-                            </button>
+                            <div class="flex items-center gap-2">
+                                <button class="reject-btn flex-1 px-3 py-2 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 text-red-500 font-bold rounded-xl hover:bg-red-50 dark:hover:bg-red-900/10 transition-all text-sm flex items-center justify-center gap-1.5" data-id="${session.id}">
+                                    <span class="material-symbols-outlined text-[18px]">cancel</span> Reject
+                                </button>
+                                <button class="message-btn p-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all text-sm flex items-center justify-center" data-id="${session.id}" data-name="${studentName}">
+                                    <span class="material-symbols-outlined text-[18px]">forum</span>
+                                </button>
+                            </div>
                         </div>
                     `;
                 } else if (status === 'awaiting_meeting_link') {
-                    statusBadge = `<span class="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-600 rounded text-[10px] font-bold uppercase tracking-wider">Add Link</span>`;
+                    statusBadge = `<span class="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-600 rounded text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">Add Link</span>`;
                     actionsHtml = `
-                        <div class="flex flex-col gap-2">
-                            <div class="relative">
-                                <input type="text" placeholder="Paste meeting link..." class="meeting-link-input w-full md:w-64 pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all">
+                        <div class="flex flex-col gap-2 w-full">
+                            <div class="relative w-full">
+                                <input type="text" placeholder="Paste meeting link..." class="meeting-link-input w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all">
                                 <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">link</span>
                             </div>
-                            <div class="flex gap-2">
-                                <button class="confirm-link-btn flex-1 px-4 py-2 bg-primary text-white font-bold rounded-xl hover:bg-primary/90 transition-all text-sm shadow-md shadow-primary/20" data-id="${session.id}">Send Link</button>
-                                <button class="message-btn px-3 py-2 bg-slate-100 dark:bg-slate-800 rounded-xl" data-id="${session.id}" data-name="${studentName}">
+                            <div class="flex items-center gap-2">
+                                <button class="confirm-link-btn flex-1 px-4 py-2 bg-primary text-white font-bold rounded-xl hover:bg-primary/90 transition-all text-sm shadow-md shadow-primary/20 whitespace-nowrap" data-id="${session.id}">Send Link</button>
+                                <button class="message-btn p-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex items-center justify-center" data-id="${session.id}" data-name="${studentName}">
                                     <span class="material-symbols-outlined text-[18px]">forum</span>
                                 </button>
-                                <button class="reject-btn px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-red-500" data-id="${session.id}">
+                                <button class="reject-btn p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex items-center justify-center" data-id="${session.id}">
                                     <span class="material-symbols-outlined text-[18px]">cancel</span>
                                 </button>
                             </div>
                         </div>
                     `;
                 } else if (status === 'location_negotiation') {
-                    statusBadge = `<span class="px-2 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-600 rounded text-[10px] font-bold uppercase tracking-wider">Negotiating Location</span>`;
+                    statusBadge = `<span class="px-2 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-600 rounded text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">Negotiating Location</span>`;
                     actionsHtml = `
-                        <div class="flex gap-2">
-                            <button class="confirm-location-btn px-6 py-2.5 bg-emerald-500 text-white font-bold rounded-xl hover:bg-emerald-600 transition-all text-sm flex items-center gap-2 shadow-lg shadow-emerald-500/20" data-id="${session.id}">
-                                <span class="material-symbols-outlined text-[18px]">check_circle</span> Confirm
-                            </button>
-                            <button class="message-btn px-4 py-2.5 bg-primary/10 text-primary font-bold rounded-xl hover:bg-primary/20 transition-all text-sm flex items-center gap-2" data-id="${session.id}" data-name="${studentName}">
-                                <span class="material-symbols-outlined text-[18px]">forum</span> Open Chat
-                            </button>
-                            <button class="reject-btn px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-red-500" data-id="${session.id}">
-                                <span class="material-symbols-outlined text-[18px]">cancel</span>
-                            </button>
+                        <div class="flex flex-col gap-2 w-full">
+                            <div class="flex items-center gap-2">
+                                <button class="confirm-location-btn flex-1 px-4 py-2 bg-emerald-500 text-white font-bold rounded-xl hover:bg-emerald-600 transition-all text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20" data-id="${session.id}">
+                                    <span class="material-symbols-outlined text-[18px]">check_circle</span> Confirm
+                                </button>
+                                <button class="message-btn p-2 bg-primary/10 text-primary font-bold rounded-xl hover:bg-primary/20 transition-all text-sm flex items-center justify-center" data-id="${session.id}" data-name="${studentName}">
+                                    <span class="material-symbols-outlined text-[18px]">forum</span>
+                                </button>
+                                <button class="reject-btn p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-red-500 flex items-center justify-center hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors" data-id="${session.id}">
+                                    <span class="material-symbols-outlined text-[18px]">cancel</span>
+                                </button>
+                            </div>
                         </div>
                     `;
                 } else if (status === 'pending_rejection_review') {
-                    statusBadge = `<span class="px-2 py-0.5 bg-red-100 dark:bg-red-900/30 text-red-600 border border-red-200 dark:border-red-900/50 rounded text-[10px] font-bold uppercase tracking-wider">Admin Reviewing Rejection</span>`;
+                    statusBadge = `<span class="px-2 py-0.5 bg-red-100 dark:bg-red-900/30 text-red-600 border border-red-200 dark:border-red-900/50 rounded text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">Admin Reviewing Rejection</span>`;
                     actionsHtml = `
-                        <div class="flex gap-2">
-                            <div class="flex items-center gap-2 px-4 py-2 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700">
-                                <span class="material-symbols-outlined text-slate-400 text-sm animate-pulse">hourglass_empty</span>
+                        <div class="flex flex-col gap-2 w-full">
+                            <div class="flex items-center gap-2 px-3 py-2 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700">
+                                <span class="material-symbols-outlined text-slate-400 text-sm animate-pulse shrink-0">hourglass_empty</span>
                                 <span class="text-xs text-slate-500 font-medium">Awaiting Admin Decision</span>
                             </div>
-                            <button class="message-btn px-4 py-2.5 bg-primary/10 text-primary font-bold rounded-xl hover:bg-primary/20 transition-all text-sm flex items-center gap-2" data-id="${session.id}" data-name="${studentName}">
+                            <button class="message-btn w-full p-2 bg-primary/10 text-primary font-bold rounded-xl hover:bg-primary/20 transition-all text-sm flex items-center justify-center gap-2" data-id="${session.id}" data-name="${studentName}">
                                 <span class="material-symbols-outlined text-[18px]">forum</span>
                             </button>
                         </div>
@@ -1331,7 +1346,7 @@ async function bindRequestsInteractions(container, userId) {
 
                 // Location row for in-person sessions
                 const locationHtml = session.meeting_type === 'in-person' && session.meeting_location ? `
-                    <div class="flex items-center gap-3 w-48 shrink-0">
+                    <div class="flex items-center gap-3 shrink-0 min-w-[130px] max-w-full">
                         <div class="w-10 h-10 bg-slate-50 dark:bg-slate-800 rounded-xl flex items-center justify-center text-primary shrink-0">
                             <span class="material-symbols-outlined text-xl">location_on</span>
                         </div>
@@ -1348,7 +1363,7 @@ async function bindRequestsInteractions(container, userId) {
 
                 // Phone row for in-person sessions
                 const phoneHtml = session.meeting_type === 'in-person' && session.student_phone ? `
-                    <div class="flex items-center gap-3 w-40 shrink-0">
+                    <div class="flex items-center gap-3 shrink-0 min-w-[120px] max-w-full">
                         <div class="w-10 h-10 bg-slate-50 dark:bg-slate-800 rounded-xl flex items-center justify-center text-primary shrink-0">
                             <span class="material-symbols-outlined text-xl">phone</span>
                         </div>
@@ -1360,12 +1375,12 @@ async function bindRequestsInteractions(container, userId) {
 
                 const isProgram = session.mentorship_type === 'program';
                 return `
-                    <div class="${isProgram ? GOLD_CARD_STYLE : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden hover:shadow-lg transition-all group p-6'}" data-session-id="${session.id}">
+                    <div class="${isProgram ? GOLD_CARD_STYLE : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl hover:shadow-lg transition-all group p-6'}" data-session-id="${session.id}">
                         ${isProgram ? `<div class="flex items-center gap-2 mb-3">${buildMonthlyBadgeHtml()}<span class="text-[10px] font-bold text-amber-600/70">${session.duration_days || 30}-Day Program · ${session.total_sessions || 4} sessions</span></div>` : ''}
-                        <div class="flex flex-col md:flex-row gap-4 md:gap-8 items-start md:items-center">
-                            <!-- Student Info: Fixed width -->
-                            <div class="flex items-center gap-4 w-full md:w-64 shrink-0">
-                                <div class="w-12 h-12 md:w-16 md:h-16 rounded-2xl overflow-hidden border-2 border-primary/20 shrink-0 shadow-sm cursor-pointer" onclick='window.openStudentProfile(${JSON.stringify(student).replace(/'/g, "&#39;")})'>
+                        <div class="rc-flex" style="display:flex; flex-direction:column; gap:16px; align-items:stretch;">
+                            <!-- Student Info -->
+                            <div class="rc-student" style="display:flex; align-items:center; gap:16px;">
+                                <div class="w-12 h-12 md:w-14 md:h-14 rounded-2xl overflow-hidden border-2 border-primary/20 shrink-0 shadow-sm cursor-pointer" onclick='window.openStudentProfile(${JSON.stringify(student).replace(/'/g, "&#39;")})'>
                                     <img src="${studentAvatar}" class="w-full h-full object-cover" />
                                 </div>
                                 <div class="flex-1 min-w-0">
@@ -1377,9 +1392,9 @@ async function bindRequestsInteractions(container, userId) {
                                 </div>
                             </div>
 
-                            <!-- Session Details: Optimized layout -->
-                            <div class="flex-1 flex flex-wrap items-center gap-x-10 gap-y-4 md:px-8 border-t md:border-t-0 md:border-l border-slate-100 dark:border-slate-800 pt-4 md:pt-0 min-w-0">
-                                <div class="flex items-center gap-3 w-44 shrink-0">
+                            <!-- Session Details -->
+                            <div class="rc-details" style="display:flex; flex-wrap:wrap; align-items:center; gap:12px 16px; border-top:1px solid var(--rc-sep,#f1f5f9); padding-top:16px;">
+                                <div class="flex items-center gap-3 shrink-0">
                                     <div class="w-10 h-10 bg-slate-50 dark:bg-slate-800 rounded-xl flex items-center justify-center text-primary shrink-0">
                                         <span class="material-symbols-outlined text-xl">calendar_today</span>
                                     </div>
@@ -1390,20 +1405,20 @@ async function bindRequestsInteractions(container, userId) {
                                 </div>
                                 ${locationHtml}
                                 ${phoneHtml}
-                                <div class="flex-1 min-w-[180px]">
+                                <div style="flex:1; min-width:0; overflow:hidden;">
                                     <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Topic</p>
-                                    <div class="flex items-center justify-between gap-3 mt-1">
-                                        <p class="font-medium text-slate-700 dark:text-slate-300 text-sm line-clamp-1 flex-1" title="${escapeHtml(session.topic) || 'No topic provided'}">${escapeHtml(session.topic) || 'No topic provided'}</p>
+                                    <div style="display:flex; align-items:center; gap:12px; min-width:0; margin-top:4px;">
+                                        <p class="font-medium text-slate-700 dark:text-slate-300 text-sm" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; flex:1;" title="${escapeHtml(session.topic) || 'No topic provided'}">${escapeHtml(session.topic) || 'No topic provided'}</p>
                                         ${session.topic ? `<button onclick="window.openTopicModal('${studentName.replace(/'/g, "\\'")}', this.dataset.topic)" data-topic="${(session.topic || '').replace(/"/g, '&quot;')}" class="shrink-0 px-3 py-1 bg-primary/10 text-primary hover:bg-primary hover:text-white rounded-lg text-[11px] font-bold transition-all whitespace-nowrap flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">open_in_full</span> View</button>` : ''}
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Actions: Fixed width -->
-                            <div class="w-full md:w-fit flex flex-wrap md:flex-col gap-2 justify-start border-t md:border-t-0 border-slate-100 dark:border-slate-800 pt-4 md:pt-0">
+                            <!-- Actions -->
+                            <div class="rc-actions" style="display:flex; flex-direction:column; gap:8px; border-top:1px solid var(--rc-sep,#f1f5f9); padding-top:16px;">
                                 ${actionsHtml}
                                 ${rescheduleBtn}
-                                <a href="/src/pages/mentorship/mentor-booking/confirmation.html?sessionId=${session.id}" class="flex-1 min-w-[120px] px-4 py-2.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 font-bold rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-all text-sm flex items-center gap-2 justify-center border border-indigo-100 dark:border-indigo-800">
+                                <a href="/src/pages/mentorship/mentor-booking/confirmation.html?sessionId=${session.id}" class="w-full px-4 py-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 font-bold rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-all text-sm flex items-center gap-2 justify-center border border-indigo-100 dark:border-indigo-800">
                                     <span class="material-symbols-outlined text-[18px]">receipt_long</span> Details
                                 </a>
                             </div>
@@ -1700,9 +1715,9 @@ async function bindUpcomingInteractions(container, userId) {
                 const programHtml = buildProgramProgressHtml(session);
 
                 const cardClass = isCancelled 
-                    ? "bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-900/30 rounded-2xl overflow-hidden shadow-sm group p-6 border-2" 
+                    ? "bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-900/30 rounded-2xl shadow-sm group p-6 border-2" 
                     : isProgram ? GOLD_CARD_STYLE
-                    : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden hover:shadow-lg transition-all group p-6";
+                    : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl hover:shadow-lg transition-all group p-6";
 
                 let actionHtml = '';
                 if (isCancelled) {
@@ -1720,9 +1735,9 @@ async function bindUpcomingInteractions(container, userId) {
                 return `
                     <div class="${cardClass}" data-session-id="${session.id}">
                         ${isProgram && !isCancelled ? `<div class="absolute top-4 right-4 z-10">${buildMonthlyBadgeHtml()}</div>` : ''}
-                        <div class="flex flex-col md:flex-row gap-4 md:gap-8 items-start md:items-center">
+                        <div class="rc-flex" style="display:flex; flex-direction:column; gap:16px; align-items:stretch;">
                             <!-- Student Info: Fixed width -->
-                            <div class="flex items-center gap-4 w-full md:w-64 shrink-0">
+                            <div class="rc-student" style="display:flex; align-items:center; gap:16px;">
                                 <div class="w-16 h-16 rounded-2xl overflow-hidden border-2 ${isCancelled ? 'border-red-200' : 'border-primary/20'} shrink-0 shadow-sm cursor-pointer" onclick='window.openStudentProfile(${JSON.stringify(student).replace(/'/g, "&#39;")})'>
                                     <img src="${studentAvatar}" class="w-full h-full object-cover ${isCancelled ? 'grayscale' : ''}" />
                                 </div>
@@ -1735,8 +1750,8 @@ async function bindUpcomingInteractions(container, userId) {
                             </div>
 
                             <!-- Session Details: Optimized layout -->
-                            <div class="flex-1 flex flex-wrap items-center gap-x-10 gap-y-4 md:px-8 border-t md:border-t-0 md:border-l ${isCancelled ? 'border-red-100 dark:border-red-900/20' : 'border-slate-100 dark:border-slate-800'} pt-4 md:pt-0 min-w-0">
-                                <div class="flex items-center gap-3 w-44 shrink-0">
+                            <div class="rc-details" style="display:flex; flex-wrap:wrap; align-items:center; gap:12px 16px; border-top:1px solid var(--rc-sep,#f1f5f9); padding-top:16px;">
+                                <div class="flex items-center gap-3 shrink-0">
                                     <div class="w-10 h-10 ${isCancelled ? 'bg-red-100 dark:bg-red-900/30 text-red-500' : 'bg-slate-50 dark:bg-slate-800 text-primary'} rounded-xl flex items-center justify-center shrink-0">
                                         <span class="material-symbols-outlined text-xl">calendar_today</span>
                                     </div>
@@ -1744,12 +1759,12 @@ async function bindUpcomingInteractions(container, userId) {
                                         <p class="${isCancelled ? 'text-red-400' : 'text-slate-400'} text-[10px] font-bold uppercase tracking-widest">Schedule</p>
                                         <div class="flex items-center gap-2 text-slate-500 dark:text-slate-400">
                                             <span class="material-symbols-outlined text-lg">schedule</span>
-                                            <span class="text-sm font-medium">${timeStr} — ${endTimeStr}</span>
+                                            <span class="text-sm font-medium whitespace-nowrap">${timeStr} — ${endTimeStr}</span>
                                         </div>
                                     </div>
                                 </div>
                                 ${session.meeting_type === 'in-person' && session.meeting_location ? `
-                                    <div class="flex items-center gap-3 w-44 shrink-0">
+                                    <div class="flex items-center gap-3 shrink-0">
                                         <div class="w-10 h-10 ${isCancelled ? 'bg-red-100 dark:bg-red-900/30 text-red-500' : 'bg-slate-50 dark:bg-slate-800 text-primary'} rounded-xl flex items-center justify-center shrink-0">
                                             <span class="material-symbols-outlined text-xl">location_on</span>
                                         </div>
@@ -1758,17 +1773,17 @@ async function bindUpcomingInteractions(container, userId) {
                                             <p class="font-bold ${isCancelled ? 'text-red-800 dark:text-red-300' : 'text-slate-900 dark:text-white'} text-sm truncate" title="${session.meeting_location}">${escapeHtml(session.meeting_location || "")}</p>
                                         </div>
                                     </div>` : ''}
-                                <div class="flex-1 min-w-[180px]">
+                                <div style="flex:1; min-width:0; overflow:hidden;">
                                     <p class="${isCancelled ? 'text-red-400' : 'text-slate-400'} text-[10px] font-bold uppercase tracking-widest">Topic</p>
-                                    <div class="flex items-center justify-between gap-3 mt-1">
-                                        <p class="font-medium ${isCancelled ? 'text-red-700 dark:text-red-400' : 'text-slate-700 dark:text-slate-300'} text-sm line-clamp-1 flex-1" title="${escapeHtml(session.topic) || 'No topic provided'}">${escapeHtml(session.topic) || 'No topic provided'}</p>
+                                    <div style="display:flex; align-items:center; gap:12px; min-width:0; margin-top:4px;">
+                                        <p class="font-medium ${isCancelled ? 'text-red-700 dark:text-red-400' : 'text-slate-700 dark:text-slate-300'} text-sm" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; flex:1;" title="${escapeHtml(session.topic) || 'No topic provided'}">${escapeHtml(session.topic) || 'No topic provided'}</p>
                                         ${session.topic ? `<button onclick="window.openTopicModal('${(student.full_name || 'Student').replace(/'/g, "\\'")}', this.dataset.topic)" data-topic="${(session.topic || '').replace(/"/g, '&quot;')}" class="shrink-0 px-3 py-1 ${isCancelled ? 'bg-red-200 text-red-700' : 'bg-primary/10 text-primary hover:bg-primary hover:text-white'} rounded-lg text-[11px] font-bold transition-all whitespace-nowrap flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">open_in_full</span> View</button>` : ''}
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Actions: Fixed width -->
-                            <div class="w-full md:w-fit flex flex-wrap md:flex-col gap-2 justify-start border-t md:border-t-0 ${isCancelled ? 'border-red-100 dark:border-red-900/20' : 'border-slate-100 dark:border-slate-800'} pt-4 md:pt-0">
+                            <div class="rc-actions" style="display:flex; flex-direction:column; gap:8px; border-top:1px solid var(--rc-sep,#f1f5f9); padding-top:16px;">
                                 ${actionHtml}
                                 ${!isCancelled ? `
                                 <button class="reschedule-session-btn flex-1 min-w-[120px] px-4 py-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-bold rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-all text-sm flex items-center justify-center gap-2 whitespace-nowrap" data-id="${session.id}" data-date="${progStatus && progStatus.nextMeeting ? progStatus.nextMeeting.toISOString() : session.scheduled_at}" data-duration="${duration}" data-name="${(student.full_name || 'Student').replace(/"/g, '&quot;')}" data-history="${JSON.stringify(session.reschedule_history || []).replace(/"/g, '&quot;')}">

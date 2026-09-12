@@ -2,6 +2,22 @@ import { supabase } from './supabaseClient.js';
 
 export const AuthService = {
     /**
+     * Check rate limit status for a given email address without recording attempt
+     */
+    async checkRateLimit(email) {
+        if (!email || !email.trim()) return { allowed: true, retry_after_seconds: 0 };
+        try {
+            const { data: rateCheck } = await supabase.rpc('check_and_record_login_attempt', {
+                p_email: email.trim(),
+                p_success: null
+            });
+            return rateCheck || { allowed: true, retry_after_seconds: 0 };
+        } catch (err) {
+            return { allowed: true, retry_after_seconds: 0 };
+        }
+    },
+
+    /**
      * Register a new instructor account with Email Verification
      */
     async signUpInstructor(email, password, fullName) {
@@ -97,15 +113,19 @@ export const AuthService = {
      * Login existing user (Student/Instructor) or Administrator
      * Supports either email or username for Admins.
      */
+    /**
+     * Login existing user (Student/Instructor) or Administrator
+     * Supports either email or username for Admins.
+     */
     async login(emailOrUsername, password) {
-        let email = emailOrUsername;
+        let email = emailOrUsername ? emailOrUsername.trim() : '';
 
         // 1. Check if it's a username (no '@' sign)
-        if (!emailOrUsername.includes('@')) {
+        if (!email.includes('@')) {
             const { data: adminRecord, error: lookupError } = await supabase
                 .from('admin_auth')
                 .select('id, backup_email, is_suspended')
-                .eq('username', emailOrUsername)
+                .eq('username', email)
                 .maybeSingle();
 
             if (adminRecord) {
@@ -115,15 +135,15 @@ export const AuthService = {
                 if (adminRecord.backup_email) {
                     email = adminRecord.backup_email;
                 } else {
-                    email = `${emailOrUsername.toLowerCase()}@tacliimi.com`;
+                    email = `${email.toLowerCase()}@tacliimi.com`;
                 }
             }
         } else {
-            // Also check suspension by email if its an admin
+            // Also check suspension by email if it's an admin
             const { data: adminByEmail } = await supabase
                 .from('admin_auth')
                 .select('is_suspended')
-                .eq('backup_email', emailOrUsername)
+                .eq('backup_email', email)
                 .maybeSingle();
             
             if (adminByEmail && adminByEmail.is_suspended) {
@@ -131,15 +151,64 @@ export const AuthService = {
             }
         }
 
+        // 2. SERVER-SIDE RATE LIMIT PRE-CHECK
+        try {
+            const { data: rateCheck, error: rateErr } = await supabase.rpc('check_and_record_login_attempt', {
+                p_email: email,
+                p_success: null
+            });
+
+            if (!rateErr && rateCheck && rateCheck.allowed === false) {
+                const retrySec = rateCheck.retry_after_seconds || 30;
+                const err = new Error(`Account temporarily locked due to multiple failed login attempts. Please try again in ${retrySec} seconds.`);
+                err.retryAfter = retrySec;
+                err.isRateLimit = true;
+                throw err;
+            }
+        } catch (rateEx) {
+            // If it's a rate-limit exception created above, rethrow
+            if (rateEx.isRateLimit || (rateEx.message && rateEx.message.includes('Account temporarily locked'))) {
+                throw rateEx;
+            }
+            console.warn('Login rate limit check notice:', rateEx);
+        }
+
+        // 3. ATTEMPT AUTHENTICATION
         const { data, error } = await supabase.auth.signInWithPassword({
             email,
             password
         });
 
-        if (error) throw error;
+        if (error) {
+            // Record failed attempt in server database
+            try {
+                await supabase.rpc('check_and_record_login_attempt', {
+                    p_email: email,
+                    p_success: false
+                });
+            } catch (recErr) {
+                console.warn('Failed to record login attempt:', recErr);
+            }
 
-        // Check if admin is suspended
+            // Return generic error message to prevent user enumeration
+            if (error.message && (error.message.includes('Invalid login credentials') || error.status === 400)) {
+                throw new Error("Invalid email or password.");
+            }
+            throw error;
+        }
+
+        // 4. AUTHENTICATION SUCCESSFUL -> RECORD SUCCESS & CHECK ACCOUNT STATUS
         if (data.session) {
+            // Record successful login attempt (clears lockout counter)
+            try {
+                await supabase.rpc('check_and_record_login_attempt', {
+                    p_email: email,
+                    p_success: true
+                });
+            } catch (recErr) {
+                console.warn('Failed to record successful login:', recErr);
+            }
+
             // Priority 1: Check admin suspension
             const { data: adminAuth } = await supabase
                 .from('admin_auth')
@@ -152,14 +221,14 @@ export const AuthService = {
                 throw new Error('Your administrative access has been suspended. Please contact the system owner.');
             }
 
-            // Priority 2: Check global account status (blocked)
+            // Priority 2: Check global account status (blocked/suspended)
             const { data: profile } = await supabase
                 .from('profiles')
                 .select('account_status')
                 .eq('id', data.user.id)
                 .maybeSingle();
 
-            if (profile?.account_status === 'blocked') {
+            if (profile?.account_status === 'blocked' || profile?.account_status === 'suspended') {
                 await supabase.auth.signOut();
                 throw new Error('Your account has been blocked by an administrator. Please contact support if you believe this is an error.');
             }
@@ -205,6 +274,10 @@ export const AuthService = {
         // Ignore "AuthSessionMissingError" because if they don't have a session,
         // they are effectively already logged out.
         if (error && error.name !== 'AuthSessionMissingError') throw error;
+    },
+
+    async signOut() {
+        return this.logout();
     },
 
     /**

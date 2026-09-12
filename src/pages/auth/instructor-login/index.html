@@ -21,14 +21,9 @@
         <div class="absolute -top-16 -right-16 w-48 h-48 bg-purple-100 rounded-full blur-3xl opacity-60"></div>
 
         <div class="relative z-10">
-            <div class="flex items-center justify-center gap-2 mb-8 cursor-pointer"
+            <div class="flex items-center justify-center mb-8 cursor-pointer"
                 onclick="window.location.href='/index.html'">
-                <div
-                    class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center shadow-lg shadow-primary/30">
-                    <span class="material-icons-round text-white">school</span>
-                </div>
-                <span class="text-2xl font-bold tracking-tight text-slate-900">Tacliimi<span
-                        class="text-primary">Learn</span></span>
+                <img src="/public/assets/images/IMG_7454.png" alt="Tacliimi" class="h-11 w-auto mx-auto object-contain">
             </div>
 
             <div class="mb-10 text-center">
@@ -50,10 +45,10 @@
 
             <form id="instructorLoginForm" class="space-y-6">
                 <div>
-                    <label class="block text-sm font-semibold mb-2" for="identifier">Email or Username</label>
+                    <label class="block text-sm font-semibold mb-2" for="email">Email address</label>
                     <input
                         class="w-full bg-slate-50 border-slate-200 rounded-xl px-4 py-3.5 focus:ring-primary focus:border-primary transition-all text-slate-900 placeholder:text-slate-400"
-                        id="identifier" placeholder="Email or admin username" required />
+                        id="email" type="email" placeholder="you@institution.edu" required />
                 </div>
                 <div>
                     <div class="flex items-center justify-between mb-2">
@@ -81,11 +76,13 @@
                 AuthService.getSession().then(async session => {
                     if (session) {
                         const profile = await AuthService.getCurrentProfile();
-                    if (profile && profile.role === 'admin') {
-                        window.location.href = '/src/pages/admin/dashboard/index.html';
-                    } else {
-                        window.location.href = '/src/pages/instructor/instructor-dashboard/index.html';
-                    }
+                        if (profile && profile.role === 'admin') {
+                            window.location.href = '/src/pages/admin/dashboard/index.html';
+                        } else if (profile && profile.role === 'instructor') {
+                            window.location.href = '/src/pages/instructor/instructor-dashboard/index.html';
+                        } else {
+                            window.location.href = '/src/pages/student/student-dashboard/index.html';
+                        }
                     }
                 });
 
@@ -104,21 +101,41 @@
                 document.getElementById('instructorLoginForm').addEventListener('submit', async (e) => {
                     e.preventDefault();
 
-                    const identifier = document.getElementById('identifier').value.trim();
+                    const email = document.getElementById('email').value.trim();
                     const password = document.getElementById('password').value;
                     const btn = e.target.querySelector('button[type="submit"]');
                     const originalText = btn.innerHTML;
+
+                    // Clear existing errors
+                    const oldErr = document.getElementById('login-error');
+                    if (oldErr) oldErr.remove();
 
                     try {
                         btn.innerText = 'Verifying...';
                         btn.disabled = true;
 
                         // Log them in via Supabase
-                        const data = await AuthService.login(identifier, password);
-
-                        // If they are a student, upgrade them to an instructor because they logged in via the instructor portal
+                        const data = await AuthService.login(email, password);
                         const profile = await AuthService.getCurrentProfile();
-                        
+
+                        // Enforce Role Separation: Reject student accounts trying to log in on Instructor page
+                        if (profile && profile.role === 'student') {
+                            await supabase.auth.signOut();
+                            
+                            const errDiv = document.createElement('div');
+                            errDiv.id = 'login-error';
+                            errDiv.className = 'text-red-600 text-sm font-medium mt-2 p-3 bg-red-50 rounded-xl border border-red-200 flex items-center gap-2';
+                            errDiv.innerHTML = `<span class="material-icons-round text-lg text-red-500">error_outline</span> Student accounts cannot log in on the Instructor Login page. Redirecting to Student Login...`;
+                            e.target.insertBefore(errDiv, btn);
+
+                            btn.innerText = 'Redirecting to Student Login...';
+                            btn.disabled = true;
+                            setTimeout(() => {
+                                window.location.href = '/src/pages/auth/user-login/index.html';
+                            }, 1500);
+                            return;
+                        }
+
                         // Admin Redirection
                         if (profile && profile.role === 'admin') {
                             btn.innerHTML = 'Admin Success <span class="material-icons-round text-xl">check</span>';
@@ -127,13 +144,6 @@
                                 window.location.href = '/src/pages/admin/dashboard/index.html';
                             }, 500);
                             return;
-                        }
-
-                        if (profile && profile.role !== 'instructor') {
-                            await supabase
-                                .from('profiles')
-                                .update({ role: 'instructor' })
-                                .eq('id', profile.id);
                         }
 
                         btn.innerHTML = 'Success <span class="material-icons-round text-xl">check</span>';
@@ -146,16 +156,11 @@
                         btn.innerHTML = originalText;
                         btn.disabled = false;
 
-                        // Clear existing errors
-                        const oldErr = document.getElementById('login-error');
-                        if (oldErr) oldErr.remove();
-
                         const errDiv = document.createElement('div');
                         errDiv.id = 'login-error';
                         errDiv.className = 'text-red-500 text-sm font-medium mt-2 p-3 bg-red-50 rounded-lg border border-red-100 flex items-center gap-2';
                         errDiv.innerHTML = `<span class="material-icons-round text-lg">error_outline</span> ${err.message}`;
 
-                        // Insert before the wrapper div holding the password input, so it appears above the submit button properly
                         e.target.insertBefore(errDiv, btn);
                     }
                 });

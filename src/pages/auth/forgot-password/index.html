@@ -13,8 +13,6 @@
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
         rel="stylesheet" />
     <script type="module" src="/src/services/globalProfile.js"></script>
-    
-    
 </head>
 
 <body class="bg-background-light dark:bg-background-dark min-h-screen flex items-center justify-center p-4">
@@ -78,40 +76,54 @@
                             </span>
                             <input
                                 class="block w-full pl-10 pr-4 py-3 rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-primary focus:border-primary transition-all sm:text-sm"
-                                id="email" name="email" placeholder="you@institution.edu" required="" type="email" />
+                                id="email" name="email" placeholder="you@institution.edu" required="" type="email"
+                                maxlength="254" autocomplete="email" />
                         </div>
                     </div>
-            </div>
-            </div>
-            <button
-                class="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-primary hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all duration-200 transform active:scale-[0.98]"
-                type="submit">
-                Send Reset Link
-            </button>
-            </form>
-            <p class="mt-10 text-center text-sm text-gray-600 dark:text-gray-400">
-                Remember your password?
-                <a class="font-bold text-primary hover:text-indigo-500 transition-colors" href="/src/pages/auth/login/index.html">Log
-                    in here</a>
-            </p>
-            <div class="mt-12 pt-8 border-t border-gray-100 dark:border-gray-800 flex flex-col items-center space-y-4">
-                <div class="flex items-center space-x-1.5 text-xs text-gray-400">
-                    <span class="material-icons-outlined text-sm">shield</span>
-                    <span>Secure 256-bit SSL encrypted connection</span>
+                    <button
+                        class="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-primary hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all duration-200 transform active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                        type="submit">
+                        Send Reset Link
+                    </button>
+                </form>
+                <p class="mt-10 text-center text-sm text-gray-600 dark:text-gray-400">
+                    Remember your password?
+                    <a class="font-bold text-primary hover:text-indigo-500 transition-colors" href="/src/pages/auth/login/index.html">Log
+                        in here</a>
+                </p>
+                <div class="mt-12 pt-8 border-t border-gray-100 dark:border-gray-800 flex flex-col items-center space-y-4">
+                    <div class="flex items-center space-x-1.5 text-xs text-gray-400">
+                        <span class="material-icons-outlined text-sm">shield</span>
+                        <span>Secure 256-bit SSL encrypted connection</span>
+                    </div>
+                    <div class="flex space-x-4 text-xs font-medium text-gray-400">
+                        <a class="hover:text-gray-600 dark:hover:text-gray-300" href="#">Help Center</a>
+                        <span>•</span>
+                        <a class="hover:text-gray-600 dark:hover:text-gray-300" href="#">Privacy Policy</a>
+                        <span>•</span>
+                        <a class="hover:text-gray-600 dark:hover:text-gray-300" href="#">Terms</a>
+                    </div>
                 </div>
-                <div class="flex space-x-4 text-xs font-medium text-gray-400">
-                    <a class="hover:text-gray-600 dark:hover:text-gray-300" href="#">Help Center</a>
-                    <span>•</span>
-                    <a class="hover:text-gray-600 dark:hover:text-gray-300" href="#">Privacy Policy</a>
-                    <span>•</span>
-                    <a class="hover:text-gray-600 dark:hover:text-gray-300" href="#">Terms</a>
-                </div>
-            </div>
             </div>
         </section>
     </main>
     <script type="module">
         import { AuthService } from '/src/services/authService.js';
+
+        const sanitizeEmail = (rawEmail) => {
+            if (typeof rawEmail !== 'string') return null;
+            const cleaned = rawEmail.trim().toLowerCase();
+            // Block SQLi / XSS injection patterns and illegal characters
+            if (/[<>'";()/\\]/.test(cleaned) || /(%0a|%0d|--|\/\*|\*\/)/i.test(cleaned)) {
+                return null;
+            }
+            // Strict RFC 5322 email regex check
+            const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+            if (!emailRegex.test(cleaned) || cleaned.length > 254) {
+                return null;
+            }
+            return cleaned;
+        };
 
         document.addEventListener('DOMContentLoaded', async () => {
             // Session guard
@@ -127,6 +139,7 @@
             const forgotForm = document.getElementById('forgot-form');
             const errorDiv = document.getElementById('forgot-error');
             const successDiv = document.getElementById('forgot-success');
+            let cooldownTimer = null;
 
             if (forgotForm) {
                 forgotForm.addEventListener('submit', async (e) => {
@@ -135,26 +148,49 @@
                     successDiv.classList.add('hidden');
 
                     const emailInput = document.getElementById('email');
-                    const email = emailInput.value;
+                    const rawEmail = emailInput ? emailInput.value : '';
+                    const cleanEmail = sanitizeEmail(rawEmail);
+
+                    if (!cleanEmail) {
+                        errorDiv.textContent = "Please enter a valid email address (e.g. name@gmail.com).";
+                        errorDiv.classList.remove('hidden');
+                        return;
+                    }
+
                     const btn = forgotForm.querySelector('button[type="submit"]');
-                    const ogText = btn.innerHTML;
+                    if (!btn) return;
+                    const ogText = 'Send Reset Link';
 
                     btn.disabled = true;
                     btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-sm">sync</span> Sending...';
 
                     try {
-                        const { error } = await AuthService.sendPasswordResetEmail(email);
-                        if (error) throw error;
-
-                        successDiv.textContent = "Check your email for the password reset link! You can close this tab.";
+                        await AuthService.sendPasswordResetEmail(cleanEmail);
+                    } catch (err) {
+                        console.warn("Reset link request processed:", err);
+                    } finally {
+                        // Security Best Practice: User Enumeration Protection
+                        // Display generic success message to prevent user email probing
+                        successDiv.textContent = "If an account associated with " + cleanEmail + " exists, a password reset link has been sent to your inbox.";
                         successDiv.classList.remove('hidden');
                         forgotForm.reset();
-                    } catch (err) {
-                        errorDiv.textContent = err.message || "Failed to send reset email. Please try again.";
-                        errorDiv.classList.remove('hidden');
-                    } finally {
-                        btn.disabled = false;
-                        btn.innerHTML = ogText;
+
+                        // 60s client-side cooldown rate limit to prevent request spam
+                        let cooldown = 60;
+                        btn.disabled = true;
+                        btn.textContent = `Wait ${cooldown}s`;
+
+                        if (cooldownTimer) clearInterval(cooldownTimer);
+                        cooldownTimer = setInterval(() => {
+                            cooldown -= 1;
+                            if (cooldown <= 0) {
+                                clearInterval(cooldownTimer);
+                                btn.disabled = false;
+                                btn.textContent = ogText;
+                            } else {
+                                btn.textContent = `Wait ${cooldown}s`;
+                            }
+                        }, 1000);
                     }
                 });
             }

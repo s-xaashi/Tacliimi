@@ -5,10 +5,11 @@ let allMentors = [];
 let expandedDomains = new Set(); // Track which domain groups are open
 const urlParams = new URLSearchParams(window.location.search);
 const filterCity = urlParams.get('city');
+const filterCategory = urlParams.get('category');
 
 let activeFilters = {
     search: '',
-    category: 'all',
+    category: filterCategory || 'all',
     country: 'all',
     city: filterCity || 'all'
 };
@@ -199,6 +200,17 @@ async function populateFilters(mentors) {
         </button>
     `;
 
+    // Auto-expand domain containing selected category from URL parameter
+    if (activeFilters.category && activeFilters.category !== 'all') {
+        domainGroups.forEach(group => {
+            const domainKey = group.domain.replace(/\s+/g, '-').toLowerCase();
+            const target = activeFilters.category.toLowerCase();
+            if (group.categories.some(c => c.name.toLowerCase().includes(target) || target.includes(c.name.toLowerCase()))) {
+                expandedDomains.add(domainKey);
+            }
+        });
+    }
+
     domainGroups.forEach(group => {
         const domainKey = group.domain.replace(/\s+/g, '-').toLowerCase();
         const isOpen = expandedDomains.has(domainKey);
@@ -240,6 +252,11 @@ async function populateFilters(mentors) {
         `;
         categoryContainer.appendChild(groupEl);
     });
+
+    // If active category is set from URL, highlight it
+    if (activeFilters.category && activeFilters.category !== 'all') {
+        setActiveCategory(activeFilters.category);
+    }
 
     // Countries
     const countries = new Set(mentors.map(m => m.country).filter(Boolean));
