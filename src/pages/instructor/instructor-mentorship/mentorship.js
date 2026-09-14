@@ -882,15 +882,15 @@ async function bindBoostInteractions(container, userId) {
         } else {
             // Purchase Form
             contentArea.innerHTML = `
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <div class="md:col-span-2 space-y-8">
+                <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 xl:gap-8">
+                    <div class="xl:col-span-2 space-y-6 md:space-y-8">
                         <div>
                             ${settings.mentor_boost_enabled !== false ? `
                             <h4 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-widest mb-4">1. Select Duration</h4>
-                            <div class="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-2xl border border-slate-200 dark:border-slate-700">
-                                <div class="flex items-center justify-between mb-4">
-                                    <label class="text-slate-700 dark:text-slate-300 font-bold">Days to run</label>
-                                    <div class="flex items-center bg-white dark:bg-slate-900 rounded-lg p-1 border border-slate-200 dark:border-slate-700 shadow-sm">
+                            <div class="bg-slate-50 dark:bg-slate-800/50 p-4 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-700">
+                                <div class="flex items-center justify-between mb-4 gap-2">
+                                    <label class="text-slate-700 dark:text-slate-300 font-bold text-sm sm:text-base">Days to run</label>
+                                    <div class="flex items-center bg-white dark:bg-slate-900 rounded-lg p-1 border border-slate-200 dark:border-slate-700 shadow-sm shrink-0">
                                         <button class="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-brand-purple hover:bg-slate-50 dark:hover:bg-slate-800 rounded-md transition-all active:scale-95" id="boost-minus"><span class="material-symbols-outlined text-[20px]">remove</span></button>
                                         <input type="number" id="boost-days" value="${settings.boost_min_days}" min="${settings.boost_min_days}" max="${settings.boost_max_days}" class="w-12 text-center bg-transparent border-none text-sm font-bold text-slate-900 dark:text-white focus:ring-0 p-0" />
                                         <button class="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-brand-purple hover:bg-slate-50 dark:hover:bg-slate-800 rounded-md transition-all active:scale-95" id="boost-plus"><span class="material-symbols-outlined text-[20px]">add</span></button>
@@ -919,22 +919,22 @@ async function bindBoostInteractions(container, userId) {
                         <div>
                             ${settings.mentor_banner_enabled !== false ? `
                             <h4 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-widest mb-4">2. Banner Add-on (Optional)</h4>
-                            <label class="flex items-start gap-4 p-5 rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 cursor-pointer hover:border-amber-400 dark:hover:border-amber-500/50 transition-all has-[:checked]:border-amber-500 has-[:checked]:bg-amber-50/30 dark:has-[:checked]:bg-amber-900/10" id="banner-addon-card">
-                                <div class="pt-0.5">
+                            <label class="flex items-start gap-3 sm:gap-4 p-4 sm:p-5 rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 cursor-pointer hover:border-amber-400 dark:hover:border-amber-500/50 transition-all has-[:checked]:border-amber-500 has-[:checked]:bg-amber-50/30 dark:has-[:checked]:bg-amber-900/10" id="banner-addon-card">
+                                <div class="pt-0.5 shrink-0">
                                     <input type="checkbox" id="banner-checkbox" class="w-5 h-5 rounded border-slate-300 text-amber-500 focus:ring-amber-500 bg-white dark:bg-slate-800" />
                                 </div>
-                                <div class="flex-1">
-                                    <div class="flex items-center justify-between">
-                                        <p class="font-bold text-slate-900 dark:text-white">Promotional Banner</p>
-                                        <div class="bg-amber-100 text-amber-700 text-xs font-bold px-2 py-0.5 rounded-md border border-amber-200">+$${settings.mentor_banner_price_per_day}/day</div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex flex-wrap items-center justify-between gap-2">
+                                        <p class="font-bold text-slate-900 dark:text-white text-sm sm:text-base">Promotional Banner</p>
+                                        <div class="bg-amber-100 text-amber-700 text-xs font-bold px-2 py-0.5 rounded-md border border-amber-200 shrink-0">+$${settings.mentor_banner_price_per_day}/day</div>
                                     </div>
-                                    <p class="text-sm text-slate-500 mt-1 mb-3">Add a custom message highlight to the bottom of your mentor card.</p>
+                                    <p class="text-xs sm:text-sm text-slate-500 mt-1 mb-3">Add a custom message highlight to the bottom of your mentor card.</p>
                                     
                                     <div id="banner-text-container" class="hidden animate-in fade-in slide-in-from-top-2 duration-300">
-                                        <input type="text" id="banner-text" placeholder="e.g., Taking new students! Use code SAVE20 for 20% off." class="w-full px-4 py-3 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-xl focus:border-amber-500 focus:ring-amber-500/20 text-sm transition-all placeholder:text-slate-400" maxlength="80" />
-                                        <div class="flex justify-between mt-1 px-1">
+                                        <input type="text" id="banner-text" placeholder="e.g., Taking new students! Use code SAVE20 for 20% off." class="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:border-amber-500 focus:ring-amber-500/20 text-xs sm:text-sm transition-all placeholder:text-slate-400" maxlength="80" />
+                                        <div class="flex flex-wrap justify-between items-center gap-1 mt-1.5 px-1">
                                             <span class="text-[10px] text-slate-400">Will be shown on your profile card</span>
-                                            <span class="text-[10px] text-slate-400" id="banner-text-count">0/80</span>
+                                            <span class="text-[10px] text-slate-400 shrink-0" id="banner-text-count">0/80</span>
                                         </div>
                                     </div>
                                 </div>
@@ -953,37 +953,37 @@ async function bindBoostInteractions(container, userId) {
                         </div>
                     </div>
                     
-                    <div>
-                        <div class="bg-white dark:bg-slate-900 rounded-2xl border-2 border-slate-100 dark:border-slate-800 shadow-sm sticky top-24">
-                            <div class="p-6 border-b border-slate-100 dark:border-slate-800">
+                    <div class="w-full min-w-0">
+                        <div class="bg-white dark:bg-slate-900 rounded-2xl border-2 border-slate-100 dark:border-slate-800 shadow-sm xl:sticky xl:top-24 overflow-hidden">
+                            <div class="p-4 sm:p-6 border-b border-slate-100 dark:border-slate-800">
                                 <h4 class="font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                                    <span class="material-symbols-outlined text-slate-400">receipt_long</span>
-                                    Order Summary
+                                    <span class="material-symbols-outlined text-slate-400 shrink-0">receipt_long</span>
+                                    <span>Order Summary</span>
                                 </h4>
                             </div>
                             
-                            <div class="p-6 space-y-4">
-                                <div class="flex justify-between text-sm">
-                                    <span class="text-slate-500 font-medium flex items-center gap-1.5"><span class="w-1.5 h-1.5 bg-brand-purple rounded-full"></span> Profile Boost</span>
-                                    <span class="font-bold text-slate-900 dark:text-white" id="summary-boost-total">$0.00</span>
+                            <div class="p-4 sm:p-6 space-y-4">
+                                <div class="flex justify-between items-center text-sm gap-2">
+                                    <span class="text-slate-500 font-medium flex items-center gap-1.5 min-w-0"><span class="w-1.5 h-1.5 bg-brand-purple rounded-full shrink-0"></span> <span class="truncate">Profile Boost</span></span>
+                                    <span class="font-bold text-slate-900 dark:text-white shrink-0" id="summary-boost-total">$0.00</span>
                                 </div>
-                                <div class="flex justify-between text-sm hidden" id="summary-banner-row">
-                                    <span class="text-slate-500 font-medium flex items-center gap-1.5"><span class="w-1.5 h-1.5 bg-amber-500 rounded-full"></span> Banner Add-on</span>
-                                    <span class="font-bold text-slate-900 dark:text-white" id="summary-banner-total">$0.00</span>
+                                <div class="flex justify-between items-center text-sm hidden gap-2" id="summary-banner-row">
+                                    <span class="text-slate-500 font-medium flex items-center gap-1.5 min-w-0"><span class="w-1.5 h-1.5 bg-amber-500 rounded-full shrink-0"></span> <span class="truncate">Banner Add-on</span></span>
+                                    <span class="font-bold text-slate-900 dark:text-white shrink-0" id="summary-banner-total">$0.00</span>
                                 </div>
                                 
-                                <div class="pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-between items-end">
-                                    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Total</span>
-                                    <span class="text-3xl font-black text-slate-900 dark:text-white" id="summary-grand-total">$0.00</span>
+                                <div class="pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-between items-baseline gap-2">
+                                    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest shrink-0">Total</span>
+                                    <span class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white shrink-0" id="summary-grand-total">$0.00</span>
                                 </div>
                                 
                                 <p class="text-[10px] text-slate-400 text-center uppercase tracking-widest font-bold mt-2" id="summary-duration-text">0 Days Total</p>
                             </div>
                             
-                            <div class="p-6 pt-0">
-                                <button id="purchase-boost-btn" class="w-full py-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl font-bold shadow-lg shadow-amber-500/30 transition-all flex justify-center items-center gap-2 active:scale-95 group">
-                                    <span>Complete Purchase</span>
-                                    <span class="material-symbols-outlined text-[20px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                            <div class="p-4 sm:p-6 pt-0">
+                                <button id="purchase-boost-btn" class="w-full py-3.5 sm:py-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl font-bold shadow-lg shadow-amber-500/30 transition-all flex justify-center items-center gap-2 active:scale-95 group">
+                                    <span class="text-sm sm:text-base">Complete Purchase</span>
+                                    <span class="material-symbols-outlined text-[20px] group-hover:translate-x-1 transition-transform shrink-0">arrow_forward</span>
                                 </button>
                                 <p class="text-[10px] text-slate-400 text-center mt-3">By purchasing, you agree to the non-refundable boost policy.</p>
                             </div>

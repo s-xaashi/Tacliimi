@@ -44,6 +44,13 @@
         border-left-color: rgba(30, 41, 59, 0.8) !important;
     }
 }
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
 </style>
 
 
@@ -206,7 +213,7 @@
 </div>
 <!-- Tab container -->
 <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
-<div class="border-b border-slate-100 dark:border-slate-800 px-6 overflow-x-auto bg-slate-50/30 dark:bg-slate-800/30">
+<div class="border-b border-slate-100 dark:border-slate-800 px-4 sm:px-6 overflow-x-auto no-scrollbar bg-slate-50/30 dark:bg-slate-800/30">
 <div class="flex gap-8 whitespace-nowrap" id="mentorship-tab-bar">
 <button class="mentorship-tab py-4 border-b-2 border-brand-purple text-brand-purple text-sm font-bold flex items-center gap-2" data-tab="setup">
                                     Get Started
