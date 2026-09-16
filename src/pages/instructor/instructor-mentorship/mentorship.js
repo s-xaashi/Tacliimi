@@ -708,6 +708,32 @@ async function refreshDashboardStats(userId) {
 async function bindPrivacyInteractions(container, userId) {
     const saveBtn = document.getElementById('save-privacy-btn');
     const toggle = document.getElementById('public-profile-toggle');
+    const linkTextEl = document.getElementById('direct-booking-link-text');
+    const copyBtn = document.getElementById('copy-booking-link-btn');
+
+    // Set exact direct mentor booking URL
+    const bookingUrl = `${window.location.origin}/src/pages/mentorship/mentor-booking/index.html?id=${userId}`;
+    if (linkTextEl) {
+        linkTextEl.textContent = bookingUrl;
+    }
+
+    if (copyBtn) {
+        copyBtn.addEventListener('click', async () => {
+            try {
+                await navigator.clipboard.writeText(bookingUrl);
+                window.showToast("Direct booking link copied to clipboard!", "success");
+            } catch (err) {
+                // Fallback copy strategy
+                const tempInput = document.createElement('input');
+                tempInput.value = bookingUrl;
+                document.body.appendChild(tempInput);
+                tempInput.select();
+                document.execCommand('copy');
+                document.body.removeChild(tempInput);
+                window.showToast("Direct booking link copied to clipboard!", "success");
+            }
+        });
+    }
 
     // Load initial state
     const { data } = await supabase.from('mentorship_profiles').select('is_public').eq('instructor_id', userId).single();
@@ -1141,29 +1167,32 @@ function buildSessionSkeleton(count = 3, layout = 'space') {
     const topicWidths = ['w-48', 'w-40', 'w-56', 'w-36', 'w-44'];
     return Array.from({ length: count }, (_, i) => `
         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 animate-pulse" aria-hidden="true">
-            <div class="flex flex-col lg:flex-row gap-4 lg:gap-4 xl:gap-6 items-start lg:items-center">
-                <div class="flex items-center gap-4 w-full lg:w-44 xl:w-56 shrink-0">
-                    <div class="w-14 h-14 lg:w-16 lg:h-16 rounded-2xl bg-slate-200 dark:bg-slate-700 shrink-0"></div>
-                    <div class="flex-1 space-y-2">
+            <div class="rc-flex" style="display:flex; flex-direction:column; gap:16px; align-items:stretch;">
+                <div class="rc-student" style="display:flex; align-items:center; gap:16px;">
+                    <div class="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-slate-200 dark:bg-slate-700 shrink-0"></div>
+                    <div class="flex-1 min-w-0 space-y-2">
                         <div class="h-4 bg-slate-200 dark:bg-slate-700 rounded ${widths[i % widths.length]}"></div>
-                        <div class="h-5 bg-slate-200 dark:bg-slate-700 rounded-full w-20"></div>
+                        <div class="flex gap-2">
+                            <div class="h-5 bg-slate-200 dark:bg-slate-700 rounded w-14"></div>
+                            <div class="h-5 bg-slate-200 dark:bg-slate-700 rounded w-20"></div>
+                        </div>
                     </div>
                 </div>
-                <div class="flex-1 flex flex-wrap items-center gap-x-6 gap-y-3 lg:px-4 xl:px-6 border-t lg:border-t-0 lg:border-l border-slate-100 dark:border-slate-800 pt-4 lg:pt-0 min-w-0">
-                    <div class="flex items-center gap-3 shrink-0 min-w-[130px]">
+                <div class="rc-details" style="display:flex; flex-wrap:wrap; align-items:center; gap:12px 16px; border-top:1px solid var(--rc-sep,#f1f5f9); padding-top:16px;">
+                    <div class="flex items-center gap-3 shrink-0">
                         <div class="w-10 h-10 bg-slate-200 dark:bg-slate-700 rounded-xl shrink-0"></div>
                         <div class="space-y-1.5">
                             <div class="h-2.5 bg-slate-200 dark:bg-slate-700 rounded w-14"></div>
                             <div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-28"></div>
                         </div>
                     </div>
-                    <div class="flex-1 min-w-[150px] space-y-1.5">
+                    <div style="flex:1; min-width:0;" class="space-y-1.5 min-w-[150px]">
                         <div class="h-2.5 bg-slate-200 dark:bg-slate-700 rounded w-10"></div>
                         <div class="h-4 bg-slate-200 dark:bg-slate-700 rounded ${topicWidths[i % topicWidths.length]}"></div>
                     </div>
                 </div>
-                <div class="w-full lg:w-48 shrink-0 flex flex-col gap-2 border-t lg:border-t-0 lg:border-l border-slate-100 dark:border-slate-800 pt-4 lg:pt-0 lg:pl-4 xl:pl-6">
-                    <div class="h-9 w-48 bg-slate-200 dark:bg-slate-700 rounded-xl"></div>
+                <div class="rc-actions" style="display:flex; flex-direction:column; gap:8px; border-top:1px solid var(--rc-sep,#f1f5f9); padding-top:16px;">
+                    <div class="h-9 w-full bg-slate-200 dark:bg-slate-700 rounded-xl"></div>
                     <div class="h-9 w-full bg-slate-200 dark:bg-slate-700 rounded-xl"></div>
                 </div>
             </div>
@@ -1923,10 +1952,10 @@ async function bindCompletedInteractions(container, userId) {
                 return `
                     <div class="${isProgram ? GOLD_CARD_STYLE : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden hover:shadow-lg transition-all group p-6'} opacity-80 hover:opacity-100" data-session-id="${session.id}">
                         ${isProgram ? `<div class="flex items-center gap-2 mb-3">${buildMonthlyBadgeHtml()}<span class="text-[10px] font-bold text-amber-600/70">Program Completed</span></div>` : ''}
-                        <div class="flex flex-col md:flex-row gap-4 md:gap-6 items-start md:items-center">
+                        <div class="rc-flex" style="display:flex; flex-direction:column; gap:16px; align-items:stretch;">
                             <!-- Student Info: Fixed width -->
-                            <div class="flex items-center gap-4 w-full md:w-56 shrink-0">
-                                <div class="w-14 h-14 md:w-16 md:h-16 rounded-2xl overflow-hidden border-2 border-slate-200 dark:border-slate-700 shrink-0 shadow-sm grayscale cursor-pointer" onclick='window.openStudentProfile(${JSON.stringify(student).replace(/'/g, "&#39;")})' >
+                            <div class="rc-student" style="display:flex; align-items:center; gap:16px;">
+                                <div class="w-12 h-12 md:w-14 md:h-14 rounded-2xl overflow-hidden border-2 border-slate-200 dark:border-slate-700 shrink-0 shadow-sm grayscale cursor-pointer" onclick='window.openStudentProfile(${JSON.stringify(student).replace(/'/g, "&#39;")})' >
                                     <img src="${studentAvatar}" class="w-full h-full object-cover" />
                                 </div>
                                 <div class="flex-1 min-w-0">
@@ -1936,8 +1965,8 @@ async function bindCompletedInteractions(container, userId) {
                             </div>
 
                             <!-- Session Details: Optimized layout -->
-                            <div class="flex-1 flex flex-wrap items-center gap-x-10 gap-y-4 md:px-8 border-t md:border-t-0 md:border-l border-slate-100 dark:border-slate-800 pt-4 md:pt-0 min-w-0">
-                                <div class="flex items-center gap-3 w-44 shrink-0">
+                            <div class="rc-details" style="display:flex; flex-wrap:wrap; align-items:center; gap:12px 16px; border-top:1px solid var(--rc-sep,#f1f5f9); padding-top:16px;">
+                                <div class="flex items-center gap-3 shrink-0">
                                     <div class="w-10 h-10 bg-slate-50 dark:bg-slate-800 rounded-xl flex items-center justify-center text-slate-400 shrink-0">
                                         <span class="material-symbols-outlined text-xl">event_available</span>
                                     </div>
@@ -1946,18 +1975,18 @@ async function bindCompletedInteractions(container, userId) {
                                         <p class="font-bold text-slate-600 dark:text-slate-400 text-sm whitespace-nowrap">${dateStr}</p>
                                     </div>
                                 </div>
-                                <div class="flex-1 min-w-[180px]">
+                                <div style="flex:1; min-width:0;" class="min-w-[140px]">
                                     <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Topic</p>
                                     <p class="font-medium text-slate-500 dark:text-slate-500 text-sm line-clamp-1" title="${escapeHtml(session.topic) || 'Mentorship Session'}">${escapeHtml(session.topic) || 'Mentorship Session'}</p>
                                 </div>
                             </div>
 
                             <!-- Actions: Fixed width -->
-                            <div class="w-full md:w-fit flex flex-wrap md:flex-col gap-2 justify-start border-t md:border-t-0 border-slate-100 dark:border-slate-800 pt-4 md:pt-0">
-                                <button class="message-btn flex-1 min-w-[130px] px-4 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all text-sm flex items-center justify-center gap-2" data-id="${session.id}" data-name="${(student.full_name || 'Student').replace(/'/g, "\\'")}"> 
+                            <div class="rc-actions" style="display:flex; flex-direction:column; gap:8px; border-top:1px solid var(--rc-sep,#f1f5f9); padding-top:16px;">
+                                <button class="message-btn w-full px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all text-sm flex items-center justify-center gap-2" data-id="${session.id}" data-name="${(student.full_name || 'Student').replace(/'/g, "\\'")}"> 
                                     <span class="material-symbols-outlined text-[18px]">forum</span> Review Chat
                                 </button>
-                                <a href="/src/pages/mentorship/mentor-booking/confirmation.html?sessionId=${session.id}" class="flex-1 min-w-[120px] px-4 py-2.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 font-bold rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-all text-sm flex items-center gap-2 justify-center border border-indigo-100 dark:border-indigo-800">
+                                <a href="/src/pages/mentorship/mentor-booking/confirmation.html?sessionId=${session.id}" class="w-full px-4 py-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 font-bold rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-all text-sm flex items-center gap-2 justify-center border border-indigo-100 dark:border-indigo-800">
                                     <span class="material-symbols-outlined text-[18px]">receipt_long</span> Details
                                 </a>
                             </div>

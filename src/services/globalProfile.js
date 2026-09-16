@@ -574,7 +574,7 @@ export const GlobalProfile = {
                 window.location.href = '/src/pages/auth/login-select/index.html';
             };
         } else {
-            if (mobileMenu && !mobileMenu.querySelector('.tacliimi-mobile-injected')) {
+            if (mobileMenu && !mobileMenu.querySelector('.tacliimi-mobile-injected') && mobileMenu.dataset.noInject !== 'true') {
                 let settingsLink = '/src/pages/student/account-settings/index.html';
                 if (isAdmin) settingsLink = '/src/pages/admin/profile/index.html';
                 else if (isInstructor) settingsLink = '/src/pages/instructor/instructor-profile/index.html';

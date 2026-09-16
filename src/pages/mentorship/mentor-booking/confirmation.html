@@ -20,18 +20,18 @@
 <header class="sticky top-0 z-50 w-full bg-white dark:bg-background-dark border-b border-primary/10 px-4 md:px-10 py-3 relative">
 <div class="max-w-7xl mx-auto flex items-center justify-between">
 <div class="flex items-center gap-4">
-<button class="p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all" id="mobile-menu-btn">
+<button class="md:hidden p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all" id="mobile-menu-btn">
     <span class="material-symbols-outlined">menu</span>
 </button>
 <nav class="hidden md:flex items-center gap-6">
 <a class="text-slate-600 dark:text-slate-300 text-sm font-medium hover:text-primary transition-colors" href="/src/pages/mentorship/mentor-marketplace/index.html">Browse Mentors</a>
-<a class="text-slate-600 dark:text-slate-300 text-sm font-medium hover:text-primary transition-colors" href="/src/pages/student/student-dashboard/index.html">My Dashboard</a>
+<a class="text-slate-600 dark:text-slate-300 text-sm font-medium hover:text-primary transition-colors" href="/src/pages/marketplace/marketplace/">Browse Courses</a>
 </nav>
 </div>
 <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-<a href="/index.html" class="flex items-center gap-2 text-primary">
-<img src="/public/assets/images/IMG_7454.png" alt="Tacliimi Learn" class="h-8 object-contain"/>
-<h2 class="hidden sm:block text-slate-900 dark:text-white text-xl font-bold tracking-tight">Tacliimi Learn</h2>
+<a href="/index.html" class="flex items-center gap-2 hover:opacity-80 transition-opacity">
+<img src="/public/assets/images/IMG_7454.png" alt="Tacliimi Learn" class="h-10 md:h-12 w-auto object-contain dark:hidden"/>
+<img src="/public/assets/images/logo-dark.png" alt="Tacliimi Learn" class="h-10 md:h-12 w-auto object-contain hidden dark:block"/>
 </a>
 </div>
 <div class="flex items-center gap-4">
@@ -43,14 +43,31 @@
 </div>
 </div>
 </div>
-</header>
-<!-- Mobile Menu -->
-<div class="hidden bg-white dark:bg-background-dark border-b border-primary/10 px-4 py-6 space-y-4 shadow-xl z-40 absolute w-full" id="mobile-menu">
-    <a class="block text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/src/pages/mentorship/mentor-marketplace/index.html">Browse Mentors</a>
-    <a class="block text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/src/pages/student/student-dashboard/index.html">My Dashboard</a>
-    <a class="block text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/src/pages/instructor/become-instructor/">Become a Teacher</a>
-    <a class="block text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/src/pages/account/settings.html">Settings</a>
+<!-- Mobile Menu Dropdown -->
+<div class="hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-2xl z-50 absolute left-4 top-full mt-2 w-64 max-w-[85vw]" id="mobile-menu">
+    <!-- Top: Global Profile Area -->
+    <div id="mobile-menu-profile" class="flex items-center gap-3 mb-3 pb-3 border-b border-slate-100 dark:border-slate-800 cursor-pointer" onclick="window.location.href='/src/pages/auth/login-select/index.html'">
+        <div class="w-10 h-10 rounded-full bg-primary/10 text-primary border border-primary/20 overflow-hidden flex-shrink-0 flex items-center justify-center" id="mobile-menu-avatar-wrapper" data-role="profile-image">
+            <span class="material-symbols-outlined text-primary text-xl">account_circle</span>
+        </div>
+        <div class="flex-1 overflow-hidden">
+            <h4 class="font-bold text-xs text-slate-900 dark:text-white truncate user-display-name">Sign In / Register</h4>
+            <p class="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5" id="mobile-menu-profile-sub">Access your account</p>
+        </div>
+        <span class="material-symbols-outlined text-slate-400 text-sm">chevron_right</span>
+    </div>
+
+    <!-- Navigation Links -->
+    <div class="space-y-1">
+        <a class="flex items-center gap-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors py-2 px-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/60" href="/src/pages/mentorship/mentor-marketplace/index.html">
+            <span class="material-symbols-outlined text-lg text-slate-400">groups</span> Browse Mentors
+        </a>
+        <a class="flex items-center gap-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors py-2 px-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/60" href="/src/pages/marketplace/marketplace/">
+            <span class="material-symbols-outlined text-lg text-slate-400">explore</span> Browse Courses
+        </a>
+    </div>
 </div>
+</header>
 <main class="flex-grow flex items-center justify-center py-12 px-4 relative">
 <!-- Skeleton Loader -->
 <div id="skeleton-loader" class="max-w-2xl w-full flex flex-col items-center animate-pulse">
@@ -215,8 +232,16 @@
         const mobileBtn = document.getElementById('mobile-menu-btn');
         const mobileMenu = document.getElementById('mobile-menu');
         if (mobileBtn && mobileMenu) {
-            mobileBtn.addEventListener('click', () => {
+            mobileBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 mobileMenu.classList.toggle('hidden');
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!mobileMenu.contains(e.target) && !mobileBtn.contains(e.target)) {
+                    mobileMenu.classList.add('hidden');
+                }
             });
         }
     });
