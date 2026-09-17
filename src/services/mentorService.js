@@ -209,6 +209,7 @@ export const MentorService = {
                     headline,
                     bio,
                     introduction_video_url,
+                    introduction_video_storage_key,
                     is_public,
                     meeting_types,
                     currency,
@@ -226,6 +227,7 @@ export const MentorService = {
                         ),
                         teaching:teaching_profiles (
                             introduction_video_url,
+                            introduction_video_storage_key,
                             teaching_experience,
                             educational_background,
                             languages_spoken,
@@ -317,10 +319,22 @@ export const MentorService = {
             }
 
             // ── Merge and map ────────────────────────────────────────────────
-            return data.map(mentor => {
+            return Promise.all(data.map(async (mentor) => {
                 const teachingData = Array.isArray(mentor.profile?.teaching) 
                     ? mentor.profile.teaching[0] 
                     : mentor.profile?.teaching;
+
+                const videoStorageKey = mentor.introduction_video_storage_key || teachingData?.introduction_video_storage_key;
+                let introVideoUrl = mentor.introduction_video_url || teachingData?.introduction_video_url || '';
+
+                if (videoStorageKey) {
+                    try {
+                        const signedUrl = await ProfileService.getIntroVideoPlaybackUrl(videoStorageKey);
+                        if (signedUrl) introVideoUrl = signedUrl;
+                    } catch (vErr) {
+                        console.warn("Failed to fetch R2 playback URL for active mentor intro video:", vErr);
+                    }
+                }
 
                 // Priority: (1) JS-aggregated raw reviews, (2) View fallback, (3) 0.0
                 const stats = ratingMap[mentor.instructor_id];
@@ -346,7 +360,8 @@ export const MentorService = {
                     avatar_url: mentor.profile?.avatar_url,
                     short_bio: mentor.profile?.short_bio || mentor.bio || 'No bio available.',
                     expertise: mentor.profile?.expertise?.map(e => e.expertise_name) || [],
-                    introduction_video: mentor.introduction_video_url || teachingData?.introduction_video_url,
+                    introduction_video: introVideoUrl,
+                    introduction_video_storage_key: videoStorageKey,
                     languages: teachingData?.languages_spoken || [],
                     educational_background: teachingData?.educational_background || [],
                     teaching_experience: teachingData?.teaching_experience,
@@ -372,7 +387,7 @@ export const MentorService = {
                     meeting_types: mentor.meeting_types,
                     serial_id: mentor.profile?.serial_id
                 };
-            });
+            }));
         } catch (error) {
             console.error('Error in getActiveMentors:', error);
             throw error;
@@ -396,6 +411,8 @@ export const MentorService = {
                             gender,
                             teaching:teaching_profiles (
                                 introduction_video_url,
+                                introduction_video_storage_key,
+                                introduction_video_provider,
                                 teaching_experience,
                                 educational_background,
                                 languages_spoken
@@ -435,6 +452,19 @@ export const MentorService = {
             const teachingData = Array.isArray(data.profile?.teaching) 
                 ? data.profile.teaching[0] 
                 : data.profile?.teaching;
+
+            // Resolve video URL (support both R2 storage key and legacy Supabase URL)
+            const videoStorageKey = data.introduction_video_storage_key || teachingData?.introduction_video_storage_key;
+            let introVideoUrl = data.introduction_video_url || teachingData?.introduction_video_url || '';
+
+            if (videoStorageKey) {
+                try {
+                    const signedUrl = await ProfileService.getIntroVideoPlaybackUrl(videoStorageKey);
+                    if (signedUrl) introVideoUrl = signedUrl;
+                } catch (vErr) {
+                    console.warn("Failed to fetch R2 playback URL for mentor intro video:", vErr);
+                }
+            }
 
             // Fetch full reviews with comments (for display) using the secure view
             const reviews = reviewsRes.data;
@@ -517,7 +547,8 @@ export const MentorService = {
                 short_bio: data.profile?.short_bio || data.bio,
                 gender: data.profile?.gender,
                 expertise: data.profile?.expertise?.map(e => e.expertise_name) || [],
-                introduction_video: data.introduction_video_url || teachingData?.introduction_video_url,
+                introduction_video: introVideoUrl,
+                introduction_video_storage_key: videoStorageKey,
                 teaching_experience: teachingData?.teaching_experience,
                 mentorship_style: teachingData?.mentorship_style,
                 experience: teachingData?.teaching_experience,

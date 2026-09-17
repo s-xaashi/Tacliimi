@@ -201,7 +201,24 @@ export const GlobalProfile = {
         const nameElements = document.querySelectorAll('.text-right p.font-semibold, .user-display-name, h1.text-3xl.font-bold, .profile-name, .auto-welcome-name');
 
         const isAdmin = profile ? (profile.role === 'admin' || profile.is_admin === true) : false;
-        const isInstructor = profile ? (profile.role === 'instructor') : false;
+        const userRole = (profile?.role || session?.user?.user_metadata?.role || '').toLowerCase();
+        let isInstructor = userRole === 'instructor' || userRole === 'mentor';
+
+        // Additional safeguard: check instructors table if role is not set on profile
+        if (!isInstructor && session?.user?.id) {
+            try {
+                const { data: instData } = await supabase
+                    .from('instructors')
+                    .select('id')
+                    .eq('user_id', session.user.id)
+                    .maybeSingle();
+                if (instData) {
+                    isInstructor = true;
+                }
+            } catch (e) {
+                // Ignore fallback check error
+            }
+        }
         let defaultName = isAdmin ? 'Admin' : (isInstructor ? 'Instructor' : 'Student');
         if (session.user.email && !isAdmin) {
             let prefix = session.user.email.split('@')[0];
@@ -252,6 +269,7 @@ export const GlobalProfile = {
             }
         });
         this.injectHeaderControls(session, profile, fullName, avatarUrl, isInstructor, isAdmin);
+        this.applyGlobalUIUpdates(session, isInstructor, isAdmin);
     },
 
     injectHeaderControls(session, profile, fullName, avatarUrl, isInstructor, isAdmin) {
@@ -303,6 +321,7 @@ export const GlobalProfile = {
                 !el.contains(explicitContainer)
             );
             this.renderToContainer(explicitContainer, session, profile, fullName, avatarUrl, isInstructor, isAdmin, safeToPrune);
+            this.applyGlobalUIUpdates(session, isInstructor, isAdmin);
             return;
         }
 
@@ -518,6 +537,35 @@ export const GlobalProfile = {
     },
 
     applyGlobalUIUpdates(session, isInstructor, isAdmin) {
+        // 1. Handle Instructor CTA Links FIRST across desktop and mobile menu
+        if (isInstructor) {
+            // Hide for logged-in instructors across desktop nav, mobile drawer, and all page elements
+            document.querySelectorAll('a, button').forEach(el => {
+                const attr = el.getAttribute('href') || el.getAttribute('onclick') || '';
+                const txt = (el.innerText || el.textContent || '').toLowerCase().trim();
+                if (attr.includes('/src/pages/instructor/become-instructor/') || 
+                    txt.includes('become a teacher') || 
+                    txt.includes('teach on tacliimi') ||
+                    txt.includes('become a mentor')) {
+                    el.style.setProperty('display', 'none', 'important');
+                    el.classList.add('!hidden');
+                }
+            });
+        } else {
+            // Un-squeeze for others by shrinking padding/text
+            document.querySelectorAll('a, button').forEach(el => {
+                const attr = el.getAttribute('href') || el.getAttribute('onclick') || '';
+                const txt = (el.innerText || '').toLowerCase();
+                if ((attr.includes('/src/pages/instructor/become-instructor/') || txt.includes('become a teacher')) && (el.closest('nav') || el.closest('header'))) {
+                    el.classList.remove('whitespace-nowrap', 'px-4', 'py-2');
+                    el.classList.add('px-3', 'py-1.5', 'text-[13px]');
+                    if (txt.includes('become a teacher')) {
+                        el.innerHTML = el.innerHTML.replace(/Become a Teacher/gi, 'Teach');
+                    }
+                }
+            });
+        }
+
         let dashboardLink = '/src/pages/student/student-dashboard/index.html';
         if (isAdmin) dashboardLink = '/src/pages/admin/dashboard/index.html';
         else if (isInstructor) dashboardLink = '/src/pages/instructor/instructor-dashboard/index.html';
@@ -595,31 +643,6 @@ export const GlobalProfile = {
                 mobileMenu.appendChild(settingsBtn);
                 mobileMenu.appendChild(logoutBtn);
             }
-        }
-
-        // Handle Instructor CTA Links
-        if (isInstructor) {
-            // Hide for logged-in instructors
-            document.querySelectorAll('a, button').forEach(el => {
-                const attr = el.getAttribute('href') || el.getAttribute('onclick') || '';
-                const txt = (el.innerText || '').toLowerCase();
-                if (attr.includes('/src/pages/instructor/become-instructor/') || txt.includes('become a teacher') || txt.includes('teach on tacliimi')) {
-                    el.style.display = 'none';
-                }
-            });
-        } else {
-            // Un-squeeze for others by shrinking padding/text
-            document.querySelectorAll('a, button').forEach(el => {
-                const attr = el.getAttribute('href') || el.getAttribute('onclick') || '';
-                const txt = (el.innerText || '').toLowerCase();
-                if ((attr.includes('/src/pages/instructor/become-instructor/') || txt.includes('become a teacher')) && (el.closest('nav') || el.closest('header'))) {
-                    el.classList.remove('whitespace-nowrap', 'px-4', 'py-2');
-                    el.classList.add('px-3', 'py-1.5', 'text-[13px]');
-                    if (txt.includes('become a teacher')) {
-                        el.innerHTML = el.innerHTML.replace(/Become a Teacher/gi, 'Teach');
-                    }
-                }
-            });
         }
     },
 
