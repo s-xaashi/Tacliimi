@@ -186,37 +186,43 @@
                 <div
                     class="bg-white dark:bg-slate-900 lg:rounded-3xl p-8 lg:border lg:border-slate-200 dark:border-slate-800 lg:shadow-sm sticky top-0 lg:top-24 min-h-screen lg:min-h-0">
                     <div class="flex flex-col items-center text-center">
-                        <div class="w-32 h-32 rounded-full border-4 border-primary/10 overflow-hidden bg-slate-50 mb-6">
-                            <img alt="Mentor profile illustration" class="w-full h-full object-cover"
-                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuBy5HpvZJoTbwFwtpwfBNKWei1RkDyWa5u2WsQclbKqKb1V4uVRlIPrzguh-17g0D6N8rb6mbivATEFTua_L_S9w5fHU64ZOrLnAPICZFIf0eq96o6l2yHRwO5bEWJjtkvIA1NacHYklJ3EmVvFkbBM5YLqMrF9EqoLOF_cg42NCWmujNfwv-ASAN_ddjtLvMc4pJgzCIywojeMQ6Kwx1S3QgC5UCpXtis1h6hHF7Ibm_026sZS3G9aXgephZyNMX3Gk1bT-YIDiEmm" />
+                        <div class="w-32 h-32 rounded-full border-4 border-primary/10 overflow-hidden bg-slate-200 dark:bg-slate-700 animate-pulse mb-6 relative">
+                            <img alt="Mentor profile illustration" class="w-full h-full object-cover relative z-10"
+                                src="" />
                         </div>
                         <p class="text-primary font-bold text-sm mb-1 uppercase tracking-wider">Meet Mentor</p>
-                        <h2 class="text-2xl font-bold mb-2">Mentor Name Here</h2>
+                        <h2 class="text-2xl font-bold mb-2">
+                            <span class="inline-block h-7 w-44 bg-slate-200 dark:bg-slate-700 animate-pulse rounded"></span>
+                        </h2>
                         <span
                             class="px-4 py-1.5 bg-primary/10 text-primary text-xs font-bold uppercase tracking-widest rounded-full mb-6">
-                            Expertise / Subject Here
+                            <span class="inline-block h-3.5 w-28 bg-primary/20 dark:bg-primary/40 animate-pulse rounded"></span>
                         </span>
                         <div class="w-full border-t border-slate-100 dark:border-slate-800 pt-6 mt-2 text-left">
                             <h3 class="font-bold text-slate-900 dark:text-slate-100 mb-2">About Mentor</h3>
                             <p class="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">
-                                Short mentor bio will appear here.
+                                <span class="block h-3.5 w-full bg-slate-200 dark:bg-slate-700 animate-pulse rounded mb-2"></span>
+                                <span class="block h-3.5 w-3/4 bg-slate-200 dark:bg-slate-700 animate-pulse rounded"></span>
                             </p>
                         </div>
                         <div class="w-full mt-6 mb-2 flex items-center gap-2 text-slate-400">
                             <span class="material-symbols-outlined text-lg">location_on</span>
-                            <span class="text-xs font-light">Location or Virtual Link</span>
+                            <span class="text-xs font-light">
+                                <span class="inline-block h-3 w-28 bg-slate-200 dark:bg-slate-700 animate-pulse rounded"></span>
+                            </span>
                         </div>
                         <div class="w-full grid grid-cols-2 gap-4 mt-6">
                             <div class="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl">
                                 <span class="block text-xs text-slate-400 font-medium mb-1">Rating</span>
                                 <div id="mentor-rating-box" class="flex items-center justify-center gap-1 font-bold">
-                                    <span class="material-symbols-outlined text-yellow-400 text-base fill-1">star</span>
-                                    —
+                                    <span class="inline-block h-4 w-10 bg-slate-200 dark:bg-slate-700 animate-pulse rounded"></span>
                                 </div>
                             </div>
                             <div class="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl">
                                 <span class="block text-xs text-slate-400 font-medium mb-1">Sessions</span>
-                                <div id="mentor-sessions-box" class="font-bold text-slate-900 dark:text-slate-100">—</div>
+                                <div id="mentor-sessions-box" class="font-bold text-slate-900 dark:text-slate-100">
+                                    <span class="inline-block h-4 w-8 bg-slate-200 dark:bg-slate-700 animate-pulse rounded"></span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -354,25 +360,20 @@
                                                     class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">
                                                     Morning Windows</h4>
                                                 <div class="space-y-3">
-                                                    <button
-                                                        class="w-full flex items-center justify-between p-4 border border-slate-200 dark:border-slate-800 rounded-xl hover:border-primary hover:bg-primary/5 transition-all group">
+                                                    <div class="w-full h-14 bg-slate-100 dark:bg-slate-800/60 rounded-xl animate-pulse flex items-center justify-between p-4 border border-slate-200/50 dark:border-slate-800">
                                                         <div class="flex items-center gap-3">
-                                                            <span
-                                                                class="material-symbols-outlined text-slate-400 group-hover:text-primary">wb_sunny</span>
-                                                            <span class="font-semibold text-sm">09:00 AM — 10:00
-                                                                AM</span>
+                                                            <div class="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-700"></div>
+                                                            <div class="w-28 h-4 bg-slate-200 dark:bg-slate-700 rounded"></div>
                                                         </div>
-                                                        <span class="text-xs font-bold text-slate-400">Available</span>
-                                                    </button>
-                                                    <button
-                                                        class="w-full flex items-center justify-between p-4 border-2 border-primary bg-primary/5 text-primary rounded-xl transition-all">
+                                                        <div class="w-14 h-3 bg-slate-200 dark:bg-slate-700 rounded"></div>
+                                                    </div>
+                                                    <div class="w-full h-14 bg-slate-100 dark:bg-slate-800/60 rounded-xl animate-pulse flex items-center justify-between p-4 border border-slate-200/50 dark:border-slate-800">
                                                         <div class="flex items-center gap-3">
-                                                            <span class="material-symbols-outlined">wb_twilight</span>
-                                                            <span class="font-bold text-sm">11:00 AM — 12:00 PM</span>
+                                                            <div class="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-700"></div>
+                                                            <div class="w-32 h-4 bg-slate-200 dark:bg-slate-700 rounded"></div>
                                                         </div>
-                                                        <span
-                                                            class="material-symbols-outlined text-lg">check_circle</span>
-                                                    </button>
+                                                        <div class="w-14 h-3 bg-slate-200 dark:bg-slate-700 rounded"></div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -383,36 +384,20 @@
                                                     Afternoon Windows</h4>
                                                 <div
                                                     class="space-y-3 max-h-[160px] overflow-y-auto pr-2 availability-scroll">
-                                                    <button
-                                                        class="w-full flex items-center justify-between p-4 border border-slate-200 dark:border-slate-800 rounded-xl hover:border-primary hover:bg-primary/5 transition-all group">
+                                                    <div class="w-full h-14 bg-slate-100 dark:bg-slate-800/60 rounded-xl animate-pulse flex items-center justify-between p-4 border border-slate-200/50 dark:border-slate-800">
                                                         <div class="flex items-center gap-3">
-                                                            <span
-                                                                class="material-symbols-outlined text-slate-400 group-hover:text-primary">schedule</span>
-                                                            <span class="font-semibold text-sm">02:30 PM — 03:30
-                                                                PM</span>
+                                                            <div class="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-700"></div>
+                                                            <div class="w-32 h-4 bg-slate-200 dark:bg-slate-700 rounded"></div>
                                                         </div>
-                                                        <span class="text-xs font-bold text-slate-400">Available</span>
-                                                    </button>
-                                                    <button
-                                                        class="w-full flex items-center justify-between p-4 border border-slate-200 dark:border-slate-800 rounded-xl hover:border-primary hover:bg-primary/5 transition-all group">
+                                                        <div class="w-14 h-3 bg-slate-200 dark:bg-slate-700 rounded"></div>
+                                                    </div>
+                                                    <div class="w-full h-14 bg-slate-100 dark:bg-slate-800/60 rounded-xl animate-pulse flex items-center justify-between p-4 border border-slate-200/50 dark:border-slate-800">
                                                         <div class="flex items-center gap-3">
-                                                            <span
-                                                                class="material-symbols-outlined text-slate-400 group-hover:text-primary">schedule</span>
-                                                            <span class="font-semibold text-sm">04:00 PM — 05:00
-                                                                PM</span>
+                                                            <div class="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-700"></div>
+                                                            <div class="w-28 h-4 bg-slate-200 dark:bg-slate-700 rounded"></div>
                                                         </div>
-                                                        <span class="text-xs font-bold text-slate-400">Available</span>
-                                                    </button>
-                                                    <button
-                                                        class="w-full flex items-center justify-between p-4 border border-slate-200 dark:border-slate-800 rounded-xl opacity-40 cursor-not-allowed bg-slate-50 dark:bg-slate-800">
-                                                        <div class="flex items-center gap-3">
-                                                            <span
-                                                                class="material-symbols-outlined text-slate-400">event_busy</span>
-                                                            <span class="font-semibold text-sm line-through">05:30 PM —
-                                                                06:30 PM</span>
-                                                        </div>
-                                                        <span class="text-xs font-bold">Booked</span>
-                                                    </button>
+                                                        <div class="w-14 h-3 bg-slate-200 dark:bg-slate-700 rounded"></div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -517,7 +502,9 @@
                                         </div>
                                         <span class="font-bold text-lg text-slate-900 dark:text-white">Single
                                             Session</span>
-                                        <div id="single-session-price" class="mt-2 font-extrabold text-2xl">$0.00</div>
+                                        <div id="single-session-price" class="mt-2 font-extrabold text-2xl">
+                                            <span class="inline-block h-7 w-20 bg-slate-200 dark:bg-slate-700 animate-pulse rounded"></span>
+                                        </div>
                                         <span
                                             class="text-[11px] text-slate-500 font-bold uppercase tracking-wider mt-1">Base
                                             Session Price</span>
@@ -537,7 +524,9 @@
                                         </div>
                                         <span class="font-bold text-lg text-slate-900 dark:text-white">Monthly
                                             Mentorship</span>
-                                        <div id="monthly-mentorship-price" class="mt-2 font-extrabold text-2xl text-slate-900 dark:text-white">$0.00</div>
+                                        <div id="monthly-mentorship-price" class="mt-2 font-extrabold text-2xl text-slate-900 dark:text-white">
+                                            <span class="inline-block h-7 w-24 bg-slate-200 dark:bg-slate-700 animate-pulse rounded"></span>
+                                        </div>
                                         <span id="monthly-calculation-text"
                                             class="text-[11px] text-slate-400 font-medium mt-1 uppercase tracking-tight">
                                             Full Monthly Access
@@ -572,7 +561,9 @@
                             </div>
                             <div class="text-right">
                                 <p class="text-sm text-slate-500 font-medium">Total for Selection</p>
-                                <p id="total-price-display" class="text-4xl font-extrabold text-primary">$0.00</p>
+                                <p id="total-price-display" class="text-4xl font-extrabold text-primary">
+                                    <span class="inline-block h-9 w-20 bg-primary/20 dark:bg-primary/40 animate-pulse rounded"></span>
+                                </p>
                             </div>
                         </div>
                         <button onclick="confirmBooking()"
@@ -600,7 +591,8 @@
             <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
                 <div class="col-span-1 md:col-span-2">
                     <div class="flex items-center gap-2 mb-6">
-                        <img src="/public/assets/images/IMG_7454.png" alt="Tacliimi Learn" class="h-8 w-auto">
+                        <img src="/public/assets/images/IMG_7454.png" alt="Tacliimi Learn" class="h-10 md:h-12 w-auto object-contain dark:hidden">
+                        <img src="/public/assets/images/logo-dark.png" alt="Tacliimi Learn" class="h-10 md:h-12 w-auto object-contain hidden dark:block">
                     </div>
                     <p class="text-slate-500 max-w-sm mb-6">
                         The world's leading community for personal and professional growth through expert mentorship.

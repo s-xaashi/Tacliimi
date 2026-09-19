@@ -3,17 +3,18 @@ import { CourseService } from '/src/services/courseService.js';
 
 import { CANVAS_W, CANVAS_H, GOLD, NAVY, ORIG, FS, PHOTO_NAME_GAP } from './certFieldConfig.js';
 
-// ─── Font preload ──────────────────────────────────────────────────────────────
+// ─── Font preload ──────────────────────────────────────────────────────────────────────────────
 async function loadFonts() {
     await Promise.all([
         document.fonts.load(`italic 600 ${FS.name}px Fraunces`),
         document.fonts.load(`700 ${FS.course}px Fraunces`),
         document.fonts.load(`600 ${FS.date}px Fraunces`),
         document.fonts.load(`500 ${FS.sig}px Caveat`),
+        document.fonts.load(`500 ${FS.tacliimiSig}px Caveat`),
         document.fonts.load(`600 ${FS.instrNm}px Inter`),
         document.fonts.load(`500 ${FS.ver}px 'IBM Plex Mono'`),
         document.fonts.load(`500 ${FS.issued}px Inter`),
-    ]).catch(() => {});
+    ]).catch(() => { });
     await document.fonts.ready;
 }
 
@@ -22,7 +23,7 @@ function loadImage(src) {
     return new Promise((resolve, reject) => {
         const img = new Image();
         img.crossOrigin = 'anonymous';
-        img.onload  = () => resolve(img);
+        img.onload = () => resolve(img);
         img.onerror = () => reject(new Error(`Failed to load image: ${src}`));
         img.src = src;
     });
@@ -36,13 +37,13 @@ function drawCircularPhoto(ctx, img, cx, cy, r) {
     ctx.clip();
     ctx.drawImage(img, cx - r, cy - r, r * 2, r * 2);
     ctx.restore();
-    
+
     // Gold ring border
     ctx.save();
     ctx.beginPath();
     ctx.arc(cx, cy, r + 7, 0, Math.PI * 2);
     ctx.strokeStyle = GOLD;
-    ctx.lineWidth   = 9;
+    ctx.lineWidth = 9;
     ctx.stroke();
     ctx.restore();
 }
@@ -60,15 +61,15 @@ function drawPhotoPlaceholder(ctx, cx, cy, r) {
     ctx.beginPath();
     ctx.arc(cx, cy, r + 7, 0, Math.PI * 2);
     ctx.strokeStyle = GOLD;
-    ctx.lineWidth   = 9;
+    ctx.lineWidth = 9;
     ctx.stroke();
     ctx.restore();
 }
 
 function drawText(ctx, text, x, y, font, color, align = 'center') {
-    ctx.font         = font;
-    ctx.fillStyle    = color;
-    ctx.textAlign    = align;
+    ctx.font = font;
+    ctx.fillStyle = color;
+    ctx.textAlign = align;
     ctx.textBaseline = 'middle';
     ctx.fillText(text, x, y);
 }
@@ -78,12 +79,12 @@ function drawText(ctx, text, x, y, font, color, align = 'center') {
  */
 function drawStudentPhotoAndName(ctx, name, photoImg, r) {
     ctx.font = `italic 600 ${FS.name}px Fraunces, serif`;
-    const nameWidth  = ctx.measureText(name).width;
+    const nameWidth = ctx.measureText(name).width;
     // Calculate total width of avatar group + gap + text
-    const groupW     = r * 2 + PHOTO_NAME_GAP + nameWidth;
+    const groupW = r * 2 + PHOTO_NAME_GAP + nameWidth;
     const groupStart = (CANVAS_W - groupW) / 2;
-    const photoCX    = groupStart + r;
-    const nameCY     = ORIG.nameY;
+    const photoCX = groupStart + r;
+    const nameCY = ORIG.nameY;
 
     if (photoImg) {
         drawCircularPhoto(ctx, photoImg, photoCX, nameCY, r);
@@ -91,9 +92,9 @@ function drawStudentPhotoAndName(ctx, name, photoImg, r) {
         drawPhotoPlaceholder(ctx, photoCX, nameCY, r);
     }
 
-    ctx.font         = `italic 600 ${FS.name}px Fraunces, serif`;
-    ctx.fillStyle    = NAVY;
-    ctx.textAlign    = 'left';
+    ctx.font = `italic 600 ${FS.name}px Fraunces, serif`;
+    ctx.fillStyle = NAVY;
+    ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
     ctx.fillText(name, groupStart + r * 2 + PHOTO_NAME_GAP, nameCY);
 }
@@ -104,7 +105,7 @@ window.generateCertificate = async function () {
     if (btn) { btn.disabled = true; btn.textContent = 'Generating…'; }
     try {
         const studentId = window.currentUser?.id;
-        const courseId  = window.currentCourseData?.id;
+        const courseId = window.currentCourseData?.id;
 
         const [cert, studentProfile] = await Promise.all([
             CourseService.generateCertificate(studentId, courseId),
@@ -114,10 +115,10 @@ window.generateCertificate = async function () {
         await loadFonts();
         const bg = await loadImage('/public/assets/images/certificate-background.png');
 
-        const canvas   = document.createElement('canvas');
-        canvas.width   = CANVAS_W;
-        canvas.height  = CANVAS_H;
-        const ctx      = canvas.getContext('2d');
+        const canvas = document.createElement('canvas');
+        canvas.width = CANVAS_W;
+        canvas.height = CANVAS_H;
+        const ctx = canvas.getContext('2d');
 
         // Draw full unaffected background so corner flames / edge markers stay put perfectly
         ctx.drawImage(bg, 0, 0, CANVAS_W, CANVAS_H);
@@ -129,7 +130,7 @@ window.generateCertificate = async function () {
         }
 
         const dateCompleted = new Date(cert.completed_at_snapshot).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-        const dateIssued    = new Date(cert.issued_at).toLocaleDateString('en-US',             { year: 'numeric', month: 'long', day: 'numeric' });
+        const dateIssued = new Date(cert.issued_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
         drawStudentPhotoAndName(
             ctx,
@@ -184,6 +185,56 @@ window.generateCertificate = async function () {
             NAVY
         );
 
+        // — Tacliimi stamp: draw brand logo as circular badge right of FINAL SCORE —
+        try {
+            const stampImg = await loadImage('/public/assets/images/7e3a1f5e-ba08-492e-87fa-6b1c28129e6c-removebg-preview.png');
+            const { stampCX, stampCY, stampR } = ORIG;
+
+            // Dark navy filled circle background
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(stampCX, stampCY, stampR, 0, Math.PI * 2);
+            ctx.fillStyle = NAVY;
+            ctx.fill();
+            ctx.restore();
+
+            // Gold ring border
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(stampCX, stampCY, stampR + 7, 0, Math.PI * 2);
+            ctx.strokeStyle = GOLD;
+            ctx.lineWidth = 6;
+            ctx.stroke();
+            ctx.restore();
+
+            // Clip and draw logo inside the circle keeping natural aspect ratio (prevents X squeezing)
+            const imgW = stampImg.naturalWidth || stampImg.width || 1;
+            const imgH = stampImg.naturalHeight || stampImg.height || 1;
+            const aspect = imgW / imgH;
+            const logoH = stampR * 1.55;
+            const logoW = logoH * aspect;
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(stampCX, stampCY, stampR - 4, 0, Math.PI * 2);
+            ctx.clip();
+            ctx.drawImage(stampImg, stampCX - logoW / 2, stampCY - logoH / 2, logoW, logoH);
+            ctx.restore();
+        } catch { /* stamp image failed — skip gracefully */ }
+
+        // Mask out the small pre-drawn cursive signature in the background template using exact image background color (#FBF8F1)
+        ctx.fillStyle = '#FBF8F1';
+        ctx.fillRect(ORIG.tacliimiSigX - 200, ORIG.tacliimiSigY - 15, 280, 40);
+
+        // — Tacliimi cursive signature (right block over pre-drawn signature line) —
+        drawText(ctx,
+            'Tacliimi',
+            ORIG.tacliimiSigX,
+            ORIG.tacliimiSigY,
+            `500 ${FS.tacliimiSig}px Caveat, cursive`,
+            NAVY
+        );
+
         // Verification code (bottom left)
         drawText(ctx,
             cert.verification_code,
@@ -206,8 +257,8 @@ window.generateCertificate = async function () {
 
         canvas.toBlob((blob) => {
             const url = URL.createObjectURL(blob);
-            const a   = document.createElement('a');
-            a.href     = url;
+            const a = document.createElement('a');
+            a.href = url;
             a.download = `Tacliimi-Certificate-${cert.verification_code}.png`;
             a.click();
             URL.revokeObjectURL(url);

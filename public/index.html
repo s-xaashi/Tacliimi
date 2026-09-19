@@ -35,8 +35,38 @@
                 </a>
 
                 <div class="hidden lg:flex items-center gap-8 ml-8">
-                    <a class="text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-primary transition-colors flex items-center h-16" href="/src/pages/marketplace/marketplace/">Categories</a>
-                    <a class="text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-primary transition-colors flex items-center h-16" href="/src/pages/mentorship/mentor-marketplace/index.html">Find a Mentor</a>
+                    <!-- Find Courses Dropdown -->
+                    <div class="relative group">
+                        <a class="text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-primary transition-colors flex items-center gap-1 h-16 cursor-pointer" href="/src/pages/marketplace/marketplace/">
+                            Find Courses
+                            <span class="material-symbols-outlined text-sm group-hover:rotate-180 transition-transform duration-200">expand_more</span>
+                        </a>
+                        <div class="absolute left-0 top-full hidden group-hover:block w-56 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-100 dark:border-slate-700 py-2 z-50">
+                            <a href="/src/pages/marketplace/marketplace/" class="block px-4 py-2 text-xs font-bold text-primary hover:bg-slate-50 dark:hover:bg-slate-700/50">All Courses</a>
+                            <hr class="my-1 border-slate-100 dark:border-slate-700/50">
+                            <a href="/src/pages/marketplace/marketplace/?category=Computer%20Science" class="block px-4 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-primary hover:bg-slate-50 dark:hover:bg-slate-700/50">Computer Science</a>
+                            <a href="/src/pages/marketplace/marketplace/?category=Business%20%26%20Finance" class="block px-4 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-primary hover:bg-slate-50 dark:hover:bg-slate-700/50">Business &amp; Finance</a>
+                            <a href="/src/pages/marketplace/marketplace/?category=Design" class="block px-4 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-primary hover:bg-slate-50 dark:hover:bg-slate-700/50">Design</a>
+                            <a href="/src/pages/marketplace/marketplace/?category=Health%20%26%20Fitness" class="block px-4 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-primary hover:bg-slate-50 dark:hover:bg-slate-700/50">Health &amp; Fitness</a>
+                            <a href="/src/pages/marketplace/marketplace/?category=Music%20%26%20Media" class="block px-4 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-primary hover:bg-slate-50 dark:hover:bg-slate-700/50">Music &amp; Media</a>
+                        </div>
+                    </div>
+                    <!-- Find a Mentor Dropdown -->
+                    <div class="relative group">
+                        <a class="text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-primary transition-colors flex items-center gap-1 h-16 cursor-pointer" href="/src/pages/mentorship/mentor-marketplace/index.html">
+                            Find a Mentor
+                            <span class="material-symbols-outlined text-sm group-hover:rotate-180 transition-transform duration-200">expand_more</span>
+                        </a>
+                        <div class="absolute left-0 top-full hidden group-hover:block w-56 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-100 dark:border-slate-700 py-2 z-50">
+                            <a href="/src/pages/mentorship/mentor-marketplace/index.html" class="block px-4 py-2 text-xs font-bold text-primary hover:bg-slate-50 dark:hover:bg-slate-700/50">All Mentors</a>
+                            <hr class="my-1 border-slate-100 dark:border-slate-700/50">
+                            <a href="/src/pages/mentorship/mentor-marketplace/index.html?category=Technology%20%26%20Code" class="block px-4 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-primary hover:bg-slate-50 dark:hover:bg-slate-700/50">Technology &amp; Code</a>
+                            <a href="/src/pages/mentorship/mentor-marketplace/index.html?category=Business%20%26%20Leadership" class="block px-4 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-primary hover:bg-slate-50 dark:hover:bg-slate-700/50">Business &amp; Leadership</a>
+                            <a href="/src/pages/mentorship/mentor-marketplace/index.html?category=Design%20%26%20Creative" class="block px-4 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-primary hover:bg-slate-50 dark:hover:bg-slate-700/50">Design &amp; Creative</a>
+                            <a href="/src/pages/mentorship/mentor-marketplace/index.html?category=Career%20%26%20Resume" class="block px-4 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-primary hover:bg-slate-50 dark:hover:bg-slate-700/50">Career &amp; Resume</a>
+                            <a href="/src/pages/mentorship/mentor-marketplace/index.html?category=Academics%20%26%20Science" class="block px-4 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-primary hover:bg-slate-50 dark:hover:bg-slate-700/50">Academics &amp; Science</a>
+                        </div>
+                    </div>
                     <a class="text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-primary transition-colors flex items-center h-16" href="/src/pages/instructor/become-instructor/">Teach on Tacliimi</a>
                 </div>
 
@@ -73,15 +103,17 @@
         <details class="group">
             <summary class="flex items-center justify-between text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors cursor-pointer list-none [&::-webkit-details-marker]:hidden">
                 <div class="flex items-center gap-3">
-                    <span class="material-symbols-outlined text-xl text-slate-400">explore</span> Marketplace Courses
+                    <span class="material-symbols-outlined text-xl text-slate-400">explore</span> Find Courses
                 </div>
                 <span class="material-symbols-outlined text-sm group-open:-rotate-180 transition-transform duration-300">expand_more</span>
             </summary>
             <div class="flex flex-col pl-9 mt-4 space-y-4">
-                <a href="/src/pages/marketplace/marketplace/?category=Business%20%26%20Finance" class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">Business & Finance</a>
+                <a href="/src/pages/marketplace/marketplace/" class="text-sm font-bold text-primary transition-colors">All Courses</a>
                 <a href="/src/pages/marketplace/marketplace/?category=Computer%20Science" class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">Computer Science</a>
+                <a href="/src/pages/marketplace/marketplace/?category=Business%20%26%20Finance" class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">Business &amp; Finance</a>
                 <a href="/src/pages/marketplace/marketplace/?category=Design" class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">Design</a>
-                <a href="/src/pages/marketplace/marketplace/" class="text-sm font-bold text-primary transition-colors">View All Courses</a>
+                <a href="/src/pages/marketplace/marketplace/?category=Health%20%26%20Fitness" class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">Health &amp; Fitness</a>
+                <a href="/src/pages/marketplace/marketplace/?category=Music%20%26%20Media" class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">Music &amp; Media</a>
             </div>
         </details>
         <details class="group">
@@ -92,10 +124,12 @@
                 <span class="material-symbols-outlined text-sm group-open:-rotate-180 transition-transform duration-300">expand_more</span>
             </summary>
             <div class="flex flex-col pl-9 mt-4 space-y-4">
-                <a href="/src/pages/mentorship/mentor-marketplace/index.html?city=Burco" class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">Mentors in Burco</a>
-                <a href="/src/pages/mentorship/mentor-marketplace/index.html?city=Hargeisa" class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">Mentors in Hargeisa</a>
-                <a href="/src/pages/mentorship/mentor-marketplace/index.html?city=Muqdisho" class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">Mentors in Muqdisho</a>
-                <a href="/src/pages/mentorship/mentor-marketplace/index.html" class="text-sm font-bold text-primary transition-colors">View All Mentors</a>
+                <a href="/src/pages/mentorship/mentor-marketplace/index.html" class="text-sm font-bold text-primary transition-colors">All Mentors</a>
+                <a href="/src/pages/mentorship/mentor-marketplace/index.html?category=Technology%20%26%20Code" class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">Technology &amp; Code</a>
+                <a href="/src/pages/mentorship/mentor-marketplace/index.html?category=Business%20%26%20Leadership" class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">Business &amp; Leadership</a>
+                <a href="/src/pages/mentorship/mentor-marketplace/index.html?category=Design%20%26%20Creative" class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">Design &amp; Creative</a>
+                <a href="/src/pages/mentorship/mentor-marketplace/index.html?category=Career%20%26%20Resume" class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">Career &amp; Resume</a>
+                <a href="/src/pages/mentorship/mentor-marketplace/index.html?category=Academics%20%26%20Science" class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">Academics &amp; Science</a>
             </div>
         </details>
         <a class="flex items-center gap-3 text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/src/pages/instructor/become-instructor/">

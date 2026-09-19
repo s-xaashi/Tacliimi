@@ -107,12 +107,13 @@ async function initBooking() {
 function renderMentorInfo(mentor) {
     document.querySelector('h2').textContent = mentor.full_name;
     const expertiseEl = document.querySelector('.bg-primary\\/10.text-primary.text-xs.font-bold');
-    if (expertiseEl) expertiseEl.textContent = mentor.headline || '';
+    if (expertiseEl) expertiseEl.textContent = mentor.headline || 'Mentor';
     
     const avatarImg = document.querySelector('aside img');
     if (avatarImg) {
         const fallbackAvatar = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(mentor.full_name) + '&background=random&color=fff';
         avatarImg.src = mentor.avatar_url || fallbackAvatar;
+        avatarImg.parentElement.classList.remove('animate-pulse', 'bg-slate-200', 'dark:bg-slate-700');
     }
 
     const bioEl = document.querySelector('aside p.text-slate-500');
@@ -208,6 +209,13 @@ function renderAvailability() {
         btn.addEventListener('click', () => selectSlot(btn, slot));
         container.appendChild(btn);
     });
+
+    if (morningContainer.children.length === 0) {
+        morningContainer.innerHTML = '<p class="text-xs text-slate-400 italic py-2">No morning slots available for this day</p>';
+    }
+    if (afternoonContainer.children.length === 0) {
+        afternoonContainer.innerHTML = '<p class="text-xs text-slate-400 italic py-2">No afternoon slots available for this day</p>';
+    }
 }
 
 function selectSlot(btn, slot) {

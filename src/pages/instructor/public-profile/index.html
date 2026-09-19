@@ -28,7 +28,8 @@
         
         <!-- Center Logo (Mobile) / Left Logo (Desktop) -->
         <a href="/index.html" class="flex items-center gap-2 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 md:static md:top-auto md:transform-none md:left-0 z-10 hover:opacity-80 transition-opacity shrink-0">
-            <img src="/public/assets/images/IMG_7454.png" alt="Tacliimi Learn" class="h-10 md:h-12 w-auto object-contain">
+            <img src="/public/assets/images/IMG_7454.png" alt="Tacliimi Learn" class="h-12 md:h-14 w-auto object-contain dark:hidden">
+            <img src="/public/assets/images/logo-dark.png" alt="Tacliimi Learn" class="h-12 md:h-14 w-auto object-contain hidden dark:block">
         </a>
         
         <!-- Desktop Navigation -->
@@ -228,8 +229,11 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
         <div class="col-span-1 md:col-span-2">
-            <span class="text-xl font-bold tracking-tight">Tacliimi Learn</span>
-            <p class="text-slate-500 max-w-sm mt-4">
+            <div class="flex items-center gap-2 mb-4">
+              <img src="/public/assets/images/IMG_7454.png" alt="Tacliimi Learn" class="h-10 md:h-12 w-auto object-contain dark:hidden">
+              <img src="/public/assets/images/logo-dark.png" alt="Tacliimi Learn" class="h-10 md:h-12 w-auto object-contain hidden dark:block">
+            </div>
+            <p class="text-slate-500 max-w-sm">
               Empowering learners and educators through high-quality video courses and personalized mentorship.
             </p>
         </div>

@@ -6,17 +6,38 @@ export const GlobalProfile = {
     async init() {
         this.injectGlobalCSS();
         this.initTheme();
+        this.preloadAuthState();
         this.monitorNetwork();
         document.addEventListener('DOMContentLoaded', () => {
+            this.preloadAuthState();
             this.applyProfile();
             this.bindThemeToggles();
         });
 
         // Sometimes scripts load after DOMContentLoaded
         if (document.readyState === 'interactive' || document.readyState === 'complete') {
+            this.preloadAuthState();
             this.applyProfile();
             this.bindThemeToggles();
         }
+    },
+
+    hasPossibleSession() {
+        try {
+            return Object.keys(localStorage).some(key => key.includes('auth-token') || key.startsWith('sb-'));
+        } catch (e) {
+            return false;
+        }
+    },
+
+    preloadAuthState() {
+        if (!this.hasPossibleSession()) return;
+        const staticButtons = document.querySelectorAll('button[onclick*="login"], a[href*="login"], button.auth-login-btn');
+        staticButtons.forEach(btn => {
+            if (btn.closest('header') || btn.closest('nav')) {
+                btn.classList.add('opacity-0', 'pointer-events-none', 'tacliimi-auth-preload-hidden');
+            }
+        });
     },
 
     injectGlobalCSS() {
@@ -28,12 +49,6 @@ export const GlobalProfile = {
             button, select, input[type="submit"], input[type="button"] {
                 -webkit-appearance: none !important;
                 appearance: none !important;
-            }
-            /* Explicit fallback for dark mode logos since PNG has artifacts */
-            html.dark img[src*="IMG_7454.png"], html.dark img[src*="IMG_7448.png"] {
-                background-color: white;
-                padding: 4px;
-                border-radius: 8px;
             }
         `;
         document.head.appendChild(style);
@@ -122,6 +137,10 @@ export const GlobalProfile = {
     },
 
     applyUnauthenticatedUI() {
+        document.querySelectorAll('.tacliimi-auth-preload-hidden').forEach(el => {
+            el.classList.remove('opacity-0', 'pointer-events-none', 'tacliimi-auth-preload-hidden');
+        });
+
         const mobileMenu = document.getElementById('mobile-menu');
         if (mobileMenu) {
             const profileArea = mobileMenu.querySelector('#mobile-menu-profile');
