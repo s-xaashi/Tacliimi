@@ -148,6 +148,7 @@ export const GlobalProfile = {
             const subEl = mobileMenu.querySelector('#mobile-menu-profile-sub');
             const logoutBtn = mobileMenu.querySelector('#mobile-logout-btn');
             const themeToggle = mobileMenu.querySelector('#mobile-theme-toggle');
+            const menuFooter = mobileMenu.querySelector('#mobile-menu-footer');
 
             if (nameEl) nameEl.innerText = 'Sign In / Register';
             if (subEl) subEl.innerText = 'Access your account';
@@ -162,6 +163,7 @@ export const GlobalProfile = {
                 themeToggle.classList.add('hidden');
                 themeToggle.classList.remove('flex');
             }
+            if (menuFooter) menuFooter.classList.add('hidden');
         }
 
         const explicitContainer = document.getElementById('global-profile-header-container');
@@ -606,6 +608,9 @@ export const GlobalProfile = {
             // Show the dashboard only when an authenticated session exists.
             const dashboardLinkEl = mobileMenu.querySelector('#mobile-dashboard-link');
             if (dashboardLinkEl) dashboardLinkEl.classList.remove('hidden');
+
+            const menuFooter = mobileMenu.querySelector('#mobile-menu-footer');
+            if (menuFooter) menuFooter.classList.remove('hidden');
 
             // Wire profile area click to correct settings page
             const profileArea = mobileMenu.querySelector('#mobile-menu-profile');
