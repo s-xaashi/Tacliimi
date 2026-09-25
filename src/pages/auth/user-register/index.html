@@ -5,7 +5,7 @@
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title>Student Registration | Tacliimi Learn</title>
-    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
+    <link rel="stylesheet" href="/public/assets/css/tacliimi.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap"
         rel="stylesheet" />
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet" />
@@ -13,40 +13,8 @@
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
         rel="stylesheet" />
     <script type="module" src="/src/services/globalProfile.js"></script>
-    <script>
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        primary: "#4F46E5",
-                        "background-light": "#F9FAFB",
-                        "background-dark": "#111827",
-                    },
-                    fontFamily: {
-                        display: ["Inter", "sans-serif"],
-                    },
-                    borderRadius: {
-                        DEFAULT: "0.5rem",
-                    },
-                },
-            },
-        };
-    </script>
-    <style type="text/tailwindcss">
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-        .bg-pattern {
-            background-color: #4f46e5;
-            background-image: radial-gradient(#ffffff 1px, transparent 1px);
-            background-size: 20px 20px;
-            opacity: 0.1;
-        }
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        }
-    </style>
+    
+    
 </head>
 
 <body class="bg-background-light dark:bg-background-dark min-h-screen flex items-center justify-center p-4">
@@ -151,6 +119,10 @@
                                 class="block w-full pl-10 pr-4 py-3 rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-primary focus:border-primary transition-all sm:text-sm"
                                 id="email" name="email" placeholder="you@institution.edu" required="" type="email" />
                         </div>
+                        <div id="email-error-msg" class="hidden text-xs text-red-600 dark:text-red-400 mt-1.5 flex items-center gap-1 font-medium">
+                            <span class="material-icons-outlined text-sm">error_outline</span>
+                            <span id="email-error-text">This email is already registered. Please log in or use another email.</span>
+                        </div>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5"
@@ -168,6 +140,47 @@
                                 onclick="const p = document.getElementById('password'); p.type = p.type === 'password' ? 'text' : 'password';">
                                 <span class="material-icons-outlined text-xl">visibility_off</span>
                             </button>
+                        </div>
+
+                        <!-- Password Strength Status Box -->
+                        <div id="password-strength-container" class="mt-3 p-3.5 bg-gray-50 dark:bg-gray-800/70 rounded-xl border border-gray-200 dark:border-gray-700/80 space-y-2.5">
+                            <div class="flex items-center justify-between text-xs font-semibold">
+                                <span class="text-gray-600 dark:text-gray-300">Password Strength Status:</span>
+                                <span id="strength-label" class="text-gray-400 font-bold uppercase tracking-wider">Too Short</span>
+                            </div>
+                            <!-- Strength Meter Bar -->
+                            <div class="w-full bg-gray-200 dark:bg-gray-700 h-2 rounded-full overflow-hidden flex gap-1 p-0.5">
+                                <div id="strength-bar-1" class="h-full w-1/4 bg-gray-300 dark:bg-gray-600 rounded-full transition-all duration-300"></div>
+                                <div id="strength-bar-2" class="h-full w-1/4 bg-gray-300 dark:bg-gray-600 rounded-full transition-all duration-300"></div>
+                                <div id="strength-bar-3" class="h-full w-1/4 bg-gray-300 dark:bg-gray-600 rounded-full transition-all duration-300"></div>
+                                <div id="strength-bar-4" class="h-full w-1/4 bg-gray-300 dark:bg-gray-600 rounded-full transition-all duration-300"></div>
+                            </div>
+                            <!-- Requirements List -->
+                            <div class="pt-1">
+                                <p class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wide">Requirements checklist:</p>
+                                <ul class="text-xs space-y-1.5 font-medium">
+                                    <li id="rule-length" class="flex items-center text-gray-400 dark:text-gray-500 transition-colors">
+                                        <span class="material-icons-outlined text-base mr-2">radio_button_unchecked</span>
+                                        <span>8+ characters long</span>
+                                    </li>
+                                    <li id="rule-uppercase" class="flex items-center text-gray-400 dark:text-gray-500 transition-colors">
+                                        <span class="material-icons-outlined text-base mr-2">radio_button_unchecked</span>
+                                        <span>Uppercase letter (A-Z)</span>
+                                    </li>
+                                    <li id="rule-lowercase" class="flex items-center text-gray-400 dark:text-gray-500 transition-colors">
+                                        <span class="material-icons-outlined text-base mr-2">radio_button_unchecked</span>
+                                        <span>Lowercase letter (a-z)</span>
+                                    </li>
+                                    <li id="rule-number" class="flex items-center text-gray-400 dark:text-gray-500 transition-colors">
+                                        <span class="material-icons-outlined text-base mr-2">radio_button_unchecked</span>
+                                        <span>Number (0-9)</span>
+                                    </li>
+                                    <li id="rule-special" class="flex items-center text-gray-400 dark:text-gray-500 transition-colors">
+                                        <span class="material-icons-outlined text-base mr-2">radio_button_unchecked</span>
+                                        <span>Special character (!@#$%^&*...)</span>
+                                    </li>
+                                </ul>
+                            </div>
                         </div>
                     </div>
                     <div class="flex items-center">
@@ -251,6 +264,144 @@
                 });
             }
 
+            // Password Strength Evaluator
+            const passwordInput = document.getElementById('password');
+            
+            function evaluatePassword(password) {
+                const rules = {
+                    length: password.length >= 8,
+                    uppercase: /[A-Z]/.test(password),
+                    lowercase: /[a-z]/.test(password),
+                    number: /[0-9]/.test(password),
+                    special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)
+                };
+
+                let score = 0;
+                if (rules.length) score++;
+                if (rules.uppercase && rules.lowercase) score++;
+                if (rules.number) score++;
+                if (rules.special) score++;
+
+                const isAllValid = rules.length && rules.uppercase && rules.lowercase && rules.number && rules.special;
+
+                return { rules, score, isAllValid };
+            }
+
+            function updatePasswordStrengthUI(password) {
+                const { rules, score, isAllValid } = evaluatePassword(password);
+
+                const updateRule = (elId, passed) => {
+                    const el = document.getElementById(elId);
+                    if (!el) return;
+                    const icon = el.querySelector('.material-icons-outlined');
+                    if (passed) {
+                        el.className = 'flex items-center text-emerald-600 dark:text-emerald-400 font-medium transition-colors';
+                        if (icon) icon.textContent = 'check_circle';
+                    } else {
+                        el.className = 'flex items-center text-gray-400 dark:text-gray-500 transition-colors';
+                        if (icon) icon.textContent = 'radio_button_unchecked';
+                    }
+                };
+
+                updateRule('rule-length', rules.length);
+                updateRule('rule-uppercase', rules.uppercase);
+                updateRule('rule-lowercase', rules.lowercase);
+                updateRule('rule-number', rules.number);
+                updateRule('rule-special', rules.special);
+
+                const label = document.getElementById('strength-label');
+                const bars = [
+                    document.getElementById('strength-bar-1'),
+                    document.getElementById('strength-bar-2'),
+                    document.getElementById('strength-bar-3'),
+                    document.getElementById('strength-bar-4')
+                ];
+
+                let colorClass = 'bg-gray-300 dark:bg-gray-600';
+                let labelText = 'Too Short';
+                let labelColor = 'text-gray-400';
+
+                if (!password) {
+                    labelText = 'Too Short';
+                    colorClass = 'bg-gray-300 dark:bg-gray-600';
+                    labelColor = 'text-gray-400';
+                } else if (score === 1) {
+                    labelText = 'Weak';
+                    colorClass = 'bg-red-500';
+                    labelColor = 'text-red-500';
+                } else if (score === 2) {
+                    labelText = 'Fair';
+                    colorClass = 'bg-orange-500';
+                    labelColor = 'text-orange-500';
+                } else if (score === 3) {
+                    labelText = 'Good';
+                    colorClass = 'bg-amber-500';
+                    labelColor = 'text-amber-500';
+                } else if (score >= 4 && isAllValid) {
+                    labelText = 'Strong';
+                    colorClass = 'bg-emerald-500';
+                    labelColor = 'text-emerald-500';
+                } else {
+                    labelText = 'Medium';
+                    colorClass = 'bg-amber-500';
+                    labelColor = 'text-amber-500';
+                }
+
+                if (label) {
+                    label.textContent = labelText;
+                    label.className = `font-bold uppercase tracking-wider ${labelColor}`;
+                }
+
+                bars.forEach((bar, index) => {
+                    if (!bar) return;
+                    if (index < score && password.length > 0) {
+                        bar.className = `h-full w-1/4 ${colorClass} rounded-full transition-all duration-300`;
+                    } else {
+                        bar.className = 'h-full w-1/4 bg-gray-300 dark:bg-gray-600 rounded-full transition-all duration-300';
+                    }
+                });
+            }
+
+            if (passwordInput) {
+                passwordInput.addEventListener('input', (e) => {
+                    updatePasswordStrengthUI(e.target.value);
+                });
+            }
+
+            // Live Email Duplicate Check
+            const emailInput = document.getElementById('email');
+            const emailErrorMsg = document.getElementById('email-error-msg');
+            const emailErrorText = document.getElementById('email-error-text');
+
+            async function checkEmailAvailability() {
+                const email = emailInput.value.trim();
+                if (!email || !email.includes('@')) {
+                    if (emailErrorMsg) emailErrorMsg.classList.add('hidden');
+                    if (emailInput) emailInput.classList.remove('border-red-500');
+                    return false;
+                }
+
+                const exists = await AuthService.checkEmailExists(email);
+                if (exists) {
+                    if (emailErrorText) emailErrorText.textContent = "This email is already used. Please log in or use a different email address.";
+                    if (emailErrorMsg) emailErrorMsg.classList.remove('hidden');
+                    if (emailInput) emailInput.classList.add('border-red-500');
+                    return true;
+                } else {
+                    if (emailErrorMsg) emailErrorMsg.classList.add('hidden');
+                    if (emailInput) emailInput.classList.remove('border-red-500');
+                    return false;
+                }
+            }
+
+            if (emailInput) {
+                emailInput.addEventListener('blur', checkEmailAvailability);
+                emailInput.addEventListener('input', () => {
+                    if (emailErrorMsg) emailErrorMsg.classList.add('hidden');
+                    if (emailInput) emailInput.classList.remove('border-red-500');
+                });
+            }
+
             const registerForm = document.getElementById('register-form');
             const errorDiv = document.getElementById('register-error');
 
@@ -266,10 +417,31 @@
                     const btn = e.target.querySelector('button[type="submit"]');
                     const originalText = btn.innerHTML;
 
+                    // 1. Password Strength Validation Check
+                    const { isAllValid: passwordValid } = evaluatePassword(password);
+                    if (!passwordValid) {
+                        errorDiv.textContent = "Please make sure your password meets all strength requirements (minimum 8 characters, uppercase letter, lowercase letter, number, and special character).";
+                        errorDiv.classList.remove('hidden');
+                        passwordInput.focus();
+                        return;
+                    }
+
                     try {
-                        btn.innerText = 'Creating Account...';
+                        btn.innerText = 'Checking Email Availability...';
                         btn.disabled = true;
 
+                        // 2. Pre-check email existence before sending verification
+                        const isDuplicate = await checkEmailAvailability();
+                        if (isDuplicate) {
+                            btn.innerHTML = originalText;
+                            btn.disabled = false;
+                            errorDiv.textContent = "This email is already used before sending a verification. Please log in or use a different email address.";
+                            errorDiv.classList.remove('hidden');
+                            emailInput.focus();
+                            return;
+                        }
+
+                        btn.innerText = 'Creating Account...';
                         localStorage.setItem('tacliimi_pending_role', role);
 
                         if (role === 'instructor') {

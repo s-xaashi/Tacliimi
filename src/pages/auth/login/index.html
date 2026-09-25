@@ -5,7 +5,7 @@
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title>Login | Tacliimi Learn</title>
-    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
+    <link rel="stylesheet" href="/public/assets/css/tacliimi.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap"
         rel="stylesheet" />
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet" />
@@ -13,40 +13,8 @@
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
         rel="stylesheet" />
     <script type="module" src="/src/services/globalProfile.js"></script>
-    <script>
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        primary: "#4F46E5",
-                        "background-light": "#F9FAFB",
-                        "background-dark": "#111827",
-                    },
-                    fontFamily: {
-                        display: ["Inter", "sans-serif"],
-                    },
-                    borderRadius: {
-                        DEFAULT: "0.5rem",
-                    },
-                },
-            },
-        };
-    </script>
-    <style type="text/tailwindcss">
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-        .bg-pattern {
-            background-color: #4f46e5;
-            background-image: radial-gradient(#ffffff 1px, transparent 1px);
-            background-size: 20px 20px;
-            opacity: 0.1;
-        }
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        }
-    </style>
+    
+    
 </head>
 
 <body class="bg-background-light dark:bg-background-dark min-h-screen flex items-center justify-center p-4">
@@ -60,10 +28,9 @@
         <section class="hidden md:flex md:w-1/2 relative bg-primary items-center justify-center p-12 overflow-hidden">
             <div class="absolute inset-0 bg-pattern"></div>
             <div class="relative z-10 text-white max-w-md">
-                <div
-                    class="mb-8 inline-flex items-center space-x-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full border border-white/20">
-                    <span class="material-icons-outlined text-white">school</span>
-                    <span class="font-semibold tracking-wide uppercase text-sm">Tacliimi Learn</span>
+                <div class="mb-8 inline-flex items-center bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-white/30 dark:border-slate-800 shadow-lg cursor-pointer" onclick="window.location.href='/index.html'">
+                    <img src="/public/assets/images/IMG_7454.png" alt="Tacliimi" class="h-9 w-auto object-contain dark:hidden" />
+                    <img src="/public/assets/images/logo-dark.png" alt="Tacliimi" class="h-9 w-auto object-contain hidden dark:block" />
                 </div>
                 <h1 class="text-5xl font-bold leading-tight mb-6">Empowering institutions, inspiring students.</h1>
                 <p class="text-indigo-100 text-lg mb-8 leading-relaxed">
@@ -86,9 +53,9 @@
         </section>
         <section class="w-full md:w-1/2 p-8 md:p-16 flex flex-col justify-center">
             <div class="max-w-md mx-auto w-full">
-                <div class="md:hidden flex items-center space-x-2 mb-8 text-primary">
-                    <span class="material-icons-outlined text-3xl">school</span>
-                    <span class="text-2xl font-bold tracking-tight">Tacliimi Learn</span>
+                <div class="md:hidden flex items-center mb-8 cursor-pointer" onclick="window.location.href='/index.html'">
+                    <img src="/public/assets/images/IMG_7454.png" alt="Tacliimi" class="h-10 w-auto object-contain dark:hidden" />
+                    <img src="/public/assets/images/logo-dark.png" alt="Tacliimi" class="h-10 w-auto object-contain hidden dark:block" />
                 </div>
                 <div class="mb-10 text-center md:text-left">
                     <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Welcome Back</h2>
@@ -130,14 +97,14 @@
                 <form id="login-form" class="space-y-6">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5"
-                            for="identifier">Email or Username</label>
+                            for="identifier">Email address</label>
                         <div class="relative">
                             <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
                                 <span class="material-icons-outlined text-xl">mail</span>
                             </span>
                              <input
                                 class="block w-full pl-10 pr-4 py-3 rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-primary focus:border-primary transition-all sm:text-sm"
-                                id="identifier" name="identifier" placeholder="Email or admin username" required="" />
+                                id="identifier" name="identifier" type="email" placeholder="you@institution.edu" required="" />
                         </div>
                     </div>
                     <div>

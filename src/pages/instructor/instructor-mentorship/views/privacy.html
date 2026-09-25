@@ -1,6 +1,6 @@
-<div class="flex-1 overflow-y-auto p-8 bg-background-light dark:bg-background-dark">
+<div class="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 bg-background-light dark:bg-background-dark">
     <div class="max-w-6xl mx-auto space-y-8">
-        <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm p-8">
+        <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm p-4 sm:p-6 md:p-8">
             <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2">Profile Visibility</h3>
             <p class="text-slate-500 dark:text-slate-400 text-sm mb-6">Manage how students discover your mentorship
                 profile.</p>
@@ -8,7 +8,7 @@
             <div class="space-y-6">
                 <!-- Visibility Toggle -->
                 <div
-                    class="flex items-start justify-between p-6 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
+                    class="flex items-start justify-between p-4 sm:p-6 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800 gap-4">
                     <div>
                         <h4 class="text-sm font-bold text-slate-900 dark:text-slate-100 mb-1">Make Profile Public</h4>
                         <p class="text-sm text-slate-500 dark:text-slate-400">Allow students to find you in the
@@ -16,11 +16,11 @@
 
                         <div
                             class="mt-4 flex items-center gap-2 text-xs font-medium text-amber-600 dark:text-amber-500 bg-amber-50 dark:bg-amber-500/10 px-3 py-2 rounded-lg border border-amber-200/50 dark:border-amber-500/20 inline-flex">
-                            <span class="material-symbols-outlined text-[16px]">info</span>
-                            Setup, Availability, and Pricing must be completed first to go public.
+                            <span class="material-symbols-outlined text-[16px] shrink-0">info</span>
+                            <span>Setup, Availability, and Pricing must be completed first to go public.</span>
                         </div>
                     </div>
-                    <label class="relative inline-flex items-center cursor-pointer mt-1">
+                    <label class="relative inline-flex items-center cursor-pointer mt-1 shrink-0">
                         <input type="checkbox" value="" class="sr-only peer" id="public-profile-toggle">
                         <div
                             class="w-14 h-7 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all dark:border-slate-600 peer-checked:bg-brand-purple">
@@ -32,16 +32,17 @@
                 <div>
                     <h4 class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">Your
                         Direct Booking Link</h4>
-                    <div class="flex">
+                    <div class="flex flex-col sm:flex-row gap-2 sm:gap-0">
                         <div
-                            class="flex-1 flex items-center bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-l-xl px-4 py-3 border-r-0">
-                            <span class="material-symbols-outlined text-slate-400 mr-2 text-lg">link</span>
-                            <span
-                                class="text-sm text-slate-600 dark:text-slate-300 font-medium truncate select-all">tacliimi.com/mentor/your-profile</span>
+                            class="flex-1 flex items-center bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl sm:rounded-l-xl sm:rounded-r-none px-3 sm:px-4 py-2.5 sm:py-3 border-r sm:border-r-0 min-w-0">
+                            <span class="material-symbols-outlined text-slate-400 mr-2 text-base sm:text-lg shrink-0">link</span>
+                            <span id="direct-booking-link-text"
+                                class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 font-medium truncate select-all break-all">tacliimi.com/mentor/your-profile</span>
                         </div>
-                        <button
-                            class="px-6 py-3 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-r-xl text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors shadow-sm">
-                            Copy
+                        <button id="copy-booking-link-btn"
+                            class="w-full sm:w-auto px-5 sm:px-6 py-2.5 sm:py-3 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl sm:rounded-r-xl sm:rounded-l-none text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors shadow-sm shrink-0 flex items-center justify-center gap-1.5 active:scale-95">
+                            <span class="material-symbols-outlined text-base">content_copy</span>
+                            <span>Copy</span>
                         </button>
                     </div>
                 </div>
@@ -51,10 +52,11 @@
             <div
                 class="flex flex-col sm:flex-row justify-end gap-4 mt-8 pt-6 border-t border-slate-200 dark:border-slate-800">
                 <button id="save-privacy-btn"
-                    class="px-8 py-3 rounded-xl font-bold text-white bg-brand-purple hover:bg-brand-purple/90 shadow-lg shadow-brand-purple/20 transition-all">
+                    class="w-full sm:w-auto px-8 py-3 rounded-xl font-bold text-white bg-brand-purple hover:bg-brand-purple/90 shadow-lg shadow-brand-purple/20 transition-all">
                     Save Changes
                 </button>
             </div>
         </div>
     </div>
 </div>
+

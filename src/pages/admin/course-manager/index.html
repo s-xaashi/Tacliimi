@@ -4,20 +4,12 @@
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title>Course Manager | Tacliimi Admin</title>
-    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
+    <link rel="stylesheet" href="/public/assets/css/tacliimi.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
     <script type="module" src="/src/services/adminSidebar.js"></script>
-    <script>
-        tailwind.config = { darkMode:"class", theme:{ extend:{ colors:{ primary:"#4F46E5" } } } };
-    </script>
-    <style type="text/tailwindcss">
-        body { font-family: 'Inter', sans-serif; }
-        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
-        .tab-btn { @apply pb-4 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium flex items-center gap-2 border-b-2 border-transparent transition-colors; }
-        .tab-btn.active { @apply text-indigo-600 dark:text-indigo-400 font-bold border-indigo-600 dark:border-indigo-400; }
-        .status-badge { @apply px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider; }
-    </style>
+    
+    
 </head>
 <body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen">
 <div id="sidebar-overlay" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-20 hidden lg:hidden"></div>

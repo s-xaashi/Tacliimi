@@ -1,56 +1,22 @@
 <!DOCTYPE html>
-<html lang="en">
 
+<html lang="en">
 <head>
-    <meta charset="utf-8" />
-    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>Instructor Dashboard | Tacliimi Learn</title>
-    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
-        rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
-        rel="stylesheet" />
-    <script>
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        primary: "#4F46E5",
-                        "brand-purple": "#7c3aed",
-                        "background-light": "#F9FAFB",
-                        "background-dark": "#111827",
-                    },
-                    fontFamily: {
-                        display: ["Inter", "sans-serif"],
-                    },
-                    borderRadius: {
-                        DEFAULT: "0.5rem",
-                    },
-                },
-            },
-        };
-    </script>
-    <style type="text/tailwindcss">
-        body { font-family: 'Inter', sans-serif; }
-        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
-        
-        /* Hide content until router loads it */
-        #instructor-content-area {
-            opacity: 1;
-            transition: opacity 0.2s ease-in-out;
-        }
-        #instructor-content-area.loading {
-            opacity: 0.5;
-            pointer-events: none;
-        }
-    </style>
-    <script type="module" src="/src/services/globalProfile.js"></script>
-    <script>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Instructor Dashboard | Tacliimi Learn</title>
+<link rel="stylesheet" href="/public/assets/css/tacliimi.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<script src="/src/services/globalProfile.js" type="module"></script>
+<script>
         // Removed synchronous Auth check
     </script>
-
-    <script type="module">
+<script type="module">
         import { AuthService } from '/src/services/authService.js';
         
         // If the URL contains an access token from an email link or OAuth, do not prematurely redirect
@@ -62,106 +28,79 @@
             });
         }
     </script>
-
 </head>
-
-<body
-    class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 transition-colors duration-200">
-    <aside
-        class="fixed left-0 top-0 h-full w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 hidden lg:flex flex-col z-20">
-        <div class="p-6 border-b border-slate-100 dark:border-slate-800">
-            <div class="flex items-center gap-2 cursor-pointer" onclick="window.location.href='/index.html'">
-                <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                    <span class="material-symbols-outlined text-white text-lg">school</span>
-                </div>
-                <span class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Tacliimi</span>
-            </div>
-        </div>
-        <nav class="flex-1 p-4 space-y-1" id="instructor-sidebar-nav">
-            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                href="/src/pages/instructor/instructor-dashboard/">
-                <span class="material-symbols-outlined">dashboard</span>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 transition-colors duration-200"><div class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[50] hidden lg:hidden" id="sidebar-overlay"></div>
+<aside class="fixed left-0 top-0 h-full w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex-col flex z-[60] -translate-x-full lg:translate-x-0" id="instructor-sidebar">
+<div class="p-6 border-b border-slate-100 dark:border-slate-800">
+<div class="flex items-center cursor-pointer" onclick="window.location.href='/index.html'">
+    <img src="/public/assets/images/IMG_7454.png" alt="Tacliimi Logo" class="h-14 w-auto object-contain dark:hidden">
+    <img src="/public/assets/images/logo-dark.png" alt="Tacliimi Logo" class="h-14 w-auto object-contain hidden dark:block">
+</div>
+</div>
+<nav class="flex-1 p-4 space-y-1" id="instructor-sidebar-nav">
+<a href="/src/pages/instructor/instructor-profile/index.html"
+   class="flex items-center gap-3 px-4 py-3 mb-2 border-b border-slate-100 dark:border-slate-800 cursor-pointer lg:hidden">
+    <div class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-primary/20 overflow-hidden flex-shrink-0" data-role="profile-image">
+        <span class="material-symbols-outlined text-slate-400 w-full h-full flex items-center justify-center">person</span>
+    </div>
+    <div class="flex-1 overflow-hidden">
+        <p class="font-bold text-slate-900 dark:text-white truncate user-display-name">Instructor</p>
+        <p class="text-xs text-slate-500 dark:text-slate-400 truncate">View and edit profile</p>
+    </div>
+    <span class="material-symbols-outlined text-slate-400">chevron_right</span>
+</a>
+<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-dashboard/">
+<span class="material-symbols-outlined">dashboard</span>
                 Dashboard
             </a>
-            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                href="/src/pages/instructor/instructor-courses/">
-                <span class="material-symbols-outlined">auto_stories</span>
+<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-courses/">
+<span class="material-symbols-outlined">auto_stories</span>
                 My Courses
             </a>
-            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                href="/src/pages/instructor/instructor-mentorship/">
-                <span class="material-symbols-outlined">groups</span>
+<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-mentorship/">
+<span class="material-symbols-outlined">groups</span>
                 Mentorship
             </a>
-            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                href="/src/pages/instructor/instructor-analytics/">
-                <span class="material-symbols-outlined">analytics</span>
+<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-analytics/">
+<span class="material-symbols-outlined">analytics</span>
                 Analytics
             </a>
-            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                href="/src/pages/instructor/instructor-earnings/">
-                <span class="material-symbols-outlined">payments</span>
+<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-earnings/">
+<span class="material-symbols-outlined">payments</span>
                 Earnings
             </a>
-            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                href="/src/pages/instructor/instructor-communications/">
-                <span class="material-symbols-outlined">message</span>
+<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-communications/">
+<span class="material-symbols-outlined">message</span>
                 Communications
             </a>
-        </nav>
-    </aside>
 
-    <div class="lg:ml-64 min-h-screen flex flex-col">
-        <header
-            class="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-8 sticky top-0 z-10 shrink-0">
-            <h1 class="text-lg font-semibold dark:text-white" id="header-page-title">Analytics</h1>
-            <div class="flex items-center gap-4">
-                <!-- NOTIFICATION BELL -->
-                <div class="relative" id="notif-wrapper">
-                    <button id="notif-bell-btn" onclick="toggleNotifPanel()"
-                        class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 relative transition-colors">
-                        <span class="material-symbols-outlined">notifications</span>
-                        <span id="notif-badge"
-                            class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full hidden"></span>
-                    </button>
-                    <!-- DROPDOWN PANEL -->
-                    <div id="notif-panel"
-                        class="hidden absolute right-0 top-12 w-96 max-h-[520px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl flex flex-col z-50 overflow-hidden">
-                        <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800 shrink-0">
-                            <span class="font-bold text-slate-800 dark:text-white text-base">Notifications</span>
-                            <button onclick="markAllRead()"
-                                class="text-xs text-primary hover:underline font-medium">Mark all read</button>
-                        </div>
-                        <div id="notif-list" class="flex-1 overflow-y-auto divide-y divide-slate-50 dark:divide-slate-800">
-                            <div id="notif-empty" class="flex flex-col items-center justify-center py-16 text-center">
-                                <span class="material-symbols-outlined text-4xl text-slate-300 mb-3">notifications_none</span>
-                                <p class="text-slate-400 text-sm">You're all caught up!</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <button class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-                    onclick="document.documentElement.classList.toggle('dark')">
-                    <span class="material-symbols-outlined">dark_mode</span>
-                </button>
-                <div class="flex items-center gap-3 pl-4 border-l border-slate-200 dark:border-slate-800 cursor-pointer hover:opacity-80 transition-opacity"
-                    onclick="window.location.href='/src/pages/instructor/instructor-profile/index.html'">
-                    <div class="text-right hidden sm:block">
-                        <p class="text-sm font-medium dark:text-white">Instructor account</p>
-                        <p class="text-xs text-slate-500">ID: 32342</p>
-                    </div>
-                    <div
-                        class="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-slate-100 text-slate-400 dark:bg-slate-800 border-2 border-primary/20 hover:border-primary transition-colors">
-                        <span class="material-symbols-outlined text-2xl">account_circle</span>
-                    </div>
-                </div>
-            </div>
-        </header>
-
-        <!-- DYNAMIC CONTENT AREA -->
-        <main id="instructor-content-area" class="flex-1 bg-background-light dark:bg-background-dark pb-20">
+</nav>
+</aside>
+<div class="lg:ml-64 min-h-screen flex flex-col">
+<header class="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-8 sticky top-0 z-10 shrink-0 w-full">
+<div class="flex items-center"><button aria-label="Open navigation menu" class="lg:hidden p-2.5 text-slate-500 bg-slate-100 dark:bg-slate-800 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors mr-3" id="instructor-mobile-menu-btn"><span class="material-symbols-outlined">menu_open</span></button><h1 class="text-lg font-semibold dark:text-white hidden lg:block" id="header-page-title">Analytics</h1></div>
 
 
+<a href="/index.html" class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 lg:hidden flex items-center gap-2 cursor-pointer transition-opacity hover:opacity-80">
+    <img src="/public/assets/images/7e3a1f5e-ba08-492e-87fa-6b1c28129e6c-removebg-preview.png" alt="Tacliimi Logo" class="h-10 w-auto object-contain drop-shadow-sm">
+</a>
+<div class="flex items-center gap-4 hidden lg:flex">
+<button class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" onclick="document.documentElement.classList.toggle('dark')">
+<span class="material-symbols-outlined">dark_mode</span>
+</button>
+<div class="flex items-center gap-3 pl-4 border-l border-slate-200 dark:border-slate-800 cursor-pointer hover:opacity-80 transition-opacity" id="global-profile-header-container" onclick="window.location.href='/src/pages/instructor/instructor-profile/index.html'">
+<div class="text-right hidden sm:block">
+<p class="text-sm font-medium dark:text-white">Instructor account</p>
+<p class="text-xs text-slate-500">ID: 32342</p>
+</div>
+<div class="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-slate-100 text-slate-400 dark:bg-slate-800 border-2 border-primary/20 hover:border-primary transition-colors">
+<span class="material-symbols-outlined text-2xl">account_circle</span>
+</div>
+</div>
+</div>
+</header>
+<!-- DYNAMIC CONTENT AREA -->
+<main class="flex-1 bg-background-light dark:bg-background-dark pb-20" id="instructor-content-area">
 <div class="px-8 pb-8 pt-2 max-w-7xl mx-auto">
 <div class="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
 <div>
@@ -171,8 +110,36 @@
 <div class="flex items-center gap-3">
 <div class="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-400 flex items-center gap-2 border border-slate-200 dark:border-slate-700">
 <span class="material-symbols-outlined text-lg">calendar_today</span>
-                        Last 30 Days
-                    </div>
+<select class="bg-transparent border-none p-0 text-sm font-medium text-slate-600 dark:text-slate-400 focus:ring-0 cursor-pointer" id="chartPeriodFilter">
+<option value="7days">Last 7 Days</option>
+<option selected="" value="30days">Last 30 Days</option>
+<option value="90days">Last 90 Days</option>
+</select>
+</div>
+</div>
+</div>
+<!-- TOP METRIC CARDS -->
+<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-8" id="metric-cards-container">
+<!-- These will be populated natively by JS but I'm placing the template here for JS to clone or fill -->
+<div class="p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-center">
+<p class="text-xs text-slate-500 uppercase font-semibold">Total Revenue</p>
+<p class="text-2xl font-bold dark:text-white flex items-center h-8" id="metric-revenue"><span class="h-8 w-24 bg-slate-200 dark:bg-slate-700 animate-pulse rounded block"></span></p>
+</div>
+<div class="p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-center">
+<p class="text-xs text-slate-500 uppercase font-semibold">Enrolled Students</p>
+<p class="text-2xl font-bold dark:text-white flex items-center h-8" id="metric-students"><span class="h-8 w-16 bg-slate-200 dark:bg-slate-700 animate-pulse rounded block"></span></p>
+</div>
+<div class="p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-center">
+<p class="text-xs text-slate-500 uppercase font-semibold">Course Clicks</p>
+<p class="text-2xl font-bold dark:text-white flex items-center h-8" id="metric-views"><span class="h-8 w-16 bg-slate-200 dark:bg-slate-700 animate-pulse rounded block"></span></p>
+</div>
+<div class="p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-center">
+<p class="text-xs text-slate-500 uppercase font-semibold">Avg Rating</p>
+<p class="text-2xl font-bold dark:text-white flex items-center h-8" id="metric-rating"><span class="h-8 w-12 bg-slate-200 dark:bg-slate-700 animate-pulse rounded block"></span></p>
+</div>
+<div class="p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-center">
+<p class="text-xs text-slate-500 uppercase font-semibold">Completions</p>
+<p class="text-2xl font-bold dark:text-white flex items-center h-8" id="metric-completions"><span class="h-8 w-16 bg-slate-200 dark:bg-slate-700 animate-pulse rounded block"></span></p>
 </div>
 </div>
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -182,18 +149,9 @@
 <span class="material-symbols-outlined text-primary">show_chart</span>
 <h3 class="font-bold text-slate-800 dark:text-slate-200">Course Performance</h3>
 </div>
-<span class="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-[10px] font-bold uppercase tracking-wider text-slate-400 rounded">No data available</span>
 </div>
-<div class="h-80 w-full relative flex flex-col items-center justify-center chart-placeholder-grid p-12">
-<svg class="absolute inset-0 w-full h-full opacity-10" preserveAspectRatio="none" viewBox="0 0 100 100">
-<path class="text-slate-400" d="M0 80 L20 75 L40 85 L60 60 L80 70 L100 40" fill="none" stroke="currentColor" stroke-dasharray="4" stroke-width="0.5"></path>
-</svg>
-<div class="relative z-10 text-center flex flex-col items-center">
-<div class="w-16 h-16 bg-slate-50 dark:bg-slate-800/50 rounded-full flex items-center justify-center mb-4 border border-slate-100 dark:border-slate-700">
-<span class="material-symbols-outlined text-slate-300 dark:text-slate-600 text-3xl">insights</span>
-</div>
-<p class="text-slate-400 dark:text-slate-500 font-medium max-w-xs">Your course views and student interactions will appear here</p>
-</div>
+<div class="p-6 h-80 w-full relative flex flex-col items-center justify-center">
+<canvas class="w-full h-full" id="performanceChart"></canvas>
 </div>
 </div>
 <div class="lg:col-span-1 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
@@ -202,15 +160,13 @@
 <span class="material-symbols-outlined text-emerald-500">groups</span>
 <h3 class="font-bold text-slate-800 dark:text-slate-200">Student Demographics</h3>
 </div>
-<span class="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-[10px] font-bold uppercase tracking-wider text-slate-400 rounded">No data available</span>
 </div>
-<div class="p-8 h-64 flex flex-col items-center justify-center">
-<div class="w-32 h-32 rounded-full border-8 border-dashed border-slate-100 dark:border-slate-800 flex items-center justify-center relative">
-<div class="w-16 h-16 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center">
-<span class="material-symbols-outlined text-slate-300 dark:text-slate-600 text-2xl">public</span>
+<div class="p-4 h-64 flex flex-col items-center justify-center" id="demographics-chart-wrap">
+<!-- Demographics donut chart injected by analytics.js -->
+<div class="flex flex-col items-center justify-center h-full gap-3 opacity-50">
+<span class="material-symbols-outlined text-4xl text-slate-400 animate-spin" style="animation-duration:2s">refresh</span>
+<p class="text-xs text-slate-400 uppercase tracking-widest font-semibold">Loading...</p>
 </div>
-</div>
-<p class="mt-4 text-xs text-slate-400 uppercase tracking-widest font-semibold">Geographic Data Placeholder</p>
 </div>
 </div>
 <div class="lg:col-span-2 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
@@ -219,25 +175,67 @@
 <span class="material-symbols-outlined text-amber-500">payments</span>
 <h3 class="font-bold text-slate-800 dark:text-slate-200">Revenue Over Time</h3>
 </div>
-<span class="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-[10px] font-bold uppercase tracking-wider text-slate-400 rounded">No data available</span>
 </div>
-<div class="p-8 h-64 flex flex-col justify-end gap-2">
-<div class="flex items-end justify-between h-32 w-full gap-4">
-<div class="flex-1 bg-slate-50 dark:bg-slate-800/40 rounded-t h-12 border border-slate-100 dark:border-slate-800 border-b-0"></div>
-<div class="flex-1 bg-slate-50 dark:bg-slate-800/40 rounded-t h-20 border border-slate-100 dark:border-slate-800 border-b-0"></div>
-<div class="flex-1 bg-slate-50 dark:bg-slate-800/40 rounded-t h-16 border border-slate-100 dark:border-slate-800 border-b-0"></div>
-<div class="flex-1 bg-slate-50 dark:bg-slate-800/40 rounded-t h-24 border border-slate-100 dark:border-slate-800 border-b-0"></div>
-<div class="flex-1 bg-slate-50 dark:bg-slate-800/40 rounded-t h-14 border border-slate-100 dark:border-slate-800 border-b-0"></div>
-<div class="flex-1 bg-slate-50 dark:bg-slate-800/40 rounded-t h-28 border border-slate-100 dark:border-slate-800 border-b-0"></div>
+<div class="p-6 h-64 flex flex-col justify-end gap-2">
+<canvas class="w-full h-full" id="revenueChart"></canvas>
 </div>
-<div class="flex justify-between w-full pt-4 border-t border-slate-100 dark:border-slate-800">
-<div class="h-2 w-12 bg-slate-50 dark:bg-slate-800 rounded"></div>
-<div class="h-2 w-12 bg-slate-50 dark:bg-slate-800 rounded"></div>
-<div class="h-2 w-12 bg-slate-50 dark:bg-slate-800 rounded"></div>
-<div class="h-2 w-12 bg-slate-50 dark:bg-slate-800 rounded"></div>
 </div>
-<p class="text-center text-slate-400 text-xs mt-4">Growth statistics will be visible after your first sale</p>
 </div>
+<!-- TOP PERFORMING COURSES -->
+<div class="mt-8 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+<div class="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-indigo-500">star</span>
+<h3 class="font-bold text-slate-800 dark:text-slate-200">Top Performing Courses</h3>
+</div>
+</div>
+<div class="overflow-x-auto" aria-busy="true">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 text-xs uppercase tracking-wider">
+<th class="p-4 font-semibold min-w-[280px]">Course</th>
+<th class="p-4 font-semibold whitespace-nowrap">Students</th>
+<th class="p-4 font-semibold whitespace-nowrap">Revenue</th>
+<th class="p-4 font-semibold whitespace-nowrap">Rating</th>
+<th class="p-4 font-semibold whitespace-nowrap">Clicks</th>
+<th class="p-4 font-semibold whitespace-nowrap">Wishlists</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-sm" id="top-courses-table-body">
+<tr class="animate-pulse">
+    <td class="p-4">
+        <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded bg-slate-200 dark:bg-slate-700"></div>
+            <div class="flex-1 space-y-2">
+                <div class="h-4 w-40 bg-slate-200 dark:bg-slate-700 rounded"></div>
+                <div class="h-3 w-16 bg-slate-200 dark:bg-slate-700 rounded"></div>
+            </div>
+        </div>
+    </td>
+    <td class="p-4"><div class="h-4 w-10 bg-slate-200 dark:bg-slate-700 rounded"></div></td>
+    <td class="p-4"><div class="h-4 w-12 bg-slate-200 dark:bg-slate-700 rounded"></div></td>
+    <td class="p-4"><div class="h-4 w-14 bg-slate-200 dark:bg-slate-700 rounded"></div></td>
+    <td class="p-4"><div class="h-4 w-10 bg-slate-200 dark:bg-slate-700 rounded"></div></td>
+    <td class="p-4"><div class="h-4 w-10 bg-slate-200 dark:bg-slate-700 rounded"></div></td>
+</tr>
+<tr class="animate-pulse">
+    <td class="p-4">
+        <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded bg-slate-200 dark:bg-slate-700"></div>
+            <div class="flex-1 space-y-2">
+                <div class="h-4 w-40 bg-slate-200 dark:bg-slate-700 rounded"></div>
+                <div class="h-3 w-16 bg-slate-200 dark:bg-slate-700 rounded"></div>
+            </div>
+        </div>
+    </td>
+    <td class="p-4"><div class="h-4 w-10 bg-slate-200 dark:bg-slate-700 rounded"></div></td>
+    <td class="p-4"><div class="h-4 w-12 bg-slate-200 dark:bg-slate-700 rounded"></div></td>
+    <td class="p-4"><div class="h-4 w-14 bg-slate-200 dark:bg-slate-700 rounded"></div></td>
+    <td class="p-4"><div class="h-4 w-10 bg-slate-200 dark:bg-slate-700 rounded"></div></td>
+    <td class="p-4"><div class="h-4 w-10 bg-slate-200 dark:bg-slate-700 rounded"></div></td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
 <footer class="mt-16 py-8 border-t border-slate-200 dark:border-slate-800 text-center">
@@ -251,15 +249,42 @@
 </div>
 </footer>
 </div>
-
-        </main>
-    </div>
-
-    <!-- Router Logic -->
-    <script src="/src/utils/js/instructor-app.js"></script>
-    <script src="/src/pages/instructor/instructor-mentorship/mentorship.js"></script>
-    <!-- Notification System -->
-    <script type="module" src="/src/services/instructorNotifications.js"></script>
+</main>
+</div>
+<!-- Router Logic -->
+<script src="/src/utils/js/instructor-app.js" type="module"></script>
+<script src="/src/pages/instructor/instructor-mentorship/mentorship.js" type="module"></script>
+<script src="/src/pages/instructor/instructor-analytics/analytics.js" type="module"></script>
+<script>
+(function() {
+    var btn = document.getElementById('instructor-mobile-menu-btn');
+    var sidebar = document.getElementById('instructor-sidebar');
+    var overlay = document.getElementById('sidebar-overlay');
+    if (!btn || !sidebar || !overlay) return;
+    btn.addEventListener('click', function() {
+        sidebar.classList.toggle('-translate-x-full');
+        overlay.classList.toggle('hidden');
+    });
+    overlay.addEventListener('click', function() {
+        sidebar.classList.add('-translate-x-full');
+        overlay.classList.add('hidden');
+    });
+})();
+</script>
+<script>
+// Defer sidebar transition to avoid slide-in animation on desktop page load
+window.addEventListener('load', function() {
+    var sidebar = document.getElementById('instructor-sidebar');
+    if (sidebar) {
+        // Only enable transition on mobile (below lg=1024px)
+        if (window.innerWidth < 1024) {
+            sidebar.classList.add('transition-transform', 'duration-300');
+        }
+        // No transition on desktop � already at lg:translate-x-0, nothing to animate
+    }
+});
+</script>
 </body>
-
 </html>
+
+

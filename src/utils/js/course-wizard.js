@@ -3,8 +3,11 @@
  */
 import { CourseService } from '/src/services/courseService.js';
 import { AuthService } from '/src/services/authService.js';
+import { financeSettingsService } from '/src/services/financeSettingsService.js';
+import { getEmbedUrl } from '/src/utils/js/videoEmbed.js';
 
 // Global state
+window.sessionUploadedFiles = window.sessionUploadedFiles || [];
 window.courseDraft = {
     title: '',
     subtitle: '',
@@ -33,6 +36,45 @@ window.totalSteps = 4;
 window.draggedSectionIdx = null;
 window.draggedItemInfo = null;
 window.categoriesList = [];
+
+/**
+ * Per-lesson video upload state registry.
+ * IMPORTANT: This is RUNTIME-ONLY state (cleared on page refresh).
+ * The DB / courseDraft remain authoritative for already-saved videos.
+ *
+ * Shape: lessonVideoState[lessonId] = {
+ *   phase: 'idle'|'uploading'|'completing'|'pending_save'|'saving'|'saved'|'cancelling'|'error',
+ *   progress: 0,          // 0–100
+ *   fileName: '',
+ *   fileSize: 0,
+ *   objectKey: null,      // R2 object key after multipart-complete
+ *   uploadId: null,       // multipart uploadId needed for mid-upload abort
+ *   abortController: null,
+ *   cancelAfterComplete: false, // race-condition flag: Cancel fired during 'completing'
+ *   prevSavedVideo: null, // snapshot of item.video before replacement starts
+ *   sIdx: -1,             // curriculum indices for card updates
+ *   iIdx: -1,
+ *   errorMessage: ''
+ * }
+ */
+window.lessonVideoState = {};
+
+/** Return or create an idle state entry for a lesson. */
+function getLessonVideoState(lessonId) {
+    if (!window.lessonVideoState[lessonId]) {
+        window.lessonVideoState[lessonId] = {
+            phase: 'idle', progress: 0,
+            fileName: '', fileSize: 0,
+            objectKey: null, uploadId: null,
+            abortController: null,
+            cancelAfterComplete: false,
+            prevSavedVideo: null,
+            sIdx: -1, iIdx: -1,
+            errorMessage: ''
+        };
+    }
+    return window.lessonVideoState[lessonId];
+}
 
 // Drag & drop + inline edit handlers (used in dynamically rendered HTML)
 // Note: Register globals at the end using registerGlobals()
@@ -76,13 +118,82 @@ function hideSavingIndicator() {
     }
 }
 
+window.applyVideoUploadGating = function(settings) {
+    const isLegacyVideosEnabled = settings.self_hosted_video_uploads_enabled === true;
+    
+    // Gating for Course Wizard Intro Video
+    const introVideoUploader = document.getElementById('intro-video-upload-section');
+    const introVideoGuidance = document.getElementById('youtube-unlisted-guidance');
+    if (introVideoUploader && introVideoGuidance) {
+        if (isLegacyVideosEnabled) {
+            introVideoUploader.classList.remove('hidden');
+            introVideoGuidance.classList.add('hidden');
+        } else {
+            introVideoUploader.classList.add('hidden');
+            introVideoGuidance.classList.remove('hidden');
+        }
+    }
+    
+    // Gating for Modal Lesson Video
+    const modalVideoUploader = document.getElementById('modal-file-upload-section');
+    const modalVideoUrlSection = document.getElementById('modal-video-url-section');
+    const modalVideoGuidance = document.getElementById('modal-youtube-guidance');
+    const modalProviderToggle = document.getElementById('modal-video-provider-toggle');
+    
+    if (modalVideoUploader && modalVideoGuidance && modalProviderToggle) {
+        if (isLegacyVideosEnabled) {
+            modalProviderToggle.classList.remove('hidden');
+            modalVideoGuidance.classList.add('hidden');
+            
+            // Initial state based on checked radio
+            const selectedProvider = document.querySelector('input[name="modal-provider-radio"]:checked')?.value || 'youtube';
+            if (selectedProvider === 'r2') {
+                modalVideoUploader.classList.remove('hidden');
+                modalVideoUrlSection.classList.add('hidden');
+            } else {
+                modalVideoUploader.classList.add('hidden');
+                modalVideoUrlSection.classList.remove('hidden');
+            }
+            
+            // Listen to radio changes
+            document.querySelectorAll('input[name="modal-provider-radio"]').forEach(radio => {
+                // Ensure we don't bind multiple times
+                radio.removeEventListener('change', window._modalRadioHandler);
+                window._modalRadioHandler = (e) => {
+                    if (e.target.value === 'r2') {
+                        modalVideoUploader.classList.remove('hidden');
+                        modalVideoUrlSection.classList.add('hidden');
+                    } else {
+                        modalVideoUploader.classList.add('hidden');
+                        modalVideoUrlSection.classList.remove('hidden');
+                    }
+                };
+                radio.addEventListener('change', window._modalRadioHandler);
+            });
+        } else {
+            modalProviderToggle.classList.add('hidden');
+            modalVideoUploader.classList.add('hidden');
+            modalVideoUrlSection.classList.remove('hidden');
+            modalVideoGuidance.classList.remove('hidden');
+        }
+    }
+};
+
 document.addEventListener('DOMContentLoaded', async () => {
-    // 1. Load Categories
+    // 1. Load Categories and Finance Settings
     try {
-        window.categoriesList = await CourseService.getCategories();
+        const [categories, settings] = await Promise.all([
+            CourseService.getCategories(),
+            financeSettingsService.getSettings()
+        ]);
+        window.categoriesList = categories;
+        window.financeSettings = settings;
         renderCategories();
+        window.applyVideoUploadGating(settings);
     } catch (e) {
-        console.error("Failed to load categories", e);
+        console.error("Failed to load initial data", e);
+        window.financeSettings = { is_monetization_enabled: false, instructor_percentage: 100 }; // Fallback
+        window.applyVideoUploadGating(window.financeSettings);
     }
 
     // 2. Check URL for existing course ID
@@ -123,13 +234,11 @@ async function loadDraft(courseId) {
             pricing: {
                 type: course.price_type || 'free',
                 currency: course.currency || 'USD',
-                price: course.price || null,
-                coupon: '',
-                coupon_percent: null,
-                coupon_start: null,
-                coupon_expiry: null
+                price: course.price != null ? parseFloat(course.price) : null,
+                coupons: course.course_coupons || []
             },
             privacy: course.is_public ? 'public' : 'private',
+            certificate_enabled: course.certificate_enabled || false,
             status: course.status || 'draft',
             has_rejection_history: (course.course_moderation_logs || []).some(log => log.decision === 'rejected'),
             isLoaded: false // Safety flag to prevent accidental wiping of DB
@@ -159,8 +268,10 @@ async function loadDraft(courseId) {
                                 content_type: contentType,
                                 is_preview: les.is_preview || false,
                                 order_index: les.order_index ?? 0,
-                                video: (contentType === 'video' || les.video_url)
-                                    ? { url: les.video_url, title: les.description || 'Video Lecture' }
+                                video_storage_key: les.video_storage_key || null,
+                                video_provider: les.video_provider || null,
+                                video: (contentType === 'video' || les.video_url || les.video_storage_key)
+                                    ? { url: les.video_url || null, title: les.description || 'Video Lecture' }
                                     : null,
                                 resources: normalizeToArray(les.lesson_resources).map(r => ({
                                     id: r.id,
@@ -221,6 +332,9 @@ async function loadDraft(courseId) {
         if (window.courseDraft.thumbnail_url) showThumbnailPreview(window.courseDraft.thumbnail_url);
         if (window.courseDraft.intro_video_url) showVideoPreview(window.courseDraft.intro_video_url, "Introduction Video");
         
+        const certToggle = document.getElementById('certificate-enabled-toggle');
+        if (certToggle) certToggle.checked = window.courseDraft.certificate_enabled;
+
         window.courseDraft.isLoaded = true; // Mark as safely loaded
         renderCurriculum();
         renderFinalPreview();
@@ -287,9 +401,12 @@ async function performSave(silent = false) {
             thumbnail_url: window.courseDraft.thumbnail_url || null,
             intro_video_url: window.courseDraft.intro_video_url || null,
             price_type: window.courseDraft.pricing.type || 'free',
-            price: parseFloat(window.courseDraft.pricing.price) || 0,
+            price: (window.courseDraft.pricing.price != null && !isNaN(parseFloat(window.courseDraft.pricing.price)))
+                ? parseFloat(window.courseDraft.pricing.price)
+                : null,
             currency: window.courseDraft.pricing.currency || 'USD',
             is_public: window.courseDraft.privacy === 'public',
+            certificate_enabled: window.courseDraft.certificate_enabled === true,
             status: window.courseDraft.status || 'draft'
         };
 
@@ -318,40 +435,42 @@ async function performSave(silent = false) {
 
 
         console.log('Starting granular curriculum sync...');
-        const existingSectionIds = window.courseDraft.curriculum.map(s => s.id).filter(Boolean);
 
-        for (const [sIdx, section] of window.courseDraft.curriculum.entries()) {
+        await Promise.all(window.courseDraft.curriculum.map(async (section, sIdx) => {
             const savedSection = await CourseService.saveSection(savedCourse.id, {
                 ...section,
                 order_index: sIdx
             });
             section.id = savedSection.id;
 
-            const existingLessonIds = section.items.map(l => l.id).filter(Boolean);
-
-            for (const [lIdx, lesson] of section.items.entries()) {
+            await Promise.all(section.items.map(async (lesson, lIdx) => {
                 const savedLesson = await CourseService.saveLesson(savedSection.id, {
                     ...lesson,
                     order_index: lIdx
                 });
                 lesson.id = savedLesson.id;
-            }
+            }));
+        }));
 
-            // Delete removed lessons only if they exist in DB
-            // (Note: Currently deleteLesson would need to be called here if we tracked what was removed)
-            // For now, let's at least ensure we're not doing a full rebuild.
-        }
-
-        // --- STEP 3: Save Coupon (optional) ---
-        if (window.courseDraft.pricing.coupon && window.courseDraft.id) {
+        // --- STEP 3: Save Coupons (optional array) ---
+        if (window.courseDraft.id) {
             try {
-                await CourseService.saveCoupon(
-                    window.courseDraft.id,
-                    window.courseDraft.pricing.coupon,
-                    window.courseDraft.pricing.coupon_percent || 10,
-                    window.courseDraft.pricing.coupon_expiry,
-                    window.courseDraft.pricing.coupon_start
-                );
+                // Clear existing coupons first
+                await CourseService.deleteCoupon(window.courseDraft.id);
+                // Insert validated ones
+                if (window.courseDraft.pricing.coupons && window.courseDraft.pricing.coupons.length > 0) {
+                    for (const cp of window.courseDraft.pricing.coupons) {
+                        if (cp.code && cp.percent) {
+                            await CourseService.saveCoupon(
+                                window.courseDraft.id,
+                                cp.code,
+                                cp.percent,
+                                cp.expiry || null,
+                                null // No start date required by UI spec
+                            );
+                        }
+                    }
+                }
             } catch (e) {
                 console.warn("Coupon save warning:", e.message);
             }
@@ -555,11 +674,12 @@ async function saveCurrentStepData(shouldSaveToDb = false) {
         window.courseDraft.level = document.getElementById('course-level')?.value || 'Beginner';
     } else if (window.currentStep === 3) {
         window.courseDraft.pricing.currency = document.getElementById('course-currency')?.value || 'USD';
-        window.courseDraft.pricing.price = document.getElementById('course-price')?.value || null;
-        window.courseDraft.pricing.coupon = document.getElementById('course-coupon')?.value || '';
-        window.courseDraft.pricing.coupon_percent = parseInt(document.getElementById('course-coupon-percent')?.value) || null;
-        window.courseDraft.pricing.coupon_start = document.getElementById('course-coupon-start')?.value || null;
-        window.courseDraft.pricing.coupon_expiry = document.getElementById('course-coupon-expiry')?.value || null;
+        
+        // 🔥 CRITICAL: Match DB column 'price' instead of just local draft state
+        const priceVal = parseFloat(document.getElementById('course-price')?.value);
+        window.courseDraft.pricing.price = isNaN(priceVal) ? null : priceVal;
+        
+        syncCourseCoupons();
     } else if (window.currentStep === 4) {
         const privacyEl = document.querySelector('input[name="privacy"]:checked');
         if (privacyEl) {
@@ -596,20 +716,23 @@ function populateFields() {
     } else if (window.currentStep === 2) {
         renderCurriculum();
     } else if (window.currentStep === 3) {
+        // 1. First: set the pricing type toggle (free/paid) and enable/disable the container.
+        //    For 'paid' this does NOT clear the price. For 'free' it sets price to null.
+        //    We call this BEFORE setting the input so the container is enabled.
+        const savedPrice = window.courseDraft.pricing.price;
         setPricingTier(window.courseDraft.pricing.type);
-        // Restore price & currency values that were saved in the draft
+
+        // 2. Restore price after calling setPricingTier (so 'paid' re-enabling doesn't interfere)
         const priceEl = document.getElementById('course-price');
-        const currencyEl = document.getElementById('course-currency');
-        const couponEl = document.getElementById('course-coupon');
-        const couponPctEl = document.getElementById('course-coupon-percent');
-        const couponExpiryEl = document.getElementById('course-coupon-expiry');
-        
-        if (priceEl && window.courseDraft.pricing.price != null) priceEl.value = window.courseDraft.pricing.price;
-        if (currencyEl && window.courseDraft.pricing.currency) currencyEl.value = window.courseDraft.pricing.currency;
-        if (couponEl) couponEl.value = window.courseDraft.pricing.coupon || '';
-        if (couponPctEl && window.courseDraft.pricing.coupon_percent) couponPctEl.value = window.courseDraft.pricing.coupon_percent;
-        if (couponExpiryEl && window.courseDraft.pricing.coupon_expiry) couponExpiryEl.value = window.courseDraft.pricing.coupon_expiry;
-        
+        if (priceEl && savedPrice != null) {
+            priceEl.value = savedPrice;
+            window.courseDraft.pricing.price = savedPrice; // re-hydrate in case setPricingTier cleared it
+        }
+
+        // 3. Render existing coupons
+        renderCourseCoupons();
+
+        // 4. Recalculate payout display
         calculatePayout();
     } else if (window.currentStep === 4) {
         renderFinalPreview();
@@ -617,10 +740,16 @@ function populateFields() {
 }
 
 async function setupEventListeners() {
+    document.getElementById('certificate-enabled-toggle')?.addEventListener('change', (e) => {
+        window.courseDraft.certificate_enabled = e.target.checked;
+        window.saveDraft(true);
+    });
+
     // Nav Buttons
-    document.getElementById('btn-next')?.addEventListener('click', async () => {
-        // Save locally only
-        await saveCurrentStepData(false);
+    document.getElementById('btn-next')?.addEventListener('click', () => {
+        // Trigger a background save
+        const saveToDb = (window.currentStep === 3);
+        saveCurrentStepData(saveToDb);
         if (validateStep(window.currentStep)) goToStep(window.currentStep + 1);
     });
 
@@ -680,6 +809,7 @@ async function setupEventListeners() {
                     // Ensure we have a course ID before uploading
                     if (!window.courseDraft.id) await performSave(true);
                     const url = await CourseService.uploadCourseThumbnail(window.courseDraft.id, file);
+                    window.sessionUploadedFiles.push({ provider: 'supabase', bucket: 'course_thumbnails', url: url });
                     window.courseDraft.thumbnail_url = url;
                     showThumbnailPreview(url);
                     window.saveDraft(true);
@@ -701,33 +831,199 @@ async function setupEventListeners() {
             if (e.target.files && e.target.files[0]) {
                 const file = e.target.files[0];
                 const btn = document.getElementById('btn-upload-video');
-                if (btn) { btn.setAttribute('data-orig', btn.innerText); btn.innerText = 'Uploading...'; btn.disabled = true; }
+                const progressContainer = document.getElementById('intro-upload-progress-container');
+                const progressBar = document.getElementById('intro-upload-progress-bar');
+                const percentText = document.getElementById('intro-upload-percent');
+
+                if (btn) { btn.setAttribute('data-orig', btn.innerText); btn.innerText = 'Initializing...'; btn.disabled = true; }
+                if (progressContainer) {
+                    progressContainer.classList.remove('hidden');
+                    progressBar.style.width = '0%';
+                    percentText.innerText = '0%';
+                }
 
                 try {
                     // Ensure we have a course ID before uploading
                     if (!window.courseDraft.id) await performSave(true);
-                    const url = await CourseService.uploadCourseVideo(window.courseDraft.id, file);
-                    window.courseDraft.intro_video_url = url;
-                    showVideoPreview(url, file.name);
+                    
+                    if (btn) btn.innerText = 'Uploading...';
+                    
+                    window.introUploadAbortController = new AbortController();
+                    
+                    const cancelBtn = document.getElementById('modal-upload-cancel');
+                    if (cancelBtn) {
+                        cancelBtn.onclick = () => {
+                            if (window.introUploadAbortController) {
+                                window.introUploadAbortController.abort();
+                            }
+                        };
+                    }
+
+                    const uploadResult = await CourseService.uploadToR2(window.courseDraft.id, null, 'intro', file, (percent) => {
+                        if (progressBar) progressBar.style.width = `${percent}%`;
+                        if (percentText) percentText.innerText = `${Math.round(percent)}%`;
+                    }, window.introUploadAbortController.signal);
+                    
+                    window.sessionUploadedFiles.push({ provider: 'r2', key: uploadResult.objectKey });
+
+                    window.courseDraft.intro_video_provider = 'r2';
+                    window.courseDraft.intro_video_storage_key = uploadResult.objectKey;
+                    window.courseDraft.intro_video_url = null; // Clear old URL
+
+                    // We can't generate a stable playback URL here without invoking the R2 presigned GET, 
+                    // so we just show the filename. The learning interface handles GET URLs.
+                    showVideoPreview('', file.name);
                     window.saveDraft(true);
                 } catch (err) {
                     console.error('Video upload error:', err);
                     alert('Upload failed: ' + err.message);
-                    if (btn) btn.innerText = btn.getAttribute('data-orig') || 'Upload Video';
                 } finally {
+                    if (btn) btn.innerText = btn.getAttribute('data-orig') || 'Choose File';
                     if (btn) btn.disabled = false;
+                    setTimeout(() => { if (progressContainer) progressContainer.classList.add('hidden'); }, 2000);
                 }
             }
+        });
+    }
+
+    // Intro Video URL Save Logic
+    const introUrlInput = document.getElementById('intro-video-embed-url');
+    const introUrlSaveBtn = document.getElementById('btn-save-intro-url');
+    if (introUrlInput && introUrlSaveBtn) {
+        introUrlSaveBtn.addEventListener('click', async function () {
+            const url = introUrlInput.value.trim();
+            if (!url) return;
+            const embedSrc = getEmbedUrl(url);
+            if (!embedSrc) {
+                const errEl = document.getElementById('intro-video-url-error');
+                if (errEl) {
+                    errEl.textContent = 'Please enter a valid YouTube or Vimeo URL.';
+                    errEl.classList.remove('hidden');
+                } else {
+                    alert('Please enter a valid YouTube or Vimeo URL.');
+                }
+                return;
+            }
+            const errEl = document.getElementById('intro-video-url-error');
+            if (errEl) errEl.classList.add('hidden');
+            
+            if (!window.courseDraft.id) await performSave(true);
+            window.courseDraft.intro_video_provider = 'youtube';
+            window.courseDraft.intro_video_url = url;
+            window.courseDraft.intro_video_storage_key = null; // Clear R2 key
+
+            showVideoPreview(url, "Embedded Video");
+            window.saveDraft(true);
+            introUrlInput.value = '';
+            if (typeof showToast === 'function') showToast("Intro video URL saved.");
         });
     }
 
     // Modal File Uploads
     const modalVidUpload = document.getElementById('modal-video-upload');
     if (modalVidUpload) {
-        modalVidUpload.addEventListener('change', function (e) {
+        modalVidUpload.addEventListener('change', async function (e) {
             if (e.target.files && e.target.files[0]) {
+                const file = e.target.files[0];
+                
+                if (activeModalItemIdx === -1) return;
+                const item = window.courseDraft.curriculum[activeModalSectionIdx].items[activeModalItemIdx];
+                const st = getLessonVideoState(item.id);
+
+                if (st.phase === 'uploading' || st.phase === 'completing' || st.phase === 'saving') {
+                    alert("An upload is already in progress for this lesson. Please wait or cancel it first.");
+                    modalVidUpload.value = ''; // clear selection
+                    return;
+                }
+
+                // If replacing an existing saved video, snapshot it so we can restore on cancel
+                if (item.video_storage_key || (item.video && item.video.url)) {
+                    st.prevSavedVideo = JSON.parse(JSON.stringify({ 
+                        video: item.video, 
+                        video_storage_key: item.video_storage_key 
+                    }));
+                } else {
+                    st.prevSavedVideo = null;
+                }
+
                 const display = document.getElementById('modal-video-name-display');
-                if (display) display.innerText = e.target.files[0].name;
+                if (display) display.innerText = file.name;
+
+                const progressContainer = document.getElementById('modal-upload-progress-container');
+                const progressBar = document.getElementById('modal-upload-progress-bar');
+                const percentText = document.getElementById('modal-upload-percent');
+
+                if (progressContainer) {
+                    progressContainer.classList.remove('hidden');
+                    progressBar.style.width = '0%';
+                    percentText.innerText = '0%';
+                }
+
+                st.phase = 'uploading';
+                st.progress = 0;
+                st.fileName = file.name;
+                st.fileSize = file.size;
+                st.sIdx = activeModalSectionIdx;
+                st.iIdx = activeModalItemIdx;
+                st.abortController = new AbortController();
+                st.cancelAfterComplete = false;
+                st.errorMessage = '';
+
+                updateLessonVideoCardUI(st.sIdx, st.iIdx);
+
+                try {
+                    const uploadResult = await CourseService.uploadToR2(
+                        window.courseDraft.id, item.id, 'lesson', file, (percent) => {
+                            st.progress = percent;
+                            // Only update modal DOM if this modal is currently open and showing the active lesson
+                            if (activeModalItemIdx === st.iIdx && activeModalSectionIdx === st.sIdx) {
+                                if (progressBar) progressBar.style.width = `${percent}%`;
+                                if (percentText) percentText.innerText = `${Math.round(percent)}%`;
+                            }
+                            updateLessonVideoCardUI(st.sIdx, st.iIdx);
+                        }, st.abortController.signal
+                    );
+                    
+                    window.sessionUploadedFiles.push({ provider: 'r2', key: uploadResult.objectKey });
+
+                    // Race condition: if cancel clicked just as completion returns
+                    if (st.cancelAfterComplete) {
+                        st.phase = 'cancelling';
+                        await CourseService.discardStagedUpload(window.courseDraft.id, uploadResult.objectKey);
+                        throw new Error('Upload cancelled');
+                    }
+
+                    st.objectKey = uploadResult.objectKey;
+                    st.phase = 'pending_save';
+                    
+                    if (activeModalItemIdx === st.iIdx && activeModalSectionIdx === st.sIdx) {
+                        if (percentText) percentText.innerText = 'Upload complete! Click Save Video';
+                        if (progressBar) progressBar.style.width = '100%';
+                        const errEl = document.getElementById('modal-video-url-error');
+                        if (errEl) errEl.classList.add('hidden');
+                    }
+                    updateLessonVideoCardUI(st.sIdx, st.iIdx);
+
+                } catch (err) {
+                    if (err.message !== 'Upload cancelled' && st.phase !== 'cancelling') {
+                        console.error('Modal upload failed:', err);
+                        st.phase = 'error';
+                        st.errorMessage = 'Upload failed: ' + err.message;
+                    } else {
+                        // User cancelled
+                        st.phase = 'idle';
+                    }
+                    
+                    if (activeModalItemIdx === st.iIdx && activeModalSectionIdx === st.sIdx) {
+                        const errEl = document.getElementById('modal-video-url-error');
+                        if (errEl) {
+                            errEl.textContent = st.errorMessage || 'Upload cancelled.';
+                            errEl.classList.remove('hidden');
+                        }
+                        if (progressContainer) progressContainer.classList.add('hidden');
+                    }
+                    updateLessonVideoCardUI(st.sIdx, st.iIdx);
+                }
             }
         });
     }
@@ -806,7 +1102,153 @@ async function setupEventListeners() {
     }
 }
 
+// --- LESSON VIDEO STATE HELPERS ---
+
+/**
+ * Lightweight badge updater.
+ * Targets only the video-badge span for a single lesson — no full curriculum re-render.
+ */
+function updateLessonVideoCardUI(sIdx, iIdx) {
+    const item = window.courseDraft.curriculum[sIdx]?.items[iIdx];
+    if (!item) return;
+
+    const badge = document.getElementById(`lesson-video-badge-${item.id}`);
+    if (!badge) return; // Modal is open or card not rendered yet — fine, renderCurriculum handles it
+
+    const st = window.lessonVideoState[item.id];
+    const hasSavedVideo = !!(item.video_storage_key || (item.video && item.video.url));
+
+    let html = '';
+
+    if (st && st.phase === 'uploading') {
+        const pct = Math.round(st.progress);
+        html = `
+            <div class="flex flex-col items-start gap-1">
+                <span class="text-blue-500 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider">
+                    Uploading ${pct}%
+                </span>
+                <div class="w-full h-1 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                    <div class="h-full bg-blue-500 rounded-full transition-all" style="width:${pct}%"></div>
+                </div>
+            </div>`;
+    } else if (st && st.phase === 'completing') {
+        html = `<span class="text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider">
+                    Completing...
+                </span>`;
+    } else if (st && st.phase === 'pending_save') {
+        html = `<span class="flex items-center gap-1 text-amber-500 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider">
+                    <span class="material-symbols-outlined text-[12px]">check_circle</span>Ready — Save Video
+                </span>`;
+    } else if (st && st.phase === 'saving') {
+        html = `<span class="text-slate-400 bg-slate-50 dark:bg-slate-800 px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider">
+                    Saving...
+                </span>`;
+    } else if ((st && st.phase === 'saved') || hasSavedVideo) {
+        html = `<button onclick="previewLessonVideo('${item.id}', ${sIdx}, ${iIdx})"
+                    class="flex items-center gap-1 text-primary hover:text-blue-700 transition text-[11px] font-bold uppercase tracking-wider"
+                    title="Preview video">
+                    <span class="material-symbols-outlined text-[14px]">play_circle</span>
+                    Video
+                </button>`;
+    } else if (st && st.phase === 'error') {
+        html = `<span class="flex items-center gap-1 text-red-500 bg-red-50 dark:bg-red-900/20 px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider">
+                    <span class="material-symbols-outlined text-[12px]">error</span>Upload failed
+                    <button onclick="retryLessonVideoUpload(${sIdx},${iIdx})" class="ml-1 underline hover:no-underline">Retry</button>
+                </span>`;
+    } else {
+        html = `<span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">No video</span>`;
+    }
+
+    badge.innerHTML = html;
+}
+
+/**
+ * Secure video preview for a saved lesson video.
+ * Calls the r2-video-playback Edge Function and opens the URL in a lightweight player modal.
+ */
+async function previewLessonVideo(lessonId, sIdx, iIdx) {
+    const item = window.courseDraft.curriculum[sIdx]?.items[iIdx];
+    if (!item) return;
+
+    // YouTube/Vimeo embed path
+    if (item.video?.url && !item.video_storage_key) {
+        const embedSrc = getEmbedUrl(item.video.url);
+        if (embedSrc) {
+            openVideoPlayerModal(embedSrc, item.video.title || 'Lesson Video', true);
+            return;
+        }
+    }
+
+    // R2 secure path
+    try {
+        const btn = document.getElementById(`lesson-video-badge-${lessonId}`)?.querySelector('button');
+        if (btn) { btn.disabled = true; btn.innerHTML += ' <span class="material-symbols-outlined text-[10px] align-middle animate-spin" style="animation-duration:1s">progress_activity</span>'; }
+        const playbackUrl = await CourseService.getR2PlaybackUrl(window.courseDraft.id, lessonId, 'lesson');
+        if (btn) { btn.disabled = false; updateLessonVideoCardUI(sIdx, iIdx); }
+        openVideoPlayerModal(playbackUrl, item.video?.title || 'Lesson Video', false);
+    } catch (err) {
+        console.error('Playback URL fetch failed:', err);
+        if (typeof showToast === 'function') showToast('Could not load video preview: ' + err.message, true);
+        updateLessonVideoCardUI(sIdx, iIdx);
+    }
+}
+
+/** Opens a simple video player modal overlay. */
+function openVideoPlayerModal(src, title, isEmbed) {
+    let modal = document.getElementById('lesson-video-player-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'lesson-video-player-modal';
+        modal.className = 'fixed inset-0 z-[9999] bg-black/80 flex items-center justify-center p-4';
+        modal.onclick = (e) => { if (e.target === modal) closeVideoPlayerModal(); };
+        document.body.appendChild(modal);
+    }
+    const mediaHtml = isEmbed
+        ? `<iframe src="${src}" class="w-full aspect-video rounded-lg" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>`
+        : `<video src="${src}#t=1" class="w-full aspect-video rounded-lg bg-black" controls autoplay preload="metadata"></video>`;
+
+    modal.innerHTML = `
+        <div class="bg-slate-900 rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden">
+            <div class="flex items-center justify-between px-4 py-3 border-b border-slate-700">
+                <span class="text-sm font-bold text-white truncate">${title}</span>
+                <button onclick="closeVideoPlayerModal()" class="text-slate-400 hover:text-white transition">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="p-4">${mediaHtml}</div>
+        </div>`;
+    modal.classList.remove('hidden');
+}
+
+window.closeVideoPlayerModal = function() {
+    const modal = document.getElementById('lesson-video-player-modal');
+    if (modal) {
+        // Stop video/audio before closing
+        modal.querySelectorAll('video').forEach(v => { v.pause(); v.src = ''; });
+        modal.classList.add('hidden');
+        modal.innerHTML = '';
+    }
+};
+
+/**
+ * Retry entry point — reopens the video modal for the failed lesson.
+ */
+function retryLessonVideoUpload(sIdx, iIdx) {
+    const item = window.courseDraft.curriculum[sIdx]?.items[iIdx];
+    if (!item) return;
+    const st = window.lessonVideoState[item.id];
+    if (st) {
+        st.phase = 'idle';
+        st.progress = 0;
+        st.errorMessage = '';
+        st.objectKey = null;
+        st.uploadId = null;
+    }
+    wizardOpenModal('modal-add-video', sIdx, iIdx);
+}
+
 // --- CURRICULUM LOGIC ---
+
 
 function addSection() {
     window.courseDraft.curriculum.push({
@@ -844,74 +1286,84 @@ function renderCurriculum() {
                 itemsHtml += `
                     <div class="group border ${borderClass} rounded-lg bg-white dark:bg-slate-900 hover:border-primary/30 transition-colors mb-3"
                          draggable="true" ondragstart="dragStartItem(event, ${sIdx}, ${iIdx})" ondragover="dragOverItem(event)" ondrop="dropItem(event, ${sIdx}, ${iIdx})">
-                        <div class="p-4 flex items-center justify-between">
-                            <div class="flex items-center gap-4 w-full">
-                                <span class="material-symbols-outlined text-slate-300 cursor-move group-hover:text-slate-400">drag_handle</span>
-                                <div class="flex items-center gap-3 w-full">
-                                    <span class="material-symbols-outlined text-slate-400">${icon}</span>
-                                    <div class="flex flex-col w-full text-left">
-                                        <input class="text-sm font-medium text-slate-900 dark:text-white leading-none bg-transparent border-none focus:ring-0 p-0 transition w-full mb-1" 
+                        <div class="p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                            <div class="flex items-start sm:items-center gap-2 sm:gap-4 w-full flex-1 min-w-0">
+                                <span class="material-symbols-outlined text-slate-300 cursor-move group-hover:text-slate-400 mt-1 sm:mt-0">drag_handle</span>
+                                <div class="flex items-start sm:items-center gap-2 sm:gap-3 w-full flex-1 min-w-0">
+                                    ${(function() {
+                                        if (item.content_type === 'video' && (item.video_storage_key || (item.video && item.video.url))) {
+                                            return `<div class="w-10 h-7 bg-slate-800 dark:bg-slate-950 rounded flex items-center justify-center flex-shrink-0 mt-0.5 sm:mt-0 relative overflow-hidden ring-1 ring-slate-700">
+                                                        <span class="material-symbols-outlined text-[16px] text-white">play_arrow</span>
+                                                    </div>`;
+                                        } else {
+                                            return `<span class="material-symbols-outlined text-slate-400 mt-0.5 sm:mt-0">${icon}</span>`;
+                                        }
+                                    })()}
+                                    <div class="flex flex-col flex-1 min-w-0 text-left w-full">
+                                        <input class="text-sm font-medium text-slate-900 dark:text-white leading-none bg-transparent border-none focus:ring-0 p-0 transition w-full mb-1 truncate" 
                                            value="${item.title}" onblur="updateItemTitle(${sIdx}, ${iIdx}, this.value)" />
                                         
                                         <!-- Scrollable container for Lesson Details -->
-                                        <div class="overflow-x-auto scrollbar-hide py-1">
-                                            <div class="flex items-center gap-3 mt-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap">
-                                                <span>${item.content_type.toUpperCase()}</span>
-                                                ${item.video ? `
-                                                    <span class="flex items-center gap-1 text-blue-500 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded">
-                                                        <span class="material-symbols-outlined text-[12px]">videocam</span> 
-                                                        ${item.video.title || 'Video'}
-                                                    </span>
-                                                ` : ''}
-                                                ${(item.quiz && item.quiz.length > 0) ? `
-                                                    <button onclick="wizardOpenModal('modal-add-quiz', ${sIdx}, ${iIdx})" class="flex items-center gap-1 text-amber-500 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded hover:bg-amber-100 dark:hover:bg-amber-900/40 transition">
-                                                        <span class="material-symbols-outlined text-[12px]">quiz</span> 
-                                                        ${item.quiz.length} Quiz${item.quiz.length !== 1 ? 'zes' : ''}
-                                                    </button>
-                                                ` : ''}
+                                        <div class="flex flex-wrap items-center gap-2 mt-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                                            <span id="lesson-video-badge-${item.id}">
+                                                ${(function() {
+                                                    const st = window.lessonVideoState ? window.lessonVideoState[item.id] : null;
+                                                    const hasSavedVideo = !!(item.video_storage_key || (item.video && item.video.url));
+                                                    if (st && st.phase === 'uploading') {
+                                                        const pct = Math.round(st.progress);
+                                                        return `<div class="flex flex-col items-start gap-1">
+                                                                    <span class="text-blue-500 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider">Uploading ${pct}%</span>
+                                                                    <div class="w-full h-1 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden"><div class="h-full bg-blue-500 rounded-full transition-all" style="width:${pct}%"></div></div>
+                                                                </div>`;
+                                                    } else if (st && st.phase === 'completing') {
+                                                        return `<span class="text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider">Completing...</span>`;
+                                                    } else if (st && st.phase === 'pending_save') {
+                                                        return `<span class="flex items-center gap-1 text-amber-500 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider"><span class="material-symbols-outlined text-[12px]">check_circle</span>Ready — Save Video</span>`;
+                                                    } else if (st && st.phase === 'saving') {
+                                                        return `<span class="text-slate-400 bg-slate-50 dark:bg-slate-800 px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider">Saving...</span>`;
+                                                    } else if ((st && st.phase === 'saved') || hasSavedVideo) {
+                                                        return `<button onclick="previewLessonVideo('${item.id}', ${sIdx}, ${iIdx})" class="flex items-center gap-1 text-primary hover:text-blue-700 transition text-[11px] font-bold uppercase tracking-wider" title="Preview video"><span class="material-symbols-outlined text-[14px]">play_circle</span>Video</button>`;
+                                                    } else if (st && st.phase === 'error') {
+                                                        return `<span class="flex items-center gap-1 text-red-500 bg-red-50 dark:bg-red-900/20 px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider"><span class="material-symbols-outlined text-[12px]">error</span>Failed <button onclick="retryLessonVideoUpload(${sIdx},${iIdx})" class="ml-1 underline hover:no-underline">Retry</button></span>`;
+                                                    }
+                                                    return `<span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">No video</span>`;
+                                                })()}
+                                            </span>
 
-                                                ${(item.resources || []).map(r => `<span class="flex items-center gap-1 text-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded"><span class="material-symbols-outlined text-[12px]">attachment</span> ${r.title}</span>`).join('')}
-                                            </div>
+                                            ${(item.quiz && item.quiz.length > 0) ? `
+                                                <button onclick="wizardOpenModal('modal-add-quiz', ${sIdx}, ${iIdx})" class="flex items-center gap-1 text-amber-500 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded hover:bg-amber-100 dark:hover:bg-amber-900/40 transition">
+                                                    <span class="material-symbols-outlined text-[12px]">quiz</span> 
+                                                    ${item.quiz.length} Quiz${item.quiz.length !== 1 ? 'zes' : ''}
+                                                </button>
+                                            ` : ''}
+
+                                            ${(item.resources && item.resources.length > 0) ? `
+                                                <button onclick="wizardOpenModal('modal-add-resource', ${sIdx}, ${iIdx})" class="flex items-center justify-center gap-1 text-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition flex-shrink-0 w-auto mt-0">
+                                                    <span class="material-symbols-outlined text-[12px]">attachment</span> 
+                                                    ${item.resources.length} Resource${item.resources.length !== 1 ? 's' : ''}
+                                                </button>
+                                            ` : ''}
                                         </div>
-                                        
-                                        <!-- Video Preview for Lesson -->
-                                        ${item.video?.url ? `
-                                            <div class="mt-2 w-full max-w-sm rounded-lg overflow-hidden border border-slate-100 dark:border-slate-800 bg-black/5 flex items-center gap-3 p-2">
-                                                <div class="w-16 h-10 bg-black rounded flex items-center justify-center relative group-preview">
-                                                    <video class="w-full h-full object-cover">
-                                                        <source src="${item.video.url}#t=0.5" type="video/mp4">
-                                                    </video>
-                                                    <div class="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition">
-                                                        <span class="material-symbols-outlined text-white text-xs">play_arrow</span>
-                                                    </div>
-                                                </div>
-                                                <div class="flex flex-col min-w-0">
-                                                    <span class="text-[10px] text-slate-400 font-bold uppercase truncate">${item.video.title || 'Lesson Video'}</span>
-                                                    <a href="${item.video.url}" target="_blank" class="text-[9px] text-primary hover:underline truncate">View Original</a>
-                                                </div>
-                                            </div>
-                                        ` : ''}
                                     </div>
                                 </div>
                             </div>
-                            <div class="flex items-center gap-1 shrink-0 ml-4">
-                                <button onclick="deleteItem(${sIdx}, ${iIdx})" class="p-2 text-slate-400 hover:text-red-500 transition"><span class="material-symbols-outlined text-xl">delete</span></button>
+                            <div class="flex items-center sm:ml-4 self-end sm:self-auto shrink-0">
+                                <!-- Delete button moved to bottom actions -->
                             </div>
                         </div>
-                        <div class="px-4 pb-4 flex gap-2">
-                            <div class="flex items-center gap-4">
-                                <div class="flex items-center gap-2">
-                                    <label class="relative inline-flex items-center cursor-pointer">
-                                        <input type="checkbox" ${item.is_preview ? 'checked' : ''} onchange="toggleLessonPreview(${sIdx}, ${iIdx})" class="sr-only peer">
-                                        <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-accent"></div>
-                                    </label>
-                                    <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Preview</span>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <button onclick="wizardOpenModal('modal-add-video', ${sIdx}, ${iIdx})" class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-accent transition flex items-center justify-center" title="Add Video"><span class="material-symbols-outlined text-lg">videocam</span></button>
-                                    <button onclick="wizardOpenModal('modal-add-resource', ${sIdx}, ${iIdx})" class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-accent transition flex items-center justify-center" title="Add Resource"><span class="material-symbols-outlined text-lg">attachment</span></button>
-                                    <button onclick="wizardOpenModal('modal-add-quiz', ${sIdx}, ${iIdx})" class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-accent transition flex items-center justify-center" title="Add Quiz"><span class="material-symbols-outlined text-lg">quiz</span></button>
-                                </div>
+                        <div class="px-3 sm:px-4 pb-3 sm:pb-4 flex flex-col sm:flex-row sm:items-center justify-between border-t border-slate-50 dark:border-slate-800/50 pt-3 sm:pt-0 sm:border-t-0 gap-3">
+                            <div class="flex items-center gap-2 self-start sm:self-center">
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" ${item.is_preview ? 'checked' : ''} onchange="toggleLessonPreview(${sIdx}, ${iIdx})" class="sr-only peer">
+                                    <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-accent"></div>
+                                </label>
+                                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-1">Preview</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:gap-2 w-full sm:w-auto ml-auto">
+                                <button onclick="wizardOpenModal('modal-add-quiz', ${sIdx}, ${iIdx})" class="flex items-center justify-center w-full sm:w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-900/10 sm:bg-slate-100 sm:dark:bg-slate-800 text-amber-500 sm:text-slate-500 hover:text-accent transition border border-amber-200 dark:border-amber-900/30 sm:border-transparent" title="Add Quiz"><span class="material-symbols-outlined text-[16px] sm:text-lg">quiz</span></button>
+                                <button onclick="wizardOpenModal('modal-add-video', ${sIdx}, ${iIdx})" class="flex items-center justify-center w-full sm:w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/10 sm:bg-slate-100 sm:dark:bg-slate-800 text-blue-500 sm:text-slate-500 hover:text-accent transition border border-blue-200 dark:border-blue-900/30 sm:border-transparent" title="Add Video"><span class="material-symbols-outlined text-[16px] sm:text-lg">videocam</span></button>
+                                <button onclick="wizardOpenModal('modal-add-resource', ${sIdx}, ${iIdx})" class="col-span-2 flex items-center justify-center w-full sm:w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-900/10 sm:bg-slate-100 sm:dark:bg-slate-800 text-emerald-500 sm:text-slate-500 hover:text-accent transition border border-emerald-200 dark:border-emerald-900/30 sm:border-transparent" title="Add Resource"><span class="material-symbols-outlined text-[16px] sm:text-lg">attachment</span></button>
+                                <button onclick="deleteItem(${sIdx}, ${iIdx})" class="col-span-2 sm:col-span-1 mt-1 sm:mt-0 flex items-center justify-center w-full sm:w-8 h-8 rounded-lg bg-red-50 dark:bg-red-900/10 sm:bg-transparent sm:dark:bg-transparent text-red-500 hover:text-red-700 sm:text-slate-400 sm:hover:text-red-500 transition border border-red-200 dark:border-red-900/30 sm:border-transparent" title="Delete Lesson"><span class="material-symbols-outlined text-[16px] sm:text-lg">delete</span></button>
                             </div>
                         </div>
                     </div>`;
@@ -920,16 +1372,16 @@ function renderCurriculum() {
 
         html += `
         <div draggable="true" ondragstart="dragStartSection(event, ${sIdx})" ondragover="dragOverSection(event)" ondrop="dropSection(event, ${sIdx})" class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-visible relative mb-8 cursor-grab active:cursor-grabbing">
-            <div class="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50 pointer-events-none">
-                <div class="flex items-center gap-4">
-                    <span class="material-symbols-outlined text-slate-400 cursor-move">drag_indicator</span>
-                    <div class="flex items-center gap-2 relative pointer-events-auto">
-                        <span class="text-sm font-bold text-slate-400 uppercase">Section ${sIdx + 1}:</span>
-                        <input type="text" value="${sec.title}" onchange="updateSectionTitle(${sIdx}, this.value)" class="text-lg font-semibold text-slate-900 dark:text-white bg-transparent border-none outline-none focus:ring-0 p-0 rounded px-1 w-64" placeholder="Section Title..." />
+            <div class="p-4 sm:p-6 border-b border-slate-100 dark:border-slate-800 flex flex-nowrap items-center justify-between gap-3 bg-slate-50/50 dark:bg-slate-800/50 pointer-events-none">
+                <div class="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
+                    <span class="material-symbols-outlined text-slate-400 cursor-move shrink-0">drag_indicator</span>
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:gap-2 relative pointer-events-auto flex-1 min-w-0">
+                        <span class="text-[11px] sm:text-sm font-bold text-slate-400 uppercase tracking-widest shrink-0">Section ${sIdx + 1}:</span>
+                        <input type="text" value="${sec.title}" onchange="updateSectionTitle(${sIdx}, this.value)" class="text-base sm:text-lg font-semibold text-slate-900 dark:text-white bg-transparent border-none outline-none focus:ring-0 p-0 rounded w-full truncate" placeholder="Section Title..." />
                     </div>
                 </div>
-                <div class="flex items-center gap-2 pointer-events-auto">
-                    <button onclick="deleteSection(${sIdx})" class="text-slate-400 hover:text-red-500 transition p-1 rounded">
+                <div class="flex items-center gap-2 pointer-events-auto shrink-0 self-start sm:self-center">
+                    <button onclick="deleteSection(${sIdx})" class="text-slate-400 hover:text-red-500 transition p-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded">
                         <span class="material-symbols-outlined">delete</span>
                     </button>
                 </div>
@@ -1058,13 +1510,52 @@ function wizardOpenModal(modalId, sIdx, iIdx) {
     if (modalId === 'modal-add-video') {
         const titleEl = document.getElementById('modal-video-title');
         const nameEl = document.getElementById('modal-video-name-display');
-        
-        if (lesson.video) {
-            if (titleEl) titleEl.value = lesson.video.title || '';
-            if (nameEl) nameEl.innerText = lesson.video.url ? 'Video attached' : 'Click or drag video to upload';
+        const embedUrlEl = document.getElementById('modal-video-embed-url');
+        const fileEl = document.getElementById('modal-video-upload');
+        const errEl = document.getElementById('modal-video-url-error');
+        const progressContainer = document.getElementById('modal-upload-progress-container');
+        const progressBar = document.getElementById('modal-upload-progress-bar');
+        const percentText = document.getElementById('modal-upload-percent');
+
+        // Always resync every field
+        if (embedUrlEl) embedUrlEl.value = (lesson.video && lesson.video.url && !lesson.video_storage_key) ? lesson.video.url : '';
+        if (fileEl) fileEl.value = ''; // clear any leftover selected File
+        if (errEl) errEl.classList.add('hidden');
+        if (progressContainer) progressContainer.classList.add('hidden');
+
+        const st = getLessonVideoState(lesson.id);
+
+        if (st.phase === 'uploading' || st.phase === 'completing' || st.phase === 'saving') {
+            if (titleEl) titleEl.value = lesson.video?.title || '';
+            if (nameEl) nameEl.innerText = st.fileName || 'Uploading...';
+            if (progressContainer) {
+                progressContainer.classList.remove('hidden');
+                progressBar.style.width = (st.phase === 'completing' || st.phase === 'saving') ? '100%' : `${st.progress}%`;
+                
+                if (st.phase === 'completing') percentText.innerText = 'Completing...';
+                else if (st.phase === 'saving') percentText.innerText = 'Saving...';
+                else percentText.innerText = `${Math.round(st.progress)}%`;
+            }
+        } else if (st.phase === 'pending_save') {
+            if (titleEl) titleEl.value = lesson.video?.title || '';
+            if (nameEl) nameEl.innerText = st.fileName || 'Video Staged';
+            if (progressContainer) {
+                progressContainer.classList.remove('hidden');
+                progressBar.style.width = '100%';
+                percentText.innerText = 'Upload complete! Click Save Video';
+            }
+        } else if (st.phase === 'error') {
+            if (titleEl) titleEl.value = lesson.video?.title || '';
+            if (nameEl) nameEl.innerText = 'Upload failed';
+            if (errEl) {
+                errEl.textContent = st.errorMessage || 'Upload failed.';
+                errEl.classList.remove('hidden');
+            }
         } else {
-            if (titleEl) titleEl.value = '';
-            if (nameEl) nameEl.innerText = 'Click or drag video to upload';
+            // idle or saved
+            if (titleEl) titleEl.value = lesson.video?.title || '';
+            const hasSavedVideo = (lesson.video_storage_key || (lesson.video && lesson.video.url));
+            if (nameEl) nameEl.innerText = hasSavedVideo ? 'Video attached (upload new to replace)' : 'Click or drag video to upload';
         }
     } else if (modalId === 'modal-add-resource') {
         renderResourceList(sIdx, iIdx);
@@ -1143,12 +1634,10 @@ function toggleResourceForm(show) {
 }
 
 function deleteResource(sIdx, iIdx, rIdx) {
-    if (confirm('Remove this resource?')) {
-        window.courseDraft.curriculum[sIdx].items[iIdx].resources.splice(rIdx, 1);
-        renderResourceList(sIdx, iIdx);
-        renderCurriculum();
-        window.saveDraft(true);
-    }
+    window.courseDraft.curriculum[sIdx].items[iIdx].resources.splice(rIdx, 1);
+    renderResourceList(sIdx, iIdx);
+    renderCurriculum();
+    window.saveDraft(true);
 }
 
 function closeModal(modalId) {
@@ -1160,50 +1649,225 @@ function closeModal(modalId) {
 }
 
 async function wizardSaveModalVideo() {
-    const fileEl = document.getElementById('modal-video-upload');
+    const provider = document.querySelector('input[name="modal-provider-radio"]:checked')?.value || 'youtube';
     const embedUrl = document.getElementById('modal-video-embed-url')?.value;
     const title = document.getElementById('modal-video-title')?.value || 'Video Lecture';
-
-    let uploadedUrl = null;
-    if (fileEl && fileEl.files && fileEl.files[0]) {
-        try {
-            const lessonId = window.courseDraft.curriculum[activeModalSectionIdx].items[activeModalItemIdx].id;
-            uploadedUrl = await CourseService.uploadLessonVideo(lessonId, fileEl.files[0]);
-        } catch (e) { alert('Upload failed: ' + e.message); return; }
-    } else if (embedUrl) {
-        uploadedUrl = embedUrl;
+    
+    if (activeModalItemIdx === -1) return;
+    const item = window.courseDraft.curriculum[activeModalSectionIdx].items[activeModalItemIdx];
+    const st = getLessonVideoState(item.id);
+    
+    // Disable save button to prevent double-clicks
+    const saveBtn = document.querySelector('#modal-add-video-content button:last-child');
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.innerText = 'Saving...';
     }
 
-    if (activeModalItemIdx !== -1) {
-        const item = window.courseDraft.curriculum[activeModalSectionIdx].items[activeModalItemIdx];
-        item.content_type = 'video';
-        item.video = { title: title, url: uploadedUrl };
-        // Sync the video title to the lesson description for DB persistence
-        item.description = title;
+    try {
+        if (provider === 'r2') {
+            if (st.phase === 'uploading' || st.phase === 'completing') {
+                alert("Upload is still in progress. Please wait or cancel.");
+                return;
+            }
+
+            if (st.phase !== 'pending_save' || !st.objectKey) {
+                const errEl = document.getElementById('modal-video-url-error');
+                if (errEl) {
+                    errEl.textContent = 'Please select a video file and wait for it to upload.';
+                    errEl.classList.remove('hidden');
+                }
+                return;
+            }
+
+            st.phase = 'saving';
+            updateLessonVideoCardUI(st.sIdx, st.iIdx);
+
+            // Commit the uploaded object to generate DB asset records
+            await CourseService.commitR2Upload(
+                window.courseDraft.id,
+                item.id,
+                'lesson',
+                st.objectKey,
+                st.fileSize
+            );
+
+            // Delete the OLD R2 object if this was a replacement, to avoid storage bloat.
+            // st.prevSavedVideo is snapshotted at upload-start time (line ~937).
+            if (st.prevSavedVideo?.video_storage_key) {
+                CourseService.discardStagedUpload(
+                    window.courseDraft.id,
+                    st.prevSavedVideo.video_storage_key
+                ).catch(err => console.warn('Old R2 cleanup failed (non-critical):', err));
+                st.prevSavedVideo = null;
+            }
+
+            item.content_type = 'video';
+            item.video_provider = 'r2';
+            item.video_storage_key = st.objectKey;
+            item.video = { title: title, url: null };
+            item.description = title;
+
+            // Clear state
+            st.phase = 'saved';
+            updateLessonVideoCardUI(st.sIdx, st.iIdx);
+
+        } else { // youtube
+            if (embedUrl) {
+                const embedSrc = getEmbedUrl(embedUrl);
+                if (!embedSrc) {
+                    const errEl = document.getElementById('modal-video-url-error');
+                    if (errEl) {
+                        errEl.textContent = 'Please enter a valid YouTube or Vimeo URL.';
+                        errEl.classList.remove('hidden');
+                    }
+                    return;
+                }
+                const errEl = document.getElementById('modal-video-url-error');
+                if (errEl) errEl.classList.add('hidden');
+                
+                item.content_type = 'video';
+                item.video_provider = 'youtube';
+                item.video_storage_key = null;
+                item.video = { title: title, url: embedUrl };
+                item.description = title;
+                
+                st.phase = 'saved';
+            } else {
+                const errEl = document.getElementById('modal-video-url-error');
+                if (errEl) {
+                    errEl.textContent = 'Please enter a valid URL.';
+                    errEl.classList.remove('hidden');
+                }
+                return;
+            }
+        }
+
+        window.saveDraft(true);
+        renderCurriculum();
+        closeModalVideoClean();
+    } catch (e) {
+        console.error('Save error', e);
+        alert("Error saving video: " + e.message);
+        st.phase = st.objectKey ? 'pending_save' : 'idle';
+        updateLessonVideoCardUI(st.sIdx, st.iIdx);
+    } finally {
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.innerText = 'Save Video';
+        }
     }
-    window.saveDraft(true);
-    renderCurriculum();
+}
+
+function closeModalVideoClean() {
+    // This is the "Close via X / Click Outside" handler.
+    // It NO LONGER ABORTS uploads. It just hides the UI.
+    const progressContainer = document.getElementById('modal-upload-progress-container');
+    if (progressContainer) progressContainer.classList.add('hidden');
+    
+    // Clear the file input
+    const fileEl = document.getElementById('modal-video-upload');
+    if (fileEl) fileEl.value = '';
+    const display = document.getElementById('modal-video-name-display');
+    if (display) display.innerText = 'Click or drag video to upload';
+
     closeModal('modal-add-video');
 }
 
+async function discardAndCloseModalVideo() {
+    // This is the EXPLICIT CANCEL hit.
+    if (activeModalItemIdx === -1) {
+        closeModalVideoClean();
+        return;
+    }
+    const item = window.courseDraft.curriculum[activeModalSectionIdx].items[activeModalItemIdx];
+    const st = getLessonVideoState(item.id);
+
+    if (st.phase === 'saving') {
+        // We are currently saving. Discard is ignored to avoid race conditions.
+        return;
+    }
+
+    if (st.phase === 'uploading' && st.abortController) {
+        st.abortController.abort();
+    } else if (st.phase === 'completing') {
+        // Special race-condition flag
+        st.cancelAfterComplete = true;
+    } else if (st.phase === 'pending_save' && st.objectKey) {
+        try {
+            st.phase = 'cancelling';
+            updateLessonVideoCardUI(st.sIdx, st.iIdx);
+            await CourseService.discardStagedUpload(
+                window.courseDraft.id, 
+                st.objectKey,
+                null // uploadId not needed for completed staged upload
+            );
+        } catch (e) {
+            console.error('Error discarding upload:', e);
+        }
+    }
+
+    if (st.phase !== 'completing') {
+        st.phase = 'idle';
+        st.objectKey = null;
+        st.progress = 0;
+        st.fileName = '';
+        st.errorMessage = '';
+        updateLessonVideoCardUI(st.sIdx, st.iIdx);
+    }
+
+    closeModalVideoClean();
+}
+
 async function saveModalResource() {
+    // Clear any lingering validation errors first
+    const clearError = (id) => {
+        const el = document.getElementById(id);
+        if (el) { el.classList.remove('border-red-500', 'ring-1', 'ring-red-400'); }
+    };
+    const showError = (id, msg) => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.classList.add('border-red-500', 'ring-1', 'ring-red-400');
+            el.focus?.();
+        }
+        // Show an inline error message below the field
+        const errId = `${id}-error`;
+        let errEl = document.getElementById(errId);
+        if (!errEl) {
+            errEl = document.createElement('p');
+            errEl.id = errId;
+            errEl.className = 'text-xs text-red-500 font-medium mt-1';
+            el?.parentElement?.appendChild(errEl);
+        }
+        errEl.textContent = msg;
+        setTimeout(() => { errEl.remove(); clearError(id); }, 3500);
+    };
+
     let title = document.getElementById('modal-resource-title-input')?.value || `New Resource`;
     const fileEl = document.getElementById('modal-resource-upload');
-    const externalUrl = document.getElementById('external-link')?.value;
+    const externalUrl = document.getElementById('external-link')?.value?.trim();
 
     let uploadedUrl = null;
     if (fileEl && fileEl.files && fileEl.files[0]) {
         try {
             uploadedUrl = await CourseService.uploadLessonResource(window.courseDraft.id, fileEl.files[0]);
+            window.sessionUploadedFiles.push({ provider: 'supabase', bucket: 'course_resources', url: uploadedUrl });
         } catch (e) { 
             console.error("Resource upload failed:", e);
-            alert('Resource upload failed: ' + e.message); 
+            showError('modal-resource-upload', 'Upload failed: ' + e.message);
             return; 
         }
     } else if (externalUrl) {
         uploadedUrl = externalUrl;
     } else {
-        alert('Please select a file to upload or provide an external link.');
+        // Highlight both the upload area and the external link input in red
+        const uploadArea = document.getElementById('video-upload-area-modal') || document.getElementById('modal-resource-upload')?.closest('.border-dashed');
+        if (uploadArea) {
+            uploadArea.classList.add('border-red-500');
+            setTimeout(() => uploadArea.classList.remove('border-red-500'), 3500);
+        }
+        showError('external-link', 'Please upload a file or paste an external link.');
         return;
     }
 
@@ -1251,15 +1915,23 @@ async function saveModalResource() {
 function setPricingTier(tier) {
     window.courseDraft.pricing.type = tier;
     const detailsContainer = document.getElementById('pricing-details-container');
+    const btnFree = document.getElementById('btn-tier-free');
+    const btnPaid = document.getElementById('btn-tier-paid');
 
     if (tier === 'free') {
         detailsContainer.style.opacity = '0.5';
         detailsContainer.style.pointerEvents = 'none';
         document.getElementById('course-price').value = '';
         window.courseDraft.pricing.price = null;
+        // Highlight Free button
+        if (btnFree) { btnFree.classList.add('bg-white', 'dark:bg-slate-600', 'shadow-sm', 'text-slate-900', 'dark:text-white'); btnFree.classList.remove('text-slate-500', 'dark:text-slate-400', 'hover:text-slate-700', 'dark:hover:text-white'); }
+        if (btnPaid) { btnPaid.classList.remove('bg-white', 'dark:bg-slate-600', 'shadow-sm', 'text-slate-900', 'dark:text-white'); btnPaid.classList.add('text-slate-500', 'dark:text-slate-400', 'hover:text-slate-700', 'dark:hover:text-white'); }
     } else {
         detailsContainer.style.opacity = '1';
         detailsContainer.style.pointerEvents = 'auto';
+        // Highlight Paid button
+        if (btnPaid) { btnPaid.classList.add('bg-white', 'dark:bg-slate-600', 'shadow-sm', 'text-slate-900', 'dark:text-white'); btnPaid.classList.remove('text-slate-500', 'dark:text-slate-400', 'hover:text-slate-700', 'dark:hover:text-white'); }
+        if (btnFree) { btnFree.classList.remove('bg-white', 'dark:bg-slate-600', 'shadow-sm', 'text-slate-900', 'dark:text-white'); btnFree.classList.add('text-slate-500', 'dark:text-slate-400', 'hover:text-slate-700', 'dark:hover:text-white'); }
     }
     calculatePayout();
 }
@@ -1315,9 +1987,12 @@ function showVideoPreview(url, filename) {
             video.className = 'intro-preview-vid absolute inset-0 w-full h-full object-cover z-20';
             video.controls = true;
             video.muted = true;
+            video.preload = "metadata";
             container.appendChild(video);
         }
-        video.src = url;
+        
+        // Append #t=1 if it doesn't already have a hash, to force thumbnail frame
+        video.src = url.includes('#') ? url : url + '#t=1';
         
         if (icon) icon.classList.add('hidden');
         if (tick) {
@@ -1526,31 +2201,32 @@ async function renderFinalPreview() {
             curriculum.forEach((sec, sIdx) => {
                 let lessonsHtml = '';
                 (sec.items || []).forEach((les, lIdx) => {
-                    let badge = '';
                     let icon = 'description';
-                    
                     const quizCount = (les.quiz && les.quiz.length > 0) ? les.quiz.length : 0;
                     const resourceCount = les.resources ? les.resources.length : 0;
-
-                    if (les.content_type === 'video' || les.video) {
-                        badge = `<span class="bg-blue-50 dark:bg-blue-900/30 text-blue-600 px-2 py-0.5 rounded text-[10px] font-bold">VIDEO</span>`;
-                        icon = 'play_circle';
-                    } else if (les.content_type === 'quiz' || quizCount > 0) {
-                        badge = `<span class="bg-amber-50 dark:bg-amber-900/30 text-amber-600 px-2 py-0.5 rounded text-[10px] font-bold">${quizCount} QUIZ${quizCount !== 1 ? 'ZES' : ''}</span>`;
-                        icon = 'quiz';
-                    }
                     
-                    const resBadge = resourceCount > 0 ? `<span class="bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 px-2 py-0.5 rounded text-[10px] font-bold">${resourceCount} RES</span>` : '';
+                    if (les.video) icon = 'play_circle';
+                    else if (quizCount > 0) icon = 'quiz';
+                    
+                    let badgesHtml = '';
+                    if (les.video || les.content_type === 'video') {
+                        badgesHtml += `<span class="bg-blue-50 dark:bg-blue-900/30 text-blue-600 px-2 py-0.5 rounded text-[10px] font-bold shrink-0">VIDEO</span>`;
+                    }
+                    if (quizCount > 0) {
+                        badgesHtml += `<span class="bg-amber-50 dark:bg-amber-900/30 text-amber-600 px-2 py-0.5 rounded text-[10px] font-bold shrink-0">${quizCount} QUIZ${quizCount !== 1 ? 'ZES' : ''}</span>`;
+                    }
+                    if (resourceCount > 0) {
+                        badgesHtml += `<span class="bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 px-2 py-0.5 rounded text-[10px] font-bold shrink-0">${resourceCount} RES</span>`;
+                    }
 
                     lessonsHtml += `
-                    <div class="flex items-center justify-between py-2 border-b border-slate-50 dark:border-slate-800 last:border-0 pl-4 overflow-x-auto flex-nowrap lesson-summary-row">
-                        <div class="flex items-center gap-3 shrink-0 mr-4">
+                    <div class="flex items-center justify-between py-2 border-b border-slate-50 dark:border-slate-800 last:border-0 pl-4 w-max min-w-full gap-8">
+                        <div class="flex items-center gap-3 shrink-0">
                             <span class="material-symbols-outlined text-slate-400 text-lg">${icon}</span>
                             <span class="text-sm text-slate-600 dark:text-slate-400 whitespace-nowrap">${les.title}</span>
                         </div>
-                        <div class="flex items-center gap-1">
-                            ${badge}
-                            ${resBadge}
+                        <div class="flex items-center gap-1 shrink-0 pr-2">
+                            ${badgesHtml}
                         </div>
                     </div>`;
                 });
@@ -1561,7 +2237,7 @@ async function renderFinalPreview() {
                         <span class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">Section ${sIdx + 1}: ${sec.title}</span>
                         <span class="text-xs text-slate-400 font-medium">${sec.items ? sec.items.length : 0} Lessons</span>
                     </div>
-                    <div class="p-2 space-y-1">
+                    <div class="p-2 space-y-1 overflow-x-auto overflow-y-hidden custom-scrollbar">
                         ${lessonsHtml || '<p class="text-xs text-slate-400 italic pl-4 py-2">No lessons in this section.</p>'}
                     </div>
                 </div>`;
@@ -1591,10 +2267,10 @@ function wizardCalculatePayout() {
     
     // Determine the source of the price
     let price;
-    if (priceInput && document.getElementById('step-3-container')?.classList.contains('block')) {
-        // If we're on Step 3 and the input exists, use its live value
+    if (priceInput) {
+        // If the input exists, use its live value and sync to draft
         price = parseFloat(priceInput.value) || 0;
-        window.courseDraft.pricing.price = price; // Sync back to draft for real-time preview
+        window.courseDraft.pricing.price = price; 
     } else {
         // Otherwise use the draft state (reliable for Step 4)
         price = parseFloat(window.courseDraft.pricing.price || 0);
@@ -1602,7 +2278,11 @@ function wizardCalculatePayout() {
     
     const isFree = window.courseDraft.pricing.type === 'free';
     const priceStr = isFree ? 'FREE' : `$${price.toFixed(2)}`;
-    const earnings = (price * 0.70).toFixed(2);
+    
+    // Dynamic Commission Logic
+    const settings = window.financeSettings || { commission_enabled: false, instructor_percentage: 100 };
+    const instructorShare = settings.commission_enabled ? settings.instructor_percentage : 100;
+    const earnings = (price * (instructorShare / 100)).toFixed(2);
 
     // 1. Update Final Price Preview (Step 4 Card)
     if (priceDisplay) priceDisplay.innerText = priceStr;
@@ -1613,7 +2293,7 @@ function wizardCalculatePayout() {
             payoutEl.innerHTML = `This course is currently <span class="font-bold text-accent">Free</span>. Switch to Paid to enable earnings estimation.`;
         } else {
             payoutEl.innerHTML = `
-                You receive <span class="font-bold text-accent">70%</span> of each sale. 
+                You receive <span class="font-bold text-accent">${instructorShare}%</span> of each sale. 
                 For a price of $${price.toFixed(2)}, your estimated earnings per sale will be 
                 <span class="font-bold text-slate-900 dark:text-white">$${earnings}</span>.
             `;
@@ -1624,12 +2304,21 @@ function wizardCalculatePayout() {
 // Consolidated version above
 
 async function publishCourse() {
+    const btnPublish = document.getElementById('btn-publish');
+    if (btnPublish) { btnPublish.disabled = true; btnPublish.textContent = 'Submitting...'; }
+
     try {
-        await window.saveDraft(true); // Always save before publish
+        // 1. Flush all draft data to DB first
+        await window.saveDraft(true);
         if (!window.courseDraft.id) throw new Error("Could not save the course draft. Please check your data.");
 
-        await CourseService.publishCourse(window.courseDraft.id);
+        // 2. Set status to pending_review so admin sees it
+        await CourseService.submitForReview(window.courseDraft.id);
 
+        // 3. Update local draft status
+        window.courseDraft.status = 'pending_review';
+
+        // 4. Show the Step 5 confirmation screen
         document.querySelectorAll('.wizard-step').forEach(el => {
             el.classList.add('hidden'); el.classList.remove('block');
         });
@@ -1637,7 +2326,8 @@ async function publishCourse() {
         document.getElementById('step-5-container')?.classList.add('flex');
         document.getElementById('bottom-nav')?.classList.add('hidden');
     } catch (e) {
-        alert("Failed to publish: " + e.message);
+        alert("Failed to submit for review: " + e.message);
+        if (btnPublish) { btnPublish.disabled = false; btnPublish.textContent = window.courseDraft.has_rejection_history ? 'Republish Course' : 'Publish Course'; }
     }
 }
 
@@ -1844,8 +2534,11 @@ async function saveDraftManual() {
     }
 
     try {
-        await saveCurrentStepData();
+        await saveCurrentStepData(true);
+        console.log("Draft saved perfectly:", window.courseDraft);
         showToast("Draft safely saved in Supabase.");
+        // Clear session tracking since these files are now permanently part of the saved draft
+        window.sessionUploadedFiles = [];
     } catch (e) {
         console.error("Manual save failed:", e);
         showToast("Failed to save draft.", true);
@@ -1858,13 +2551,33 @@ async function saveDraftManual() {
 }
 
 async function exitWizard() {
-    if (confirm('Are you sure you want to exit?\n\nYour current progress has been auto-saved as a draft. You can continue from where you left off!')) {
-        // Save current step data before exit so draft is complete
-        await saveCurrentStepData();
-        // Persist the current step so resume works
-        persistStep(window.courseDraft.id, window.currentStep);
-        window.location.href = '/src/pages/instructor/instructor-courses/index.html';
+    const btn = document.getElementById('btn-wizard-exit');
+    if (btn) {
+        btn.innerHTML = '<span class="material-symbols-outlined text-sm animate-spin">sync</span> Exiting...';
+        btn.disabled = true;
     }
+
+    // Discard any staged or newly uploaded files for this session that weren't saved to draft
+    if (window.sessionUploadedFiles && window.sessionUploadedFiles.length > 0) {
+        console.log("Cleaning up unsaved session files...", window.sessionUploadedFiles);
+        for (const file of window.sessionUploadedFiles) {
+            try {
+                if (file.provider === 'r2' && file.key) {
+                    await CourseService.discardStagedUpload(window.courseDraft.id, file.key);
+                } else if (file.provider === 'supabase' && file.url) {
+                    const pathParts = file.url.split('public/' + file.bucket + '/');
+                    if (pathParts.length > 1) {
+                        const path = decodeURIComponent(pathParts[1]);
+                        await supabase.storage.from(file.bucket).remove([path]);
+                    }
+                }
+            } catch (e) {
+                console.error("Cleanup failed for unsaved file", file, e);
+            }
+        }
+    }
+    
+    window.location.href = '/src/pages/instructor/instructor-courses/index.html';
 }
 
 function setupInputStability() {
@@ -1917,10 +2630,14 @@ function registerGlobals() {
         updateSectionTitle,
         updateItemTitle,
         saveModalVideo: wizardSaveModalVideo,
+        discardAndCloseModalVideo,
         toggleResourceForm,
         saveModalResource,
         deleteResource,
-        calculatePayout: wizardCalculatePayout
+        calculatePayout: wizardCalculatePayout,
+        previewLessonVideo,
+        retryLessonVideoUpload,
+        closeModalVideoClean
     };
 
     for (const [key, val] of Object.entries(globals)) {
@@ -1930,3 +2647,78 @@ function registerGlobals() {
 
 registerGlobals();
 
+// --- COUPON MANAGEMENT ---
+
+function renderCourseCoupons() {
+    const container = document.getElementById('course-coupons-container');
+    if (!container) return;
+    container.innerHTML = '';
+    
+    if (!window.courseDraft.pricing.coupons || window.courseDraft.pricing.coupons.length === 0) {
+        return;
+    }
+
+    let html = '';
+    window.courseDraft.pricing.coupons.forEach((cp, idx) => {
+        html += `
+        <div class="flex items-start sm:items-center p-3 border border-slate-200 dark:border-slate-700 rounded-lg bg-slate-50 dark:bg-slate-800/50 relative">
+            <div class="flex-1 grid grid-cols-2 sm:grid-cols-3 gap-3 pr-8 sm:pr-0">
+                <div class="col-span-1">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Coupon Code</label>
+                    <input id="cp-code-${idx}" class="w-full text-sm uppercase rounded bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:ring-accent focus:border-accent" value="${cp.code || cp.coupon_code || ''}" placeholder="SUMMER20" maxlength="50" autocomplete="off" spellcheck="false" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9\-_]/g,'').slice(0,50)" />
+                </div>
+                <div class="col-span-1">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Discount (%)</label>
+                    <input id="cp-pct-${idx}" type="number" min="1" max="100" class="w-full text-sm rounded bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:ring-accent focus:border-accent" value="${cp.percent || cp.discount_percent || ''}" placeholder="20" />
+                </div>
+                <div class="col-span-2 sm:col-span-1">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Expiration</label>
+                    <input id="cp-exp-${idx}" type="date" class="w-full text-sm rounded bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:ring-accent focus:border-accent" value="${(cp.expiry || cp.expires_at || '').split('T')[0]}" />
+                </div>
+            </div>
+            <button onclick="removeCourseCoupon(${idx})" class="absolute top-2 right-2 sm:static sm:p-2 sm:ml-4 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition shrink-0">
+                <span class="material-symbols-outlined text-[20px]">delete</span>
+            </button>
+        </div>`;
+    });
+    container.innerHTML = html;
+}
+
+function syncCourseCoupons() {
+    if (!window.courseDraft.pricing.coupons) return;
+    const synced = [];
+    window.courseDraft.pricing.coupons.forEach((cp, idx) => {
+        const codeInput = document.getElementById(`cp-code-${idx}`);
+        const pctInput = document.getElementById(`cp-pct-${idx}`);
+        const expInput = document.getElementById(`cp-exp-${idx}`);
+        
+        if (codeInput && pctInput) {
+            // SECURITY: strip anything that isn't A-Z, 0-9, hyphen, or underscore.
+            // Prevents HTML injection and keeps codes to valid coupon format.
+            const rawCode = (codeInput.value || '').toUpperCase().replace(/[^A-Z0-9\-_]/g, '').slice(0, 50).trim();
+            synced.push({
+                code: rawCode,
+                percent: parseInt(pctInput.value) || null,
+                expiry: expInput.value || null
+            });
+        }
+    });
+    window.courseDraft.pricing.coupons = synced;
+}
+
+window.addCourseCoupon = function() {
+    syncCourseCoupons();
+    window.courseDraft.pricing.coupons = window.courseDraft.pricing.coupons || [];
+    window.courseDraft.pricing.coupons.push({ code: '', percent: null, expiry: null });
+    renderCourseCoupons();
+};
+
+window.removeCourseCoupon = function(idx) {
+    syncCourseCoupons();
+    window.courseDraft.pricing.coupons.splice(idx, 1);
+    renderCourseCoupons();
+};
+
+// Expose module-scoped functions to window so HTML onclick attributes can reach them
+window.saveDraftManual = saveDraftManual;
+window.exitWizard = exitWizard;

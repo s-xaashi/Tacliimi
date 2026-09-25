@@ -1,6 +1,43 @@
 import { supabase } from '/src/services/supabaseClient.js';
 import { AuthService } from '/src/services/authService.js';
 import { MentorService } from '/src/services/mentorService.js';
+import { showToast, showConfirmModal, showAlertModal } from '/src/services/uiUtils.js';
+import { buildProgramProgressHtml, getProgramMeetingStatus, openMentorshipRescheduleModal } from '/src/utils/js/mentorshipUI.js';
+
+// XSS safety helper
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+
+window.triggerAdminReschedule = function(sessionId, currentScheduledAt, currentDurationStr, studentNameStr, historyJson) {
+    let history = [];
+    try { history = historyJson ? JSON.parse(historyJson) : []; } catch(e) { history = []; }
+    openMentorshipRescheduleModal(
+        sessionId, currentScheduledAt, currentDurationStr, studentNameStr, 'admin',
+        async (id, newDateObj, newDur, note) => {
+            const session = await AuthService.getSession();
+            if (!session || !session.user) throw new Error("Not logged in");
+
+            const { error } = await supabase.rpc('admin_reschedule_session', {
+                p_admin_id: session.user.id,
+                p_session_id: id,
+                p_new_scheduled_at: newDateObj.toISOString(),
+                p_new_duration_minutes: newDur,
+                p_note: note || null
+            });
+            if (error) throw error;
+            if (typeof window.location.reload === 'function') setTimeout(() => window.location.reload(), 500);
+        },
+        history
+    );
+};
 
 document.addEventListener('DOMContentLoaded', async () => {
     const overviewList = document.getElementById('overview-list');
@@ -14,8 +51,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     let allSessions = [];
     let currentTab = 'overview';
     let selectedStatus = 'all';
+    let selectedType = 'all';
     let startDate = null;
     let endDate = null;
+    let searchQuery = '';
+    let realtimeChannel = null;
 
     const LOADER_HTML = `
         <div class="flex flex-col items-center justify-center py-20 gap-4">
@@ -117,13 +157,28 @@ document.addEventListener('DOMContentLoaded', async () => {
             const status = (session.booking_status || session.status || 'pending').toLowerCase();
             const start = new Date(session.scheduled_at);
             const duration = session.duration_minutes || 60;
-            const end = new Date(start.getTime() + duration * 60000);
+            let end = new Date(start.getTime() + duration * 60000);
+            if (session.mentorship_type === 'program' && session.end_date) {
+                end = new Date(session.end_date);
+                end.setHours(23, 59, 59, 999);
+            }
             
+            // For program mentorships, override: if within end_date, it is still active
+            // regardless of whether booking_status was prematurely set to 'completed'
+            const isProgramStillActive = session.mentorship_type === 'program' 
+                && session.end_date 
+                && now < end 
+                && status !== 'cancelled';
+
             // Exclude sessions that should be in the "Completed" tab
             const isAutoCompleted = status === 'confirmed' && now >= end;
-            const matchesActiveTab = status !== 'cancelled' && status !== 'rejected' && status !== 'completed' && !isAutoCompleted;
+            const matchesActiveTab = isProgramStillActive || (
+                status !== 'cancelled' && status !== 'rejected' && status !== 'completed' && !isAutoCompleted
+            );
             
             let matchesStatusFilter = selectedStatus === 'all' || status === selectedStatus;
+            // For programs still active despite 'completed' status in DB, match 'confirmed' filter too
+            if (isProgramStillActive && selectedStatus === 'confirmed') matchesStatusFilter = true;
             
             // Special handling for legacy "Started" filter
             const isStarted = now >= start && now < end;
@@ -131,7 +186,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                 matchesStatusFilter = isStarted;
             }
             
-            return matchesActiveTab && matchesStatusFilter;
+            let matchesTypeFilter = selectedType === 'all' || (session.mentorship_type || 'single') === selectedType;
+
+            // Search filter — match session, mentor, or payment serial_id (strip prefix)
+            const q = searchQuery.replace(/^(ses|ses-|mtr|mtr-|pay|pay-)/i, '').trim();
+            const matchesSearch = !q || 
+                String(session.session_serial_id || '').includes(q) ||
+                String(session.mentor_serial_id || '').includes(q) ||
+                String(session.payment_serial_id || '').includes(q);
+            
+            return matchesActiveTab && matchesStatusFilter && matchesTypeFilter && matchesSearch;
         });
 
         const overviewPane = document.getElementById('overview-pane');
@@ -162,13 +226,26 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             const start = new Date(session.scheduled_at);
             const duration = session.duration_minutes || 60;
-            const end = new Date(start.getTime() + duration * 60000);
-            
-            const isStarted = now >= start && now < end;
+            // Meeting slot end — always duration-based for badge logic
+            const meetingSlotEnd = new Date(start.getTime() + duration * 60000);
+            // program lifecycle end (for health/filter use only)
+            let progEnd = meetingSlotEnd;
+            if (session.mentorship_type === 'program' && session.end_date) {
+                progEnd = new Date(session.end_date);
+                progEnd.setHours(23, 59, 59, 999);
+            }
+
+            // isMeetingLive: only true during the actual meeting slot
+            const isMeetingLive = now >= start && now < meetingSlotEnd;
+            // For program: after slot ends, compute next meeting
+            const progStatus = session.mentorship_type === 'program' ? getProgramMeetingStatus(session) : null;
+            const isStarted = progStatus ? progStatus.isMeetingLive : isMeetingLive;
+            const showNextMeeting = progStatus && !progStatus.isMeetingLive && progStatus.nextMeetingLabel && now >= progStatus.meetingSlotEnd;
 
             const dateStr = start.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
             const timeStr = start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-            const endStr = end.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+            // Display end time is always the meeting slot, not program end
+            const endStr = meetingSlotEnd.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
             
             let statusColor = "bg-slate-100 text-slate-600";
             let statusLabel = (session.booking_status || '').replace(/_/g, ' ');
@@ -176,6 +253,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (isStarted) {
                 statusColor = "bg-amber-400 text-white animate-pulse shadow-lg shadow-amber-400/20";
                 statusLabel = "Session Started";
+            } else if (showNextMeeting) {
+                statusColor = "bg-indigo-100 text-indigo-600 border border-indigo-200";
+                statusLabel = `Next: ${progStatus.nextMeetingLabel}`;
             } else {
                 if (session.booking_status === 'confirmed') statusColor = "bg-emerald-100 text-emerald-600";
                 if (session.booking_status === 'pending_review') statusColor = "bg-amber-100 text-amber-600";
@@ -186,10 +266,61 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const studentAvatar = student.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.full_name)}&background=6366f1&color=fff`;
             const mentorAvatar = mentor.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(mentor.full_name)}&background=7c3aed&color=fff`;
+            
+            let healthHtml = '';
+            if (session.mentorship_type === 'program') {
+                const dbStartDateStr = session.program_start_date || session.scheduled_at;
+                const dbStartDate = new Date(dbStartDateStr);
+                const dbDuration = session.duration_days || 30;
+                
+                const hasStarted = (session.booking_status === 'confirmed' || session.booking_status === 'completed');
+                
+                let healthColor = 'text-slate-500 bg-slate-100 dark:bg-slate-800';
+                let healthIcon = 'schedule';
+                let healthLabel = 'Inactive';
+                
+                if (hasStarted) {
+                    const daysElapsed = Math.floor((now.getTime() - dbStartDate.getTime()) / (1000 * 60 * 60 * 24));
+                    const progressPct = Math.min(100, Math.round((daysElapsed / dbDuration) * 100));
+                    const completedSessions = session.completed_sessions_count || 0;
+                    const daysRemaining = Math.max(0, dbDuration - daysElapsed);
+                    
+                    // Health is time-based: on track if program is progressing normally
+                    if (progressPct < 100) {
+                        healthColor = 'text-emerald-700 bg-emerald-100 border-emerald-300 dark:bg-emerald-900/40 dark:border-emerald-800';
+                        healthIcon = 'vital_signs';
+                        healthLabel = `On Track · ${daysRemaining}d left`;
+                    } else {
+                        healthColor = 'text-blue-700 bg-blue-100 border-blue-300 dark:bg-blue-900/40 dark:border-blue-800';
+                        healthIcon = 'done_all';
+                        healthLabel = 'Duration Complete';
+                    }
+                }
+
+                healthHtml = `
+                    <div class="flex items-center gap-1 ${healthColor} px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider mt-1.5 border shadow-sm" title="Program Health Indicator">
+                        <span class="material-symbols-outlined text-[10px]">${healthIcon}</span> ${healthLabel}
+                    </div>
+                `;
+            }
+
+            const programHtml = buildProgramProgressHtml(session);
+
+            let cardClasses = "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-indigo-700";
+            if (session.mentorship_type === 'program') {
+                cardClasses = "bg-amber-50/20 dark:bg-amber-900/10 border-2 border-amber-200 dark:border-amber-900/30 shadow-md shadow-amber-500/5 hover:border-amber-400 dark:hover:border-amber-700";
+            }
 
             return `
-                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 hover:shadow-xl hover:border-indigo-300 dark:hover:border-indigo-700 transition-all duration-300 group relative session-card" data-session-id="${session.id}">
-                    <div class="flex flex-col lg:flex-row items-center justify-between gap-8">
+                <div class="${cardClasses} rounded-3xl p-4 md:p-6 hover:shadow-xl transition-all duration-300 group relative session-card" data-session-id="${session.id}">
+                    ${session.mentorship_type === 'program' ? `<div class="absolute -top-3 right-8 z-10"><div class="px-3 py-1 bg-gradient-to-r from-amber-200 to-yellow-400 text-amber-900 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-1 shadow-lg shadow-amber-500/20"><span class="material-symbols-outlined text-[14px]">workspace_premium</span> Program Mentorship</div></div>` : ''}
+                    <!-- ID badges -->
+                    <div class="absolute top-4 left-6 flex items-center gap-2 z-10">
+                        ${session.session_serial_id ? `<span class="px-2 py-0.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-lg text-[9px] font-black uppercase tracking-widest border border-indigo-100 dark:border-indigo-800">SES-${session.session_serial_id}</span>` : ''}
+                        ${session.mentor_serial_id ? `<span class="px-2 py-0.5 bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-lg text-[9px] font-black uppercase tracking-widest border border-purple-100 dark:border-purple-800">MTR-${session.mentor_serial_id}</span>` : ''}
+                        ${session.payment_serial_id ? `<span class="px-2 py-0.5 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-lg text-[9px] font-black uppercase tracking-widest border border-emerald-100 dark:border-emerald-800">PAY-${session.payment_serial_id}</span>` : ''}
+                    </div>
+                    <div class="flex flex-col lg:flex-row items-center justify-between gap-8 mt-6 lg:mt-4">
                         
                         <!-- Connection Flow Container -->
                         <div class="flex items-center justify-between gap-4 md:gap-8 flex-1 w-full max-w-4xl">
@@ -202,7 +333,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 </div>
                                 <div class="min-w-0">
                                     <p class="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-0.5">Student</p>
-                                    <p class="font-bold text-slate-900 dark:text-white truncate block group-hover/profile:text-indigo-600 transition-colors">${student.full_name}</p>
+                                    <p class="font-bold text-slate-900 dark:text-white truncate block group-hover/profile:text-indigo-600 transition-colors">${escapeHtml(student.full_name || "")}</p>
                                     <div class="flex items-center gap-1.5 mt-1">
                                         <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                                         <p class="text-[10px] text-slate-500 truncate lowercase">${student.email || 'no email'}</p>
@@ -216,9 +347,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                                     <div class="w-8 md:w-16 h-0.5 bg-gradient-to-r from-indigo-100 to-indigo-400 dark:from-indigo-900/50 dark:to-indigo-500 rounded-full"></div>
                                     <span class="material-symbols-outlined text-indigo-500 text-base -ml-2">chevron_right</span>
                                 </div>
-                                <span class="px-2 py-0.5 ${statusColor} rounded-full text-[9px] font-black uppercase tracking-tighter whitespace-nowrap border border-current opacity-80">
+                                <span class="px-2 py-0.5 ${statusColor} rounded-full text-[9px] font-black uppercase tracking-tighter whitespace-nowrap border border-current opacity-80 mt-1">
                                     ${statusLabel}
                                 </span>
+                                ${healthHtml}
                             </div>
 
                             <!-- Mentor -->
@@ -227,7 +359,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                     <p class="text-[9px] font-black text-purple-500 uppercase tracking-widest mb-0.5">Mentor</p>
                                     <a href="${mentorProfileBase}?id=${session.mentor_id}"
                                        class="profile-link font-bold text-slate-900 dark:text-white truncate block hover:text-purple-600 transition-colors"
-                                       onclick="event.stopPropagation()">${mentor.full_name}</a>
+                                       onclick="event.stopPropagation()">${escapeHtml(mentor.full_name || "")}</a>
                                     <div class="flex items-center gap-1.5 mt-1 justify-end">
                                         <p class="text-[10px] text-slate-500 truncate lowercase">${mentor.email || 'no email'}</p>
                                         <span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span>
@@ -250,11 +382,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                                      <span class="text-[11px] text-slate-500 font-medium">${timeStr} — ${endStr}</span>
                                  </div>
                              </div>
-                             <div class="w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 group-hover:bg-indigo-50 dark:group-hover:bg-indigo-900/30 group-hover:text-indigo-600 transition-all">
-                                 <span class="material-symbols-outlined">launch</span>
+                             <div class="flex items-center gap-2">
+                                 <button onclick="event.stopPropagation(); window.triggerAdminReschedule('${session.id}', '${progStatus && progStatus.nextMeeting ? progStatus.nextMeeting.toISOString() : session.scheduled_at}', '${duration}', '${(student.full_name || 'Student').replace(/'/g, "\\'").replace(/"/g, '&quot;')}', this.dataset.history)" data-history="${JSON.stringify(session.reschedule_history || []).replace(/"/g, '&quot;')}" class="w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 transition-all z-10 relative">
+                                     <span class="material-symbols-outlined text-[18px]">edit_calendar</span>
+                                 </button>
+                                 <div class="w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 group-hover:bg-indigo-50 dark:group-hover:bg-indigo-900/30 group-hover:text-indigo-600 transition-all">
+                                     <span class="material-symbols-outlined">launch</span>
+                                 </div>
                              </div>
                         </div>
                     </div>
+                    ${programHtml}
                 </div>
             `;
         }).join('');
@@ -263,6 +401,28 @@ document.addEventListener('DOMContentLoaded', async () => {
         overviewList.querySelectorAll('.session-card').forEach(card => {
             card.onclick = () => window.location.href = `${confirmationBase}?sessionId=${card.dataset.sessionId}`;
         });
+
+        // Highlight focused session if present in URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const focusSession = urlParams.get('focusSession');
+        if (focusSession) {
+            setTimeout(() => {
+                const targetCard = overviewList.querySelector(`[data-session-id="${focusSession}"]`);
+                if (targetCard) {
+                    targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    targetCard.classList.add('ring-4', 'ring-indigo-500', 'shadow-2xl', 'scale-[1.02]');
+                    setTimeout(() => {
+                        targetCard.classList.remove('ring-4', 'ring-indigo-500', 'shadow-2xl', 'scale-[1.02]');
+                        // also remove the parameter so it doesn't happen again on refresh
+                        const newUrl = new URL(window.location);
+                        newUrl.searchParams.delete('focusSession');
+                        window.history.replaceState({}, '', newUrl);
+                    }, 2500);
+                } else {
+                    // Try to look in other tabs? Usually the admin clicks in from an active payment, but if not found in active, it might be in completed or rejections.
+                }
+            }, 300);
+        }
     };
 
     const renderCompleted = () => {
@@ -278,7 +438,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             const status = s.booking_status || s.status;
             const start = new Date(s.scheduled_at);
             const duration = s.duration_minutes || 60;
-            const end = new Date(start.getTime() + duration * 60000);
+            let end = new Date(start.getTime() + duration * 60000);
+            if (s.mentorship_type === 'program' && s.end_date) {
+                end = new Date(s.end_date);
+                end.setHours(23, 59, 59, 999);
+            }
+
+            // If this is a program still within its end_date, it belongs in Active, not Completed
+            const isProgramStillActive = s.mentorship_type === 'program'
+                && s.end_date
+                && now < end
+                && status !== 'cancelled';
+            if (isProgramStillActive) return false;
             
             const isCompleted = ['completed', 'cancelled'].includes(status) || (status === 'confirmed' && now >= end);
             
@@ -295,6 +466,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 eDate.setHours(23,59,59,999);
                 if (start > eDate) return false;
             }
+
+            // Search filter
+            const q = searchQuery.replace(/^(ses|ses-|mtr|mtr-|pay|pay-)/i, '').trim();
+            const matchesSearch = !q || 
+                String(s.session_serial_id || '').includes(q) ||
+                String(s.mentor_serial_id || '').includes(q) ||
+                String(s.payment_serial_id || '').includes(q);
+            if (!matchesSearch) return false;
             
             return true;
         }).sort((a,b) => new Date(b.scheduled_at) - new Date(a.scheduled_at));
@@ -311,7 +490,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             const mentor = session.mentor || { full_name: 'Unknown' };
             const start = new Date(session.scheduled_at);
             const duration = session.duration_minutes || 60;
-            const end = new Date(start.getTime() + duration * 60000);
+            let end = new Date(start.getTime() + duration * 60000);
+            if (session.mentorship_type === 'program' && session.end_date) {
+                end = new Date(session.end_date);
+                end.setHours(23, 59, 59, 999);
+            }
 
             const dateStr = start.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
             const timeStr = start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
@@ -323,15 +506,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (status === 'confirmed') statusColor = "bg-blue-50 text-blue-500"; // Case where it's past but confirmed
 
             return `
-                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 hover:shadow-md transition-all cursor-pointer session-card group" data-session-id="${session.id}">
+                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 md:p-6 hover:shadow-md transition-all cursor-pointer session-card group" data-session-id="${session.id}">
                     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                         <div class="flex items-center gap-4">
                             <div class="w-12 h-12 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 group-hover:text-primary transition-colors">
                                 <span class="material-symbols-outlined">history</span>
                             </div>
                             <div>
-                                <h4 class="font-bold text-slate-900 dark:text-white">${student.full_name} <span class="text-slate-400 font-medium">with</span> ${mentor.full_name}</h4>
-                                <div class="flex items-center gap-3 mt-1">
+                                <h4 class="font-bold text-slate-900 dark:text-white">${escapeHtml(student.full_name || "")} <span class="text-slate-400 font-medium">with</span> ${escapeHtml(mentor.full_name || "")}</h4>
+                                <div class="flex items-center flex-wrap gap-3 mt-1">
+                                    ${session.session_serial_id ? `<span class="text-[9px] font-black text-indigo-500 uppercase tracking-widest bg-indigo-50 dark:bg-indigo-900/20 px-1.5 py-0.5 rounded">SES-${session.session_serial_id}</span>` : ''}
+                                    ${session.mentor_serial_id ? `<span class="text-[9px] font-black text-purple-500 uppercase tracking-widest bg-purple-50 dark:bg-purple-900/20 px-1.5 py-0.5 rounded">MTR-${session.mentor_serial_id}</span>` : ''}
+                                    ${session.payment_serial_id ? `<span class="text-[9px] font-black text-emerald-600 uppercase tracking-widest bg-emerald-50 dark:bg-emerald-900/20 px-1.5 py-0.5 rounded">PAY-${session.payment_serial_id}</span>` : ''}
                                     <span class="text-xs text-slate-500 flex items-center gap-1">
                                         <span class="material-symbols-outlined text-sm">calendar_today</span> ${dateStr}
                                     </span>
@@ -358,10 +544,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     const renderRejections = (rejections) => {
+        // Apply search filter to rejections
+        const q = searchQuery.replace(/^(ses|ses-|mtr|mtr-|pay|pay-)/i, '').trim();
+        const filtered = rejections.filter(s => !q ||
+            String(s.session_serial_id || '').includes(q) ||
+            String(s.mentor_serial_id || '').includes(q) ||
+            String(s.payment_serial_id || '').includes(q)
+        );
+
         rejectionsList.classList.remove('hidden');
         overviewList.classList.add('hidden');
 
-        if (rejections.length === 0) {
+        if (filtered.length === 0) {
             rejectionsList.innerHTML = EMPTY_STATE_HTML;
             return;
         }
@@ -372,7 +566,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const date = new Date(session.scheduled_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 
             return `
-                <div class="bg-white dark:bg-slate-900 border-2 border-amber-200 dark:border-amber-900/30 rounded-3xl p-8 flex flex-col gap-6 shadow-xl shadow-amber-500/5">
+                <div class="bg-white dark:bg-slate-900 border-2 border-amber-200 dark:border-amber-900/30 rounded-3xl p-5 md:p-8 flex flex-col gap-6 shadow-xl shadow-amber-500/5">
                     <div class="flex justify-between items-start">
                         <div class="flex items-center gap-4">
                             <div class="w-14 h-14 rounded-2xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center text-amber-500">
@@ -380,7 +574,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                             </div>
                             <div>
                                 <h4 class="font-black text-lg">Rejection Review</h4>
-                                <p class="text-xs text-slate-500">Submitted for: ${date}</p>
+                                <div class="flex items-center gap-2 mt-0.5">
+                                    ${session.session_serial_id ? `<span class="text-[9px] font-black text-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 px-1.5 py-0.5 rounded uppercase tracking-widest">SES-${session.session_serial_id}</span>` : ''}
+                                    ${session.mentor_serial_id ? `<span class="text-[9px] font-black text-purple-500 bg-purple-50 dark:bg-purple-900/20 px-1.5 py-0.5 rounded uppercase tracking-widest">MTR-${session.mentor_serial_id}</span>` : ''}
+                                    ${session.payment_serial_id ? `<span class="text-[9px] font-black text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 px-1.5 py-0.5 rounded uppercase tracking-widest">PAY-${session.payment_serial_id}</span>` : ''}
+                                    <p class="text-xs text-slate-500">Submitted for: ${date}</p>
+                                </div>
                             </div>
                         </div>
                         <span class="px-3 py-1 bg-amber-100 text-amber-700 rounded-lg text-[10px] font-black uppercase tracking-widest">Pending Decision</span>
@@ -394,13 +593,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <div class="grid grid-cols-2 gap-4">
                         <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50">
                             <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Mentor Contact</p>
-                            <p class="font-bold text-sm truncate">${mentor.full_name}</p>
+                            <p class="font-bold text-sm truncate">${escapeHtml(mentor.full_name || "")}</p>
                             <p class="text-[11px] text-slate-500 truncate">${mentor.email || 'N/A'}</p>
                             <p class="text-[11px] text-slate-500">${mentor.phone_number || 'N/A'}</p>
                         </div>
                         <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50">
                             <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Student Contact</p>
-                            <p class="font-bold text-sm truncate">${student.full_name}</p>
+                            <p class="font-bold text-sm truncate">${escapeHtml(student.full_name || "")}</p>
                             <p class="text-[11px] text-slate-500 truncate">${student.email || 'N/A'}</p>
                         </div>
                     </div>
@@ -424,7 +623,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         rejectionsList.querySelectorAll('.deny-btn').forEach(btn => {
             btn.onclick = () => handleDecision(btn.dataset.id, 'pending_review', btn);
         });
-    };
+    };;
 
     const handleDecision = async (sessionId, status, btn) => {
         const originalText = btn.innerText;
@@ -445,19 +644,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             if (error) throw error;
 
-            // Trigger notification for instructor/mentor
+            // Refund logic for confirmed rejections
             try {
                 const sessionData = allSessions.find(s => s.id === sessionId);
                 if (sessionData) {
-                    const isConfirmed = status === 'cancelled'; // Confirmed the REJECTION -> Cancelled
-                    const isDenied = status === 'pending_review';    // Denied the REJECTION -> Back to Pending
+                    const isConfirmed = status === 'cancelled';
                     
                     if (isConfirmed) {
-                        // If the session was paid, auto-create a refund request
                         const wasPaid = sessionData.booking_status === 'paid_waiting_review';
                         if (wasPaid) {
                             try {
-                                // Find the payment record for this session
                                 const { data: payment } = await supabase
                                     .from('payments')
                                     .select('id')
@@ -475,77 +671,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 }
                             } catch (refundErr) {
                                 console.error('Could not auto-create refund request:', refundErr);
-                                // Non-fatal: session is already cancelled
                             }
                         }
-
-                        // Notify Mentor
-                        await NotificationService.createNotification(
-                            sessionData.mentor_id,
-                            'Rejection Confirmed',
-                            `Admin has confirmed your request to cancel the session with ${sessionData.student_name || 'your student'}.`,
-                            'booking_cancelled',
-                            { 
-                                session_id: sessionId, 
-                                status: 'cancelled',
-                                student_name: sessionData.student_name,
-                                student_avatar: sessionData.student_avatar,
-                                session_type: sessionData.meeting_type,
-                                scheduled_at: sessionData.scheduled_at
-                            }
-                        );
-
-                        // Notify Student
-                        await NotificationService.createNotification(
-                            sessionData.student_id,
-                            'Session Cancelled',
-                            `Your session with ${sessionData.mentor_name || 'your mentor'} has been cancelled following admin review.`,
-                            'booking_cancelled',
-                            {
-                                session_id: sessionId,
-                                status: 'cancelled',
-                                mentor_name: sessionData.mentor_name,
-                                mentor_avatar: sessionData.mentor_avatar,
-                                session_type: sessionData.meeting_type,
-                                scheduled_at: sessionData.scheduled_at
-                            }
-                        );
-                    } else if (isDenied) {
-                        // Notify Mentor
-                        await NotificationService.createNotification(
-                            sessionData.mentor_id,
-                            'Rejection Denied',
-                            `Admin has denied your request to cancel the session with ${sessionData.student_name || 'your student'}. The session is back to Pending Review and requires your action.`,
-                            'booking_created', // Use booking_created to prompt action
-                            { 
-                                session_id: sessionId, 
-                                status: 'pending_review',
-                                student_name: sessionData.student_name,
-                                student_avatar: sessionData.student_avatar,
-                                session_type: sessionData.meeting_type,
-                                scheduled_at: sessionData.scheduled_at
-                            }
-                        );
-
-                        // Notify Student
-                        await NotificationService.createNotification(
-                            sessionData.student_id,
-                            'Session Restored',
-                            `Admin has denied the rejection request for your session with ${sessionData.mentor_name || 'your mentor'}. The session is back to Pending Review.`,
-                            'booking_confirmed',
-                            {
-                                session_id: sessionId,
-                                status: 'pending_review',
-                                mentor_name: sessionData.mentor_name,
-                                mentor_avatar: sessionData.mentor_avatar,
-                                session_type: sessionData.meeting_type,
-                                scheduled_at: sessionData.scheduled_at
-                            }
-                        );
                     }
                 }
-            } catch (notifErr) {
-                console.error("Failed to send admin decision notification:", notifErr);
+            } catch (err) {
+                console.error('Error in post-decision logic:', err);
             }
             
             // Refresh data locally
@@ -553,7 +684,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             renderTab();
         } catch (err) {
             console.error(err);
-            alert("Error processing decision: " + err.message);
+            showAlertModal({ title: 'Error', message: 'Error processing decision: ' + err.message, type: 'error' });
             btn.disabled = false;
             btn.innerText = originalText;
         }
@@ -588,6 +719,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (statusFilter) {
         statusFilter.onchange = (e) => {
             selectedStatus = e.target.value;
+            renderOverview();
+        };
+    }
+
+    // Type Filter Logic
+    const typeFilter = document.getElementById('type-filter');
+    if (typeFilter) {
+        typeFilter.onchange = (e) => {
+            selectedType = e.target.value;
             renderOverview();
         };
     }
@@ -629,9 +769,44 @@ document.addEventListener('DOMContentLoaded', async () => {
         icon.innerText = document.documentElement.classList.contains('dark') ? 'light_mode' : 'dark_mode';
     };
 
-    const toggleSidebar = document.getElementById('toggle-sidebar');
-    const sidebar = document.getElementById('sidebar');
-    toggleSidebar.onclick = () => sidebar.classList.toggle('-translate-x-full');
+    // Search Input
+    const searchInput = document.getElementById('booking-search');
+    const clearSearchBtn = document.getElementById('clear-search');
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            searchQuery = e.target.value.trim();
+            clearSearchBtn.classList.toggle('hidden', !searchQuery);
+            renderTab();
+        });
+    }
+    if (clearSearchBtn) {
+        clearSearchBtn.onclick = () => {
+            searchInput.value = '';
+            searchQuery = '';
+            clearSearchBtn.classList.add('hidden');
+            renderTab();
+        };
+    }
+
+    // 6. Supabase Realtime — auto-refresh all tabs on INSERT/UPDATE
+    let refreshDebounceTimer = null;
+    const debouncedRefresh = () => {
+        clearTimeout(refreshDebounceTimer);
+        refreshDebounceTimer = setTimeout(async () => {
+            await fetchData();
+        }, 1200); // small debounce to avoid rapid-fire refreshes
+    };
+
+    realtimeChannel = supabase
+        .channel('admin-bookings-realtime')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'mentorship_sessions' }, debouncedRefresh)
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'mentorship_sessions' }, debouncedRefresh)
+        .subscribe();
+
+    // Cleanup realtime on page unload
+    window.addEventListener('beforeunload', () => {
+        if (realtimeChannel) supabase.removeChannel(realtimeChannel);
+    });
 
     document.getElementById('logout-btn').onclick = async () => {
         await AuthService.logout();
@@ -659,32 +834,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             const links = student.social_links;
             socialLinksContainer.innerHTML = '';
             
-            const platforms = [
-                { key: 'github', icon: 'github' },
-                { key: 'linkedin', icon: 'linkedin' },
-                { key: 'twitter', icon: 'twitter' },
-                { key: 'facebook', icon: 'facebook' },
-                { key: 'website', icon: 'linktree' }
-            ];
-
-            let html = '';
             const isDark = document.documentElement.classList.contains('dark');
             const iconColor = isDark ? 'ffffff' : '475569'; // White in dark, slate-600 in light
 
-            if (links && typeof links === 'object') {
-                platforms.forEach(p => {
-                    const url = links[p.key];
-                    if (url && url.trim() !== '') {
-                        const fullUrl = url.startsWith('http') ? url : `https://${url}`;
-                        const iconUrl = `https://cdn.simpleicons.org/${p.icon}?color=${iconColor}`;
-                        html += `
-                            <a href="${fullUrl}" target="_blank" class="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center hover:bg-slate-700 transition-all group" onclick="event.stopPropagation()">
-                                <img src="${iconUrl}" class="w-5 h-5 opacity-80 group-hover:opacity-100" alt="${p.key}">
-                            </a>
-                        `;
-                    }
-                });
-            }
+            const html = window.renderSocialIconsHtml ? window.renderSocialIconsHtml(links, iconColor) : '';
 
             if (html) {
                 socialLinksContainer.innerHTML = html;
@@ -735,3 +888,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Initial Load
     fetchData();
 });
+

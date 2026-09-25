@@ -23,6 +23,27 @@ async function initMentorProfile() {
             return;
         }
 
+        // Animated Promo Banner
+        try {
+            const { boostService } = await import('../../../services/boostService.js');
+            const banners = await boostService.getActivePromoBanners('mentor');
+            const banner = banners.find(b => b.entity_id === mentorId);
+            
+            if (banner) {
+                const container = document.getElementById('mentor-promo-banner-container');
+                const textEl = document.getElementById('mentor-promo-text');
+                textEl.textContent = banner.banner_text;
+                
+                container.classList.remove('hidden');
+                setTimeout(() => {
+                    container.classList.remove('-translate-y-full', 'rotate-x-90', 'max-h-0', 'opacity-0');
+                    container.classList.add('max-h-24', 'opacity-100', 'translate-y-0', 'rotate-x-0');
+                }, 50);
+            }
+        } catch (err) {
+            console.warn("Failed to fetch promo banner for mentor profile:", err);
+        }
+
         console.log("Successfully fetched mentor:", mentor.full_name, "with instructor_id:", mentor.instructor_id);
         console.log("Mentor introduction video URL:", mentor.introduction_video);
         renderProfile(mentor);
@@ -162,21 +183,31 @@ function renderProfile(mentor) {
         }
     }
 
-    // Expertise Tags - Look for the expertise section by finding the section with "psychology" text
-    const expertiseSection = Array.from(document.querySelectorAll('section')).find(section => 
-        section.textContent.includes('Expertise')
-    );
-    if (expertiseSection) {
-        const expertiseContainer = expertiseSection.querySelector('.flex.flex-wrap.gap-2');
-        if (expertiseContainer) {
-            const tags = mentor.expertise || [];
-            if (tags.length > 0) {
-                expertiseContainer.innerHTML = tags.map(tag => `
-                    <span class="px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-lg text-sm font-medium transition-colors hover:bg-primary/10 hover:text-primary cursor-default">${tag}</span>
-                `).join('');
-            } else {
-                expertiseContainer.innerHTML = '<p class="text-sm text-slate-400">No expertise areas listed.</p>';
-            }
+    // Expertise Tags — cap at 4 badges on public profile
+    const expertiseTagsContainer = document.getElementById('expertise-tags-container');
+    if (expertiseTagsContainer) {
+        const tags = (mentor.expertise || []).slice(0, 4); // Max 4 badges
+        if (tags.length > 0) {
+            expertiseTagsContainer.innerHTML = tags.map(tag =>
+                `<span class="px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-lg text-sm font-medium transition-colors hover:bg-primary/10 hover:text-primary cursor-default">${tag}</span>`
+            ).join('');
+        } else {
+            expertiseTagsContainer.innerHTML = '<p class="text-sm text-slate-400">No expertise areas listed.</p>';
+        }
+    }
+
+    // Languages Spoken — show section only if data exists
+    const languagesSection = document.getElementById('languages-section');
+    const languagesList = document.getElementById('languages-list');
+    if (languagesSection && languagesList) {
+        const langs = mentor.language_list || [];
+        if (langs.length > 0) {
+            languagesSection.classList.remove('hidden');
+            languagesList.innerHTML = langs.map(lang =>
+                `<span class="px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-lg text-sm font-medium">${lang}</span>`
+            ).join('');
+        } else {
+            languagesSection.classList.add('hidden');
         }
     }
 
@@ -233,9 +264,9 @@ function renderProfile(mentor) {
             reviewsContainer.innerHTML = reviews.map(rev => `
                 <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm">
                     <div class="flex items-center gap-3 mb-4">
-                        <img src="${rev.student?.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(rev.student?.full_name || 'Anonymous') + '&background=random&color=fff'}" class="w-10 h-10 rounded-full object-cover">
+                        <img src="${rev.student?.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(rev.student?.full_name || 'Student') + '&background=random&color=fff'}" class="w-10 h-10 rounded-full object-cover">
                         <div>
-                            <h4 class="text-sm font-bold text-slate-900 dark:text-white">${rev.student?.full_name || 'Anonymous Student'}</h4>
+                            <h4 class="text-sm font-bold text-slate-900 dark:text-white">${rev.student?.full_name || 'Student'}</h4>
                             <div class="flex text-orange-400">
                                 ${Array(5).fill(0).map((_, i) => `<span class="material-symbols-outlined text-xs ${i < rev.rating ? 'fill-1' : ''}">star</span>`).join('')}
                             </div>
@@ -253,6 +284,9 @@ function renderProfile(mentor) {
             `;
         }
     }
+
+    // Clear all skeleton loaders now that data is populated
+    document.querySelectorAll('.animate-pulse').forEach(el => el.classList.remove('animate-pulse'));
 
     // Review Button & Modal Logic
     const addReviewBtn = document.getElementById('add-review-btn');
@@ -341,7 +375,7 @@ function renderProfile(mentor) {
                 submitReviewBtn.disabled = true;
                 submitReviewBtn.innerHTML = '<span class="material-symbols-outlined animate-spin text-lg">sync</span> Submitting...';
 
-                await MentorService.submitReview(mentor.instructor_id, user.id, currentRating, comment);
+                await MentorService.submitReview(mentor.instructor_id, currentRating, comment);
                 
                 alert("Review submitted successfully!");
                 closeReviewModal();
@@ -375,9 +409,16 @@ function renderAvailabilitySummary(mentor) {
         const slots = mentor.availability || [];
         if (slots.length > 0) {
             // Group by time if multiple slots exist
+            const formatTime = (timeStr) => {
+                const [h, m] = timeStr.split(':');
+                const hour = parseInt(h);
+                const ampm = hour >= 12 ? 'PM' : 'AM';
+                const hour12 = hour % 12 || 12;
+                return `${hour12}:${m} ${ampm}`;
+            };
             const timeRanges = slots.map(s => {
-                const start = s.start_time.substring(0, 5);
-                const end = s.end_time.substring(0, 5);
+                const start = formatTime(s.start_time.substring(0, 5));
+                const end = formatTime(s.end_time.substring(0, 5));
                 return `${start} - ${end}`;
             });
             timeEl.textContent = [...new Set(timeRanges)].join(', ');

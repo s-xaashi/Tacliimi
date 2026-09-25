@@ -2,6 +2,7 @@ import { MentorService } from '../../../services/mentorService.js';
 import { AuthService } from '../../../services/authService.js';
 import { supabase } from '../../../services/supabaseClient.js';
 import { PaymentService } from '../../../services/paymentService.js';
+import { isNonStudentRole, showStudentOnlyModal } from '../../../services/roleGuard.js';
 
 let selectedSlot = null;
 let currentMentor = null;
@@ -40,6 +41,48 @@ async function initBooking() {
         // 4. Initial Calendar Setup
         renderCalendar();
 
+        const sessionIdToResume = urlParams.get('resumeSession');
+        if (sessionIdToResume) {
+            const banner = document.getElementById('resume-session-banner');
+            if (banner) banner.classList.remove('hidden');
+            
+            window._resumingSessionId = sessionIdToResume;
+            
+            const { data: pastSession } = await supabase.from('mentorship_sessions').select('*').eq('id', sessionIdToResume).single();
+            if (pastSession) {
+                const topicEl = document.querySelector('textarea');
+                if (topicEl) topicEl.value = pastSession.topic || '';
+                
+                const meetingTypeInputs = document.querySelectorAll('input[name="meeting_type"]');
+                meetingTypeInputs.forEach(i => { if (i.value === pastSession.meeting_type) i.checked = true; });
+                document.querySelector('input[name="meeting_type"]:checked')?.dispatchEvent(new Event('change'));
+                
+                const isMonthly = pastSession.notes && pastSession.notes.includes('monthly');
+                const durationInputs = document.querySelectorAll('input[name="mentorship_duration"]');
+                durationInputs.forEach(i => {
+                    if (isMonthly && i.value === 'monthly') i.checked = true;
+                    else if (!isMonthly && i.value === 'single') i.checked = true;
+                });
+                document.querySelector('input[name="mentorship_duration"]:checked')?.dispatchEvent(new Event('change'));
+                
+                const morningContainer = document.querySelectorAll('h4 + div')[0];
+                if (morningContainer) {
+                    const scheduledAt = new Date(pastSession.scheduled_at);
+                    const formattedDate = scheduledAt.toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                    morningContainer.innerHTML = `
+                        <div class="w-full flex items-center justify-between p-4 border-2 border-primary bg-primary/5 text-primary rounded-xl transition-all">
+                            <div class="flex items-center gap-3">
+                                <span class="material-symbols-outlined">event_available</span>
+                                <span class="font-bold text-sm">Resuming: ${formattedDate}</span>
+                            </div>
+                            <span class="material-symbols-outlined text-lg">check_circle</span>
+                        </div>
+                    `;
+                    document.querySelectorAll('h4 + div')[1].innerHTML = '';
+                }
+            }
+        }
+
     } catch (err) {
         console.error("Error initializing booking:", err);
         // Show error in the main content area instead of silently failing
@@ -64,26 +107,40 @@ async function initBooking() {
 function renderMentorInfo(mentor) {
     document.querySelector('h2').textContent = mentor.full_name;
     const expertiseEl = document.querySelector('.bg-primary\\/10.text-primary.text-xs.font-bold');
-    if (expertiseEl) expertiseEl.textContent = mentor.headline || '';
+    if (expertiseEl) expertiseEl.textContent = mentor.headline || 'Mentor';
     
     const avatarImg = document.querySelector('aside img');
     if (avatarImg) {
         const fallbackAvatar = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(mentor.full_name) + '&background=random&color=fff';
         avatarImg.src = mentor.avatar_url || fallbackAvatar;
+        avatarImg.parentElement.classList.remove('animate-pulse', 'bg-slate-200', 'dark:bg-slate-700');
     }
 
     const bioEl = document.querySelector('aside p.text-slate-500');
     if (bioEl) bioEl.textContent = mentor.short_bio || 'Expert mentor ready to guide you.';
 
-    const stats = document.querySelectorAll('aside .font-bold');
-    if (stats.length >= 2) {
-        // Rating and Sessions findable by their parent text
-        const ratingBox = document.querySelector('.bg-slate-50 div.flex.items-center.justify-center.font-bold');
-        if (ratingBox) ratingBox.innerHTML = `<span class="material-symbols-outlined text-yellow-400 text-base fill-1">star</span> ${mentor.rating || '0.0'}`;
-        
-        const sessionsBox = document.querySelectorAll('.bg-slate-50 .font-bold')[1];
-        if (sessionsBox) sessionsBox.textContent = mentor.total_sessions || '0';
+    // Expertise tags — cap at 3 in the compact booking sidebar
+    const tags = (mentor.expertise || []).slice(0, 3);
+    if (tags.length > 0) {
+        let tagsContainer = document.getElementById('mentor-expertise-tags');
+        if (!tagsContainer && bioEl) {
+            tagsContainer = document.createElement('div');
+            tagsContainer.id = 'mentor-expertise-tags';
+            tagsContainer.className = 'flex flex-wrap gap-1.5 mt-3';
+            bioEl.parentNode.insertBefore(tagsContainer, bioEl.nextSibling);
+        }
+        if (tagsContainer) {
+            tagsContainer.innerHTML = tags.map(tag =>
+                `<span class="px-2 py-1 bg-primary/10 text-primary rounded-lg text-[10px] font-bold">${tag}</span>`
+            ).join('');
+        }
     }
+
+    const ratingBox = document.getElementById('mentor-rating-box');
+    if (ratingBox) ratingBox.innerHTML = `<span class="material-symbols-outlined text-yellow-400 text-base fill-1">star</span> ${mentor.rating || '0.0'}`;
+    
+    const sessionsBox = document.getElementById('mentor-sessions-box');
+    if (sessionsBox) sessionsBox.textContent = mentor.completed_sessions ?? mentor.total_sessions ?? '0';
     
     const locationEl = document.querySelector('.w-full.mt-6.mb-2.flex.items-center.gap-2.text-slate-400 span:last-child');
     if (locationEl) locationEl.textContent = mentor.city ? `${mentor.city}, ${mentor.country}` : (mentor.country || 'Virtual');
@@ -152,9 +209,19 @@ function renderAvailability() {
         btn.addEventListener('click', () => selectSlot(btn, slot));
         container.appendChild(btn);
     });
+
+    if (morningContainer.children.length === 0) {
+        morningContainer.innerHTML = '<p class="text-xs text-slate-400 italic py-2">No morning slots available for this day</p>';
+    }
+    if (afternoonContainer.children.length === 0) {
+        afternoonContainer.innerHTML = '<p class="text-xs text-slate-400 italic py-2">No afternoon slots available for this day</p>';
+    }
 }
 
 function selectSlot(btn, slot) {
+    const errorSlot = document.getElementById('error-slot');
+    if (errorSlot) errorSlot.classList.add('hidden');
+
     // Reset others
     document.querySelectorAll('[data-slot-id]').forEach(s => {
         s.className = 'w-full flex items-center justify-between p-4 border border-slate-200 dark:border-slate-800 rounded-xl hover:border-primary hover:bg-primary/5 transition-all group';
@@ -234,7 +301,7 @@ function updatePricing(hourlyRate, monthlyRate) {
                 applyBtn.disabled = true;
                 applyBtn.textContent = '...';
 
-                const result = await MentorService.validateCoupon(currentMentor.id, code);
+                const result = await MentorService.validateCoupon(currentMentor.instructor_id, code);
                 
                 couponMessage.classList.remove('hidden');
                 if (result.valid) {
@@ -328,8 +395,14 @@ async function confirmBooking() {
     const meetingType = document.querySelector('input[name="meeting_type"]:checked')?.value;
     const duration = document.querySelector('input[name="mentorship_duration"]:checked')?.value;
 
-    if (!selectedSlot) {
-        alert("Please select a time slot.");
+    if (!window._resumingSessionId && !selectedSlot) {
+        const errorSlot = document.getElementById('error-slot');
+        if (errorSlot) {
+            errorSlot.classList.remove('hidden');
+            errorSlot.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+            alert("Please select a time slot.");
+        }
         return;
     }
     if (!meetingType) {
@@ -363,57 +436,259 @@ async function confirmBooking() {
             return;
         }
 
-        const confirmBtn = document.querySelector('button[onclick*="confirmation.html"]');
-        if (confirmBtn) {
-            confirmBtn.disabled = true;
-            confirmBtn.innerHTML = '<span class="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></span>Redirecting to payment...';
+        // Block instructors/mentors from booking
+        if (await isNonStudentRole()) {
+            showStudentOnlyModal();
+            return;
         }
 
-        // Calculate the actual date/time
-        const [hours, minutes] = selectedSlot.start_time.split(':');
-        const scheduledAt = new Date(selectedDate);
-        scheduledAt.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+        const confirmBtn = document.querySelector('button[onclick="confirmBooking()"]');
+        if (confirmBtn) {
+            confirmBtn.disabled = true;
+            confirmBtn.innerHTML = '<span class="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></span>Initiating payment...';
+        }
 
-        // Calculate duration in minutes
-        const [startH, startM] = selectedSlot.start_time.split(':').map(Number);
-        const [endH, endM] = selectedSlot.end_time.split(':').map(Number);
-        const durationMinutes = (endH * 60 + endM) - (startH * 60 + startM);
+        let newSessionId = window._resumingSessionId;
 
-        const sessionData = {
-            studentId: session.user.id,
-            mentorId: currentMentor.instructor_id,
-            scheduledAt: scheduledAt.toISOString(),
-            topic: topic,
-            meetingType: meetingType,
-            meetingLocation: meetingLocation,
-            studentPhone: studentPhone,
-            durationMinutes: durationMinutes,
-            notes: `Type: ${duration}`,
-        };
+        if (!newSessionId) {
+            // Calculate the actual date/time
+            const [hours, minutes] = selectedSlot.start_time.split(':');
+            const scheduledAt = new Date(selectedDate);
+            scheduledAt.setHours(parseInt(hours), parseInt(minutes), 0, 0);
 
-        // Step 1: Create the session record — Edge Function will set booking_status to pending_payment
-        const newSession = await MentorService.createSession(sessionData);
+            // Calculate duration in minutes
+            const [startH, startM] = selectedSlot.start_time.split(':').map(Number);
+            const [endH, endM] = selectedSlot.end_time.split(':').map(Number);
+            const durationMinutes = (endH * 60 + endM) - (startH * 60 + startM);
+
+            const isMonthly = duration === 'monthly';
+            const sessionData = {
+                studentId: session.user.id,
+                mentorId: currentMentor.instructor_id,
+                scheduledAt: scheduledAt.toISOString(),
+                topic: topic,
+                meetingType: meetingType,
+                meetingLocation: meetingLocation,
+                studentPhone: studentPhone,
+                durationMinutes: durationMinutes,
+                notes: `Type: ${duration}`,
+                mentorshipType: isMonthly ? 'program' : 'single',
+                durationDays: isMonthly ? 30 : null,
+                totalSessions: isMonthly ? 30 : 1
+            };
+
+            // Step 1: Create or Update the session record
+            const newSession = await MentorService.createSession(sessionData);
+            newSessionId = newSession.id;
+            window._resumingSessionId = newSessionId;
+        } else {
+            // Update the existing session in case they changed topic or duration
+            const updateData = {
+                topic: topic,
+                meeting_type: meetingType,
+                meeting_location: meetingLocation,
+                student_phone: studentPhone
+            };
+            
+            if (selectedSlot) {
+                const [startH, startM] = selectedSlot.start_time.split(':').map(Number);
+                const [endH, endM] = selectedSlot.end_time.split(':').map(Number);
+                updateData.duration_minutes = (endH * 60 + endM) - (startH * 60 + startM);
+                
+                const scheduledAt = new Date(selectedDate);
+                scheduledAt.setHours(startH, startM, 0, 0);
+                updateData.scheduled_at = scheduledAt.toISOString();
+            }
+            
+            await supabase.from('mentorship_sessions').update(updateData).eq('id', newSessionId);
+        }
 
         // Step 2: Calculate the price to charge
-        const isMonthly = duration === 'monthly';
-        const baseAmount = isMonthly
+        const isMonthlyForPrice = duration === 'monthly';
+        const baseAmount = isMonthlyForPrice
             ? (currentMentor.monthly_rate || currentMentor.hourly_rate * 20)
             : (currentMentor.hourly_rate || 0);
 
-        // Step 3: Redirect to Sifalo Checkout — this navigates the page away
-        await PaymentService.createBookingCheckout(newSession.id, baseAmount, 'USD');
+        let finalPrice = baseAmount * (1 - (appliedDiscount / 100));
+
+        // Step 3: Use geo-aware routing
+        const paymentRouting = await PaymentService.startBookingPayment(newSessionId, finalPrice, 'USD');
+        
+        if (paymentRouting.method === 'ewallet') {
+            // Show Tacliimi Pay modal
+            openBookingPaymentModal(newSessionId, finalPrice, 'USD', currentMentor.full_name, currentMentor.avatar_url);
+        }
 
     } catch (err) {
         console.error("Booking error:", err);
         alert("Failed to initiate payment: " + err.message);
-        const confirmBtn = document.querySelector('button[onclick*="confirmation.html"]');
+        const confirmBtn = document.querySelector('button[onclick="confirmBooking()"]');
         if (confirmBtn) {
             confirmBtn.disabled = false;
-            confirmBtn.textContent = 'Confirm and Book Session';
+            confirmBtn.innerHTML = 'Confirm and Book Session';
         }
     }
 }
 
 window.confirmBooking = confirmBooking;
 
-document.addEventListener('DOMContentLoaded', initBooking);
+// ── Payment Modal Methods ──
+
+window._bpmContext = { sessionId: null, amount: 0, currency: 'USD' };
+
+function resetBpmModal() {
+    ['method', 'phone', 'processing', 'result'].forEach(s => {
+        const el = document.getElementById(`bpm-step-${s}`);
+        if (el) el.classList.add('hidden');
+    });
+}
+
+function showBpmStep(step) {
+    resetBpmModal();
+    const target = document.getElementById(`bpm-step-${step}`);
+    if (target) {
+        target.classList.remove('hidden');
+        target.style.animation = 'none';
+        target.offsetHeight; 
+        target.style.animation = null;
+    }
+}
+
+function showBpmResult(isSuccess, title, message) {
+    showBpmStep('result');
+    const container = document.getElementById('bpm-result-container');
+    const icon = document.getElementById('bpm-result-icon');
+    const titleEl = document.getElementById('bpm-result-title');
+    const msgEl = document.getElementById('bpm-result-msg');
+    
+    titleEl.textContent = title;
+    msgEl.textContent = message;
+    
+    if (isSuccess) {
+        container.className = "w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-6 text-4xl shadow-xl bg-emerald-100 dark:bg-emerald-500/20 text-emerald-500";
+        icon.textContent = 'check_circle';
+        icon.className = "material-symbols-outlined text-5xl";
+    } else {
+        container.className = "w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-6 text-4xl shadow-xl bg-red-100 dark:bg-red-500/20 text-red-500";
+        icon.textContent = 'error';
+        icon.className = "material-symbols-outlined text-5xl";
+    }
+}
+
+window.openBookingPaymentModal = function(sessionId, amount, currency, mentorName, avatarUrl) {
+    window._bpmContext = { sessionId, amount, currency, gateway: 'waafi' };
+    
+    const mentorNameEl = document.getElementById('bpm-mentor-name');
+    if (mentorNameEl) mentorNameEl.textContent = mentorName || 'Your Mentor';
+
+    const avatarImg = document.getElementById('bpm-mentor-avatar');
+    if (avatarImg) {
+        avatarImg.src = avatarUrl || ('https://ui-avatars.com/api/?name=' + encodeURIComponent(mentorName || 'Mentor') + '&background=random&color=fff');
+    }
+    
+    const priceEl = document.getElementById('bpm-price');
+    if (priceEl) priceEl.textContent = `$${amount.toFixed(2)}`;
+    
+    const modal = document.getElementById('booking-payment-modal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        document.body.style.overflow = 'hidden';
+        showBpmStep('method'); 
+    }
+};
+
+window.closeBookingPaymentModal = function() {
+    const modal = document.getElementById('booking-payment-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        document.body.style.overflow = '';
+    }
+    const btn = document.querySelector('button[onclick="confirmBooking()"]');
+    if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = 'Confirm and Book Session';
+    }
+};
+
+window.bpmSelectWallet = function(gateway, name, prefixDigit) {
+    window._bpmContext.gateway = gateway;
+    document.getElementById('bpm-wallet-name').textContent = name;
+    
+    const input = document.getElementById('bpm-phone-input');
+    if (input) {
+        input.value = '';
+        input.placeholder = prefixDigit + 'xxxxxxx';
+        document.getElementById('bpm-phone-error').classList.add('hidden');
+        
+        showBpmStep('phone');
+        setTimeout(() => input.focus(), 300);
+    }
+};
+
+window.bpmBackToMethod = function() {
+    showBpmStep('method');
+};
+
+window.bpmRedirectToSifalo = async function() {
+    showBpmStep('processing');
+    try {
+        await PaymentService.createBookingCheckout(
+            window._bpmContext.sessionId,
+            window._bpmContext.amount,
+            window._bpmContext.currency
+        );
+    } catch (err) {
+        showBpmResult(false, 'Checkout Failed', err.message);
+    }
+};
+
+window.bpmSubmitDirectPayment = async function() {
+    const phone = document.getElementById('bpm-phone-input').value.trim();
+    const errEl = document.getElementById('bpm-phone-error');
+
+    if (!phone || phone.length < 7) {
+        errEl.textContent = 'Please enter a valid phone number';
+        errEl.classList.remove('hidden');
+        return;
+    }
+    errEl.classList.add('hidden');
+
+    const { sessionId, amount, currency, gateway } = window._bpmContext;
+    showBpmStep('processing');
+
+    try {
+        const result = await PaymentService.createDirectPayment({
+            type: 'booking',
+            referenceId: sessionId,
+            amount,
+            currency,
+            gateway,
+            account: phone,
+        });
+
+        if (result.status === 'success') {
+            showBpmResult(true, 'Booking Confirmed! 🎉', 'Your session has been successfully booked. Redirecting to your dashboard...');
+            setTimeout(() => { window.location.href = '/src/pages/student/student-dashboard/index.html'; }, 2500);
+        } else {
+            showBpmResult(false, 'Payment Failed', result.message || 'Your payment could not be processed. Please try again.');
+        }
+    } catch (err) {
+        showBpmResult(false, 'Payment Failed', err.message);
+    }
+};
+
+// Result modal return to flow
+document.addEventListener('DOMContentLoaded', () => {
+    const resultBtn = document.getElementById('bpm-result-btn');
+    if (resultBtn) {
+        resultBtn.onclick = () => window.closeBookingPaymentModal();
+    }
+});
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initBooking);
+} else {
+    initBooking();
+}

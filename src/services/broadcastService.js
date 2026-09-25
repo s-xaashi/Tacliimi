@@ -1,86 +1,98 @@
-/**
- * broadcastService.js
- * ===========================================================
- * NOTE: Notification fan-out is handled server-side.
- * When a broadcast is inserted, the `trg_broadcast_notifications`
- * PostgreSQL trigger fires `fn_broadcast_notifications()` which
- * bulk-inserts one notification row per matching user in a single
- * SQL statement. No client-side looping is required or safe.
- * See: src/db/migrations/20260626_architectural_fixes.sql
- * ===========================================================
- */
 import { supabase } from './supabaseClient.js';
 
+/**
+ * BroadcastService
+ * Manages system-wide announcements for students, instructors, and admins.
+ */
 export const BroadcastService = {
+    /**
+     * Fetch all active broadcasts for the current user's role
+     */
+    async getActiveBroadcasts() {
+        const { data, error } = await supabase
+            .from('system_broadcasts')
+            .select('*')
+            .eq('is_active', true)
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error('Error fetching active broadcasts:', error);
+            return [];
+        }
+        return data || [];
+    },
 
     /**
-     * SuperAdmin sends a system-wide broadcast.
-     * Fan-out notifications are handled by the DB trigger — no JS loop needed.
+     * Fetch all broadcasts (Admin Only)
      */
-    async sendBroadcast({ title, message, targetAudience = 'all', expiresAt = null, adminId }) {
+    async getAllBroadcasts() {
+        const { data, error } = await supabase
+            .from('system_broadcasts')
+            .select(`
+                *,
+                admin_auth!system_broadcasts_admin_id_fkey (
+                    full_name,
+                    role
+                )
+            `)
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error('Error fetching all broadcasts:', error);
+            throw error;
+        }
+        return data || [];
+    },
+
+    /**
+     * Send a new broadcast (Admin Only)
+     */
+    async sendBroadcast({ title, message, targetAudience, adminId }) {
         const { data, error } = await supabase
             .from('system_broadcasts')
             .insert({
-                sent_by: adminId,
                 title,
                 message,
                 target_audience: targetAudience,
-                is_active: true,
-                expires_at: expiresAt
+                admin_id: adminId,
+                is_active: true
             })
             .select()
             .single();
 
-        if (error) throw error;
+        if (error) {
+            console.error('Error sending broadcast:', error);
+            throw error;
+        }
 
-        // Log the admin action
-        await supabase.from('admin_audit_logs').insert({
-            admin_id: adminId,
-            action: 'send_broadcast',
-            entity_type: 'system_broadcast',
-            entity_id: data.id,
-            details: { target_audience: targetAudience, title }
-        });
+        // Create audit log
+        try {
+            await supabase.from('admin_audit_logs').insert({
+                admin_id: adminId,
+                action: 'send_broadcast',
+                entity_type: 'system_broadcasts',
+                entity_id: data.id,
+                details: { title, target_audience: targetAudience }
+            });
+        } catch (logErr) {
+            console.warn('Failed to log broadcast action:', logErr);
+        }
 
         return data;
     },
 
     /**
-     * Get all active broadcasts for the current user.
+     * Deactivate a broadcast (Admin Only)
      */
-    async getActiveBroadcasts() {
-        const { data, error } = await supabase
-            .from('system_broadcasts')
-            .select('*, admin_auth!system_broadcasts_sent_by_fkey(full_name)')
-            .eq('is_active', true)
-            .order('created_at', { ascending: false });
-
-        if (error) throw error;
-        return data || [];
-    },
-
-    /**
-     * SuperAdmin: get ALL broadcasts including expired.
-     */
-    async getAllBroadcasts() {
-        const { data, error } = await supabase
-            .from('system_broadcasts')
-            .select('*, admin_auth!system_broadcasts_sent_by_fkey(full_name)')
-            .order('created_at', { ascending: false });
-
-        if (error) throw error;
-        return data || [];
-    },
-
-    /**
-     * SuperAdmin: deactivate a broadcast.
-     */
-    async deactivateBroadcast(broadcastId) {
+    async deactivateBroadcast(id) {
         const { error } = await supabase
             .from('system_broadcasts')
             .update({ is_active: false })
-            .eq('id', broadcastId);
+            .eq('id', id);
 
-        if (error) throw error;
+        if (error) {
+            console.error('Error deactivating broadcast:', error);
+            throw error;
+        }
     }
 };

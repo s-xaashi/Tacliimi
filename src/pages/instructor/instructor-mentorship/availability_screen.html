@@ -1,60 +1,18 @@
 <!DOCTYPE html>
+
 <html lang="en"><head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>Mentorship Availability | Tacliimi Learn</title>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link rel="stylesheet" href="/public/assets/css/tacliimi.css">
 <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<script id="tailwind-config">
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        "primary": "#137fec",
-                        "brand-purple": "#7c3aed",
-                        "background-light": "#f6f7f8",
-                        "background-dark": "#101922",
-                    },
-                    fontFamily: {
-                        "display": ["Lexend", "sans-serif"]
-                    },
-                    borderRadius: {
-                        "DEFAULT": "0.25rem",
-                        "lg": "0.5rem",
-                        "xl": "0.75rem",
-                        "full": "9999px"
-                    },
-                },
-            },
-        }
-    </script>
-<style type="text/tailwindcss">
-        body {
-            font-family: 'Lexend', sans-serif;
-        }
-        .sidebar-item-active {
-            @apply bg-primary/10 text-primary border-r-[3px] border-primary;
-        }
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        }
-        .fill-icon {
-            font-variation-settings: 'FILL' 1;
-        }
-        input[type="time"]::-webkit-calendar-picker-indicator {
-            filter: invert(48%) sepia(13%) saturate(3207%) hue-rotate(220deg) brightness(95%) contrast(80%);
-            cursor: pointer;
-        }
-        .dark input[type="time"]::-webkit-calendar-picker-indicator {
-            filter: invert(100%);
-        }
-    </style>
+
+
 </head>
-<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100">
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100"><div class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[50] hidden lg:hidden" id="sidebar-overlay"></div>
 <div class="flex h-screen overflow-hidden">
-<aside class="w-64 flex-shrink-0 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col">
+<aside class="bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col fixed left-0 top-0 h-full w-64 z-[60] -translate-x-full lg:translate-x-0" id="instructor-sidebar">
 <div class="p-6 flex items-center gap-3">
 <div class="w-10 h-10 rounded-xl bg-brand-purple flex items-center justify-center text-white shadow-lg shadow-brand-purple/20">
 <span class="material-symbols-outlined text-2xl fill-icon">school</span>
@@ -88,9 +46,9 @@
 </a>
 </nav>
 </aside>
-<main class="flex-1 flex flex-col overflow-hidden">
+<main class="flex-1 flex flex-col overflow-hidden lg:ml-64 transition-all">
 <header class="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-8">
-<div class="flex items-center gap-4">
+<div class="flex items-center gap-4"><button aria-label="Open navigation menu" class="lg:hidden p-2.5 text-slate-500 bg-slate-100 dark:bg-slate-800 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors mr-3" id="instructor-mobile-menu-btn"><span class="material-symbols-outlined">menu_open</span></button>
 <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100">Mentorship Bookings</h2>
 </div>
 <div class="flex items-center gap-6">
@@ -169,7 +127,7 @@
 </div>
 <div class="p-8">
 <div class="flex flex-col gap-4">
-<div class="flex flex-col sm:flex-row sm:items-center gap-6 p-6 rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-brand-purple/30 transition-colors shadow-sm">
+<div class="flex flex-col items-center sm:flex-row sm:items-center gap-6 p-4 md:p-6 rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-brand-purple/30 transition-colors shadow-sm">
 <div class="w-16 h-16 rounded-xl bg-brand-purple/10 flex flex-col items-center justify-center flex-shrink-0">
 <span class="text-xs font-bold text-brand-purple uppercase">Sat</span>
 <span class="text-xl font-black text-brand-purple">SAT</span>
@@ -189,13 +147,13 @@
 <span class="material-symbols-outlined text-[16px]">add_circle</span> Add Slot
                                         </button>
 </div>
-<div class="flex flex-col items-end gap-2">
+<div class="flex flex-col items-center sm:items-end gap-2 w-full sm:w-auto mt-2 sm:mt-0">
 <span class="text-xs font-bold text-green-500 uppercase flex items-center gap-1.5 px-3 py-1 bg-green-500/10 rounded-full">
 <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> Active
                                         </span>
 </div>
 </div>
-<div class="flex flex-col sm:flex-row sm:items-center gap-6 p-6 rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-brand-purple/30 transition-colors shadow-sm">
+<div class="flex flex-col items-center sm:flex-row sm:items-center gap-6 p-4 md:p-6 rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-brand-purple/30 transition-colors shadow-sm">
 <div class="w-16 h-16 rounded-xl bg-slate-100 dark:bg-slate-800 flex flex-col items-center justify-center flex-shrink-0">
 <span class="text-xs font-bold text-slate-400 uppercase">Sun</span>
 <span class="text-xl font-black text-slate-800 dark:text-slate-200">SUN</span>
@@ -215,13 +173,13 @@
 <span class="material-symbols-outlined text-[16px]">add_circle</span> Add Slot
                                         </button>
 </div>
-<div class="flex flex-col items-end gap-2">
+<div class="flex flex-col items-center sm:items-end gap-2 w-full sm:w-auto mt-2 sm:mt-0">
 <span class="text-xs font-bold text-green-500 uppercase flex items-center gap-1.5 px-3 py-1 bg-green-500/10 rounded-full">
 <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> Active
                                         </span>
 </div>
 </div>
-<div class="flex flex-col sm:flex-row sm:items-center gap-6 p-6 rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-brand-purple/30 transition-colors shadow-sm">
+<div class="flex flex-col items-center sm:flex-row sm:items-center gap-6 p-4 md:p-6 rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-brand-purple/30 transition-colors shadow-sm">
 <div class="w-16 h-16 rounded-xl bg-slate-100 dark:bg-slate-800 flex flex-col items-center justify-center flex-shrink-0">
 <span class="text-xs font-bold text-slate-400 uppercase">Mon</span>
 <span class="text-xl font-black text-slate-800 dark:text-slate-200">MON</span>
@@ -241,13 +199,13 @@
 <span class="material-symbols-outlined text-[16px]">add_circle</span> Add Slot
                                         </button>
 </div>
-<div class="flex flex-col items-end gap-2">
+<div class="flex flex-col items-center sm:items-end gap-2 w-full sm:w-auto mt-2 sm:mt-0">
 <span class="text-xs font-bold text-green-500 uppercase flex items-center gap-1.5 px-3 py-1 bg-green-500/10 rounded-full">
 <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> Active
                                         </span>
 </div>
 </div>
-<div class="flex flex-col sm:flex-row sm:items-center gap-6 p-6 rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-brand-purple/30 transition-colors shadow-sm">
+<div class="flex flex-col items-center sm:flex-row sm:items-center gap-6 p-4 md:p-6 rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-brand-purple/30 transition-colors shadow-sm">
 <div class="w-16 h-16 rounded-xl bg-slate-100 dark:bg-slate-800 flex flex-col items-center justify-center flex-shrink-0">
 <span class="text-xs font-bold text-slate-400 uppercase">Tue</span>
 <span class="text-xl font-black text-slate-800 dark:text-slate-200">TUE</span>
@@ -267,13 +225,13 @@
 <span class="material-symbols-outlined text-[16px]">add_circle</span> Add Slot
                                         </button>
 </div>
-<div class="flex flex-col items-end gap-2">
+<div class="flex flex-col items-center sm:items-end gap-2 w-full sm:w-auto mt-2 sm:mt-0">
 <span class="text-xs font-bold text-green-500 uppercase flex items-center gap-1.5 px-3 py-1 bg-green-500/10 rounded-full">
 <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> Active
                                         </span>
 </div>
 </div>
-<div class="flex flex-col sm:flex-row sm:items-center gap-6 p-6 rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-brand-purple/30 transition-colors shadow-sm">
+<div class="flex flex-col items-center sm:flex-row sm:items-center gap-6 p-4 md:p-6 rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-brand-purple/30 transition-colors shadow-sm">
 <div class="w-16 h-16 rounded-xl bg-slate-100 dark:bg-slate-800 flex flex-col items-center justify-center flex-shrink-0">
 <span class="text-xs font-bold text-slate-400 uppercase">Wed</span>
 <span class="text-xl font-black text-slate-800 dark:text-slate-200">WED</span>
@@ -293,7 +251,7 @@
 <span class="material-symbols-outlined text-[16px]">add_circle</span> Add Slot
                                         </button>
 </div>
-<div class="flex flex-col items-end gap-2">
+<div class="flex flex-col items-center sm:items-end gap-2 w-full sm:w-auto mt-2 sm:mt-0">
 <span class="text-xs font-bold text-green-500 uppercase flex items-center gap-1.5 px-3 py-1 bg-green-500/10 rounded-full">
 <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> Active
                                         </span>
@@ -313,5 +271,35 @@
 </div>
 </main>
 </div>
-
+<script>
+(function() {
+    var btn = document.getElementById('instructor-mobile-menu-btn');
+    var sidebar = document.getElementById('instructor-sidebar');
+    var overlay = document.getElementById('sidebar-overlay');
+    if (!btn || !sidebar || !overlay) return;
+    btn.addEventListener('click', function() {
+        sidebar.classList.toggle('-translate-x-full');
+        overlay.classList.toggle('hidden');
+    });
+    overlay.addEventListener('click', function() {
+        sidebar.classList.add('-translate-x-full');
+        overlay.classList.add('hidden');
+    });
+})();
+</script>
+<script>
+// Defer sidebar transition to avoid slide-in animation on desktop page load
+window.addEventListener('load', function() {
+    var sidebar = document.getElementById('instructor-sidebar');
+    if (sidebar) {
+        // Only enable transition on mobile (below lg=1024px)
+        if (window.innerWidth < 1024) {
+            sidebar.classList.add('transition-transform', 'duration-300');
+        }
+        // No transition on desktop — already at lg:translate-x-0, nothing to animate
+    }
+});
+</script>
 </body></html>
+
+

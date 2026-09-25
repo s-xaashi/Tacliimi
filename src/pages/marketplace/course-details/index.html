@@ -12,251 +12,360 @@
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
         rel="stylesheet" />
     <script type="module" src="/src/services/globalProfile.js"></script>
-    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
-    <script>
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        primary: "#6366F1",
-                        "background-light": "#F9FAFB",
-                        "background-dark": "#0F172A",
-                    },
-                    fontFamily: {
-                        display: ["Inter", "sans-serif"],
-                        sans: ["Inter", "sans-serif"],
-                    },
-                    borderRadius: {
-                        DEFAULT: "0.75rem",
-                    },
-                },
-            },
-        };
-    </script>
-    <style type="text/tailwindcss">
-        body { font-family: 'Inter', sans-serif; }
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 48;
-        }
-    </style>
+    <link rel="stylesheet" href="/public/assets/css/tacliimi.css">
+    
+    
 </head>
 
 <body
     class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen transition-colors duration-200">
-    <nav
-        class="sticky top-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16 items-center">
-                <a href="/" class="flex items-center gap-2">
-                    <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                        <span class="material-icons-round text-white text-xl">school</span>
-                    </div>
-                    <span class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Tacliimi<span
-                            class="text-primary">Learn</span></span>
-                </a>
-                <div class="flex items-center gap-4" id="cd-header-profile-placeholder">
-                    <!-- Global Profile Injected Below -->
+    <nav class="sticky top-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 transition-colors min-h-[64px]">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between relative">
+            <!-- Mobile Hamburger (Left) -->
+            <button class="lg:hidden p-2 -ml-2 text-slate-600 dark:text-slate-300 z-10" id="mobile-menu-btn">
+                <span class="material-symbols-outlined text-2xl">menu</span>
+            </button>
+
+            <!-- Logo (Center on mobile, Left on desktop) -->
+            <a href="/" class="flex items-center gap-2 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 lg:static lg:top-auto lg:left-0 lg:transform-none z-10 hover:opacity-80 transition-opacity shrink-0">
+                <!-- LOGO SIZE: Adjust h-12 md:h-14 to resize logo manually -->
+                <img src="/public/assets/images/IMG_7454.png" alt="Tacliimi Learn" class="h-12 md:h-14 w-auto object-contain dark:hidden">
+                <img src="/public/assets/images/logo-dark.png" alt="Tacliimi Learn" class="h-12 md:h-14 w-auto object-contain hidden dark:block">
+            </a>
+
+            <!-- Desktop Menu (Right Profile) -->
+            <div class="hidden lg:flex items-center gap-4 flex-shrink-0 z-10" id="cd-header-profile-placeholder">
+                <!-- Global Profile Injected Below -->
+            </div>
+        </div>
+
+        <!-- Mobile Menu Output -->
+        <div id="mobile-menu-overlay" class="fixed inset-0 bg-black/50 z-[55] hidden transition-opacity duration-300 lg:hidden" aria-hidden="true"></div>
+        <div class="fixed top-0 left-0 z-[60] w-72 max-w-[82vw] h-[100dvh] bg-white dark:bg-slate-900 shadow-2xl overflow-y-auto flex flex-col px-4 py-8 -translate-x-full transition-transform duration-300 ease-in-out lg:hidden" id="mobile-menu">
+            <!-- Top: Mobile Profile Area -->
+            <div id="mobile-menu-profile" class="flex items-center gap-4 mb-6 pb-6 border-b border-slate-100 dark:border-slate-800 cursor-pointer" onclick="window.location.href='/src/pages/student/account-settings/index.html'">
+                <div class="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-primary/20 overflow-hidden flex-shrink-0" id="mobile-menu-avatar-wrapper" data-role="profile-image">
+                    <span class="material-symbols-outlined text-slate-400 w-full h-full flex justify-center items-center">person</span>
                 </div>
+                <div class="flex-1 overflow-hidden">
+                    <h4 class="font-bold text-slate-900 dark:text-white truncate user-display-name">Loading...</h4>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">View and edit profile</p>
+                </div>
+                <span class="material-symbols-outlined text-slate-400">chevron_right</span>
+            </div>
+
+            <!-- Middle: Navigation Links -->
+            <div class="flex flex-col space-y-5 flex-1">
+                <!-- Dynamic Categories -->
+                <div id="mobile-categories-container" class="space-y-4">
+                    <div class="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Categories</div>
+                    <div id="mobile-categories-list" class="flex flex-col space-y-3 pl-3 border-l-2 border-slate-100 dark:border-slate-800">
+                        <div class="animate-pulse flex items-center gap-2"><div class="w-4 h-4 bg-slate-200 dark:bg-slate-700 rounded"></div><div class="h-4 w-24 bg-slate-200 dark:bg-slate-700 rounded"></div></div>
+                    </div>
+                </div>
+                
+                <div class="h-px bg-slate-100 dark:bg-slate-800 w-full my-2"></div>
+                <a class="flex items-center gap-3 text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/index.html">
+                    <span class="material-symbols-outlined text-xl text-slate-400">home</span> Home
+                </a>
+                <a class="flex items-center gap-3 text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/src/pages/marketplace/marketplace/">
+                    <span class="material-symbols-outlined text-xl text-slate-400">explore</span> Marketplace Courses
+                </a>
+                <a class="flex items-center gap-3 text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/src/pages/mentorship/mentor-marketplace/index.html">
+                    <span class="material-symbols-outlined text-xl text-slate-400">supervisor_account</span> Find a Mentor
+                </a>
+                <a class="flex items-center gap-3 text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/src/pages/student/student-dashboard/index.html">
+                    <span class="material-symbols-outlined text-xl text-slate-400">dashboard</span> Dashboard
+                </a>
+            </div>
+
+            <!-- Bottom: Footer Actions -->
+            <div class="pt-6 mt-6 border-t border-slate-100 dark:border-slate-800 space-y-5 pb-10">
+                <button id="mobile-theme-toggle" class="flex items-center gap-3 w-full text-left text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors">
+                    <span class="material-symbols-outlined text-xl text-slate-400">dark_mode</span> Toggle Theme
+                </button>
             </div>
         </div>
     </nav>
+    <!-- Promo Banner -->
+    <div id="course-promo-banner-container" class="hidden overflow-hidden bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 shadow-md relative perspective-1000 z-40 transition-all duration-[1000ms] ease-out transform-gpu -translate-y-full rotate-x-90 max-h-0 opacity-0 origin-top border-b border-amber-600/20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-center gap-3">
+            <span class="material-symbols-outlined text-white text-[28px] animate-pulse drop-shadow-md">campaign</span>
+            <p id="course-promo-text" class="text-white font-black text-sm sm:text-base tracking-wide drop-shadow-md uppercase"></p>
+        </div>
+    </div>
     <main class="relative bg-white dark:bg-slate-900 min-h-screen">
         <!-- Premium Background Aura -->
-        <div class="absolute top-0 inset-x-0 h-[600px] bg-gradient-to-b from-primary/10 via-white/50 to-white dark:from-primary/20 dark:via-slate-900/50 dark:to-slate-900 -z-10 pointer-events-none opacity-50"></div>
+        <div
+            class="absolute top-0 inset-x-0 h-[600px] bg-gradient-to-b from-primary/10 via-white/50 to-white dark:from-primary/20 dark:via-slate-900/50 dark:to-slate-900 -z-10 pointer-events-none opacity-50">
+        </div>
 
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div class="flex flex-col lg:flex-row gap-8">
-            <div class="lg:w-2/3">
-                <div class="relative aspect-video rounded-2xl overflow-hidden bg-slate-900 group">
-                    <img alt="Course Preview Thumbnail"
-                        class="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700"
-                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuAoxv0lnn9g0hqpV8k7IbB4nHlU5WRInPNUzsbsOw4MERt6qUu-wKJ8hZF1fP5O-AjmvXUsc5jRabFqVdbT7QHymxerTNfftiAKfaqUXneH0jyuu1m3pwea8k5jYqm7t9vGN4_SVlTGZT5NANZh8ZosozBi_L46evR9BzIZIkLuG_gk4P1TV31HsRiM_LvsfbXMJwk0UWfc25apMiGooKsz9O73_bVbnHGE97ZnziwtaSn9hnZzBxxQrky3czU-h_LG31PTYSYujV9S" />
-                    <div class="absolute inset-0 flex items-center justify-center">
-                        <button id="play-preview-btn"
-                            class="w-20 h-20 bg-primary/20 backdrop-blur-xl hover:bg-primary text-white rounded-full flex items-center justify-center shadow-2xl transition-all hover:scale-110 border border-white/30">
-                            <span class="material-icons-round text-5xl translate-x-1">play_arrow</span>
-                        </button>
+            <div class="flex flex-col lg:flex-row gap-4 lg:gap-8">
+                <div class="lg:w-2/3 contents lg:block">
+                    <!-- Skeleton: Thumbnail -->
+                    <div id="cd-skeleton-thumb" class="relative aspect-video rounded-2xl overflow-hidden bg-slate-200 dark:bg-slate-800 animate-pulse order-1 lg:order-none">
+                        <div class="w-full h-full bg-slate-300 dark:bg-slate-700"></div>
                     </div>
-                    <div class="absolute bottom-6 left-6">
-                        <span
-                            class="px-3 py-1 bg-black/50 backdrop-blur-md text-white text-xs font-semibold rounded-full uppercase tracking-wider border border-white/20">
-                            Previewing: Intro to Course Design
-                        </span>
-                    </div>
-                </div>
-                <div class="mt-8">
-                    <div id="cd-category-badge" class="mb-4">
-                        <span class="px-3 py-1 bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-widest rounded-full border border-primary/20">
-                            Course details
-                        </span>
-                    </div>
-                    <h1 id="cd-title" class="text-4xl md:text-5xl font-black text-slate-900 dark:text-white leading-tight tracking-tight">
-                        Course Title Here
-                    </h1>
-                    <p id="cd-subtitle" class="mt-4 text-xl text-slate-500 dark:text-slate-400 font-medium leading-relaxed max-w-3xl hidden"></p>
-                </div>
-                <div id="what-you-will-learn-section"
-                    class="mt-12 p-8 border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900/50">
-                    <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-6">What you'll learn / Description
-                    </h2>
-                    <div id="cd-description"
-                        class="text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">
-                        <!-- Description content will be injected here -->
-                    </div>
-                </div>
-                <div class="mt-12">
-                    <div class="flex items-center justify-between mb-6">
-                        <h2 class="text-xl font-bold text-slate-900 dark:text-white">Course Content</h2>
-                        <span id="cd-content-meta" class="text-sm text-slate-500"></span>
-                    </div>
-                    <div id="cd-curriculum" class="space-y-4">
-                        <!-- Curriculum loaded dynamically via JS -->
-                    </div>
-                </div>
-                <div
-                    class="mt-12 p-8 border border-slate-200 dark:border-slate-800 rounded-2xl bg-slate-50 dark:bg-slate-900/30">
-                    <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-6">About the Instructor</h2>
-                    <div class="flex flex-col md:flex-row gap-6">
-                        <img id="cd-instructor-avatar" alt="Instructor Profile" class="w-24 h-24 rounded-full bg-slate-200 object-cover flex-shrink-0 cursor-pointer"
-                            onclick="window.location.href='/src/pages/instructor/public-profile/index.html?id=' + currentCourse.instructor_id"
-                            src="https://ui-avatars.com/api/?name=Instructor&background=6366f1&color=fff" />
-                        <div class="flex-1">
-                            <h3 id="cd-instructor" class="text-lg font-bold text-slate-900 dark:text-white hover:text-primary transition-colors cursor-pointer" 
-                                onclick="window.location.href='/src/pages/instructor/public-profile/index.html?id=' + currentCourse.instructor_id">
-                                Loading...
-                            </h3>
-                            <p id="cd-instructor-role" class="text-primary text-sm font-medium mb-3"></p>
-                            <div class="flex flex-wrap gap-4 text-xs font-semibold text-slate-500 mb-4">
-                                <span class="flex items-center gap-1"><span
-                                        class="material-icons-round text-sm text-yellow-500">star</span> <span id="cd-instructor-rating">—</span> Rating</span>
-                                <span class="flex items-center gap-1"><span
-                                        class="material-icons-round text-sm">people</span> <span id="cd-instructor-students">—</span> Students</span>
-                                <span class="flex items-center gap-1"><span
-                                        class="material-icons-round text-sm">play_circle_filled</span> <span id="cd-instructor-courses">—</span> Courses</span>
-                            </div>
-                            <p id="cd-instructor-bio" class="text-sm leading-relaxed text-slate-600 dark:text-slate-400 mb-4">
-                                Loading instructor bio...
-                            </p>
-                            <div id="cd-instructor-expertise" class="flex flex-wrap gap-2"></div>
+                    <div class="relative aspect-video rounded-2xl overflow-hidden bg-slate-900 group order-1 lg:order-none hidden" id="cd-thumb-wrapper">
+                        <img alt="Course Preview Thumbnail"
+                            class="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuAoxv0lnn9g0hqpV8k7IbB4nHlU5WRInPNUzsbsOw4MERt6qUu-wKJ8hZF1fP5O-AjmvXUsc5jRabFqVdbT7QHymxerTNfftiAKfaqUXneH0jyuu1m3pwea8k5jYqm7t9vGN4_SVlTGZT5NANZh8ZosozBi_L46evR9BzIZIkLuG_gk4P1TV31HsRiM_LvsfbXMJwk0UWfc25apMiGooKsz9O73_bVbnHGE97ZnziwtaSn9hnZzBxxQrky3czU-h_LG31PTYSYujV9S" />
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <button id="play-preview-btn"
+                                class="w-20 h-20 bg-primary/20 backdrop-blur-xl hover:bg-primary text-white rounded-full flex items-center justify-center shadow-2xl transition-all hover:scale-110 border border-white/30">
+                                <span class="material-icons-round text-5xl translate-x-1">play_arrow</span>
+                            </button>
+                        </div>
+                        <div class="absolute bottom-6 left-6">
+                            <span
+                                class="px-3 py-1 bg-black/50 backdrop-blur-md text-white text-xs font-semibold rounded-full uppercase tracking-wider border border-white/20">
+                                Previewing: Intro to Course Design
+                            </span>
                         </div>
                     </div>
-                </div>
-                <div class="mt-12 mb-12">
-                    <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-6">Student Reviews</h2>
-                    <!-- Rating Summary -->
-                    <div class="flex flex-col md:flex-row gap-8 items-center mb-10">
-                        <div class="text-center">
-                            <div id="cd-avg-rating" class="text-5xl font-black text-slate-900 dark:text-white">0.0</div>
-                            <div id="cd-rating-stars" class="flex justify-center mt-2">
-                                <span class="material-icons-round text-slate-300">star</span>
-                                <span class="material-icons-round text-slate-300">star</span>
-                                <span class="material-icons-round text-slate-300">star</span>
-                                <span class="material-icons-round text-slate-300">star</span>
-                                <span class="material-icons-round text-slate-300">star</span>
-                            </div>
-                            <div class="text-xs font-semibold text-primary mt-2 uppercase tracking-wide">Course Rating</div>
-                            <div id="cd-review-count" class="text-xs text-slate-500 mt-1">0 reviews</div>
+                    <!-- Skeleton: Title & Meta -->
+                    <div id="cd-skeleton-meta" class="mt-0 lg:mt-8 order-2 lg:order-none animate-pulse">
+                        <div class="h-5 w-28 bg-slate-200 dark:bg-slate-700 rounded-full mb-5"></div>
+                        <div class="h-10 w-3/4 bg-slate-200 dark:bg-slate-700 rounded-xl mb-3"></div>
+                        <div class="h-8 w-1/2 bg-slate-200 dark:bg-slate-700 rounded-xl mb-5"></div>
+                        <div class="flex gap-4 mb-5">
+                            <div class="h-5 w-24 bg-slate-200 dark:bg-slate-700 rounded"></div>
+                            <div class="h-5 w-32 bg-slate-200 dark:bg-slate-700 rounded"></div>
                         </div>
-                        <div class="flex-1 space-y-2 max-w-md w-full" id="cd-rating-bars">
-                            <!-- Bars rendered dynamically -->
+                        <div class="h-5 w-full bg-slate-200 dark:bg-slate-700 rounded mb-2"></div>
+                        <div class="h-5 w-5/6 bg-slate-200 dark:bg-slate-700 rounded"></div>
+                    </div>
+                    <div class="mt-0 lg:mt-8 order-2 lg:order-none hidden" id="cd-meta-wrapper">
+                        <div id="cd-category-badge" class="mb-4">
+                            <span
+                                class="px-3 py-1 bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-widest rounded-full border border-primary/20">
+                                Course details
+                            </span>
+                        </div>
+                        <h1 id="cd-title"
+                            class="text-4xl md:text-5xl font-black text-slate-900 dark:text-white leading-tight tracking-tight">
+                            Course Title Here
+                        </h1>
+                        <div id="cd-course-metrics" class="flex flex-wrap items-center gap-6 mt-5 mb-1 text-sm font-medium text-slate-600 dark:text-slate-400 hidden">
+                             <span class="flex items-center gap-1.5"><span class="material-icons-round text-yellow-500 text-base">star</span> <span id="cd-header-rating" class="font-bold text-slate-900 dark:text-white">0.0</span> <span id="cd-header-reviews" class="text-xs">(0)</span></span>
+                             <span class="flex items-center gap-1.5"><span class="material-icons-round text-base text-slate-400">group</span> <span id="cd-header-enrolled" class="font-bold text-slate-900 dark:text-white">0</span> students enrolled</span>
+                        </div>
+                        <p id="cd-subtitle"
+                            class="mt-4 text-xl text-slate-500 dark:text-slate-400 font-medium leading-relaxed max-w-3xl hidden">
+                        </p>
+                    </div>
+                    <div id="what-you-will-learn-section"
+                        class="mt-0 lg:mt-12 p-8 border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900/50 order-5 lg:order-none">
+                        <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-6">What you'll learn /
+                            Description
+                        </h2>
+                        <div id="cd-description"
+                            class="text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">
+                            <!-- Description content will be injected here -->
                         </div>
                     </div>
-                    <!-- Leave a Review (only shown when enrolled) -->
-                    <div id="cd-review-form" class="hidden mb-8 p-6 border border-primary/30 bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl">
-                        <h3 class="text-base font-bold text-slate-900 dark:text-white mb-4">Leave a Review</h3>
-                        <div class="flex gap-2 mb-4" id="cd-star-picker">
-                            <span class="material-icons-round text-2xl cursor-pointer text-slate-300 hover:text-yellow-400 transition-colors" data-star="1">star</span>
-                            <span class="material-icons-round text-2xl cursor-pointer text-slate-300 hover:text-yellow-400 transition-colors" data-star="2">star</span>
-                            <span class="material-icons-round text-2xl cursor-pointer text-slate-300 hover:text-yellow-400 transition-colors" data-star="3">star</span>
-                            <span class="material-icons-round text-2xl cursor-pointer text-slate-300 hover:text-yellow-400 transition-colors" data-star="4">star</span>
-                            <span class="material-icons-round text-2xl cursor-pointer text-slate-300 hover:text-yellow-400 transition-colors" data-star="5">star</span>
+                    <div class="mt-0 lg:mt-12 order-4 lg:order-none">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="text-xl font-bold text-slate-900 dark:text-white">Course Content</h2>
+                            <span id="cd-content-meta" class="text-sm text-slate-500"></span>
                         </div>
-                        <textarea id="cd-review-text" rows="3" placeholder="Share your experience with this course..."
-                            class="w-full p-3 text-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-xl outline-none focus:ring-2 focus:ring-primary text-slate-700 dark:text-slate-200"></textarea>
-                        <button id="cd-submit-review" class="mt-3 px-6 py-2 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-indigo-600 transition-all">Submit Review</button>
-                        <p id="cd-review-msg" class="mt-2 text-sm text-emerald-600 hidden">Review submitted! Thank you.</p>
+                        <div id="cd-curriculum" class="space-y-4">
+                            <!-- Curriculum loaded dynamically via JS -->
+                        </div>
                     </div>
-                    <!-- Reviews List -->
-                    <div id="cd-reviews-list" class="grid md:grid-cols-2 gap-6">
-                        <p class="text-slate-500 text-sm col-span-2 text-center py-8">No reviews yet. Be the first!</p>
-                    </div>
-                </div>
-            </div>
-            <div class="lg:w-1/3">
-                <div class="sticky top-24 space-y-6">
                     <div
-                        class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl overflow-hidden p-6">
-                        <div class="flex items-baseline gap-4 mb-6">
-                            <span id="cd-price" class="text-4xl font-bold text-slate-900 dark:text-white">$00.00</span>
-                            <span id="cd-original-price" class="text-lg text-slate-400 line-through"></span>
-                            <span id="cd-discount-badge"
-                                class="hidden text-xs font-bold text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded">DISCOUNT</span>
-                        </div>
-                        <div class="space-y-3">
-                            <div id="private-course-banner" class="hidden mb-3 p-4 bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800 rounded-xl text-center">
-                            <span class="material-symbols-outlined text-violet-600 text-2xl mb-1">lock</span>
-                            <p class="text-sm font-bold text-violet-700 dark:text-violet-400 mb-1">Private Course</p>
-                            <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">You must be signed in to enroll in this course.</p>
-                        </div>
-                        <div class="space-y-4 mb-8">
-                            <button id="enroll-btn"
-                                class="w-full py-4.5 bg-primary hover:bg-primary/90 text-white font-black rounded-2xl transition-all shadow-xl shadow-primary/20 hover:shadow-primary/30 active:scale-[0.98] flex items-center justify-center gap-2 text-lg">
-                                Enroll Now
-                            </button>
-                            <button id="wishlist-btn"
-                                class="w-full py-4 bg-transparent border-2 border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-700 dark:text-slate-300 font-bold rounded-2xl transition-all active:scale-[0.98]">
-                                Add to Wishlist
-                            </button>
-                            <div class="relative group/coupon">
-                                <div class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within/coupon:text-primary transition-colors">
-                                    <span class="material-icons-round text-xl">sell</span>
+                        class="mt-0 lg:mt-12 p-8 border border-slate-200 dark:border-slate-800 rounded-2xl bg-slate-50 dark:bg-slate-900/30 order-6 lg:order-none">
+                        <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-6">About the Instructor</h2>
+                        <div class="flex flex-col md:flex-row gap-6">
+                            <a id="cd-instructor-avatar-link" href="#" class="flex-shrink-0">
+                                <img id="cd-instructor-avatar" alt="Instructor Profile"
+                                    class="w-16 h-16 rounded-full bg-slate-200 object-cover cursor-pointer hover:ring-2 hover:ring-primary transition-all"
+                                    src="https://ui-avatars.com/api/?name=Instructor&background=6366f1&color=fff&size=64" />
+                            </a>
+                            <div class="flex-1">
+                                <a id="cd-instructor-name-link" href="#" class="inline-block mb-1">
+                                    <h3 id="cd-instructor"
+                                        class="text-lg font-bold text-slate-900 dark:text-white hover:text-primary transition-colors cursor-pointer">
+                                        Loading...
+                                    </h3>
+                                </a>
+                                <p id="cd-instructor-role" class="text-primary text-sm font-medium mb-3"></p>
+                                <div class="flex flex-wrap gap-4 text-xs font-semibold text-slate-500 mb-4">
+                                    <span class="flex items-center gap-1"><span
+                                            class="material-icons-round text-sm text-yellow-500">star</span> <span
+                                            id="cd-instructor-rating">—</span> Rating</span>
+                                    <span class="flex items-center gap-1"><span
+                                            class="material-icons-round text-sm">people</span> <span
+                                            id="cd-instructor-students">—</span> Students</span>
+                                    <span class="flex items-center gap-1"><span
+                                            class="material-icons-round text-sm">play_circle_filled</span> <span
+                                            id="cd-instructor-courses">—</span> Courses</span>
                                 </div>
-                                <input id="coupon-input"
-                                    class="w-full pl-12 pr-28 py-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all placeholder:text-slate-400 font-medium text-slate-700 dark:text-slate-200"
-                                    placeholder="Coupon Code" type="text" />
-                                <button id="apply-coupon-btn" onclick="applyCoupon()"
-                                    class="absolute right-2 top-2 bottom-2 px-6 bg-primary/10 hover:bg-primary text-primary hover:text-white text-sm font-bold rounded-xl transition-all border border-primary/20">
-                                    Apply
+                                <p id="cd-instructor-bio"
+                                    class="text-sm leading-relaxed text-slate-600 dark:text-slate-400 mb-4">
+                                    Loading instructor bio...
+                                </p>
+                                <div id="cd-instructor-expertise" class="flex flex-wrap gap-2"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-0 lg:mt-12 mb-12 order-7 lg:order-none">
+                        <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-6">Student Reviews</h2>
+                        <!-- Rating Summary -->
+                        <div class="flex flex-col md:flex-row gap-8 items-center mb-10">
+                            <div class="text-center">
+                                <div id="cd-avg-rating" class="text-5xl font-black text-slate-900 dark:text-white">0.0
+                                </div>
+                                <div id="cd-rating-stars" class="flex justify-center mt-2">
+                                    <span class="material-icons-round text-slate-300">star</span>
+                                    <span class="material-icons-round text-slate-300">star</span>
+                                    <span class="material-icons-round text-slate-300">star</span>
+                                    <span class="material-icons-round text-slate-300">star</span>
+                                    <span class="material-icons-round text-slate-300">star</span>
+                                </div>
+                                <div class="text-xs font-semibold text-primary mt-2 uppercase tracking-wide">Course
+                                    Rating</div>
+                                <div id="cd-review-count" class="text-xs text-slate-500 mt-1">0 reviews</div>
+                            </div>
+                            <div class="flex-1 space-y-2 max-w-md w-full" id="cd-rating-bars">
+                                <!-- Bars rendered dynamically -->
+                            </div>
+                        </div>
+                        <!-- Leave a Review (only shown when enrolled) -->
+                        <div id="cd-review-form"
+                            class="hidden mb-8 p-6 border border-primary/30 bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl">
+                            <h3 class="text-base font-bold text-slate-900 dark:text-white mb-4">Leave a Review</h3>
+                            <div class="flex gap-2 mb-4" id="cd-star-picker">
+                                <span
+                                    class="material-icons-round text-2xl cursor-pointer text-slate-300 hover:text-yellow-400 transition-colors"
+                                    data-star="1">star</span>
+                                <span
+                                    class="material-icons-round text-2xl cursor-pointer text-slate-300 hover:text-yellow-400 transition-colors"
+                                    data-star="2">star</span>
+                                <span
+                                    class="material-icons-round text-2xl cursor-pointer text-slate-300 hover:text-yellow-400 transition-colors"
+                                    data-star="3">star</span>
+                                <span
+                                    class="material-icons-round text-2xl cursor-pointer text-slate-300 hover:text-yellow-400 transition-colors"
+                                    data-star="4">star</span>
+                                <span
+                                    class="material-icons-round text-2xl cursor-pointer text-slate-300 hover:text-yellow-400 transition-colors"
+                                    data-star="5">star</span>
+                            </div>
+                            <textarea id="cd-review-text" rows="3"
+                                placeholder="Share your experience with this course..."
+                                class="w-full p-3 text-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-xl outline-none focus:ring-2 focus:ring-primary text-slate-700 dark:text-slate-200"></textarea>
+                            <button id="cd-submit-review"
+                                class="mt-3 px-6 py-2 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-indigo-600 transition-all">Submit
+                                Review</button>
+                            <p id="cd-review-msg" class="mt-2 text-sm text-emerald-600 hidden">Review submitted! Thank
+                                you.</p>
+                        </div>
+                        <!-- Reviews List -->
+                        <div id="cd-reviews-list" class="grid md:grid-cols-2 gap-6">
+                            <p class="text-slate-500 text-sm col-span-2 text-center py-8">No reviews yet. Be the first!
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="lg:w-1/3 contents lg:block">
+                    <div class="relative lg:sticky top-0 lg:top-24 space-y-6 order-3 lg:order-none mt-8 lg:mt-0">
+                        <!-- Skeleton: Payment Card -->
+                        <div id="cd-skeleton-payment" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl overflow-hidden p-6 animate-pulse">
+                            <div class="h-10 w-28 bg-slate-200 dark:bg-slate-700 rounded-xl mb-6"></div>
+                            <div class="h-12 w-full bg-slate-200 dark:bg-slate-700 rounded-2xl mb-3"></div>
+                            <div class="h-12 w-full bg-slate-200 dark:bg-slate-700 rounded-2xl mb-3"></div>
+                            <div class="h-12 w-full bg-slate-200 dark:bg-slate-700 rounded-2xl mb-6"></div>
+                            <div class="border-t border-slate-100 dark:border-slate-800 pt-5 space-y-3">
+                                <div class="h-4 w-32 bg-slate-200 dark:bg-slate-700 rounded mb-3"></div>
+                                <div class="h-4 w-full bg-slate-200 dark:bg-slate-700 rounded"></div>
+                                <div class="h-4 w-full bg-slate-200 dark:bg-slate-700 rounded"></div>
+                                <div class="h-4 w-3/4 bg-slate-200 dark:bg-slate-700 rounded"></div>
+                            </div>
+                        </div>
+                        <div id="cd-payment-wrapper" class="hidden">
+                        <div
+                            class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl overflow-hidden p-6">
+                            <div class="flex items-baseline gap-4 mb-6">
+                                <span id="cd-price"
+                                    class="text-4xl font-bold text-slate-900 dark:text-white">$00.00</span>
+                                <span id="cd-original-price" class="text-lg text-slate-400 line-through"></span>
+                                <span id="cd-discount-badge"
+                                    class="hidden text-xs font-bold text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded">DISCOUNT</span>
+                            </div>
+                            <div class="space-y-3">
+                                <div id="private-course-banner"
+                                    class="hidden mb-3 p-4 bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800 rounded-xl text-center">
+                                    <span class="material-symbols-outlined text-violet-600 text-2xl mb-1">lock</span>
+                                    <p class="text-sm font-bold text-violet-700 dark:text-violet-400 mb-1">Private
+                                        Course</p>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">You must be signed in to
+                                        enroll in this course.</p>
+                                </div>
+                                <div class="space-y-4 mb-8">
+                                    <button id="enroll-btn"
+                                        class="w-full py-4.5 bg-primary hover:bg-primary/90 text-white font-black rounded-2xl transition-all shadow-xl shadow-primary/20 hover:shadow-primary/30 active:scale-[0.98] flex items-center justify-center gap-2 text-lg">
+                                        Enroll Now
+                                    </button>
+                                    <button id="wishlist-btn"
+                                        class="w-full py-4 bg-transparent border-2 border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-700 dark:text-slate-300 font-bold rounded-2xl transition-all active:scale-[0.98]">
+                                        Add to Wishlist
+                                    </button>
+                                    <div class="relative group/coupon">
+                                        <div
+                                            class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within/coupon:text-primary transition-colors">
+                                            <span class="material-icons-round text-xl">sell</span>
+                                        </div>
+                                        <input id="coupon-input"
+                                            class="w-full pl-12 pr-28 py-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all placeholder:text-slate-400 font-medium text-slate-700 dark:text-slate-200"
+                                            placeholder="Coupon Code" type="text" />
+                                        <button id="apply-coupon-btn" onclick="applyCoupon()"
+                                            class="absolute right-2 top-2 bottom-2 px-6 bg-primary/10 hover:bg-primary text-primary hover:text-white text-sm font-bold rounded-xl transition-all border border-primary/20">
+                                            Apply
+                                        </button>
+                                    </div>
+                                    <p id="cd-coupon-msg" class="hidden text-xs font-medium mt-2"></p>
+                                </div>
+                            </div>
+                            <div class="mt-8 border-t border-slate-100 dark:border-slate-800 pt-6">
+                                <h4
+                                    class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-widest mb-4">
+                                    This course includes:</h4>
+                                <ul id="cd-includes-list" class="space-y-4 text-sm text-slate-600 dark:text-slate-400">
+                                    <!-- Dynamically populated by JS -->
+                                    <li class="flex items-center gap-3"><span
+                                            class="material-icons-round text-primary text-lg">all_inclusive</span> Full
+                                        lifetime access</li>
+                                    <li class="flex items-center gap-3"><span
+                                            class="material-icons-round text-primary text-lg">devices</span> Access on
+                                        mobile and TV</li>
+                                    <li class="flex items-center gap-3"><span
+                                            class="material-icons-round text-primary text-lg">emoji_events</span>
+                                        Certificate of completion</li>
+                                </ul>
+                            </div>
+                            <div class="mt-8 flex justify-center gap-6 text-xs font-bold text-slate-400">
+                                <button
+                                    class="hover:text-primary transition-colors flex items-center gap-1 uppercase tracking-wider">
+                                    <span class="material-icons-round text-sm">share</span> Share Course
                                 </button>
                             </div>
                         </div>
-                        </div>
-                        <div class="mt-8 border-t border-slate-100 dark:border-slate-800 pt-6">
-                            <h4 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-widest mb-4">
-                                This course includes:</h4>
-                            <ul id="cd-includes-list" class="space-y-4 text-sm text-slate-600 dark:text-slate-400">
-                                <!-- Dynamically populated by JS -->
-                                <li class="flex items-center gap-3"><span
-                                        class="material-icons-round text-primary text-lg">all_inclusive</span> Full
-                                    lifetime access</li>
-                                <li class="flex items-center gap-3"><span
-                                        class="material-icons-round text-primary text-lg">devices</span> Access on
-                                    mobile and TV</li>
-                                <li class="flex items-center gap-3"><span
-                                        class="material-icons-round text-primary text-lg">emoji_events</span>
-                                    Certificate of completion</li>
-                            </ul>
-                        </div>
-                        <div class="mt-8 flex justify-center gap-6 text-xs font-bold text-slate-400">
-                            <button
-                                class="hover:text-primary transition-colors flex items-center gap-1 uppercase tracking-wider">
-                                <span class="material-icons-round text-sm">share</span> Share Course
-                            </button>
-                        </div>
+                        </div><!-- end cd-payment-wrapper -->
                     </div>
                 </div>
             </div>
-        </div>
     </main>
     <footer class="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-12 mt-20">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex flex-col md:flex-row justify-between items-center gap-8">
                 <div class="flex items-center gap-2">
-                    <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                        <span class="material-icons-round text-white text-xl">school</span>
-                    </div>
-                    <span class="text-xl font-bold text-slate-900 dark:text-white">Tacliimi</span>
+                    <a href="/" class="hover:opacity-80 transition-opacity">
+                        <!-- LOGO SIZE (footer): Adjust h-10 md:h-12 to resize footer logo manually -->
+                        <img src="/public/assets/images/IMG_7454.png" alt="Tacliimi Learn" class="h-10 md:h-12 w-auto object-contain dark:hidden">
+                        <img src="/public/assets/images/logo-dark.png" alt="Tacliimi Learn" class="h-10 md:h-12 w-auto object-contain hidden dark:block">
+                    </a>
                 </div>
                 <div class="flex gap-8 text-sm font-medium text-slate-500 dark:text-slate-400">
                     <a class="hover:text-primary transition-colors" href="#">About Us</a>
@@ -272,6 +381,10 @@
     <script type="module">
         import { CourseService } from '/src/services/courseService.js?v=6';
         import { AuthService } from '/src/services/authService.js?v=6';
+        import { showStudentOnlyModal } from '/src/services/roleGuard.js';
+
+        // Expose to window for inline handlers
+        window.showStudentOnlyModal = showStudentOnlyModal;
 
         // Expose to window for payment modal access
         window.CourseService = CourseService;
@@ -282,6 +395,60 @@
         let selectedRating = 0;
         let isEnrolled = false;
 
+        // ── Coupon Implementation ──
+        window.applyCoupon = async function () {
+            const courseId = new URLSearchParams(window.location.search).get('id');
+            const input = document.getElementById('coupon-input');
+            const btn = document.getElementById('apply-coupon-btn');
+            const msg = document.getElementById('cd-coupon-msg');
+            const priceEl = document.getElementById('cd-price');
+            const code = input.value.trim().toUpperCase();
+
+            if (!code || !courseId) return;
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>';
+
+            try {
+                // Use the centralized service for validation
+                const coupon = await CourseService.validateCoupon(courseId, code);
+
+                if (coupon) {
+                    if (window.basePrice === undefined) {
+                        window.basePrice = parseFloat(priceEl.textContent.replace(/[^\d.]/g, ''));
+                    }
+
+                    const discount = coupon.discount_percent;
+                    const newPrice = window.basePrice * (1 - discount / 100);
+
+                    priceEl.textContent = `$${newPrice.toFixed(2)}`;
+                    document.getElementById('cd-original-price').textContent = `$${window.basePrice.toFixed(2)}`;
+                    document.getElementById('cd-original-price').classList.remove('hidden');
+                    document.getElementById('cd-discount-badge').textContent = `${discount}% OFF`;
+                    document.getElementById('cd-discount-badge').classList.remove('hidden');
+
+                    // Store for enrollment
+                    window._pmContext.couponCode = code;
+                    window._pmContext.amount = newPrice;
+
+                    if (msg) {
+                        msg.textContent = `Success! ${discount}% discount applied.`;
+                        msg.className = 'text-xs font-bold text-emerald-500 mt-2 block animate-pulse';
+                    }
+                }
+            } catch (e) {
+                console.error('Coupon error:', e);
+                if (msg) {
+                    // Update textContent with the exact message from the RPC (e.g., "Coupon has expired")
+                    msg.textContent = e.message || 'Error validating coupon.';
+                    msg.className = 'text-xs font-medium text-red-500 mt-2 block';
+                }
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Apply';
+            }
+        };
+
         document.addEventListener('DOMContentLoaded', async () => {
             const enrollBtn = document.getElementById('enroll-btn');
             const wishlistBtn = document.getElementById('wishlist-btn');
@@ -290,20 +457,28 @@
             const courseId = urlParams.get('id');
 
             if (!courseId) {
+                ['cd-skeleton-thumb','cd-skeleton-meta','cd-skeleton-payment'].forEach(id => { const el = document.getElementById(id); if(el) el.remove(); });
+                ['cd-thumb-wrapper','cd-meta-wrapper','cd-payment-wrapper'].forEach(id => { const el = document.getElementById(id); if(el) el.classList.remove('hidden'); });
                 document.getElementById('cd-title').textContent = 'No course selected.';
                 return;
             }
 
             try {
-                const [courseData, session] = await Promise.all([
+                const [courseData, session, courseStats] = await Promise.all([
                     CourseService.getCourseFull(courseId),
-                    AuthService.getSession()
+                    AuthService.getSession(),
+                    CourseService.getCourseStats(courseId)
                 ]);
 
                 if (!courseData) {
+                    ['cd-skeleton-thumb','cd-skeleton-meta','cd-skeleton-payment'].forEach(id => { const el = document.getElementById(id); if(el) el.remove(); });
+                    ['cd-thumb-wrapper','cd-meta-wrapper','cd-payment-wrapper'].forEach(id => { const el = document.getElementById(id); if(el) el.classList.remove('hidden'); });
                     document.getElementById('cd-title').textContent = 'Course not found.';
                     return;
                 }
+
+                // Increment views count whenever a user views course details
+                CourseService.incrementCourseViews(courseId);
 
                 currentCourse = courseData;
                 window.currentCourseSerial = courseData.serial_id;
@@ -325,9 +500,51 @@
                     enrollBtn.classList.replace('hover:bg-indigo-600', 'hover:bg-violet-700');
                 }
 
+                // ── Reveal real content (hide skeletons) ──
+                const skelThumb = document.getElementById('cd-skeleton-thumb');
+                const skelMeta = document.getElementById('cd-skeleton-meta');
+                const skelPayment = document.getElementById('cd-skeleton-payment');
+                const thumbWrapper = document.getElementById('cd-thumb-wrapper');
+                const metaWrapper = document.getElementById('cd-meta-wrapper');
+                const paymentWrapper = document.getElementById('cd-payment-wrapper');
+                if (skelThumb) skelThumb.remove();
+                if (skelMeta) skelMeta.remove();
+                if (skelPayment) skelPayment.remove();
+                if (thumbWrapper) thumbWrapper.classList.remove('hidden');
+                if (metaWrapper) metaWrapper.classList.remove('hidden');
+                if (paymentWrapper) paymentWrapper.classList.remove('hidden');
+
                 // ── Basic Info ──
                 document.getElementById('cd-title').textContent = courseData.title;
                 document.title = 'Tacliimi Learn - ' + courseData.title;
+
+
+                // ── Animated Promo Banner ──
+                try {
+                    const { boostService } = await import('/src/services/boostService.js');
+                    const matchId = courseData.root_course_id || courseData.id;
+                    const banners = await boostService.getActivePromoBanners('course');
+                    const banner = banners.find(b => b.entity_id === matchId);
+                    
+                    if (banner) {
+                        const container = document.getElementById('course-promo-banner-container');
+                        const textEl = document.getElementById('course-promo-text');
+                        textEl.textContent = banner.banner_text;
+                        
+                        container.classList.remove('hidden');
+                        setTimeout(() => {
+                            container.classList.remove('-translate-y-full', 'rotate-x-90', 'max-h-0', 'opacity-0');
+                            container.classList.add('max-h-24', 'opacity-100', 'translate-y-0', 'rotate-x-0');
+                        }, 50);
+                    }
+                } catch (err) {
+                    console.warn("Failed to fetch promo banner for course-details:", err);
+                }
+
+                // Set course header metrics
+                const enrolledCount = courseStats?.enrolledCount || 0;
+                document.getElementById('cd-header-enrolled').textContent = enrolledCount;
+                document.getElementById('cd-course-metrics').classList.remove('hidden');
 
                 // Subtitle
                 const subtitleEl = document.getElementById('cd-subtitle');
@@ -344,6 +561,22 @@
                 document.getElementById('cd-original-price').classList.add('hidden');
                 document.getElementById('cd-discount-badge').classList.add('hidden');
 
+                // ── Auto-apply coupon from URL param (e.g. from student update offer) ──
+                const urlCoupon = urlParams.get('coupon');
+                const urlOfferId = urlParams.get('offer');
+                if (urlCoupon) {
+                    const couponInput = document.getElementById('coupon-input');
+                    if (couponInput) {
+                        couponInput.value = urlCoupon;
+                        // Trigger the apply after a tick so price elements are ready
+                        setTimeout(() => window.applyCoupon && window.applyCoupon(), 400);
+                    }
+                }
+                if (urlOfferId) {
+                    // Store offer ID so we can mark it redeemed after enrollment
+                    window._pendingOfferRedemption = urlOfferId;
+                }
+
                 const descEl = document.getElementById('cd-description');
                 if (descEl) descEl.textContent = courseData.description || 'No description provided.';
 
@@ -352,8 +585,8 @@
                 let totalLessons = 0;
                 let totalQuizzes = 0;
                 let totalResources = 0;
-                
-                curriculum.forEach(section => { 
+
+                curriculum.forEach(section => {
                     const lessons = section.course_lessons || [];
                     totalLessons += lessons.length;
                     lessons.forEach(lesson => {
@@ -407,7 +640,7 @@
                             <div class="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center shrink-0">
                                 <span class="material-icons-round text-emerald-600 dark:text-emerald-400 text-lg">schedule</span>
                             </div>
-                            <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">${h > 0 ? h+'h ' : ''}${m}m total duration</span>
+                            <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">${h > 0 ? h + 'h ' : ''}${m}m total duration</span>
                         </li>`;
                     }
                     html += `
@@ -424,6 +657,15 @@
                         </div>
                         <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Access on mobile and TV</span>
                     </li>`;
+                    if (courseData.certificate_enabled) {
+                        html += `
+                    <li class="flex items-center gap-3.5 p-1">
+                        <div class="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
+                            <span class="material-icons-round text-amber-600 dark:text-amber-400 text-lg">workspace_premium</span>
+                        </div>
+                        <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Certificate of completion</span>
+                    </li>`;
+                    }
                     includesList.innerHTML = html;
                 }
 
@@ -477,7 +719,8 @@
                             `;
 
                             lessons.forEach(lesson => {
-                                const hasVideo = !!lesson.video_url;
+                                const isR2 = lesson.video_provider === 'r2' || !!lesson.video_storage_key;
+                                const hasVideo = !!lesson.video_url || isR2;
                                 const isAccessible = lesson.is_preview || isEnrolled;
                                 const quizzes = Array.isArray(lesson.quizzes) ? lesson.quizzes : (lesson.quizzes ? [lesson.quizzes] : []);
                                 const resources = Array.isArray(lesson.lesson_resources) ? lesson.lesson_resources : (lesson.lesson_resources ? [lesson.lesson_resources] : []);
@@ -505,40 +748,44 @@
                                 }
                                 rightHtml += '</div>';
 
-                                // Video thumbnail row (only shown if accessible and has video)
+                                // Video thumbnail or Locked Box (parallel version)
                                 let thumbHtml = '';
                                 if (hasVideo && isAccessible) {
+                                    const clickArgs = isR2 ? `'R2_PENDING', '${courseData.id}', '${lesson.id}', false` : `'${lesson.video_url}', null, null, false`;
+                                    const videoSrcAttr = isR2 ? '' : `src="${lesson.video_url}"`;
+                                    
                                     thumbHtml = `
-                                    <div class="px-4 pb-3 flex items-center gap-3">
-                                        <div class="relative w-28 h-16 rounded-lg overflow-hidden bg-slate-900 flex-shrink-0 cursor-pointer group/thumb"
-                                            onclick="playLessonPreview('${lesson.video_url}')">
-                                            <video src="${lesson.video_url}" class="w-full h-full object-cover opacity-70" preload="metadata" muted></video>
-                                            <div class="absolute inset-0 flex items-center justify-center">
-                                                <span class="material-icons-round text-white text-2xl drop-shadow group-hover/thumb:scale-110 transition-transform">play_circle_filled</span>
-                                            </div>
+                                    <div class="relative w-20 h-12 rounded-lg overflow-hidden bg-slate-900 shrink-0 cursor-pointer group/thumb border border-slate-700/50"
+                                        onclick="playLessonPreview(${clickArgs})">
+                                        <video ${videoSrcAttr} class="w-full h-full object-cover opacity-60" preload="metadata" muted></video>
+                                        <div class="absolute inset-0 flex items-center justify-center">
+                                            <span class="material-icons-round text-white text-lg drop-shadow group-hover/thumb:scale-110 transition-transform">play_circle</span>
                                         </div>
-                                        <p class="text-xs text-slate-400">Click to preview this lesson</p>
                                     </div>`;
                                 } else if (hasVideo && !isAccessible) {
                                     thumbHtml = `
-                                    <div class="px-4 pb-3 flex items-center gap-3">
-                                        <div class="relative w-28 h-16 rounded-lg overflow-hidden bg-slate-800 flex-shrink-0 flex items-center justify-center">
-                                            <span class="material-icons-round text-slate-500 text-3xl">lock</span>
-                                        </div>
-                                        <p class="text-xs text-slate-400">Enroll to watch this lesson</p>
+                                    <div class="relative w-20 h-12 rounded-lg overflow-hidden bg-slate-800/80 shrink-0 flex items-center justify-center border border-slate-700/50">
+                                        <span class="material-icons-round text-slate-500 text-xl">lock</span>
                                     </div>`;
                                 }
 
                                 html += `
-                                <div>
-                                    <div class="px-4 py-3 flex items-center justify-between text-sm ${isAccessible ? 'hover:bg-slate-50 dark:hover:bg-slate-800/30' : 'opacity-80'} transition-colors">
-                                        <div class="flex items-center gap-3 text-slate-700 dark:text-slate-300 min-w-0">
-                                            ${iconHtml}
-                                            <span class="truncate">${lesson.title}</span>
+                                <div class="px-4 py-3 group ${isAccessible ? 'hover:bg-slate-50 dark:hover:bg-slate-800/30' : 'opacity-85'} transition-colors">
+                                    <div class="flex items-center gap-4 text-sm">
+                                        ${thumbHtml}
+                                        <div class="flex-1 min-w-0">
+                                            <div class="flex items-center justify-between">
+                                                <div class="flex items-center gap-2.5 text-slate-700 dark:text-slate-300 min-w-0">
+                                                    ${iconHtml}
+                                                    <span class="font-bold truncate text-slate-900 dark:text-white">${lesson.title}</span>
+                                                </div>
+                                                ${rightHtml}
+                                            </div>
+                                            <!-- Sub-info -->
+                                            ${hasVideo && !isAccessible ? '<p class="text-[10px] text-slate-500 font-medium mt-1">Enroll to watch this lesson</p>' : ''}
+                                            ${hasVideo && isAccessible ? '<p class="text-[10px] text-primary font-bold mt-1">Click to preview lesson</p>' : ''}
                                         </div>
-                                        ${rightHtml}
                                     </div>
-                                    ${thumbHtml}
                                 </div>`;
                             });
 
@@ -565,11 +812,18 @@
                 document.getElementById('cd-instructor-role').textContent = instructorProfile.professional_title || courseData.level || 'Instructor';
                 document.getElementById('cd-instructor-bio').textContent = instructorProfile.short_bio || 'No bio available for this instructor.';
 
+                // Set instructor profile links
+                const profileUrl = `/src/pages/instructor/public-profile/index.html?id=${instructorId}`;
+                const avatarLink = document.getElementById('cd-instructor-avatar-link');
+                const nameLink = document.getElementById('cd-instructor-name-link');
+                if (avatarLink) avatarLink.href = profileUrl;
+                if (nameLink) nameLink.href = profileUrl;
+
                 const avatarEl = document.getElementById('cd-instructor-avatar');
                 if (instructorProfile.avatar_url) {
                     avatarEl.src = instructorProfile.avatar_url;
                 } else {
-                    avatarEl.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(instructorProfile.full_name || 'Instructor')}&background=6366f1&color=fff&size=96`;
+                    avatarEl.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(instructorProfile.full_name || 'Instructor')}&background=6366f1&color=fff&size=64`;
                 }
 
                 // Load instructor stats + expertise in parallel
@@ -581,6 +835,11 @@
 
                     document.getElementById('cd-instructor-students').textContent = stats.totalStudents;
                     document.getElementById('cd-instructor-courses').textContent = stats.totalCourses;
+                    
+                    const ratingEl = document.getElementById('cd-instructor-rating');
+                    if (ratingEl) {
+                        ratingEl.textContent = (stats.avgRating && stats.avgRating > 0) ? stats.avgRating : '—';
+                    }
 
                     // Expertise tags
                     const expertiseContainer = document.getElementById('cd-instructor-expertise');
@@ -608,13 +867,17 @@
                     const countEl = document.getElementById('cd-review-count');
                     const barsEl = document.getElementById('cd-rating-bars');
 
+                    const headerRatingEl = document.getElementById('cd-header-rating');
+                    const headerReviewsEl = document.getElementById('cd-header-reviews');
+
                     if (reviews.length === 0) {
                         avgEl.textContent = '0.0';
                         countEl.textContent = '0 reviews';
-                        starsEl.innerHTML = [1,2,3,4,5].map(() => '<span class="material-icons-round text-slate-300">star</span>').join('');
-                        barsEl.innerHTML = renderRatingBars([0,0,0,0,0], 0);
+                        if (headerRatingEl) headerRatingEl.textContent = '0.0';
+                        if (headerReviewsEl) headerReviewsEl.textContent = '(0)';
+                        starsEl.innerHTML = [1, 2, 3, 4, 5].map(() => '<span class="material-icons-round text-slate-300">star</span>').join('');
+                        barsEl.innerHTML = renderRatingBars([0, 0, 0, 0, 0], 0);
                         listEl.innerHTML = '<p class="text-slate-500 text-sm col-span-2 text-center py-8">No reviews yet. Be the first!</p>';
-                        document.getElementById('cd-instructor-rating').textContent = '—';
                         return;
                     }
 
@@ -624,16 +887,17 @@
 
                     avgEl.textContent = avgFixed;
                     countEl.textContent = `${total} review${total !== 1 ? 's' : ''}`;
-                    document.getElementById('cd-instructor-rating').textContent = avgFixed;
+                    if (headerRatingEl) headerRatingEl.textContent = avgFixed;
+                    if (headerReviewsEl) headerReviewsEl.textContent = `(${total})`;
 
                     // Star display for average
-                    starsEl.innerHTML = [1,2,3,4,5].map(n => {
+                    starsEl.innerHTML = [1, 2, 3, 4, 5].map(n => {
                         const cls = n <= Math.round(avg) ? 'text-yellow-500' : 'text-slate-300';
                         return `<span class="material-icons-round ${cls}">star</span>`;
                     }).join('');
 
                     // Rating distribution
-                    const counts = [5,4,3,2,1].map(n => reviews.filter(r => r.rating === n).length);
+                    const counts = [5, 4, 3, 2, 1].map(n => reviews.filter(r => r.rating === n).length);
                     barsEl.innerHTML = renderRatingBars(counts, total);
 
                     // Review cards
@@ -644,7 +908,7 @@
                             ? `<img src="${reviewer.avatar_url}" class="w-10 h-10 rounded-full object-cover" alt="${name}" />`
                             : `<div class="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center text-primary font-bold text-sm">${name.charAt(0).toUpperCase()}</div>`;
                         const date = new Date(r.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-                        const stars = [1,2,3,4,5].map(n => `<span class="material-icons-round text-sm ${n <= r.rating ? 'text-yellow-500' : 'text-slate-300'}" >star</span>`).join('');
+                        const stars = [1, 2, 3, 4, 5].map(n => `<span class="material-icons-round text-sm ${n <= r.rating ? 'text-yellow-500' : 'text-slate-300'}" >star</span>`).join('');
                         return `
                         <div class="p-6 border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900/40">
                             <div class="flex items-center gap-3 mb-3">
@@ -661,7 +925,7 @@
                 }
 
                 function renderRatingBars(counts, total) {
-                    return [5,4,3,2,1].map((stars, idx) => {
+                    return [5, 4, 3, 2, 1].map((stars, idx) => {
                         const pct = total > 0 ? Math.round((counts[idx] / total) * 100) : 0;
                         const color = pct > 0 ? 'bg-yellow-400' : 'bg-slate-300';
                         return `<div class="flex items-center gap-3 text-xs font-medium text-slate-500">
@@ -735,6 +999,14 @@
                         window.location.href = `/src/pages/auth/login/?return=${encodeURIComponent(window.location.pathname + window.location.search)}`;
                         return;
                     }
+
+                    // Block instructor/mentor accounts from enrolling
+                    const userRole = currentUser.user_metadata?.role || '';
+                    if (userRole === 'instructor' || userRole === 'mentor') {
+                        showStudentOnlyModal();
+                        return;
+                    }
+
                     const isEnrolled = await CourseService.checkEnrollment(courseId, currentUser.id);
                     if (!isEnrolled) {
                         const isFree = !courseData.price || courseData.price === 0 || courseData.price === 'Free' || parseFloat(courseData.price) === 0;
@@ -747,9 +1019,21 @@
                         enrollBtn.innerHTML = '<span class="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></span> Enrolling...';
                         try {
                             const result = await CourseService.enrollCourse(courseId, currentUser.id);
-                            showSuccessModal(courseData.serial_id, result.paymentSerialId);
+
+                            // If user is enrolling via an update offer, mark it as redeemed
+                            if (window._pendingOfferRedemption) {
+                                await CourseService.markOfferRedeemed(window._pendingOfferRedemption);
+                                window._pendingOfferRedemption = null;
+                            }
+
+                            // Use the shared payment-modal success screen (works for free courses too)
+                            window.showPaymentModal();
+                            window.showPaymentResult(true, 'Enrolled Successfully! 🎉', 'You now have full access to this course. Happy learning!');
                         } catch (e) {
-                            alert('Failed to enroll: ' + e.message);
+                            console.error('Free enrollment error:', e);
+                            if (window.showToast) {
+                                window.showToast('Failed to enroll: ' + e.message, 'error');
+                            }
                             enrollBtn.disabled = false;
                             enrollBtn.textContent = 'Enroll Now';
                             return;
@@ -775,16 +1059,13 @@
                 const playPreviewBtn = document.getElementById('play-preview-btn');
                 if (playPreviewBtn) {
                     playPreviewBtn.addEventListener('click', () => {
-                        const videoUrl = courseData.intro_video_url;
-                        if (videoUrl) {
-                            const modal = document.getElementById('video-modal');
-                            const player = document.getElementById('video-modal-player');
-                            player.src = videoUrl;
-                            modal.classList.remove('hidden');
-                            modal.classList.add('flex');
-                            player.play();
+                        const isR2 = courseData.intro_video_provider === 'r2' || !!courseData.intro_video_storage_key;
+                        const videoUrl = isR2 ? 'R2_PENDING' : courseData.intro_video_url;
+
+                        if (videoUrl || isR2) {
+                            window.playLessonPreview(videoUrl, courseData.id, null, true);
                         } else {
-                            alert('No preview video available.');
+                            window.showToast('No preview video available.', 'error');
                         }
                     });
                 }
@@ -807,37 +1088,84 @@
             }
         }
 
-        window.playLessonPreview = function(videoUrl) {
+        window.playLessonPreview = async function (videoUrl, courseId, lessonId, isIntro = false) {
             if (!videoUrl) return;
+            
+            let finalUrl = videoUrl;
+            let useIframe = false;
+            const isDirectVideo = (videoUrl === 'R2_PENDING') || (videoUrl && (videoUrl.match(/\.(mp4|webm|ogg)$/i) || videoUrl.startsWith('blob:') || videoUrl.includes('supabase.co/storage') || videoUrl.includes('tacliimi-video')));
+
+            if (videoUrl === 'R2_PENDING') {
+                try {
+                    const type = isIntro ? 'intro' : 'lesson';
+                    finalUrl = await CourseService.getR2PlaybackUrl(courseId, isIntro ? null : lessonId, type);
+                } catch(e) {
+                    console.error("Failed to fetch R2 playback URL:", e);
+                    if(window.showToast) window.showToast("Failed to load secure video.", "error");
+                    return;
+                }
+            } else {            
+                try {
+                    // Convert standard YouTube links to embed format
+                    if (videoUrl.includes('youtube.com/watch?v=')) {
+                        const urlObj = new URL(videoUrl);
+                        const videoId = urlObj.searchParams.get('v');
+                        if (videoId) {
+                            finalUrl = `https://www.youtube.com/embed/${videoId}`;
+                            useIframe = true;
+                        }
+                    } else if (videoUrl.includes('youtu.be/')) {
+                        const videoId = videoUrl.split('youtu.be/')[1].split('?')[0];
+                        if (videoId) {
+                            finalUrl = `https://www.youtube.com/embed/${videoId}`;
+                            useIframe = true;
+                        }
+                    } else if (videoUrl.includes('youtube.com/embed') || videoUrl.includes('vimeo.com/video') || videoUrl.includes('iframe')) {
+                        useIframe = true;
+                    }
+                } catch (e) {
+                    console.error("Error parsing video URL:", e);
+                }
+            }
+
+            // If it's a completely generic link and not an embed or direct video, open in new tab
+            if (!isDirectVideo && !useIframe) {
+                window.open(videoUrl, '_blank');
+                return;
+            }
+
             const modal = document.getElementById('video-modal');
-            const player = document.getElementById('video-modal-player');
-            player.src = videoUrl;
+            const container = document.getElementById('video-modal-container');
+            container.innerHTML = '';
+            
+            if (useIframe) {
+                container.innerHTML = `<iframe src="${finalUrl}" class="w-full h-full bg-black/50" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+            } else {
+                container.innerHTML = `<video src="${finalUrl}" class="w-full h-full object-contain" controls autoplay></video>`;
+            }
+            
             modal.classList.remove('hidden');
             modal.classList.add('flex');
-            player.play().catch(() => {});
         };
 
-        window.closeVideoModal = function() {
+        window.closeVideoModal = function () {
             const modal = document.getElementById('video-modal');
-            const player = document.getElementById('video-modal-player');
+            const container = document.getElementById('video-modal-container');
             modal.classList.add('hidden');
             modal.classList.remove('flex');
-            player.pause();
-            player.src = '';
+            container.innerHTML = ''; // stops playback
         };
     </script>
 
     <!-- Video Modal -->
     <div id="video-modal"
         class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-        <div class="relative w-full max-w-4xl aspect-video bg-black rounded-lg overflow-hidden shadow-2xl">
+        <div class="relative w-full max-w-4xl aspect-video bg-black rounded-lg overflow-hidden shadow-2xl border border-slate-800/50">
             <button onclick="closeVideoModal()"
-                class="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-black/50 hover:bg-black/80 text-white flex items-center justify-center transition-colors">
+                class="absolute top-4 right-4 z-20 w-10 h-10 rounded-full bg-black/50 hover:bg-black/80 text-white flex items-center justify-center transition-colors">
                 <span class="material-icons-round">close</span>
             </button>
-            <video id="video-modal-player" class="w-full h-full object-contain" controls>
-                Your browser does not support the video tag.
-            </video>
+            <div id="video-modal-container" class="w-full h-full relative z-10"></div>
         </div>
     </div>
 
@@ -851,472 +1179,563 @@
     ════════════════════════════════════════════════════════ -->
     <div id="payment-modal" class="fixed inset-0 z-[9999] hidden" role="dialog" aria-modal="true">
         <!-- Backdrop: Fixed separate layer -->
-        <div id="payment-backdrop" class="fixed inset-0 bg-slate-900/40 dark:bg-[#0f0c29]/80 backdrop-blur-xl transition-all duration-500" onclick="closePaymentModal()"></div>
+        <div id="payment-backdrop"
+            class="fixed inset-0 bg-slate-900/40 dark:bg-[#0f0c29]/80 backdrop-blur-xl transition-all duration-500"
+            onclick="closePaymentModal()"></div>
 
         <!-- Scrollable Wrapper -->
         <div class="fixed inset-0 overflow-y-auto flex items-start justify-center p-4 sm:p-8 pointer-events-none">
             <!-- Modal card with Theme Adaptation -->
-            <div class="relative z-10 w-full max-w-[440px] my-auto pointer-events-auto rounded-3xl overflow-hidden shadow-2xl dark:shadow-[0_40px_100px_rgba(0,0,0,0.8)] border border-slate-200 dark:border-white/10 animate-in fade-in zoom-in duration-500 bg-white dark:bg-slate-900">
-            
-            <!-- Glow Effect -->
-            <div class="absolute -top-24 -left-24 w-48 h-48 bg-indigo-500/20 rounded-full blur-[80px]"></div>
-            <div class="absolute -bottom-24 -right-24 w-48 h-48 bg-purple-500/20 rounded-full blur-[80px]"></div>
+            <div
+                class="relative z-10 w-full max-w-[440px] my-auto pointer-events-auto rounded-3xl overflow-hidden shadow-2xl dark:shadow-[0_40px_100px_rgba(0,0,0,0.8)] border border-slate-200 dark:border-white/10 animate-in fade-in zoom-in duration-500 bg-white dark:bg-slate-900">
 
-            <div class="relative z-20">
-                <!-- Header -->
-                <div class="px-8 pt-8 pb-6 flex items-center justify-between">
-                    <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg transform rotate-3 hover:rotate-0 transition-transform duration-300"
-                             style="background: linear-gradient(135deg, #6c63ff, #4f46e5);">
-                            <span class="material-icons-round text-white text-2xl">account_balance_wallet</span>
+                <!-- Glow Effect -->
+                <div class="absolute -top-24 -left-24 w-48 h-48 bg-indigo-500/20 rounded-full blur-[80px]"></div>
+                <div class="absolute -bottom-24 -right-24 w-48 h-48 bg-purple-500/20 rounded-full blur-[80px]"></div>
+
+                <div class="relative z-20">
+                    <!-- Header -->
+                    <div class="px-8 pt-8 pb-6 flex items-center justify-between">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg transform rotate-3 hover:rotate-0 transition-transform duration-300"
+                                style="background: linear-gradient(135deg, #6c63ff, #4f46e5);">
+                                <span class="material-icons-round text-white text-2xl">account_balance_wallet</span>
+                            </div>
+                            <div>
+                                <h2 class="text-slate-900 dark:text-white font-bold text-xl tracking-tight">Tacliimi Pay
+                                </h2>
+                                <p
+                                    class="text-primary dark:text-indigo-300/60 text-xs font-medium uppercase tracking-widest">
+                                    Secure Checkout</p>
+                            </div>
                         </div>
-                        <div>
-                            <h2 class="text-slate-900 dark:text-white font-bold text-xl tracking-tight">Tacliimi Pay</h2>
-                            <p class="text-primary dark:text-indigo-300/60 text-xs font-medium uppercase tracking-widest">Secure Checkout</p>
-                        </div>
+                        <button onclick="closePaymentModal()"
+                            class="w-10 h-10 rounded-full flex items-center justify-center text-slate-400 dark:text-white/30 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-all">
+                            <span class="material-icons-round text-xl">close</span>
+                        </button>
                     </div>
-                    <button onclick="closePaymentModal()" class="w-10 h-10 rounded-full flex items-center justify-center text-slate-400 dark:text-white/30 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-all">
-                        <span class="material-icons-round text-xl">close</span>
-                    </button>
-                </div>
 
-                <!-- Course Summary (Rich) -->
-                <div class="mx-8 mb-6 p-5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10">
-                    <div class="flex gap-4 mb-4">
-                        <!-- Thumbnail -->
-                        <div class="relative w-24 h-24 rounded-xl overflow-hidden bg-slate-800 flex-shrink-0 border border-white/10 shadow-lg">
-                            <img id="pm-thumbnail" src="" alt="Course" class="w-full h-full object-cover">
-                            <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+                    <!-- Course Summary (Rich) -->
+                    <div
+                        class="mx-8 mb-6 p-5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10">
+                        <div class="flex gap-4 mb-4">
+                            <!-- Thumbnail -->
+                            <div
+                                class="relative w-24 h-24 rounded-xl overflow-hidden bg-slate-800 flex-shrink-0 border border-white/10 shadow-lg">
+                                <img id="pm-thumbnail" src="" alt="Course" class="w-full h-full object-cover">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+                            </div>
+
+                            <div class="flex-1 flex flex-col justify-center min-w-0">
+                                <p
+                                    class="text-primary/50 dark:text-indigo-300/50 text-[10px] font-bold uppercase tracking-widest mb-1">
+                                    Enrolling In</p>
+                                <h3 id="pm-course-title"
+                                    class="text-slate-900 dark:text-white font-bold text-base leading-tight mb-3 line-clamp-2">
+                                    Course Title</h3>
+
+                                <!-- Instructor Badge -->
+                                <div class="flex items-center gap-2">
+                                    <img id="pm-instructor-avatar" src="" alt="Instructor"
+                                        class="w-5 h-5 rounded-full border border-white/20 shadow-sm">
+                                    <span id="pm-instructor-name"
+                                        class="text-indigo-200/70 text-xs font-medium truncate">Instructor Name</span>
+                                </div>
+                            </div>
                         </div>
-                        
-                        <div class="flex-1 flex flex-col justify-center min-w-0">
-                            <p class="text-primary/50 dark:text-indigo-300/50 text-[10px] font-bold uppercase tracking-widest mb-1">Enrolling In</p>
-                            <h3 id="pm-course-title" class="text-slate-900 dark:text-white font-bold text-base leading-tight mb-3 line-clamp-2">Course Title</h3>
-                            
-                            <!-- Instructor Badge -->
+
+
+
+                        <div
+                            class="pt-4 border-t border-slate-200 dark:border-white/5 flex items-center justify-between">
                             <div class="flex items-center gap-2">
-                                <img id="pm-instructor-avatar" src="" alt="Instructor" class="w-5 h-5 rounded-full border border-white/20 shadow-sm">
-                                <span id="pm-instructor-name" class="text-indigo-200/70 text-xs font-medium truncate">Instructor Name</span>
+                                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                <p class="text-slate-500 dark:text-white/40 text-[11px] font-medium italic">Instant
+                                    access after pay</p>
+                            </div>
+                            <div class="text-right">
+                                <p
+                                    class="text-primary/50 dark:text-indigo-300/50 text-[10px] font-bold uppercase tracking-widest">
+                                    Total Due</p>
+                                <p id="pm-price"
+                                    class="text-xl font-bold text-slate-900 dark:text-white tracking-tight">$0.00</p>
                             </div>
                         </div>
                     </div>
 
-                    <div class="pt-4 border-t border-white/5 flex items-center justify-between">
+                    <!-- Content Area (Scrollable if needed) -->
+                    <div class="px-8 pb-8">
+                        <!-- Step 1: Selection -->
+                        <div id="pm-step-method">
+                            <p class="text-slate-600 dark:text-white/80 text-sm font-semibold mb-4">Select Payment
+                                Method</p>
+                            <div class="grid grid-cols-1 gap-3" id="pm-wallet-grid">
+                                <!-- EVC Plus -->
+                                <button onclick="selectWallet('waafi', 'EVC Plus / Zaad / Sahal', '61')"
+                                    class="group relative flex items-center gap-4 p-4 rounded-2xl border border-slate-200 dark:border-white/5 bg-white dark:bg-white/[0.02] hover:bg-slate-50 dark:hover:bg-white/[0.08] hover:border-primary/50 dark:hover:border-indigo-500/50 transition-all duration-300 text-left shadow-sm hover:shadow-md">
+                                    <div
+                                        class="w-10 h-10 rounded-xl bg-orange-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                        <span
+                                            class="material-icons-round text-orange-600 dark:text-orange-400">smartphone</span>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="text-slate-900 dark:text-white text-sm font-bold">EVC Plus / Zaad /
+                                            Sahal</p>
+                                        <p class="text-slate-500 dark:text-white/40 text-[11px]">Primary Choice ·
+                                            Instant Mobile Pay</p>
+                                    </div>
+                                    <span
+                                        class="material-icons-round text-slate-300 dark:text-white/10 group-hover:text-primary dark:group-hover:text-indigo-400 group-hover:translate-x-1 transition-all">chevron_right</span>
+                                </button>
+
+                                <!-- eDahab -->
+                                <button onclick="selectWallet('edahab', 'eDahab', '63')"
+                                    class="group relative flex items-center gap-4 p-4 rounded-2xl border border-slate-200 dark:border-white/5 bg-white dark:bg-white/[0.02] hover:bg-slate-50 dark:hover:bg-white/[0.08] hover:border-primary/50 dark:hover:border-indigo-500/50 transition-all duration-300 text-left shadow-sm hover:shadow-md">
+                                    <div
+                                        class="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                        <span
+                                            class="material-icons-round text-blue-600 dark:text-blue-400">account_balance</span>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="text-slate-900 dark:text-white text-sm font-bold">eDahab</p>
+                                        <p class="text-slate-500 dark:text-white/40 text-[11px]">Dahabshiil Group · Fast
+                                            & Secure</p>
+                                    </div>
+                                    <span
+                                        class="material-icons-round text-slate-300 dark:text-white/10 group-hover:text-primary dark:group-hover:text-indigo-400 group-hover:translate-x-1 transition-all">chevron_right</span>
+                                </button>
+
+                                <!-- Premier Wallet -->
+                                <button onclick="selectWallet('pbwallet', 'Premier Wallet', '65')"
+                                    class="group relative flex items-center gap-4 p-4 rounded-2xl border border-slate-200 dark:border-white/5 bg-white dark:bg-white/[0.02] hover:bg-slate-50 dark:hover:bg-white/[0.08] hover:border-primary/50 dark:hover:border-indigo-500/50 transition-all duration-300 text-left shadow-sm hover:shadow-md">
+                                    <div
+                                        class="w-10 h-10 rounded-xl bg-teal-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                        <span
+                                            class="material-icons-round text-teal-600 dark:text-teal-400">payments</span>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="text-slate-900 dark:text-white text-sm font-bold">Premier Wallet</p>
+                                        <p class="text-slate-500 dark:text-white/40 text-[11px]">Direct Bank Sync · VIP
+                                            Experience</p>
+                                    </div>
+                                    <span
+                                        class="material-icons-round text-slate-300 dark:text-white/10 group-hover:text-primary dark:group-hover:text-indigo-400 group-hover:translate-x-1 transition-all">chevron_right</span>
+                                </button>
+
+                                <!-- International -->
+                                <div class="h-[1px] bg-slate-100 dark:bg-white/5 my-2"></div>
+                                <button onclick="redirectToSifalo()"
+                                    class="group relative flex items-center gap-4 p-4 rounded-2xl border border-slate-200 dark:border-white/5 bg-white dark:bg-white/[0.02] hover:bg-slate-50 dark:hover:bg-white/[0.08] hover:border-primary/50 dark:hover:border-indigo-500/50 transition-all duration-300 text-left shadow-sm hover:shadow-md">
+                                    <div
+                                        class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                        <span
+                                            class="material-icons-round text-slate-600 dark:text-white/60">public</span>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="text-slate-900 dark:text-white text-sm font-bold">International (Card
+                                            / Apple / Google)</p>
+                                        <p class="text-slate-500 dark:text-white/40 text-[11px]">Visa · Mastercard · Pay
+                                            via Sifalo Checkout</p>
+                                    </div>
+                                    <span
+                                        class="material-icons-round text-slate-300 dark:text-white/10 group-hover:text-primary dark:group-hover:text-indigo-400 group-hover:translate-x-1 transition-all">chevron_right</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Phone Input -->
+                        <div id="pm-step-phone" class="hidden animate-in slide-in-from-right-4 duration-300">
+                            <button onclick="backToMethodSelect()"
+                                class="flex items-center gap-2 text-indigo-400 text-xs font-bold mb-6 hover:text-indigo-300 transition-colors uppercase tracking-widest">
+                                <span class="material-icons-round text-sm">arrow_back</span>
+                                Change Method
+                            </button>
+
+                            <div class="mb-6">
+                                <h3 class="text-slate-900 dark:text-white font-bold text-lg mb-1">Mobile Details</h3>
+                                <p class="text-slate-500 dark:text-white/50 text-xs">Enter your <span
+                                        id="pm-wallet-name" class="text-primary dark:text-indigo-300 font-bold"></span>
+                                    mobile number</p>
+                            </div>
+
+                            <div class="relative group">
+                                <div
+                                    class="absolute inset-y-0 left-4 flex items-center gap-2 pr-2 border-r border-slate-200 dark:border-white/10">
+                                    <span class="text-slate-400 dark:text-white/60 font-mono text-sm"
+                                        id="pm-country-code">+252</span>
+                                </div>
+                                <input id="pm-phone-input" type="tel" inputmode="numeric" maxlength="9"
+                                    placeholder="61xxxxxxx"
+                                    class="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl pl-[72px] pr-4 py-4 text-slate-900 dark:text-white text-base font-mono outline-none focus:border-primary/50 dark:focus:border-indigo-500/50 focus:bg-white dark:focus:bg-white/[0.08] transition-all"
+                                    oninput="this.value=this.value.replace(/\D/g,'')">
+                            </div>
+                            <p id="pm-phone-error" class="text-red-400 text-xs mt-3 flex items-center gap-2 hidden">
+                                <span class="material-icons-round text-[14px]">error_outline</span>
+                                <span id="pm-phone-error-text">Please enter a valid number</span>
+                            </p>
+
+                            <button id="pm-pay-btn" onclick="submitDirectPayment()"
+                                class="mt-8 w-full py-4 rounded-2xl font-bold border-0 text-white shadow-[0_10px_20px_rgba(79,70,229,0.3)] hover:shadow-[0_15px_25px_rgba(79,70,229,0.4)] hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center gap-3"
+                                style="background: linear-gradient(135deg, #6c63ff, #4f46e5);">
+                                <span class="material-icons-round">bolt</span>
+                                Proceed to Pay
+                            </button>
+                        </div>
+
+                        <!-- Step 3: Processing -->
+                        <div id="pm-step-processing"
+                            class="hidden py-12 text-center animate-in zoom-in-95 duration-500">
+                            <div class="relative w-24 h-24 mx-auto mb-8">
+                                <div
+                                    class="absolute inset-0 border-4 border-slate-100 dark:border-white/5 rounded-full">
+                                </div>
+                                <div
+                                    class="absolute inset-0 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin">
+                                </div>
+                                <div
+                                    class="absolute inset-4 bg-indigo-500/10 rounded-full flex items-center justify-center">
+                                    <span
+                                        class="material-icons-round text-indigo-400 text-3xl animate-pulse">sync</span>
+                                </div>
+                            </div>
+                            <h3 class="text-slate-900 dark:text-white font-bold text-xl mb-2">Securing your spot...</h3>
+                            <p class="text-slate-500 dark:text-white/40 text-sm">Validating payment details with Sifalo
+                                Pay Gateway</p>
+                        </div>
+
+                        <!-- Step 4: Result -->
+                        <div id="pm-step-result" class="hidden py-6 text-center animate-in zoom-in-95 duration-500">
+                            <div id="pm-result-container"
+                                class="w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-6 text-4xl shadow-xl">
+                                <!-- Icon and color set by JS -->
+                                <span id="pm-result-icon">✅</span>
+                            </div>
+                            <h3 id="pm-result-title" class="text-slate-900 dark:text-white font-bold text-2xl mb-2">
+                                Success!</h3>
+                            <p id="pm-result-msg"
+                                class="text-slate-500 dark:text-white/50 text-sm mb-10 leading-relaxed px-4"></p>
+
+                            <button id="pm-result-btn"
+                                class="w-full py-4 rounded-2xl font-bold text-white transition-all shadow-lg hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0">
+                                Continue
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Footer -->
+                    <div
+                        class="px-8 py-4 bg-slate-50 dark:bg-black/20 border-t border-slate-200 dark:border-white/5 flex items-center justify-between">
                         <div class="flex items-center gap-2">
-                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                            <p class="text-slate-500 dark:text-white/40 text-[11px] font-medium italic">Instant access after pay</p>
+                            <span class="material-icons-round text-emerald-500/50 text-base">verified_user</span>
+                            <p
+                                class="text-slate-400 dark:text-white/20 text-[10px] font-bold uppercase tracking-widest">
+                                Sifalo Certified</p>
                         </div>
-                        <div class="text-right">
-                            <p class="text-primary/50 dark:text-indigo-300/50 text-[10px] font-bold uppercase tracking-widest">Total Due</p>
-                            <p id="pm-price" class="text-xl font-bold text-slate-900 dark:text-white tracking-tight">$0.00</p>
+                        <div class="flex gap-4">
+                            <span
+                                class="material-icons-round text-slate-300 dark:text-white/10 text-xl hover:text-primary dark:hover:text-white/30 transition-colors cursor-help"
+                                title="256-bit SSL Protection">lock</span>
+                            <span
+                                class="material-icons-round text-slate-300 dark:text-white/10 text-xl hover:text-primary dark:hover:text-white/30 transition-colors cursor-help"
+                                title="Card Anti-Fraud Monitoring">security</span>
                         </div>
-                    </div>
-                </div>
-
-                <!-- Content Area (Scrollable if needed) -->
-                <div class="px-8 pb-8">
-                    <!-- Step 1: Selection -->
-                    <div id="pm-step-method">
-                        <p class="text-slate-600 dark:text-white/80 text-sm font-semibold mb-4">Select Payment Method</p>
-                        <div class="grid grid-cols-1 gap-3" id="pm-wallet-grid">
-                            <!-- EVC Plus -->
-                            <button onclick="selectWallet('waafi', 'EVC Plus / Zaad / Sahal', '61')"
-                                class="group relative flex items-center gap-4 p-4 rounded-2xl border border-slate-200 dark:border-white/5 bg-white dark:bg-white/[0.02] hover:bg-slate-50 dark:hover:bg-white/[0.08] hover:border-primary/50 dark:hover:border-indigo-500/50 transition-all duration-300 text-left shadow-sm hover:shadow-md">
-                                <div class="w-10 h-10 rounded-xl bg-orange-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                    <span class="material-icons-round text-orange-600 dark:text-orange-400">smartphone</span>
-                                </div>
-                                <div class="flex-1">
-                                    <p class="text-slate-900 dark:text-white text-sm font-bold">EVC Plus / Zaad / Sahal</p>
-                                    <p class="text-slate-500 dark:text-white/40 text-[11px]">Primary Choice · Instant Mobile Pay</p>
-                                </div>
-                                <span class="material-icons-round text-slate-300 dark:text-white/10 group-hover:text-primary dark:group-hover:text-indigo-400 group-hover:translate-x-1 transition-all">chevron_right</span>
-                            </button>
-
-                            <!-- eDahab -->
-                            <button onclick="selectWallet('edahab', 'eDahab', '63')"
-                                class="group relative flex items-center gap-4 p-4 rounded-2xl border border-slate-200 dark:border-white/5 bg-white dark:bg-white/[0.02] hover:bg-slate-50 dark:hover:bg-white/[0.08] hover:border-primary/50 dark:hover:border-indigo-500/50 transition-all duration-300 text-left shadow-sm hover:shadow-md">
-                                <div class="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                    <span class="material-icons-round text-blue-600 dark:text-blue-400">account_balance</span>
-                                </div>
-                                <div class="flex-1">
-                                    <p class="text-slate-900 dark:text-white text-sm font-bold">eDahab</p>
-                                    <p class="text-slate-500 dark:text-white/40 text-[11px]">Dahabshiil Group · Fast & Secure</p>
-                                </div>
-                                <span class="material-icons-round text-slate-300 dark:text-white/10 group-hover:text-primary dark:group-hover:text-indigo-400 group-hover:translate-x-1 transition-all">chevron_right</span>
-                            </button>
-
-                            <!-- Premier Wallet -->
-                            <button onclick="selectWallet('pbwallet', 'Premier Wallet', '65')"
-                                class="group relative flex items-center gap-4 p-4 rounded-2xl border border-slate-200 dark:border-white/5 bg-white dark:bg-white/[0.02] hover:bg-slate-50 dark:hover:bg-white/[0.08] hover:border-primary/50 dark:hover:border-indigo-500/50 transition-all duration-300 text-left shadow-sm hover:shadow-md">
-                                <div class="w-10 h-10 rounded-xl bg-teal-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                    <span class="material-icons-round text-teal-600 dark:text-teal-400">payments</span>
-                                </div>
-                                <div class="flex-1">
-                                    <p class="text-slate-900 dark:text-white text-sm font-bold">Premier Wallet</p>
-                                    <p class="text-slate-500 dark:text-white/40 text-[11px]">Direct Bank Sync · VIP Experience</p>
-                                </div>
-                                <span class="material-icons-round text-slate-300 dark:text-white/10 group-hover:text-primary dark:group-hover:text-indigo-400 group-hover:translate-x-1 transition-all">chevron_right</span>
-                            </button>
-
-                            <!-- International -->
-                            <div class="h-[1px] bg-slate-100 dark:bg-white/5 my-2"></div>
-                            <button onclick="redirectToSifalo()"
-                                class="group relative flex items-center gap-4 p-4 rounded-2xl border border-slate-200 dark:border-white/5 bg-white dark:bg-white/[0.02] hover:bg-slate-50 dark:hover:bg-white/[0.08] hover:border-primary/50 dark:hover:border-indigo-500/50 transition-all duration-300 text-left shadow-sm hover:shadow-md">
-                                <div class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                    <span class="material-icons-round text-slate-600 dark:text-white/60">public</span>
-                                </div>
-                                <div class="flex-1">
-                                    <p class="text-slate-900 dark:text-white text-sm font-bold">International (Card / Apple / Google)</p>
-                                    <p class="text-slate-500 dark:text-white/40 text-[11px]">Visa · Mastercard · Pay via Sifalo Checkout</p>
-                                </div>
-                                <span class="material-icons-round text-slate-300 dark:text-white/10 group-hover:text-primary dark:group-hover:text-indigo-400 group-hover:translate-x-1 transition-all">chevron_right</span>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Step 2: Phone Input -->
-                    <div id="pm-step-phone" class="hidden animate-in slide-in-from-right-4 duration-300">
-                        <button onclick="backToMethodSelect()" class="flex items-center gap-2 text-indigo-400 text-xs font-bold mb-6 hover:text-indigo-300 transition-colors uppercase tracking-widest">
-                            <span class="material-icons-round text-sm">arrow_back</span>
-                            Change Method
-                        </button>
-                        
-                        <div class="mb-6">
-                            <h3 class="text-slate-900 dark:text-white font-bold text-lg mb-1">Mobile Details</h3>
-                            <p class="text-slate-500 dark:text-white/50 text-xs">Enter your <span id="pm-wallet-name" class="text-primary dark:text-indigo-300 font-bold"></span> mobile number</p>
-                        </div>
-
-                        <div class="relative group">
-                            <div class="absolute inset-y-0 left-4 flex items-center gap-2 pr-2 border-r border-slate-200 dark:border-white/10">
-                                <span class="text-slate-400 dark:text-white/60 font-mono text-sm" id="pm-country-code">+252</span>
-                            </div>
-                            <input id="pm-phone-input" type="tel" inputmode="numeric" maxlength="9"
-                                placeholder="61xxxxxxx"
-                                class="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl pl-[72px] pr-4 py-4 text-slate-900 dark:text-white text-base font-mono outline-none focus:border-primary/50 dark:focus:border-indigo-500/50 focus:bg-white dark:focus:bg-white/[0.08] transition-all"
-                                oninput="this.value=this.value.replace(/\D/g,'')">
-                        </div>
-                        <p id="pm-phone-error" class="text-red-400 text-xs mt-3 flex items-center gap-2 hidden">
-                            <span class="material-icons-round text-[14px]">error_outline</span>
-                            <span id="pm-phone-error-text">Please enter a valid number</span>
-                        </p>
-
-                        <button id="pm-pay-btn" onclick="submitDirectPayment()"
-                            class="mt-8 w-full py-4 rounded-2xl font-bold border-0 text-white shadow-[0_10px_20px_rgba(79,70,229,0.3)] hover:shadow-[0_15px_25px_rgba(79,70,229,0.4)] hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center gap-3"
-                            style="background: linear-gradient(135deg, #6c63ff, #4f46e5);">
-                            <span class="material-icons-round">bolt</span>
-                            Proceed to Pay
-                        </button>
-                    </div>
-
-                    <!-- Step 3: Processing -->
-                    <div id="pm-step-processing" class="hidden py-12 text-center animate-in zoom-in-95 duration-500">
-                        <div class="relative w-24 h-24 mx-auto mb-8">
-                            <div class="absolute inset-0 border-4 border-slate-100 dark:border-white/5 rounded-full"></div>
-                            <div class="absolute inset-0 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-                            <div class="absolute inset-4 bg-indigo-500/10 rounded-full flex items-center justify-center">
-                                <span class="material-icons-round text-indigo-400 text-3xl animate-pulse">sync</span>
-                            </div>
-                        </div>
-                        <h3 class="text-slate-900 dark:text-white font-bold text-xl mb-2">Securing your spot...</h3>
-                        <p class="text-slate-500 dark:text-white/40 text-sm">Validating payment details with Sifalo Pay Gateway</p>
-                    </div>
-
-                    <!-- Step 4: Result -->
-                    <div id="pm-step-result" class="hidden py-6 text-center animate-in zoom-in-95 duration-500">
-                        <div id="pm-result-container" class="w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-6 text-4xl shadow-xl">
-                            <!-- Icon and color set by JS -->
-                            <span id="pm-result-icon">✅</span>
-                        </div>
-                        <h3 id="pm-result-title" class="text-slate-900 dark:text-white font-bold text-2xl mb-2">Success!</h3>
-                        <p id="pm-result-msg" class="text-slate-500 dark:text-white/50 text-sm mb-10 leading-relaxed px-4"></p>
-                        
-                        <button id="pm-result-btn"
-                            class="w-full py-4 rounded-2xl font-bold text-white transition-all shadow-lg hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0">
-                            Continue
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Footer -->
-                <div class="px-8 py-4 bg-slate-50 dark:bg-black/20 border-t border-slate-200 dark:border-white/5 flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                        <span class="material-icons-round text-emerald-500/50 text-base">verified_user</span>
-                        <p class="text-slate-400 dark:text-white/20 text-[10px] font-bold uppercase tracking-widest">Sifalo Certified</p>
-                    </div>
-                    <div class="flex gap-4">
-                        <span class="material-icons-round text-slate-300 dark:text-white/10 text-xl hover:text-primary dark:hover:text-white/30 transition-colors cursor-help" title="256-bit SSL Protection">lock</span>
-                        <span class="material-icons-round text-slate-300 dark:text-white/10 text-xl hover:text-primary dark:hover:text-white/30 transition-colors cursor-help" title="Card Anti-Fraud Monitoring">security</span>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-    <!-- END PAYMENT MODAL -->
+        <!-- END PAYMENT MODAL -->
 
-    <script type="module">
-        import { PaymentService } from '/src/services/paymentService.js';
+        <script type="module">
+            import { PaymentService } from '/src/services/paymentService.js';
 
-        // Current payment context
-        window._pmContext = { courseId: null, amount: 0, currency: 'USD', gateway: null };
+            // Current payment context
+            window._pmContext = { courseId: null, amount: 0, currency: 'USD', gateway: null };
 
-        window.openPaymentModal = async function(course) {
-            const btn = document.getElementById('enroll-btn');
-            if (btn) {
-                btn.disabled = true;
-                btn.innerHTML = '<span class="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></span>Loading...';
-            }
-            try {
-                const finalPrice = window.basePrice !== undefined
-                    ? parseFloat(document.getElementById('cd-price').textContent.replace('$', ''))
-                    : (course.price || 0);
-
-                window._pmContext = { courseId: course.id, amount: finalPrice, currency: 'USD', gateway: null };
-
-                // Detect country
-                const isSomali = await PaymentService.isSomaliUser();
-
-                if (isSomali) {
-                    // Show branded modal for Somali users
-                    document.getElementById('pm-course-title').textContent = course.title || 'Course';
-                    document.getElementById('pm-price').textContent = `$${finalPrice.toFixed(2)}`;
-                    
-                    // Thumbnail
-                    const thumbEl = document.getElementById('pm-thumbnail');
-                    thumbEl.src = course.thumbnail_url || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&q=80';
-                    thumbEl.onerror = () => { thumbEl.src = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&q=80'; };
-
-                    // Instructor
-                    const instr = course.instructor || {};
-                    document.getElementById('pm-instructor-name').textContent = instr.full_name || 'Expert Instructor';
-                    const avatarEl = document.getElementById('pm-instructor-avatar');
-                    avatarEl.src = instr.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(instr.full_name || 'Instructor')}&background=6366f1&color=fff`;
-
-                    showModal();
-                    showStep('method');
-                } else {
-                    // International: redirect directly
-                    if (btn) btn.innerHTML = '<span class="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></span>Redirecting to checkout...';
-                    await PaymentService.createCourseCheckout(course.id, finalPrice, 'USD');
+            window.openPaymentModal = async function (course) {
+                const btn = document.getElementById('enroll-btn');
+                if (btn) {
+                    btn.disabled = true;
+                    btn.innerHTML = '<span class="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></span>Loading...';
                 }
-            } catch (err) {
-                showResult(false, 'Checkout Failed', err.message, err.details);
+                try {
+                    const finalPrice = window.basePrice !== undefined
+                        ? parseFloat(document.getElementById('cd-price').textContent.replace('$', ''))
+                        : (course.price || 0);
+
+                    window._pmContext = { courseId: course.id, amount: finalPrice, currency: 'USD', gateway: null };
+
+                    // Detect country
+                    const isSomali = await PaymentService.isSomaliUser();
+
+                    if (isSomali) {
+                        // Show branded modal for Somali users
+                        document.getElementById('pm-course-title').textContent = course.title || 'Course';
+                        document.getElementById('pm-price').textContent = `$${finalPrice.toFixed(2)}`;
+
+
+                        // Thumbnail
+                        const thumbEl = document.getElementById('pm-thumbnail');
+                        thumbEl.src = course.thumbnail_url || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&q=80';
+                        thumbEl.onerror = () => { thumbEl.src = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&q=80'; };
+
+                        // Instructor
+                        const instr = course.instructor || {};
+                        document.getElementById('pm-instructor-name').textContent = instr.full_name || 'Expert Instructor';
+                        const avatarEl = document.getElementById('pm-instructor-avatar');
+                        avatarEl.src = instr.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(instr.full_name || 'Instructor')}&background=6366f1&color=fff`;
+
+                        showModal();
+                        showStep('method');
+                    } else {
+                        // International: redirect directly
+                        if (btn) btn.innerHTML = '<span class="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></span>Redirecting to checkout...';
+                        await PaymentService.createCourseCheckout(course.id, finalPrice, 'USD');
+                    }
+                } catch (err) {
+                    showResult(false, 'Checkout Failed', err.message, err.details);
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerHTML = '<span class="material-icons-round text-[18px] leading-none">shopping_cart</span> Enroll Now';
+                    }
+                }
+            };
+
+            function showModal() {
+                const modal = document.getElementById('payment-modal');
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                document.body.style.overflow = 'hidden';
+            }
+            // Expose to other module scripts for free-course enrollment
+            window.showPaymentModal = showModal;
+            window.showPaymentResult = showResult;
+
+            function showResult(success, title, message, details = null) {
+                const container = document.getElementById('pm-result-container');
+                const icon = document.getElementById('pm-result-icon');
+                const btn = document.getElementById('pm-result-btn');
+
+                // Update container and icon
+                if (success) {
+                    container.style.background = 'rgba(16, 185, 129, 0.1)';
+                    container.style.color = '#10b981';
+                    container.style.border = '2px solid rgba(16, 185, 129, 0.2)';
+                    icon.textContent = 'check_circle';
+                    icon.className = 'material-icons-round text-5xl';
+                } else {
+                    container.style.background = 'rgba(239, 68, 68, 0.1)';
+                    container.style.color = '#ef4444';
+                    container.style.border = '2px solid rgba(239, 68, 68, 0.2)';
+                    icon.textContent = 'error_outline';
+                    icon.className = 'material-icons-round text-5xl';
+                }
+
+                document.getElementById('pm-result-title').textContent = title;
+
+                // Format message with details if available
+                let displayMsg = message;
+                if (details) {
+                    if (details.message) displayMsg += `: ${details.message}`;
+                    if (details.hint) displayMsg += ` (Hint: ${details.hint})`;
+                    if (details.code) displayMsg += ` [Code: ${details.code}]`;
+                }
+                document.getElementById('pm-result-msg').textContent = displayMsg;
+
+                if (success) {
+                    btn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+                    btn.textContent = 'Go to My Courses';
+                    btn.onclick = () => { window.location.href = '/src/pages/student/student-dashboard/index.html'; };
+                } else {
+                    btn.style.background = 'linear-gradient(135deg, #6c63ff, #4f46e5)';
+                    btn.textContent = 'Try Again';
+                    btn.onclick = () => showStep('method');
+                }
+                showStep('result');
+                if (success) {
+                    // Success stays, no body scroll
+                    document.body.style.overflow = 'hidden';
+                } else {
+                    showModal(); // Ensure modal is visible and scroll locked
+                }
+            }
+
+            window.closePaymentModal = function () {
+                const modal = document.getElementById('payment-modal');
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                document.body.style.overflow = '';
+                // Re-enable enroll button
+                const btn = document.getElementById('enroll-btn');
                 if (btn) {
                     btn.disabled = false;
                     btn.innerHTML = '<span class="material-icons-round text-[18px] leading-none">shopping_cart</span> Enroll Now';
                 }
-            }
-        };
+            };
 
-        function showModal() {
-            const modal = document.getElementById('payment-modal');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            document.body.style.overflow = 'hidden';
-        }
-
-        function showResult(success, title, message, details = null) {
-            const container = document.getElementById('pm-result-container');
-            const icon = document.getElementById('pm-result-icon');
-            const btn = document.getElementById('pm-result-btn');
-            
-            // Update container and icon
-            if (success) {
-                container.style.background = 'rgba(16, 185, 129, 0.1)';
-                container.style.color = '#10b981';
-                container.style.border = '2px solid rgba(16, 185, 129, 0.2)';
-                icon.textContent = 'check_circle';
-                icon.className = 'material-icons-round text-5xl';
-            } else {
-                container.style.background = 'rgba(239, 68, 68, 0.1)';
-                container.style.color = '#ef4444';
-                container.style.border = '2px solid rgba(239, 68, 68, 0.2)';
-                icon.textContent = 'error_outline';
-                icon.className = 'material-icons-round text-5xl';
-            }
-
-            document.getElementById('pm-result-title').textContent = title;
-            
-            // Format message with details if available
-            let displayMsg = message;
-            if (details) {
-                if (details.message) displayMsg += `: ${details.message}`;
-                if (details.hint) displayMsg += ` (Hint: ${details.hint})`;
-                if (details.code) displayMsg += ` [Code: ${details.code}]`;
-            }
-            document.getElementById('pm-result-msg').textContent = displayMsg;
-            
-            if (success) {
-                btn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
-                btn.textContent = 'Go to My Courses';
-                btn.onclick = () => { window.location.href = '/src/pages/student/student-dashboard/index.html'; };
-            } else {
-                btn.style.background = 'linear-gradient(135deg, #6c63ff, #4f46e5)';
-                btn.textContent = 'Try Again';
-                btn.onclick = () => showStep('method');
-            }
-            showStep('result');
-            if (success) {
-                // Success stays, no body scroll
-                document.body.style.overflow = 'hidden';
-            } else {
-                showModal(); // Ensure modal is visible and scroll locked
-            }
-        }
-
-        window.closePaymentModal = function() {
-            const modal = document.getElementById('payment-modal');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-            document.body.style.overflow = '';
-            // Re-enable enroll button
-            const btn = document.getElementById('enroll-btn');
-            if (btn) {
-                btn.disabled = false;
-                btn.innerHTML = '<span class="material-icons-round text-[18px] leading-none">shopping_cart</span> Enroll Now';
-            }
-        };
-
-        function showStep(step) {
-            ['method', 'phone', 'processing', 'result'].forEach(s => {
-                const el = document.getElementById(`pm-step-${s}`);
-                if (el) el.classList.add('hidden');
-            });
-            const target = document.getElementById(`pm-step-${step}`);
-            if (target) {
-                target.classList.remove('hidden');
-                // Trigger animation reset
-                target.style.animation = 'none';
-                target.offsetHeight; 
-                target.style.animation = null;
-            }
-        }
-
-        window.selectWallet = function(gateway, name, prefixDigit) {
-            window._pmContext.gateway = gateway;
-            document.getElementById('pm-wallet-name').textContent = name;
-            const input = document.getElementById('pm-phone-input');
-            input.value = '';
-            input.placeholder = prefixDigit + 'xxxxxxx';
-            document.getElementById('pm-phone-error').classList.add('hidden');
-            showStep('phone');
-            setTimeout(() => input.focus(), 300);
-        };
-
-        window.backToMethodSelect = function() {
-            showStep('method');
-        };
-
-        window.redirectToSifalo = async function() {
-            showStep('processing');
-            try {
-                await PaymentService.createCourseCheckout(
-                    window._pmContext.courseId,
-                    window._pmContext.amount,
-                    window._pmContext.currency
-                );
-            } catch (err) {
-                showResult(false, 'Checkout Failed', err.message);
-            }
-        };
-
-        window.submitDirectPayment = async function() {
-            const phone = document.getElementById('pm-phone-input').value.trim();
-            const errEl = document.getElementById('pm-phone-error');
-
-            if (!phone || phone.length < 7) {
-                errEl.textContent = 'Please enter a valid phone number';
-                errEl.classList.remove('hidden');
-                return;
-            }
-            errEl.classList.add('hidden');
-
-            const { courseId, amount, currency, gateway } = window._pmContext;
-            showStep('processing');
-
-            try {
-                const result = await PaymentService.createDirectPayment({
-                    type: 'course',
-                    referenceId: courseId,
-                    amount,
-                    currency,
-                    gateway,
-                    account: phone,
+            function showStep(step) {
+                ['method', 'phone', 'processing', 'result'].forEach(s => {
+                    const el = document.getElementById(`pm-step-${s}`);
+                    if (el) el.classList.add('hidden');
                 });
-
-                if (result.status === 'success') {
-                    showResult(true, 'Enrollment Successful! 🎉',
-                        'You now have full access to this course. Redirecting to your dashboard...');
-                    setTimeout(() => { window.location.href = '/src/pages/student/student-dashboard/index.html'; }, 2500);
-                } else {
-                    showResult(false, 'Payment Failed', result.message || 'Your payment could not be processed. Please try again.');
+                const target = document.getElementById(`pm-step-${step}`);
+                if (target) {
+                    target.classList.remove('hidden');
+                    // Trigger animation reset
+                    target.style.animation = 'none';
+                    target.offsetHeight;
+                    target.style.animation = null;
                 }
-            } catch (err) {
-                showResult(false, 'Payment Failed', err.message);
             }
-        };
 
-    </script>
+            window.selectWallet = function (gateway, name, prefixDigit) {
+                window._pmContext.gateway = gateway;
+                document.getElementById('pm-wallet-name').textContent = name;
+                const input = document.getElementById('pm-phone-input');
+                input.value = '';
+                input.placeholder = prefixDigit + 'xxxxxxx';
+                document.getElementById('pm-phone-error').classList.add('hidden');
+                showStep('phone');
+                setTimeout(() => input.focus(), 300);
+            };
 
+            window.backToMethodSelect = function () {
+                showStep('method');
+            };
+
+            window.redirectToSifalo = async function () {
+                showStep('processing');
+                try {
+                    await PaymentService.createCourseCheckout(
+                        window._pmContext.courseId,
+                        window._pmContext.amount,
+                        window._pmContext.currency
+                    );
+                } catch (err) {
+                    showResult(false, 'Checkout Failed', err.message);
+                }
+            };
+
+            window.submitDirectPayment = async function () {
+                const phone = document.getElementById('pm-phone-input').value.trim();
+                const errEl = document.getElementById('pm-phone-error');
+
+                if (!phone || phone.length < 7) {
+                    errEl.textContent = 'Please enter a valid phone number';
+                    errEl.classList.remove('hidden');
+                    return;
+                }
+                errEl.classList.add('hidden');
+
+                const { courseId, amount, currency, gateway } = window._pmContext;
+                showStep('processing');
+
+                try {
+                    const result = await PaymentService.createDirectPayment({
+                        type: 'course',
+                        referenceId: courseId,
+                        amount,
+                        currency,
+                        gateway,
+                        account: phone,
+                    });
+
+                    if (result.status === 'success') {
+                        showResult(true, 'Enrollment Successful! 🎉',
+                            'You now have full access to this course. Redirecting to your dashboard...');
+                        setTimeout(() => { window.location.href = '/src/pages/student/student-dashboard/index.html'; }, 2500);
+                    } else {
+                        showResult(false, 'Payment Failed', result.message || 'Your payment could not be processed. Please try again.');
+                    }
+                } catch (err) {
+                    showResult(false, 'Payment Failed', err.message);
+                }
+            };
+
+        </script>
+
+        <style>
+            .animate-pulse {
+                animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+            }
+
+            @keyframes pulse {
+
+                0%,
+                100% {
+                    opacity: 1;
+                }
+
+                50% {
+                    opacity: .5;
+                }
+            }
+        </style>
+        </script>
+
+    <!-- Side-drawer mobile menu logic -->
     <script>
-        // Coupon logic — still active (discount applied before Sifalo checkout redirect)
-        async function applyCoupon() {
-            const input = document.getElementById('coupon-input');
-            const btn = document.getElementById('apply-coupon-btn');
-            const code = input.value.trim().toUpperCase();
-            if (!code) return;
+        (function() {
+            var btn = document.getElementById('mobile-menu-btn');
+            var menu = document.getElementById('mobile-menu');
+            var overlay = document.getElementById('mobile-menu-overlay');
+            
+            if (!btn || !menu) return;
 
-            const urlParams = new URLSearchParams(window.location.search);
-            const courseId = urlParams.get('id');
-
-            btn.disabled = true;
-            btn.innerHTML = '<span class="animate-spin inline-block w-3 h-3 border-2 border-white border-t-transparent rounded-full"></span>';
-
-            try {
-                const { data: coupon, error } = await supabase
-                    .from('course_coupons')
-                    .select('*')
-                    .eq('course_id', courseId)
-                    .eq('code', code)
-                    .eq('is_active', true)
-                    .single();
-
-                if (error || !coupon) throw new Error("Invalid coupon code");
-
-                const now = new Date();
-                if (coupon.starts_at && new Date(coupon.starts_at) > now)
-                    throw new Error(`Coupon not active yet`);
-                if (coupon.expires_at && new Date(coupon.expires_at) < now)
-                    throw new Error("Coupon has expired");
-
-                const priceEl = document.getElementById('cd-price');
-                if (window.basePrice === undefined)
-                    window.basePrice = parseFloat(priceEl.textContent.replace('$', ''));
-
-                const newPrice = window.basePrice * (1 - coupon.discount_percent / 100);
-                priceEl.textContent = `$${newPrice.toFixed(2)}`;
-
-                document.getElementById('cd-original-price').textContent = `$${window.basePrice.toFixed(2)}`;
-                document.getElementById('cd-original-price').classList.remove('hidden');
-                document.getElementById('cd-discount-badge').textContent = `${coupon.discount_percent}% OFF`;
-                document.getElementById('cd-discount-badge').classList.remove('hidden');
-
-                input.classList.add('border-emerald-500', 'bg-emerald-50');
-                btn.innerHTML = '<span class="material-icons-round text-xs">check</span>';
-                btn.classList.replace('bg-primary', 'bg-emerald-500');
-                btn.classList.replace('hover:bg-indigo-600', 'hover:bg-emerald-600');
-
-                if (typeof showToast === 'function')
-                    showToast(`Coupon applied! ${coupon.discount_percent}% discount.`);
-
-            } catch (err) {
-                alert(err.message);
-                btn.disabled = false;
-                btn.innerHTML = 'Apply';
-                input.classList.add('border-red-500');
+            function openMenu() {
+                menu.classList.remove('-translate-x-full');
+                menu.classList.add('translate-x-0');
+                if (overlay) overlay.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
             }
-        }
-    </script>
+            
+            function closeMenu() {
+                menu.classList.add('-translate-x-full');
+                menu.classList.remove('translate-x-0');
+                if (overlay) overlay.classList.add('hidden');
+                document.body.style.overflow = '';
+            }
+            
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                menu.classList.contains('translate-x-0') ? closeMenu() : openMenu();
+            });
+            
+            if (overlay) overlay.addEventListener('click', closeMenu);
+            
+            // Close menu when clicking anywhere outside the drawer
+            document.addEventListener('click', function(e) {
+                if (menu.classList.contains('translate-x-0') && !menu.contains(e.target) && e.target !== btn && !btn.contains(e.target)) {
+                    closeMenu();
+                }
+            });
 
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') closeMenu();
+            });
+            
+            // Load Categories for mobile menu
+            async function loadCategories() {
+                try {
+                    if (!window.CourseService) {
+                        setTimeout(loadCategories, 200);
+                        return;
+                    }
+                    const categories = await window.CourseService.getCategories();
+                    const listEl = document.getElementById('mobile-categories-list');
+                    if (listEl) {
+                        listEl.innerHTML = categories.map(cat => `
+                            <a class="flex items-center gap-3 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors py-1" href="/src/pages/marketplace/marketplace/index.html?category=${encodeURIComponent(cat.id)}">
+                                <span class="material-symbols-outlined text-lg text-slate-400">category</span> ${cat.name}
+                            </a>
+                        `).join('');
+                    }
+                } catch (e) {
+                    console.error('Failed to load categories for menu', e);
+                }
+            }
+            loadCategories();
+        })();
+    </script>
 </body>
 
 </html>

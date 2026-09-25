@@ -1,796 +1,749 @@
 <!DOCTYPE html>
+
 <html lang="en">
-
 <head>
-    <meta charset="utf-8" />
-    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>Course Creation Wizard - Tacliimi Learn</title>
-    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
-        rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
-    <script>
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        primary: "#1E40AF", // Deep Blue
-                        accent: "#7C3AED",
-                        "background-light": "#F9FAFB",
-                        "background-dark": "#111827",
-                    },
-                    fontFamily: {
-                        display: ["Inter", "sans-serif"],
-                    },
-                    borderRadius: {
-                        DEFAULT: "0.5rem",
-                    },
-                },
-            },
-        };
-    </script>
-    <style type="text/tailwindcss">
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-        .step-active {
-            color: #1E40AF;
-            font-weight: 600;
-        }
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        /* Hide Number Input Spinners */
-        input::-webkit-outer-spin-button,
-        input::-webkit-inner-spin-button {
-            -webkit-appearance: none;
-            appearance: none;
-            margin: 0;
-        }
-        input[type=number] {
-            -moz-appearance: textfield;
-            appearance: textfield;
-        }
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Course Creation Wizard - Tacliimi Learn</title>
+<link rel="stylesheet" href="/public/assets/css/tacliimi.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
 
-        .wizard-step.block {
-            animation: fadeIn 0.4s ease-out forwards;
-        }
-    </style>
+
 </head>
-
 <body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen relative">
-    <nav class="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 sticky top-0 z-50">
-        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16">
-                <!-- Left: Logo only -->
-                <div class="flex items-center gap-2">
-                    <div class="bg-primary p-1.5 rounded-lg text-white">
-                        <span class="material-icons text-2xl">school</span>
-                    </div>
-                    <span class="text-xl font-bold tracking-tight text-primary hidden sm:block">Tacliimi Learn</span>
-                </div>
+<nav class="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 sticky top-0 z-50 relative">
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="flex items-center justify-between h-16 relative">
+<!-- Left: Hamburger icon on mobile -->
+<div class="flex items-center lg:w-1/3">
+<button aria-label="Open menu" class="lg:hidden p-2 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors" id="wizard-mobile-menu-btn"><span class="material-symbols-outlined">menu</span></button>
+</div>
 
-                <!-- Right: All actions + profile -->
-                <div class="flex items-center gap-3">
-                    <!-- Auto-save indicator -->
-                    <div id="save-status" class="hidden items-center gap-2 px-3 py-1 bg-slate-50 dark:bg-slate-800 rounded-full border border-slate-100 dark:border-slate-700">
-                        <span class="flex h-2 w-2 relative">
-                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-                            <span class="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
-                        </span>
-                        <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Saving...</span>
-                    </div>
+<!-- Center: Logo -->
+<div class="absolute left-1/2 -translate-x-1/2 flex items-center gap-2">
+<img src="/public/assets/images/IMG_7448.png" alt="Tacliimi Logo" class="h-8 w-auto dark:hidden">
+<img src="/public/assets/images/logo-dark.png" alt="Tacliimi Logo" class="h-8 w-auto hidden dark:block">
+<span class="text-xl font-bold tracking-tight text-primary hidden sm:block">Tacliimi Learn</span>
+</div>
 
-                    <!-- Save Draft Button -->
-                    <button id="btn-save-draft-nav" onclick="saveDraftManual()"
-                        class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-4 py-2 rounded-lg font-bold text-xs hover:bg-indigo-50 hover:text-primary dark:hover:bg-indigo-900/30 dark:hover:text-indigo-400 transition flex items-center gap-2" title="Save Draft">
-                        <span class="material-symbols-outlined text-sm">save</span>
-                        <span class="hidden sm:inline">Save Draft</span>
-                    </button>
+<!-- Right: All actions + profile -->
+<div class="flex items-center justify-end gap-3 lg:w-1/3 hidden lg:flex">
+<!-- Auto-save indicator -->
+<div class="hidden items-center gap-2 px-3 py-1 bg-slate-50 dark:bg-slate-800 rounded-full border border-slate-100 dark:border-slate-700" id="save-status">
+<span class="flex h-2 w-2 relative">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+</span>
+<span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Saving...</span>
+</div>
+<!-- Save Draft Button -->
+<button class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-4 py-2 rounded-lg font-bold text-xs hover:bg-indigo-50 hover:text-primary dark:hover:bg-indigo-900/30 dark:hover:text-indigo-400 transition flex items-center gap-2" id="btn-save-draft-nav" onclick="saveDraftManual()" title="Save Draft">
+<span class="material-symbols-outlined text-sm">save</span>
+<span class="hidden sm:inline">Save Draft</span>
+</button>
+<!-- Exit Button -->
+<button id="btn-wizard-exit" class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-4 py-2 rounded-lg font-bold text-xs hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:text-red-400 transition flex items-center gap-2" onclick="exitWizard()" title="Exit Wizard">
+<span class="material-symbols-outlined text-sm">exit_to_app</span>
+<span class="hidden sm:inline">Exit</span>
+</button>
+<!-- Global profile injects ONLY into this dedicated div -->
+<div id="global-profile-header-container"></div>
+</div>
+</div>
+</div>
 
-                    <!-- Exit Button -->
-                    <button onclick="exitWizard()"
-                        class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-4 py-2 rounded-lg font-bold text-xs hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:text-red-400 transition flex items-center gap-2" title="Exit Wizard">
-                        <span class="material-symbols-outlined text-sm">logout</span>
-                        <span class="hidden sm:inline">Exit</span>
-                    </button>
-
-                    <!-- Global Profile Injected Below -->
-                </div>
-            </div>
-        </div>
-    </nav>
-
-    <main class="max-w-4xl mx-auto px-4 py-12">
-        <div class="mb-12">
-            <div class="flex justify-between items-center mb-6">
-                <div class="flex flex-col">
-                    <h1 class="text-2xl font-bold dark:text-white">Create New Course</h1>
-                    <p class="text-slate-500 dark:text-slate-400 text-sm mt-1" id="step-subtitle">Step 1 of 4: Basic
+<!-- Mobile Menu Dropdown -->
+<div id="wizard-mobile-menu" class="absolute top-16 left-4 w-48 bg-white dark:bg-slate-900 z-50 rounded-xl shadow-xl border border-slate-200 dark:border-slate-800 transform opacity-0 scale-95 transition-all duration-200 hidden lg:hidden">
+    <div id="mobile-menu" class="p-2 flex flex-col space-y-1">
+        <button class="flex items-center gap-3 w-full px-4 py-3 text-sm font-bold text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors border border-slate-200 dark:border-slate-700" onclick="saveDraftManual()">
+            <span class="material-symbols-outlined text-indigo-500">save</span> Save Draft
+        </button>
+        <button class="flex items-center gap-3 w-full px-4 py-3 text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-lg transition-colors" onclick="exitWizard()">
+            <span class="material-symbols-outlined text-red-500">exit_to_app</span> Exit
+        </button>
+    </div>
+</div>
+</nav>
+<main class="max-w-4xl mx-auto px-4 py-12">
+<div class="mb-12">
+<div class="flex justify-between items-center mb-6">
+<div class="flex flex-col">
+<h1 class="text-2xl font-bold dark:text-white">Create New Course</h1>
+<p class="text-slate-500 dark:text-slate-400 text-sm mt-1" id="step-subtitle">Step 1 of 4: Basic
                         Information</p>
-                </div>
-                <div class="w-48 bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
-                    <div id="progress-bar" class="bg-primary h-full w-1/4 transition-all duration-500"></div>
-                </div>
-            </div>
-
-            <!-- Step Indicators -->
-            <div class="grid grid-cols-4 gap-4" id="step-indicators">
-                <!-- Indicator 1 -->
-                <div class="flex flex-col items-center gap-2 group step-ind" data-step="1">
-                    <div
-                        class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center ring-4 ring-blue-50 dark:ring-blue-900/30 icon-bg transition">
-                        <span class="material-icons text-xl">info</span>
-                    </div>
-                    <span
-                        class="text-xs font-semibold text-primary uppercase tracking-wider title-text transition">Basic
+</div>
+<div class="w-48 bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-1/4 transition-all duration-500" id="progress-bar"></div>
+</div>
+</div>
+<!-- Step Indicators -->
+<div class="grid grid-cols-4 gap-4" id="step-indicators">
+<!-- Indicator 1 -->
+<div class="flex flex-col items-center gap-2 group step-ind" data-step="1">
+<div class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center ring-4 ring-blue-50 dark:ring-blue-900/30 icon-bg transition">
+<span class="material-icons text-xl">info</span>
+</div>
+<span class="text-xs font-semibold text-primary uppercase tracking-wider title-text transition">Basic
                         Info</span>
-                </div>
-                <!-- Indicator 2 -->
-                <div class="flex flex-col items-center gap-2 group step-ind" data-step="2">
-                    <div
-                        class="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-500 flex items-center justify-center transition group-hover:bg-slate-300 dark:group-hover:bg-slate-700 icon-bg">
-                        <span class="material-icons text-xl">menu_book</span>
-                    </div>
-                    <span
-                        class="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider title-text transition">Curriculum</span>
-                </div>
-                <!-- Indicator 3 -->
-                <div class="flex flex-col items-center gap-2 group step-ind" data-step="3">
-                    <div
-                        class="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-500 flex items-center justify-center transition group-hover:bg-slate-300 dark:group-hover:bg-slate-700 icon-bg">
-                        <span class="material-icons text-xl">payments</span>
-                    </div>
-                    <span
-                        class="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider title-text transition">Pricing</span>
-                </div>
-                <!-- Indicator 4 -->
-                <div class="flex flex-col items-center gap-2 group step-ind" data-step="4">
-                    <div
-                        class="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-500 flex items-center justify-center transition group-hover:bg-slate-300 dark:group-hover:bg-slate-700 icon-bg">
-                        <span class="material-icons text-xl">publish</span>
-                    </div>
-                    <span
-                        class="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider title-text transition">Publish</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- STEP 1 CONTAINER -->
-        <div id="step-1-container" class="wizard-step block space-y-6">
-            <div
-                class="bg-white dark:bg-slate-900 p-8 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 relative overflow-hidden">
-                <div class="absolute top-0 left-0 w-full h-2 bg-primary"></div>
-                <div class="space-y-8">
-                    <div>
-                        <label
-                            class="block text-sm font-bold text-slate-900 dark:text-slate-100 mb-4 uppercase tracking-wide"
-                            for="course-title">Course Title <span class="text-red-500">*</span></label>
-                        <input
-                            class="w-full text-xl px-0 py-2 border-b-2 border-slate-200 dark:border-slate-800 bg-transparent focus:outline-none focus:border-primary dark:focus:border-primary transition-colors placeholder:text-slate-300 dark:placeholder:text-slate-700 course-input"
-                            data-field="title" id="course-title"
-                            placeholder="e.g. Advanced Machine Learning with Python" type="text" />
-                        <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Your title should be catchy and
+</div>
+<!-- Indicator 2 -->
+<div class="flex flex-col items-center gap-2 group step-ind" data-step="2">
+<div class="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-500 flex items-center justify-center transition group-hover:bg-slate-300 dark:group-hover:bg-slate-700 icon-bg">
+<span class="material-icons text-xl">menu_book</span>
+</div>
+<span class="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider title-text transition">Curriculum</span>
+</div>
+<!-- Indicator 3 -->
+<div class="flex flex-col items-center gap-2 group step-ind" data-step="3">
+<div class="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-500 flex items-center justify-center transition group-hover:bg-slate-300 dark:group-hover:bg-slate-700 icon-bg">
+<span class="material-icons text-xl">payments</span>
+</div>
+<span class="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider title-text transition">Pricing</span>
+</div>
+<!-- Indicator 4 -->
+<div class="flex flex-col items-center gap-2 group step-ind" data-step="4">
+<div class="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-500 flex items-center justify-center transition group-hover:bg-slate-300 dark:group-hover:bg-slate-700 icon-bg">
+<span class="material-icons text-xl">publish</span>
+</div>
+<span class="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider title-text transition">Publish</span>
+</div>
+</div>
+</div>
+<!-- STEP 1 CONTAINER -->
+<div class="wizard-step block space-y-6" id="step-1-container">
+<div class="bg-white dark:bg-slate-900 p-8 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 relative overflow-hidden">
+<div class="absolute top-0 left-0 w-full h-2 bg-primary"></div>
+<div class="space-y-8">
+<div>
+<label class="block text-sm font-bold text-slate-900 dark:text-slate-100 mb-4 uppercase tracking-wide" for="course-title">Course Title <span class="text-red-500">*</span></label>
+<input class="w-full text-xl px-0 py-2 border-b-2 border-slate-200 dark:border-slate-800 bg-transparent focus:outline-none focus:border-primary dark:focus:border-primary transition-colors placeholder:text-slate-300 dark:placeholder:text-slate-700 course-input" data-field="title" id="course-title" placeholder="e.g. Advanced Machine Learning with Python" type="text"/>
+<p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Your title should be catchy and
                             descriptive.</p>
-                    </div>
-                    <div>
-                        <label
-                            class="block text-sm font-bold text-slate-900 dark:text-slate-100 mb-4 uppercase tracking-wide"
-                            for="course-subtitle">Course Subtitle</label>
-                        <input
-                            class="w-full text-lg px-0 py-2 border-b-2 border-slate-200 dark:border-slate-800 bg-transparent focus:outline-none focus:border-primary dark:focus:border-primary transition-colors placeholder:text-slate-300 dark:placeholder:text-slate-700 course-input"
-                            data-field="subtitle" id="course-subtitle" placeholder="Master the fundamentals of AI"
-                            type="text" />
-                    </div>
-                    <div>
-                        <label
-                            class="block text-sm font-bold text-slate-900 dark:text-slate-100 mb-4 uppercase tracking-wide"
-                            for="description">Description</label>
-                        <textarea
-                            class="w-full text-base px-4 py-3 border border-slate-200 dark:border-slate-800 rounded-lg bg-slate-50 dark:bg-slate-800 focus:ring-2 focus:ring-primary focus:border-transparent transition-all dark:text-white course-input"
-                            data-field="description" id="description" placeholder="Tell students what they'll learn..."
-                            rows="4"></textarea>
-                    </div>
-                </div>
-            </div>
-            <div
-                class="bg-white dark:bg-slate-900 p-8 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div>
-                        <label
-                            class="block text-sm font-bold text-slate-900 dark:text-slate-100 mb-4 uppercase tracking-wide">Category</label>
-                        <select
-                            class="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 focus:ring-2 focus:ring-primary focus:border-transparent course-input"
-                            data-field="category" id="course-category">
-                            <option value="">Select a category</option>
-                            <option value="Computer Science">Computer Science</option>
-                            <option value="Business & Finance">Business & Finance</option>
-                            <option value="Design">Design</option>
-                            <option value="Marketing">Marketing</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label
-                            class="block text-sm font-bold text-slate-900 dark:text-slate-100 mb-4 uppercase tracking-wide">Level</label>
-                        <select
-                            class="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 focus:ring-2 focus:ring-primary focus:border-transparent course-input"
-                            data-field="level" id="course-level">
-                            <option value="Beginner">Beginner</option>
-                            <option value="Intermediate">Intermediate</option>
-                            <option value="Advanced">Advanced</option>
-                            <option value="All Levels">All Levels</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-            <div
-                class="bg-white dark:bg-slate-900 p-8 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800">
-                <label
-                    class="block text-sm font-bold text-slate-900 dark:text-slate-100 mb-6 uppercase tracking-wide">Course
+</div>
+<div>
+<label class="block text-sm font-bold text-slate-900 dark:text-slate-100 mb-4 uppercase tracking-wide" for="course-subtitle">Course Subtitle</label>
+<input class="w-full text-lg px-0 py-2 border-b-2 border-slate-200 dark:border-slate-800 bg-transparent focus:outline-none focus:border-primary dark:focus:border-primary transition-colors placeholder:text-slate-300 dark:placeholder:text-slate-700 course-input" data-field="subtitle" id="course-subtitle" placeholder="Master the fundamentals of AI" type="text"/>
+</div>
+<div>
+<label class="block text-sm font-bold text-slate-900 dark:text-slate-100 mb-4 uppercase tracking-wide" for="description">Description</label>
+<textarea class="w-full text-base px-4 py-3 border border-slate-200 dark:border-slate-800 rounded-lg bg-slate-50 dark:bg-slate-800 focus:ring-2 focus:ring-primary focus:border-transparent transition-all dark:text-white course-input" data-field="description" id="description" placeholder="Tell students what they'll learn..." rows="4"></textarea>
+</div>
+</div>
+</div>
+<div class="bg-white dark:bg-slate-900 p-8 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<div>
+<label class="block text-sm font-bold text-slate-900 dark:text-slate-100 mb-4 uppercase tracking-wide">Category</label>
+<select class="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 focus:ring-2 focus:ring-primary focus:border-transparent course-input" data-field="category" id="course-category">
+<option value="">Select a category</option>
+<option value="Computer Science">Computer Science</option>
+<option value="Business &amp; Finance">Business &amp; Finance</option>
+<option value="Design">Design</option>
+<option value="Marketing">Marketing</option>
+</select>
+</div>
+<div>
+<label class="block text-sm font-bold text-slate-900 dark:text-slate-100 mb-4 uppercase tracking-wide">Level</label>
+<select class="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 focus:ring-2 focus:ring-primary focus:border-transparent course-input" data-field="level" id="course-level">
+<option value="Beginner">Beginner</option>
+<option value="Intermediate">Intermediate</option>
+<option value="Advanced">Advanced</option>
+<option value="All Levels">All Levels</option>
+</select>
+</div>
+</div>
+</div>
+<div class="bg-white dark:bg-slate-900 p-8 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800">
+<label class="block text-sm font-bold text-slate-900 dark:text-slate-100 mb-6 uppercase tracking-wide">Course
                     Thumbnail</label>
-                <div class="flex items-center gap-8">
-                    <div id="thumbnail-preview-container"
-                        class="w-48 h-32 bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-300 dark:border-slate-700 overflow-hidden bg-cover bg-center relative">
-                        <span id="thumbnail-placeholder-icon"
-                            class="material-icons text-4xl text-slate-400 dark:text-slate-500">add_photo_alternate</span>
-                        <div id="thumbnail-tick" class="hidden absolute top-2 right-2 bg-emerald-500 text-white rounded-full p-0.5 shadow-sm">
-                            <span class="material-symbols-outlined text-[16px] font-bold">check</span>
-                        </div>
-                    </div>
-                    <div class="flex-1">
-                        <p class="text-sm text-slate-600 dark:text-slate-400 mb-4 leading-relaxed">Upload your course
+<div class="flex items-center gap-8">
+<div class="w-48 h-32 bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-300 dark:border-slate-700 overflow-hidden bg-cover bg-center relative" id="thumbnail-preview-container">
+<span class="material-icons text-4xl text-slate-400 dark:text-slate-500" id="thumbnail-placeholder-icon">add_photo_alternate</span>
+<div class="hidden absolute top-2 right-2 bg-emerald-500 text-white rounded-full p-0.5 shadow-sm" id="thumbnail-tick">
+<span class="material-symbols-outlined text-[16px] font-bold">check</span>
+</div>
+</div>
+<div class="flex-1">
+<p class="text-sm text-slate-600 dark:text-slate-400 mb-4 leading-relaxed">Upload your course
                             image here. Important: Use <span class="font-bold text-primary">1280x720 pixels (16:9 ratio)</span> for best results across all devices. Format: .jpg, .jpeg, or .png.</p>
-                        <input type="file" id="thumbnail-upload" class="hidden" accept="image/*" />
-                        <button id="btn-upload-thumbnail" onclick="document.getElementById('thumbnail-upload').click()"
-                            class="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-6 py-2 rounded-lg font-semibold text-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition">Upload
+<input accept="image/*" class="hidden" id="thumbnail-upload" type="file"/>
+<button class="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-6 py-2 rounded-lg font-semibold text-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition" id="btn-upload-thumbnail" onclick="document.getElementById('thumbnail-upload').click()">Upload
                             File</button>
-                    </div>
-                </div>
-            </div>
-            <div
-                class="bg-white dark:bg-slate-900 p-8 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800">
-                <label
-                    class="block text-sm font-bold text-slate-900 dark:text-slate-100 mb-6 uppercase tracking-wide">Course
+</div>
+</div>
+</div>
+<div class="bg-white dark:bg-slate-900 p-8 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800">
+<label class="block text-sm font-bold text-slate-900 dark:text-slate-100 mb-6 uppercase tracking-wide">Course
                     Introduction Video</label>
-                <div class="flex items-center gap-8">
-                    <div id="video-preview-container"
-                        class="w-48 h-32 bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-300 dark:border-slate-700 relative overflow-hidden">
-                        <span id="video-placeholder-icon"
-                            class="material-symbols-outlined text-4xl text-slate-400 dark:text-slate-500">video_library</span>
-                        <div id="video-tick"
-                            class="absolute inset-0 bg-slate-800/80 hidden flex-col items-center justify-center text-white">
-                            <span class="material-icons text-2xl text-green-400 mb-1">check_circle</span>
-                            <span class="text-xs font-medium">Video Attached</span>
-                        </div>
-                    </div>
-                    <div class="flex-1">
-                        <p class="text-sm text-slate-600 dark:text-slate-400 mb-4 leading-relaxed">Add a short preview
-                            clip (1-2 minutes) to introduce your course to potential students. Supported formats: .mp4,
-                            .mov</p>
-                        <input type="file" id="video-upload" class="hidden" accept="video/mp4,video/quicktime" />
-                        <button id="btn-upload-video" onclick="document.getElementById('video-upload').click()"
-                            class="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-6 py-2 rounded-lg font-semibold text-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition">Upload
-                            Video</button>
-                        <span id="video-filename-display" class="ml-4 text-xs text-slate-500 font-medium"></span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- STEP 2 CONTAINER: CURRICULUM -->
-        <div id="step-2-container" class="wizard-step hidden space-y-6">
-            <div id="curriculum-container" class="space-y-6">
-                <!-- Dynamic Curriculum Sections will go here -->
-                <div class="w-full text-center py-6 text-slate-500 italic text-sm">Use the button below to add your
-                    first section.</div>
-            </div>
-
-            <div class="relative pt-10">
-                <button onclick="addSection()"
-                    class="w-full py-6 border-2 border-dashed border-accent/50 rounded-xl flex items-center justify-center gap-3 text-accent transition bg-accent/5 hover:bg-accent/10 shadow-sm">
-                    <span class="material-symbols-outlined text-2xl">library_add</span>
-                    <span class="font-bold text-lg">Add New Section</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- STEP 3 CONTAINER: PRICING -->
-        <div id="step-3-container" class="wizard-step hidden space-y-8">
-            <div
-                class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
-                <div class="p-8 space-y-8">
-                    <div
-                        class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
-                        <div>
-                            <h4 class="font-bold text-slate-900 dark:text-white">Course Tier</h4>
-                            <p class="text-sm text-slate-500 dark:text-slate-400">Choose if this course is free or
-                                requires payment.</p>
-                        </div>
-                        <div class="flex items-center bg-slate-200 dark:bg-slate-700 rounded-lg p-1"
-                            id="pricing-tier-toggle">
-                            <button id="btn-tier-free" onclick="setPricingTier('free')"
-                                class="px-6 py-2 rounded-md text-sm font-bold bg-white dark:bg-slate-600 shadow-sm text-slate-900 dark:text-white transition">Free</button>
-                            <button id="btn-tier-paid" onclick="setPricingTier('paid')"
-                                class="px-6 py-2 rounded-md text-sm font-bold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white transition">Paid</button>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="pricing-details-container"
-                        style="opacity: 0.5; pointer-events: none;">
-                        <div class="space-y-2">
-                            <label class="block text-sm font-bold text-slate-700 dark:text-slate-300">Currency</label>
-                            <select id="course-currency"
-                                class="w-full rounded-lg border-slate-200 dark:border-slate-700 dark:bg-slate-800 focus:ring-accent focus:border-accent course-input"
-                                data-field="currency">
-                                <option value="USD">USD - US Dollar ($)</option>
-                                <option value="EUR">EUR - Euro (€)</option>
-                                <option value="GBP">GBP - British Pound (£)</option>
-                            </select>
-                        </div>
-                        <div class="space-y-2">
-                            <label class="block text-sm font-bold text-slate-700 dark:text-slate-300">Course
-                                Price</label>
-                            <div class="relative">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <span class="text-slate-400">$</span>
-                                </div>
-                                <input id="course-price"
-                                    class="w-full pl-7 rounded-lg border-slate-200 dark:border-slate-700 dark:bg-slate-800 focus:ring-accent focus:border-accent course-input"
-                                    data-field="price" placeholder="0.00" type="number" step="0.01" min="0" />
+<div class="flex items-start gap-8 flex-wrap">
+<div class="w-48 h-32 bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-300 dark:border-slate-700 relative overflow-hidden flex-shrink-0" id="video-preview-container">
+<span class="material-symbols-outlined text-4xl text-slate-400 dark:text-slate-500" id="video-placeholder-icon">video_library</span>
+<div class="absolute inset-0 bg-slate-800/80 hidden flex-col items-center justify-center text-white" id="video-tick">
+<span class="material-icons text-2xl text-green-400 mb-1">check_circle</span>
+<span class="text-xs font-medium">Video Attached</span>
+</div>
+</div>
+<div class="flex-1 min-w-[200px] space-y-4">
+                            <!-- PROVIDER TOGGLE (hidden if self-hosted uploads disabled) -->
+                            <div id="intro-video-provider-toggle" class="flex items-center gap-4 mb-2 hidden">
+                                <label class="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300 cursor-pointer">
+                                    <input type="radio" name="intro-provider-radio" value="youtube" checked class="text-primary focus:ring-primary h-4 w-4">
+                                    YouTube / Vimeo
+                                </label>
+                                <label class="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300 cursor-pointer">
+                                    <input type="radio" name="intro-provider-radio" value="r2" class="text-primary focus:ring-primary h-4 w-4">
+                                    Direct Upload
+                                </label>
                             </div>
-                        </div>
-                        <div class="space-y-2 md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div>
-                                <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Coupon
-                                    Code</label>
+
+                            <!-- FILE UPLOAD SECTION -->
+                            <div id="intro-video-upload-section" class="hidden">
+                                <p class="text-sm text-slate-600 dark:text-slate-400 mb-2 leading-relaxed">Add a short preview
+                                clip (1-2 minutes) to introduce your course. Supported formats: .mp4, .mov</p>
+                                <input accept="video/mp4,video/quicktime" class="hidden" id="video-upload" type="file" />
+                                
+                                <div class="flex items-center gap-4">
+                                    <button class="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-6 py-2 rounded-lg font-semibold text-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition"
+                                        id="btn-upload-video" onclick="document.getElementById('video-upload').click()">Choose File</button>
+                                    <span class="text-xs text-slate-500 font-medium truncate max-w-[150px]" id="video-filename-display"></span>
+                                </div>
+                                
+                                <!-- R2 Upload Progress -->
+                                <div id="intro-upload-progress-container" class="hidden mt-3 max-w-sm">
+                                    <div class="flex justify-between text-xs text-slate-500 mb-1">
+                                        <span>Uploading...</span>
+                                        <span id="intro-upload-percent">0%</span>
+                                    </div>
+                                    <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1.5">
+                                        <div id="intro-upload-progress-bar" class="bg-primary h-1.5 rounded-full" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- URL INPUT SECTION -->
+                            <div class="space-y-2" id="intro-video-url-section">
+                                <label class="text-xs font-bold text-slate-500 uppercase tracking-widest hidden" id="intro-url-label">Or paste a YouTube / Vimeo URL</label>
                                 <div class="flex gap-2">
-                                    <input id="course-coupon"
-                                        class="w-full uppercase rounded-lg border-slate-200 dark:border-slate-700 dark:bg-slate-800 focus:ring-accent focus:border-accent"
-                                        placeholder="e.g. EARLYBIRD" type="text" />
+                                    <input class="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus:ring-2 focus:ring-primary focus:border-transparent transition-all dark:text-white"
+                                        id="intro-video-embed-url" type="text" placeholder="https://www.youtube.com/watch?v=..." />
+                                    <button id="btn-save-intro-url" class="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-sm font-semibold transition shrink-0 border border-slate-200 dark:border-slate-700">Save</button>
                                 </div>
+                                
+                                <!-- YouTube Unlisted guidance -->
+                                <div class="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800/30"
+                                    id="youtube-unlisted-guidance">
+                                    <span class="material-symbols-outlined text-blue-500 text-base flex-shrink-0 mt-0.5">info</span>
+                                    <p class="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
+                                        <span class="font-bold">Set this video's visibility to “Unlisted” on YouTube</span> (not Public or Private). Unlisted videos keep your content behind Tacliimi's access controls.
+                                    </p>
+                                </div>
+                                <p class="text-xs text-red-500 font-medium hidden" id="intro-video-url-error"></p>
                             </div>
-                            <div>
-                                <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Discount
-                                    (%)</label>
-                                <input id="course-coupon-percent" type="number" min="1" max="100"
-                                    class="w-full rounded-lg border-slate-200 dark:border-slate-700 dark:bg-slate-800 focus:ring-accent focus:border-accent text-sm text-slate-700 dark:text-slate-300"
-                                    placeholder="10" />
-                            </div>
-                            <div>
-                                <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Expiry
-                                    Date</label>
-                                <input id="course-coupon-expiry" type="datetime-local"
-                                    class="w-full rounded-lg border-slate-200 dark:border-slate-700 dark:bg-slate-800 focus:ring-accent focus:border-accent text-sm text-slate-700 dark:text-slate-300" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div
-                    class="bg-purple-50 dark:bg-purple-900/20 p-8 border-t border-purple-100 dark:border-purple-900/30">
-                    <div class="flex items-start gap-4">
-                        <div class="p-3 bg-white dark:bg-slate-900 rounded-xl shadow-sm">
-                            <span class="material-symbols-outlined text-accent text-3xl">account_balance_wallet</span>
-                        </div>
-                        <div class="space-y-1">
-                            <h4 class="font-bold text-slate-900 dark:text-white">Payout Summary</h4>
-                            <p class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+</div>
+</div>
+</div>
+</div>
+<!-- STEP 2 CONTAINER: CURRICULUM -->
+<div class="wizard-step hidden space-y-6" id="step-2-container">
+<div class="space-y-6" id="curriculum-container">
+<!-- Dynamic Curriculum Sections will go here -->
+<div class="w-full text-center py-6 text-slate-500 italic text-sm">Use the button below to add your
+                    first section.</div>
+</div>
+<div class="relative pt-10">
+<button class="w-full py-6 border-2 border-dashed border-accent/50 rounded-xl flex items-center justify-center gap-3 text-accent transition bg-accent/5 hover:bg-accent/10 shadow-sm" onclick="addSection()">
+<span class="material-symbols-outlined text-2xl">library_add</span>
+<span class="font-bold text-lg">Add New Section</span>
+</button>
+</div>
+</div>
+<!-- STEP 3 CONTAINER: PRICING -->
+<div class="wizard-step hidden space-y-8" id="step-3-container">
+<div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+<div class="p-8 space-y-8">
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800 gap-4">
+<div>
+<h4 class="font-bold text-slate-900 dark:text-white">Course Tier</h4>
+<p class="text-sm text-slate-500 dark:text-slate-400">Choose if this course is free or
+                                requires payment.</p>
+</div>
+<div class="flex items-center self-start sm:self-auto bg-slate-200 dark:bg-slate-700 rounded-lg p-1 w-full sm:w-auto" id="pricing-tier-toggle">
+<button class="flex-1 sm:flex-none px-4 sm:px-6 py-1.5 sm:py-2 rounded-md text-sm font-bold bg-white dark:bg-slate-600 shadow-sm text-slate-900 dark:text-white transition" id="btn-tier-free" onclick="setPricingTier('free')">Free</button>
+<button class="flex-1 sm:flex-none px-4 sm:px-6 py-1.5 sm:py-2 rounded-md text-sm font-bold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white transition" id="btn-tier-paid" onclick="setPricingTier('paid')">Paid</button>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="pricing-details-container" style="opacity: 0.5; pointer-events: none;">
+<div class="space-y-2">
+<label class="block text-sm font-bold text-slate-700 dark:text-slate-300">Currency</label>
+<div class="w-full rounded-lg border border-slate-200 dark:border-slate-700 dark:bg-slate-800 px-3 py-2 flex items-center gap-2 text-slate-700 dark:text-slate-300 text-sm">
+<span class="font-bold text-slate-500 text-xs bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded">$</span>
+                                USD — US Dollar
+                                <input id="course-currency" type="hidden" value="USD"/>
+</div>
+</div>
+<div class="space-y-2">
+<label class="block text-sm font-bold text-slate-700 dark:text-slate-300">Course
+                                Price</label>
+<div class="relative">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+<span class="text-slate-400">$</span>
+</div>
+<input class="w-full pl-7 rounded-lg border-slate-200 dark:border-slate-700 dark:bg-slate-800 focus:ring-accent focus:border-accent course-input" data-field="price" id="course-price" min="0" placeholder="0.00" step="0.01" type="number"/>
+</div>
+</div>
+<div class="space-y-4 md:col-span-2 mt-4 pt-4 border-t border-slate-100 dark:border-slate-800/50">
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+<div>
+<h4 class="font-bold text-slate-900 dark:text-white">Coupons (Optional)</h4>
+<p class="text-sm text-slate-500 dark:text-slate-400">Offer discounts to your students.</p>
+</div>
+<button class="self-start sm:self-auto px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-lg text-sm font-bold transition flex items-center gap-2 dark:text-white" onclick="addCourseCoupon()" type="button">
+<span class="material-symbols-outlined text-[18px]">add</span> Add Coupon
+                                </button>
+</div>
+<div class="space-y-3" id="course-coupons-container">
+<!-- Dynamic coupons injected here -->
+</div>
+</div>
+</div>
+</div>
+<div class="bg-purple-50 dark:bg-purple-900/20 p-8 border-t border-purple-100 dark:border-purple-900/30">
+<div class="flex items-start gap-4">
+<div class="p-3 bg-white dark:bg-slate-900 rounded-xl shadow-sm">
+<span class="material-symbols-outlined text-accent text-3xl">account_balance_wallet</span>
+</div>
+<div class="space-y-1">
+<h4 class="font-bold text-slate-900 dark:text-white">Payout Summary</h4>
+<p class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
                                 You receive <span class="font-bold text-accent">70%</span> of each sale.
                                 For a price of $49.99, your estimated earnings per sale will be
                                 <span class="font-bold text-slate-900 dark:text-white">$39.99</span>.
                             </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- STEP 4 CONTAINER: PUBLISH -->
-        <div id="step-4-container" class="wizard-step hidden space-y-8">
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-                <div class="lg:col-span-7 space-y-6">
-                    <section
-                        class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden relative">
-                        <div
-                            class="p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 flex items-center justify-between">
-                            <div class="flex items-center gap-2">
-                                <span class="material-symbols-outlined text-primary text-lg">visibility</span>
-                                <h3
-                                    class="font-bold text-sm uppercase tracking-wider text-slate-600 dark:text-slate-400">
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- STEP 4 CONTAINER: PUBLISH -->
+<div class="wizard-step hidden space-y-8" id="step-4-container">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+<div class="lg:col-span-7 space-y-6">
+<section class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden relative">
+<div class="p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-lg">visibility</span>
+<h3 class="font-bold text-sm uppercase tracking-wider text-slate-600 dark:text-slate-400">
                                     Marketplace Preview</h3>
-                            </div>
-                        </div>
-                        <div class="p-6">
-                            <div id="final-thumbnail-preview"
-                                class="relative aspect-video rounded-lg bg-slate-50 dark:bg-slate-800/50 overflow-hidden mb-6 border-2 border-dashed border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center bg-cover bg-center">
-                                <div class="z-10 flex flex-col items-center text-slate-400 dark:text-slate-500"
-                                    id="final-thumbnail-icon">
-                                    <span class="material-symbols-outlined text-5xl mb-2 opacity-20">image</span>
-                                    <span class="text-xs font-medium uppercase tracking-widest">Thumbnail Preview</span>
-                                </div>
-                            </div>
-                            <div class="relative">
-                                <h4 id="final-title-preview"
-                                    class="text-xl font-bold mb-2 text-slate-400 dark:text-slate-500 italic">Title of
+</div>
+</div>
+<div class="p-6">
+<div class="relative aspect-video rounded-lg bg-slate-50 dark:bg-slate-800/50 overflow-hidden mb-6 border-2 border-dashed border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center bg-cover bg-center" id="final-thumbnail-preview">
+<div class="z-10 flex flex-col items-center text-slate-400 dark:text-slate-500" id="final-thumbnail-icon">
+<span class="material-symbols-outlined text-5xl mb-2 opacity-20">image</span>
+<span class="text-xs font-medium uppercase tracking-widest">Thumbnail Preview</span>
+</div>
+</div>
+<div class="relative">
+<h4 class="text-xl font-bold mb-2 text-slate-400 dark:text-slate-500 italic" id="final-title-preview">Title of
                                     your course will appear here</h4>
-                                <p id="final-subtitle-preview"
-                                    class="text-sm font-semibold text-slate-600 dark:text-slate-400 mb-2"></p>
-                                <p id="summary-description-preview-main"
-                                    class="text-sm text-slate-500 dark:text-slate-500 mb-4 line-clamp-3 leading-relaxed">
-                                </p>
-                            </div>
-                            <div
-                                class="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400 mb-6 relative">
-                                <span class="flex items-center gap-1">
-                                    <span class="material-symbols-outlined text-amber-400 text-sm"
-                                        style="font-variation-settings:'FILL' 1;">star</span>
-                                    <span class="font-semibold text-slate-700 dark:text-slate-200">0.0</span>
+<p class="text-sm font-semibold text-slate-600 dark:text-slate-400 mb-2" id="final-subtitle-preview"></p>
+<p class="text-sm text-slate-500 dark:text-slate-500 mb-4 line-clamp-3 leading-relaxed" id="summary-description-preview-main">
+</p>
+</div>
+<div class="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400 mb-6 relative">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-amber-400 text-sm" style="font-variation-settings:'FILL' 1;">star</span>
+<span class="font-semibold text-slate-700 dark:text-slate-200">0.0</span>
                                     (New)
                                 </span>
-                                <span>&bull;</span>
-                                <span><span id="final-sections-count">0</span> Modules</span>
-                                <span>&bull;</span>
-                                <span id="final-level-preview">Course Level</span>
-                            </div>
-                            <div
-                                class="flex items-center gap-3 pt-6 border-t border-slate-100 dark:border-slate-800 relative">
-                                <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary overflow-hidden"
-                                    id="final-instructor-avatar">
-                                    <span class="material-symbols-outlined">person</span>
-                                </div>
-                                <div>
-                                    <p class="text-sm font-bold leading-none" id="final-instructor-name">Instructor</p>
-                                </div>
-                                <div class="ml-auto text-xl font-black text-primary" id="final-price-preview">Free</div>
-                            </div>
-                        </div>
-                    </section>
-                </div>
-                <div class="lg:col-span-5 space-y-6">
-                    <section
-                        class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-6">
-                        <div class="flex items-center justify-between mb-2">
-                            <h3 class="font-bold text-lg">Completion Summary</h3>
-                            <span
-                                class="text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded uppercase">Step
+<span>•</span>
+<span><span id="final-sections-count">0</span> Modules</span>
+<span>•</span>
+<span id="final-level-preview">Course Level</span>
+</div>
+<div class="flex items-center gap-3 pt-6 border-t border-slate-100 dark:border-slate-800 relative">
+<div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary overflow-hidden" id="final-instructor-avatar">
+<span class="material-symbols-outlined">person</span>
+</div>
+<div>
+<p class="text-sm font-bold leading-none" id="final-instructor-name">Instructor</p>
+</div>
+<div class="ml-auto text-xl font-black text-primary" id="final-price-preview">Free</div>
+</div>
+</div>
+</section>
+</div>
+<div class="lg:col-span-5 space-y-6">
+<section class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-6">
+<div class="flex items-center justify-between mb-2">
+<h3 class="font-bold text-lg">Completion Summary</h3>
+<span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded uppercase">Step
                                 1-3 Summary</span>
-                        </div>
-                        <div class="space-y-4 mt-6">
-                            <div class="flex items-center justify-between group">
-                                <div class="flex items-center gap-3">
-                                    <span
-                                        class="material-symbols-outlined text-emerald-500 bg-emerald-100 dark:bg-emerald-900/30 rounded-full p-1 text-base">check</span>
-                                    <div class="flex flex-col">
-                                        <span class="text-sm font-medium text-slate-700 dark:text-slate-200">Basic
+</div>
+<div class="space-y-4 mt-6">
+<div class="flex items-center justify-between group">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-emerald-500 bg-emerald-100 dark:bg-emerald-900/30 rounded-full p-1 text-base">check</span>
+<div class="flex flex-col">
+<span class="text-sm font-medium text-slate-700 dark:text-slate-200">Basic
                                             Information</span>
-                                        <span class="text-[10px] text-slate-400">Title, Category, Level</span>
-                                    </div>
-                                </div>
-                                <button onclick="goToStep(1)" class="text-xs text-primary hover:underline">Edit</button>
-                            </div>
-                             <div class="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-100 dark:border-slate-800 ml-9 mb-2 space-y-2">
-                                <div class="flex items-center gap-2">
-                                    <span class="material-symbols-outlined text-[14px] text-slate-400">image</span>
-                                    <p class="text-xs text-slate-500">Thumbnail: <span id="summary-thumbnail-status"
-                                            class="font-medium text-slate-700 dark:text-slate-300">Not Uploaded</span>
-                                    </p>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <span class="material-symbols-outlined text-[14px] text-slate-400">videocam</span>
-                                    <p class="text-xs text-slate-500">Intro Video: <span id="summary-video-preview"
-                                            class="font-medium text-slate-700 dark:text-slate-300">Not Uploaded</span>
-                                    </p>
-                                </div>
-                            </div>
-                            <div class="flex items-center justify-between group">
-                                <div class="flex items-center gap-3">
-                                    <span
-                                        class="material-symbols-outlined text-emerald-500 bg-emerald-100 dark:bg-emerald-900/30 rounded-full p-1 text-base">check</span>
-                                    <div class="flex flex-col">
-                                        <span class="text-sm font-medium text-slate-700 dark:text-slate-200">Curriculum
+<span class="text-[10px] text-slate-400">Title, Category, Level</span>
+</div>
+</div>
+<button class="text-xs text-primary hover:underline" onclick="goToStep(1)">Edit</button>
+</div>
+<div class="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-100 dark:border-slate-800 ml-9 mb-2 space-y-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[14px] text-slate-400">image</span>
+<p class="text-xs text-slate-500">Thumbnail: <span class="font-medium text-slate-700 dark:text-slate-300" id="summary-thumbnail-status">Not Uploaded</span>
+</p>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[14px] text-slate-400">videocam</span>
+<p class="text-xs text-slate-500">Intro Video: <span class="font-medium text-slate-700 dark:text-slate-300" id="summary-video-preview">Not Uploaded</span>
+</p>
+</div>
+</div>
+<div class="flex items-center justify-between group">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-emerald-500 bg-emerald-100 dark:bg-emerald-900/30 rounded-full p-1 text-base">check</span>
+<div class="flex flex-col">
+<span class="text-sm font-medium text-slate-700 dark:text-slate-200">Curriculum
                                             Structure</span>
-                                        <span class="text-[10px] text-slate-400"><span
-                                                id="summary-sections-count">0</span> Sections configured</span>
-                                    </div>
-                                </div>
-                                <button onclick="goToStep(2)" class="text-xs text-primary hover:underline">Edit</button>
-                            </div>
-                            <div class="flex items-center justify-between group">
-                                <div class="flex items-center gap-3">
-                                    <span
-                                        class="material-symbols-outlined text-emerald-500 bg-emerald-100 dark:bg-emerald-900/30 rounded-full p-1 text-base">check</span>
-                                    <div class="flex flex-col">
-                                        <span class="text-sm font-medium text-slate-700 dark:text-slate-200">Pricing
+<span class="text-[10px] text-slate-400"><span id="summary-sections-count">0</span> Sections configured</span>
+</div>
+</div>
+<button class="text-xs text-primary hover:underline" onclick="goToStep(2)">Edit</button>
+</div>
+<div class="flex items-center justify-between group">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-emerald-500 bg-emerald-100 dark:bg-emerald-900/30 rounded-full p-1 text-base">check</span>
+<div class="flex flex-col">
+<span class="text-sm font-medium text-slate-700 dark:text-slate-200">Pricing
                                             &amp; Discounts</span>
-                                        <span class="text-[10px] text-slate-400" id="summary-pricing-type">Free</span>
-                                    </div>
-                                </div>
-                                <button onclick="goToStep(3)" class="text-xs text-primary hover:underline">Edit</button>
-                            </div>
-                        </div>
-                    </section>
-                    
-                    <!-- Curriculum Overview (Step 4 Detailed Preview) -->
-                    <section class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-6">
-                        <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
-                            <span class="material-symbols-outlined text-primary">list_alt</span>
+<span class="text-[10px] text-slate-400" id="summary-pricing-type">Free</span>
+</div>
+</div>
+<button class="text-xs text-primary hover:underline" onclick="goToStep(3)">Edit</button>
+</div>
+</div>
+</section>
+<!-- Curriculum Overview (Step 4 Detailed Preview) -->
+<section class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-6">
+<h3 class="font-bold text-lg mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">list_alt</span>
                             Full Curriculum Summary
                         </h3>
-                        <div id="final-curriculum-summary" class="space-y-4 overflow-x-auto no-scrollbar">
-                            <p class="text-sm text-slate-400 italic">Loading curriculum details...</p>
-                        </div>
-                    </section>
-
-                    <section
-                        class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-6">
-                        <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
-                            <span class="material-symbols-outlined text-primary">lock_open</span>
+<div class="space-y-4 overflow-x-auto no-scrollbar" id="final-curriculum-summary">
+<p class="text-sm text-slate-400 italic">Loading curriculum details...</p>
+</div>
+</section>
+<section class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-6">
+<h3 class="font-bold text-lg mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">lock_open</span>
                             Privacy Settings
                         </h3>
-                        <div class="space-y-4">
-                            <label
-                                class="relative flex items-start gap-4 p-4 rounded-lg border-2 border-primary bg-primary/5 cursor-pointer">
-                                <input checked="" class="mt-1 text-primary focus:ring-primary h-4 w-4" name="privacy"
-                                    type="radio" value="public" />
-                                <div class="flex flex-col">
-                                    <span class="font-bold text-slate-900 dark:text-slate-100">Public</span>
-                                    <span class="text-sm text-slate-600 dark:text-slate-400">Available to everyone on
+<div class="space-y-4">
+<label class="relative flex items-start gap-4 p-4 rounded-lg border-2 border-primary bg-primary/5 cursor-pointer">
+<input checked="" class="mt-1 text-primary focus:ring-primary h-4 w-4" name="privacy" type="radio" value="public"/>
+<div class="flex flex-col">
+<span class="font-bold text-slate-900 dark:text-slate-100">Public</span>
+<span class="text-sm text-slate-600 dark:text-slate-400">Available to everyone on
                                         Tacliimi Marketplace. Searchable and discoverable.</span>
-                                </div>
-                            </label>
-                            <label
-                                class="relative flex items-start gap-4 p-4 rounded-lg border-2 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 cursor-pointer">
-                                <input class="mt-1 text-primary focus:ring-primary h-4 w-4" name="privacy" type="radio"
-                                    value="private" />
-                                <div class="flex flex-col">
-                                    <span class="font-bold text-slate-900 dark:text-slate-100">Private (Link
+</div>
+</label>
+<label class="relative flex items-start gap-4 p-4 rounded-lg border-2 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 cursor-pointer">
+<input class="mt-1 text-primary focus:ring-primary h-4 w-4" name="privacy" type="radio" value="private"/>
+<div class="flex flex-col">
+<span class="font-bold text-slate-900 dark:text-slate-100">Private (Link
                                         Only)</span>
-                                    <span class="text-sm text-slate-600 dark:text-slate-400">Not searchable. Only
+<span class="text-sm text-slate-600 dark:text-slate-400">Not searchable. Only
                                         students with the direct enrollment link can access it.</span>
-                                </div>
-                            </label>
-                        </div>
-                    </section>
-                </div>
-            </div>
-        </div>
-
-        <!-- Navigation Buttons -->
-        <div class="flex justify-between items-center py-6 mt-6 border-t border-slate-200 dark:border-slate-800"
-            id="bottom-nav">
-            <button id="btn-prev"
-                class="flex items-center gap-2 px-6 py-3 text-slate-400 dark:text-slate-600 font-bold opacity-50 cursor-not-allowed transition"
-                disabled="">
-                <span class="material-icons">arrow_back</span>
+</div>
+</label>
+</div>
+</section>
+<section class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-6">
+<h3 class="font-bold text-lg mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">workspace_premium</span>
+                            Certificate of Completion
+                        </h3>
+<label class="flex items-center justify-between gap-4 p-4 rounded-lg border-2 border-slate-200 dark:border-slate-700 cursor-pointer">
+<div class="flex flex-col">
+<span class="font-bold text-slate-900 dark:text-slate-100">Enable certificate for this course</span>
+<span class="text-sm text-slate-600 dark:text-slate-400">Students who complete 100% of the course can generate and download a Tacliimi Certificate of Completion.</span>
+</div>
+<div class="relative inline-flex shrink-0">
+<input class="sr-only peer" id="certificate-enabled-toggle" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+</div>
+</label>
+</section>
+</div>
+</div>
+</div>
+<!-- Navigation Buttons -->
+<div class="flex justify-between items-center py-6 mt-6 border-t border-slate-200 dark:border-slate-800" id="bottom-nav">
+<button class="flex items-center gap-1 sm:gap-2 px-3 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base whitespace-nowrap text-slate-400 dark:text-slate-600 font-bold opacity-50 cursor-not-allowed transition" disabled="" id="btn-prev">
+<span class="material-icons text-sm sm:text-base">arrow_back</span>
                 Previous
             </button>
-            <button id="btn-next"
-                class="bg-primary hover:bg-blue-700 text-white flex items-center gap-2 px-10 py-3 rounded-xl font-bold transition transform active:scale-95 shadow-lg shadow-blue-500/20">
-                Save & Next
-                <span class="material-icons">arrow_forward</span>
-            </button>
-            <button id="btn-publish"
-                class="hidden bg-green-600 hover:bg-green-700 text-white flex items-center gap-2 px-10 py-3 rounded-xl font-bold transition transform active:scale-95 shadow-lg shadow-green-500/20">
+<button class="bg-primary hover:bg-blue-700 text-white flex items-center gap-1 sm:gap-2 px-4 sm:px-10 py-2.5 sm:py-3 text-sm sm:text-base whitespace-nowrap rounded-xl font-bold transition transform active:scale-95 shadow-lg shadow-blue-500/20" id="btn-next">
+                Next Step
+                <span class="material-icons text-sm sm:text-base">arrow_forward</span>
+</button>
+<button class="hidden bg-green-600 hover:bg-green-700 text-white flex items-center gap-1 sm:gap-2 px-4 sm:px-10 py-2.5 sm:py-3 text-sm sm:text-base whitespace-nowrap rounded-xl font-bold transition transform active:scale-95 shadow-lg shadow-green-500/20" id="btn-publish">
                 Publish Course
-                <span class="material-icons">check_circle</span>
-            </button>
-        </div>
-
-        <!-- STEP 5 CONTAINER: SUBMITTED FOR REVIEW -->
-        <div id="step-5-container" class="wizard-step hidden flex-col items-center justify-center py-12 text-center">
-            <div
-                class="w-24 h-24 bg-amber-100 dark:bg-amber-900/30 text-amber-500 rounded-full flex items-center justify-center mb-6 shadow-xl shadow-amber-500/20">
-                <span class="material-symbols-outlined text-5xl">pending_actions</span>
-            </div>
-            <h2 class="text-3xl font-bold text-slate-900 dark:text-white mb-2">Submitted for Review!</h2>
-            <p class="text-slate-500 text-lg mb-8 max-w-lg">Your course has been submitted successfully. It will be
+                <span class="material-icons text-sm sm:text-base">check_circle</span>
+</button>
+</div>
+<!-- STEP 5 CONTAINER: SUBMITTED FOR REVIEW -->
+<div class="wizard-step hidden flex-col items-center justify-center py-12 text-center" id="step-5-container">
+<div class="w-24 h-24 bg-amber-100 dark:bg-amber-900/30 text-amber-500 rounded-full flex items-center justify-center mb-6 shadow-xl shadow-amber-500/20">
+<span class="material-symbols-outlined text-5xl">pending_actions</span>
+</div>
+<h2 class="text-3xl font-bold text-slate-900 dark:text-white mb-2">Submitted for Review!</h2>
+<p class="text-slate-500 text-lg mb-8 max-w-lg">Your course has been submitted successfully. It will be
                 reviewed by our moderation team shortly. Once approved, it will be published and you will be notified.
             </p>
-            <div class="flex gap-4">
-                <button onclick="window.location.href='/src/pages/instructor/instructor-dashboard/index.html'"
-                    class="px-8 py-3 bg-primary hover:bg-blue-700 text-white font-bold rounded-xl transition shadow-lg">Go
+<div class="flex gap-4">
+<button class="px-8 py-3 bg-primary hover:bg-blue-700 text-white font-bold rounded-xl transition shadow-lg" onclick="window.location.href='/src/pages/instructor/instructor-dashboard/index.html'">Go
                     to Dashboard</button>
-                <button onclick="window.location.href='/src/pages/instructor/instructor-courses/index.html'"
-                    class="px-8 py-3 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl hover:bg-slate-50 transition">View
+<button class="px-8 py-3 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl hover:bg-slate-50 transition" onclick="window.location.href='/src/pages/instructor/instructor-courses/index.html'">View
                     My Courses</button>
-            </div>
-        </div>
-
-    </main>
-    <footer class="mt-12 py-8 border-t border-slate-200 dark:border-slate-800 text-center">
-        <p class="text-slate-500 dark:text-slate-600 text-xs">
+</div>
+</div>
+</main>
+<footer class="mt-12 py-8 border-t border-slate-200 dark:border-slate-800 text-center">
+<p class="text-slate-500 dark:text-slate-600 text-xs">
             © 2024 Tacliimi Learn - Multi-Institutional E-Learning Platform.
             <span class="mx-2">|</span>
             Need help? <a class="underline hover:text-primary" href="#">Contact Instructor Support</a>
-        </p>
-    </footer>
-
-    <div id="toast"
-        class="fixed bottom-4 right-4 bg-slate-900 text-white px-6 py-3 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 flex items-center gap-3 z-50">
-        <span class="material-icons text-green-400">check_circle</span>
-        <span id="toast-message">Draft saved automatically.</span>
-    </div>
-
-    <!-- MODALS -->
-    <!-- Add Video Modal -->
-    <div id="modal-add-video"
-        class="fixed inset-0 z-[60] hidden items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-        <div id="modal-add-video-content"
-            class="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800 transform scale-95 opacity-0 transition-all duration-300">
-            <div
-                class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
-                <h2 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    <span class="material-symbols-outlined text-primary">videocam</span> Add Video
+</p>
+</footer>
+<div class="fixed bottom-4 right-4 bg-slate-900 text-white px-6 py-3 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 flex items-center gap-3 z-50" id="toast">
+<span class="material-icons text-green-400">check_circle</span>
+<span id="toast-message">Draft saved automatically.</span>
+</div>
+<!-- MODALS -->
+<!-- Add Video Modal -->
+<div class="fixed inset-0 z-[60] hidden items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" id="modal-add-video">
+<div class="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800 transform scale-95 opacity-0 transition-all duration-300" id="modal-add-video-content">
+<div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
+<h2 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">videocam</span> Add Video
                 </h2>
-                <button onclick="closeModal('modal-add-video')"
-                    class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition">
-                    <span class="material-symbols-outlined">close</span>
-                </button>
-            </div>
-            <div class="p-6">
-                <div class="flex border-b border-slate-200 dark:border-slate-700 mb-6">
-                    <button class="px-6 py-3 text-sm font-semibold border-b-2 border-accent text-accent">Upload
-                        Video</button>
-                    <button
-                        class="px-6 py-3 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">Embed
-                        Link</button>
-                </div>
+<button class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition" onclick="closeModalVideoClean()">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<div class="p-6">
+                            <!-- PROVIDER TOGGLE (hidden if self-hosted uploads disabled) -->
+                            <div id="modal-video-provider-toggle" class="flex items-center gap-4 mb-2 hidden">
+                                <label class="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300 cursor-pointer">
+                                    <input type="radio" name="modal-provider-radio" value="youtube" checked class="text-primary focus:ring-primary h-4 w-4">
+                                    YouTube / Vimeo
+                                </label>
+                                <label class="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300 cursor-pointer">
+                                    <input type="radio" name="modal-provider-radio" value="r2" class="text-primary focus:ring-primary h-4 w-4">
+                                    Direct Upload
+                                </label>
+                            </div>
 
-                <div class="space-y-4">
-                    <div id="video-upload-area-modal" class="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl p-10 flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-800/30 hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors cursor-pointer relative overflow-hidden">
-                        <input type="file" id="modal-video-upload" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" accept="video/*" />
-                        <div class="w-16 h-16 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                            <span class="material-symbols-outlined text-4xl text-primary">cloud_upload</span>
-                        </div>
-                        <p class="text-slate-900 dark:text-white font-semibold mb-1" id="modal-video-name-display">Click or drag video to upload</p>
-                        <p class="text-slate-500 dark:text-slate-400 text-sm">MP4, MOV, or AVI (Max 2GB)</p>
-                    </div>
+                            <!-- FILE UPLOAD AREA (hidden by default) -->
+                            <div id="modal-file-upload-section" class="hidden">
+                                <div class="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl p-10 flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-800/30 hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors cursor-pointer relative overflow-hidden" id="video-upload-area-modal">
+                                    <input type="file" id="modal-video-upload" accept="video/mp4,video/quicktime" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                                    <div class="w-16 h-16 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                                        <span class="material-symbols-outlined text-4xl text-primary">cloud_upload</span>
+                                    </div>
+                                    <p class="text-slate-900 dark:text-white font-semibold mb-1 truncate w-full max-w-[220px] sm:max-w-md mx-auto text-center" id="modal-video-name-display">Click or drag video to upload</p>
+                                    <p class="text-slate-500 dark:text-slate-400 text-sm">MP4 or MOV (Max 500MB)</p>
+                                </div>
+                                
+                                <!-- R2 Upload Progress -->
+                                <div id="modal-upload-progress-container" class="hidden mt-3">
+                                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between text-xs text-slate-500 mb-1 pt-1 gap-2 sm:gap-1">
+                                        <div class="flex items-center justify-between">
+                                            <span class="hidden sm:inline">Uploading to Secure Storage...</span>
+                                            <span class="sm:hidden font-medium">Uploading...</span>
+                                            <button type="button" id="modal-upload-cancel" class="text-red-500 hover:text-red-700 font-medium cursor-pointer shrink-0 sm:hidden">Cancel</button>
+                                        </div>
+                                        <div class="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
+                                            <button type="button" class="hidden sm:block text-red-500 hover:text-red-700 font-medium cursor-pointer shrink-0" onclick="document.getElementById('modal-upload-cancel').click()">Cancel</button>
+                                            <span id="modal-upload-percent" class="truncate text-right flex-1 sm:flex-none font-medium">0%</span>
+                                        </div>
+                                    </div>
+                                    <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
+                                        <div id="modal-upload-progress-bar" class="bg-primary h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
 
-                    <div class="relative flex items-center py-2">
-                        <div class="flex-grow border-t border-slate-200 dark:border-slate-800"></div>
-                        <span class="flex-shrink mx-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Or</span>
-                        <div class="flex-grow border-t border-slate-200 dark:border-slate-800"></div>
-                    </div>
-
-                    <div class="space-y-1.5">
-                        <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Embed URL (Vimeo, YouTube, etc.)</label>
-                        <input id="modal-video-embed-url" class="w-full rounded-lg border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:ring-accent focus:border-accent text-sm" placeholder="Paste link here..." type="text" />
-                    </div>
-                </div>
-            </div>
-            <div
-                class="px-6 py-4 bg-slate-50/50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3">
-                <button onclick="closeModal('modal-add-video')"
-                    class="px-6 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 font-semibold hover:bg-slate-200 dark:hover:bg-slate-700 transition text-sm">Cancel</button>
-                <button onclick="saveModalVideo()"
-                    class="px-8 py-2.5 bg-accent hover:bg-purple-700 text-white rounded-lg font-bold transition shadow-lg shadow-purple-500/20 text-sm">Save
+                            <!-- URL INPUT (visible by default) -->
+                            <div class="space-y-1.5" id="modal-video-url-section">
+                                <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">YouTube / Vimeo URL</label>
+                                <input type="text" id="modal-video-embed-url" class="w-full rounded-lg border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:ring-accent focus:border-accent text-sm" placeholder="Paste link here..." />
+                                <p class="text-xs text-red-500 font-medium hidden" id="modal-video-url-error"></p>
+                                
+                                <div class="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800/30 mt-2" id="modal-youtube-guidance">
+                                    <span class="material-symbols-outlined text-blue-500 text-base flex-shrink-0 mt-0.5">info</span>
+                                    <p class="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
+                                        <span class="font-bold">Set this video's visibility to “Unlisted” on YouTube</span> to keep it private but playable.
+                                    </p>
+                                </div>
+                            </div>
+</div>
+<div class="px-6 py-4 bg-slate-50/50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3">
+<button class="px-6 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 font-semibold hover:bg-slate-200 dark:hover:bg-slate-700 transition text-sm" onclick="discardAndCloseModalVideo()">Cancel</button>
+<button class="px-8 py-2.5 bg-accent hover:bg-purple-700 text-white rounded-lg font-bold transition shadow-lg shadow-purple-500/20 text-sm" onclick="saveModalVideo()">Save
                     Video</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Add Resource Modal -->
-    <div id="modal-add-resource"
-        class="fixed inset-0 z-[60] hidden items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-        <div id="modal-add-resource-content"
-            class="bg-white dark:bg-slate-900 w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[90vh] transform scale-95 opacity-0 transition-all duration-300">
-            <div
-                class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50 flex-shrink-0">
-                <h2 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    <span class="material-symbols-outlined text-accent">attachment</span> Manage Resources
+</div>
+</div>
+</div>
+<!-- Add Resource Modal -->
+<div class="fixed inset-0 z-[60] hidden items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" id="modal-add-resource">
+<div class="bg-white dark:bg-slate-900 w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[90vh] transform scale-95 opacity-0 transition-all duration-300" id="modal-add-resource-content">
+<div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50 flex-shrink-0">
+<h2 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+<span class="material-symbols-outlined text-accent">attachment</span> Manage Resources
                 </h2>
-                <button onclick="closeModal('modal-add-resource')"
-                    class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition text-slate-500">
-                    <span class="material-symbols-outlined">close</span>
-                </button>
-            </div>
-            
-            <div class="p-6 overflow-y-auto space-y-6 flex-grow">
-                <!-- Attached List -->
-                <div>
-                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Attached Resources</h4>
-                    <div id="resource-list-container" class="space-y-2 mb-4">
-                        <!-- Resources will be listed here -->
-                    </div>
-                    <button id="add-resource-toggle-btn" onclick="toggleResourceForm(true)" class="hidden w-full py-2 border border-dashed border-slate-200 dark:border-slate-800 rounded-lg flex items-center justify-center gap-2 text-slate-400 hover:text-accent hover:border-accent transition group mb-4">
-                        <span class="material-symbols-outlined text-sm">add_circle</span>
-                        <span class="text-xs font-semibold">Add Another Resource</span>
-                    </button>
-                </div>
-
-                <!-- Add Form Container -->
-                <div id="resource-add-form" class="space-y-6 pt-4 border-t border-slate-100 dark:border-slate-800">
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Resource Title</label>
-                        <input id="modal-resource-title-input"
-                            class="w-full rounded-lg border-slate-300 dark:border-slate-700 dark:bg-slate-800 focus:ring-accent focus:border-accent"
-                            type="text" placeholder="e.g., Course Syllabus" />
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Upload File</label>
-                        <div class="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-8 flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-800/50 hover:border-accent transition group cursor-pointer relative overflow-hidden">
-                            <input type="file" id="modal-resource-upload" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
-                            <div class="w-12 h-12 bg-white dark:bg-slate-700 rounded-full flex items-center justify-center shadow-sm mb-3 group-hover:scale-110 transition-transform">
-                                <span class="material-symbols-outlined text-accent text-3xl">cloud_upload</span>
-                            </div>
-                            <p class="text-sm font-medium text-slate-900 dark:text-white" id="modal-resource-name-display">Click to upload or drag & drop</p>
-                            <p class="text-xs text-slate-500 mt-1">PDF, DOCX, or ZIP (Max. 50MB)</p>
-                        </div>
-                    </div>
-                    <div class="relative flex items-center py-2">
-                        <div class="flex-grow border-t border-slate-200 dark:border-slate-800"></div>
-                        <span class="flex-shrink mx-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Or</span>
-                        <div class="flex-grow border-t border-slate-200 dark:border-slate-800"></div>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">External Link</label>
-                        <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <span class="material-symbols-outlined text-slate-400 text-lg">link</span>
-                            </div>
-                            <input id="external-link" class="block w-full pl-10 pr-3 py-3 border border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-sm focus:ring-accent focus:border-accent outline-none transition" placeholder="https://example.com/resource" type="text" />
-                        </div>
-                    </div>
-                    <div class="flex justify-end gap-2 pt-2">
-                        <button onclick="toggleResourceForm(false)" id="cancel-resource-add-btn" class="hidden px-4 py-2 text-xs font-semibold text-slate-500 hover:text-slate-700 transition">Cancel</button>
-                        <button onclick="saveModalResource()" class="bg-accent hover:bg-purple-700 text-white px-6 py-2.5 rounded-xl font-bold text-sm transition transform active:scale-95 shadow-md shadow-purple-500/20">Upload & Add</button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="px-6 py-4 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex justify-end flex-shrink-0">
-                <button onclick="closeModal('modal-add-resource')"
-                    class="px-8 py-2.5 bg-slate-900 dark:bg-slate-700 hover:bg-slate-800 text-white rounded-xl font-bold text-sm transition transform active:scale-95 shadow-lg">Done</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Add Quiz Modal -->
-    <div id="modal-add-quiz"
-        class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] hidden items-center justify-center p-4">
-        <div id="modal-add-quiz-content"
-            class="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden transform scale-95 opacity-0 transition-all duration-300">
-            <div
-                class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
-                <div>
-                    <h2 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                        <span class="material-symbols-outlined text-amber-500">quiz</span> Manage Lesson Quizzes
+<button class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition text-slate-500" onclick="closeModal('modal-add-resource')">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<div class="p-6 overflow-y-auto space-y-6 flex-grow">
+<!-- Attached List -->
+<div>
+<h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Attached Resources</h4>
+<div class="space-y-2 mb-4" id="resource-list-container">
+<!-- Resources will be listed here -->
+</div>
+<button class="hidden w-full py-2 border border-dashed border-slate-200 dark:border-slate-800 rounded-lg flex items-center justify-center gap-2 text-slate-400 hover:text-accent hover:border-accent transition group mb-4" id="add-resource-toggle-btn" onclick="toggleResourceForm(true)">
+<span class="material-symbols-outlined text-sm">add_circle</span>
+<span class="text-xs font-semibold">Add Another Resource</span>
+</button>
+</div>
+<!-- Add Form Container -->
+<div class="space-y-6 pt-4 border-t border-slate-100 dark:border-slate-800" id="resource-add-form">
+<div>
+<label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Resource Title</label>
+<input class="w-full rounded-lg border-slate-300 dark:border-slate-700 dark:bg-slate-800 focus:ring-accent focus:border-accent" id="modal-resource-title-input" placeholder="e.g., Course Syllabus" type="text"/>
+</div>
+<div>
+<label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Upload File</label>
+<div class="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-8 flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-800/50 hover:border-accent transition group cursor-pointer relative overflow-hidden">
+<input class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" id="modal-resource-upload" type="file"/>
+<div class="w-12 h-12 bg-white dark:bg-slate-700 rounded-full flex items-center justify-center shadow-sm mb-3 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-accent text-3xl">cloud_upload</span>
+</div>
+<p class="text-sm font-medium text-slate-900 dark:text-white" id="modal-resource-name-display">Click to upload or drag &amp; drop</p>
+<p class="text-xs text-slate-500 mt-1">PDF, DOCX, or ZIP (Max. 50MB)</p>
+</div>
+</div>
+<div class="relative flex items-center py-2">
+<div class="flex-grow border-t border-slate-200 dark:border-slate-800"></div>
+<span class="flex-shrink mx-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Or</span>
+<div class="flex-grow border-t border-slate-200 dark:border-slate-800"></div>
+</div>
+<div>
+<label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">External Link</label>
+<div class="relative">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-slate-400 text-lg">link</span>
+</div>
+<input class="block w-full pl-10 pr-3 py-3 border border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-sm focus:ring-accent focus:border-accent outline-none transition" id="external-link" placeholder="https://example.com/resource" type="text"/>
+</div>
+</div>
+<div class="flex justify-end gap-2 pt-2">
+<button class="hidden px-4 py-2 text-xs font-semibold text-slate-500 hover:text-slate-700 transition" id="cancel-resource-add-btn" onclick="toggleResourceForm(false)">Cancel</button>
+<button class="bg-accent hover:bg-purple-700 text-white px-6 py-2.5 rounded-xl font-bold text-sm transition transform active:scale-95 shadow-md shadow-purple-500/20" onclick="saveModalResource()">Upload &amp; Add</button>
+</div>
+</div>
+</div>
+<div class="px-6 py-4 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex justify-end flex-shrink-0">
+<button class="px-8 py-2.5 bg-slate-900 dark:bg-slate-700 hover:bg-slate-800 text-white rounded-xl font-bold text-sm transition transform active:scale-95 shadow-lg" onclick="closeModal('modal-add-resource')">Done</button>
+</div>
+</div>
+</div>
+<!-- Add Quiz Modal -->
+<div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] hidden items-center justify-center p-4" id="modal-add-quiz">
+<div class="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden transform scale-95 opacity-0 transition-all duration-300" id="modal-add-quiz-content">
+<div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
+<div>
+<h2 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+<span class="material-symbols-outlined text-amber-500">quiz</span> Manage Lesson Quizzes
                     </h2>
-                    <p class="text-[10px] font-bold text-accent uppercase tracking-widest mt-0.5" id="quiz-modal-subtitle">0 Quizzes Combined</p>
-                </div>
-                <button onclick="closeModal('modal-add-quiz')"
-                    class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition">
-                    <span class="material-symbols-outlined">close</span>
+<p class="text-[10px] font-bold text-accent uppercase tracking-widest mt-0.5" id="quiz-modal-subtitle">0 Quizzes Combined</p>
+</div>
+<button class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition" onclick="closeModal('modal-add-quiz')">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<div class="p-6 overflow-y-auto space-y-8" id="quiz-packages-container">
+<!-- Dynamic Quiz Packages injected here -->
+</div>
+<div class="p-6 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row justify-between items-center gap-4 sm:gap-0 bg-slate-50 dark:bg-slate-800/30">
+<button class="w-full sm:w-auto flex justify-center items-center gap-2 px-4 py-3 sm:py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl font-bold text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition shadow-sm" onclick="addAnotherQuizPackage()">
+<span class="material-symbols-outlined text-lg">library_add</span> Add Another Quiz
                 </button>
-            </div>
+<div class="flex gap-3 w-full sm:w-auto">
+<button class="w-1/3 sm:w-auto px-4 sm:px-6 py-3 sm:py-2.5 rounded-xl font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition text-sm bg-slate-200/50 sm:bg-transparent" onclick="closeModal('modal-add-quiz')">Cancel</button>
+<button class="w-2/3 sm:w-auto bg-accent hover:bg-purple-700 text-white flex items-center justify-center gap-1 sm:gap-2 px-4 sm:px-8 py-3 sm:py-2.5 rounded-xl font-bold transition transform active:scale-95 shadow-lg shadow-purple-500/20 text-sm" onclick="saveModalQuiz()">
+                        Save <span class="hidden sm:inline">All Quizzes </span> <span class="material-symbols-outlined text-sm">check_circle</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<script src="/src/services/globalProfile.js" type="module"></script>
+<script src="/src/utils/js/course-wizard.js" type="module"></script>
 
-            <div class="p-6 overflow-y-auto space-y-8" id="quiz-packages-container">
-                <!-- Dynamic Quiz Packages injected here -->
-            </div>
+<script>
+(function() {
+    var btn = document.getElementById('wizard-mobile-menu-btn');
+    var menu = document.getElementById('wizard-mobile-menu');
 
-            <div class="p-6 border-t border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/30">
-                <button onclick="addAnotherQuizPackage()"
-                    class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl font-bold text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition shadow-sm">
-                    <span class="material-symbols-outlined text-lg">library_add</span> Add Another Quiz
-                </button>
-                <div class="flex gap-3">
-                    <button onclick="closeModal('modal-add-quiz')"
-                        class="px-6 py-2.5 rounded-xl font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition text-sm">Cancel</button>
-                    <button onclick="saveModalQuiz()"
-                        class="bg-accent hover:bg-purple-700 text-white flex items-center gap-2 px-8 py-2.5 rounded-xl font-bold transition transform active:scale-95 shadow-lg shadow-purple-500/20 text-sm">
-                        Save All Quizzes <span class="material-symbols-outlined text-sm">check_circle</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
+    if (!btn || !menu) return;
 
-    <script type="module" src="/src/services/globalProfile.js"></script>
-    <script type="module" src="/src/utils/js/course-wizard.js"></script>
+    var isOpen = false;
+
+    function openMenu(e) {
+        if(e) e.stopPropagation();
+        menu.classList.remove('hidden');
+        // Small timeout for css transitions
+        setTimeout(() => {
+            menu.classList.remove('opacity-0', 'scale-95');
+            menu.classList.add('opacity-100', 'scale-100');
+        }, 10);
+        isOpen = true;
+    }
+
+    function closeMenu() {
+        menu.classList.remove('opacity-100', 'scale-100');
+        menu.classList.add('opacity-0', 'scale-95');
+        setTimeout(() => {
+            menu.classList.add('hidden');
+        }, 200);
+        isOpen = false;
+    }
+
+    btn.addEventListener('click', function(e) {
+        if (isOpen) {
+            closeMenu();
+        } else {
+            openMenu(e);
+        }
+    });
+
+    document.addEventListener('click', function(e) {
+        if (isOpen && btn && menu && !btn.contains(e.target) && !menu.contains(e.target)) {
+            closeMenu();
+        }
+    });
+})();
+</script>
 </body>
-
 </html>

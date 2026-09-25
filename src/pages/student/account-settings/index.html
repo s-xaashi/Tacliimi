@@ -1,94 +1,56 @@
 <!DOCTYPE html>
-<html class="light" lang="en">
+<html lang="en">
 
 <head>
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title>Tacliimi Learn | Student Dashboard - My Mentors</title>
-    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
+    <link rel="stylesheet" href="/public/assets/css/tacliimi.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap"
         rel="stylesheet" />
     <link
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
         rel="stylesheet" />
-    <script>
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        primary: "#A855F7",
-                        "background-light": "#F8F9FA",
-                        "background-dark": "#111827",
-                        "teal-accent": "#14B8A6",
-                    },
-                    fontFamily: {
-                        display: ["Inter", "sans-serif"],
-                    },
-                    borderRadius: {
-                        DEFAULT: "0.75rem",
-                    },
-                },
-            },
-        };
-    </script>
-    <style type="text/tailwindcss">
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-        .progress-glow {
-            box-shadow: 0 0 10px rgba(168, 85, 247, 0.3);
-        }
-        .interest-card.selected {
-            @apply border-teal-500 bg-teal-50/50 dark:bg-teal-900/10;
-        }
-        .selected .material-symbols-outlined {
-            font-variation-settings: 'FILL' 1;
-            @apply text-teal-600 dark:text-teal-400;
-        }
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        }
-    </style>
+    
+    
 </head>
 
 <body
     class="bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-200 min-h-screen transition-colors duration-200">
-    <nav
-        class="sticky top-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16 items-center">
-                <div class="flex items-center gap-8">
-                    <div class="flex items-center gap-2">
-                        <div
-                            class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-bold">
-                            T</div>
-                        <span
-                            class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-400">Tacliimi
-                            Learn</span>
-                    </div>
-                    <div class="hidden md:flex items-center space-x-6">
-                        <a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors px-1"
-                            href="/">Home</a>
-                        <a class="text-primary font-semibold border-b-2 border-primary pb-1 px-1"
-                            href="/src/pages/student/student-dashboard/">Dashboard</a>
-                        <a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
-                            href="/src/pages/marketplace/marketplace/">Browse</a>
-                        <a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
-                            href="/src/pages/student/student-dashboard/my-mentors.html">Mentors</a>
-                        <a class="bg-primary hover:bg-purple-600 text-white px-6 py-2.5 rounded-lg font-semibold transition-colors flex items-center"
-                            href="/src/pages/instructor/become-instructor/">Become a Teacher</a>
-                    </div>
-                </div>
-                <div class="flex items-center gap-4">
-                    <!-- Global Profile Injected Below via TacliimiDB -->
-                </div>
+    <header class="sticky top-0 z-50 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
+        <div class="h-16 flex items-center justify-between px-4 sm:px-6 lg:px-8 relative">
+            <!-- Hamburger (Left) — opens settings-sidebar via mobileNav.js -->
+            <button class="settings-mobile-menu-btn lg:hidden p-2 -ml-2 text-slate-600 dark:text-slate-300 z-10" id="mobile-menu-btn">
+                <span class="material-symbols-outlined">menu</span>
+            </button>
+
+            <!-- Logo (Center on mobile, Left on desktop) -->
+            <a href="/src/pages/student/student-dashboard/index.html" class="flex items-center gap-2 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 lg:static lg:top-auto lg:left-0 lg:transform-none z-10 hover:opacity-80 transition-opacity shrink-0">
+                <img src="/public/assets/images/IMG_7454.png" alt="Tacliimi Learn" class="h-12 md:h-14 w-auto object-contain dark:hidden">
+                <img src="/public/assets/images/logo-dark.png" alt="Tacliimi Learn" class="h-12 md:h-14 w-auto object-contain hidden dark:block">
+            </a>
+
+            <!-- Desktop Nav -->
+            <nav class="hidden lg:flex items-center gap-6 mx-auto">
+                <a class="text-slate-500 dark:text-slate-400 hover:text-primary transition-colors text-sm font-medium" href="/">Home</a>
+                <a class="text-primary font-semibold text-sm border-b-2 border-primary pb-0.5" href="/src/pages/student/student-dashboard/">Dashboard</a>
+                <a class="text-slate-500 dark:text-slate-400 hover:text-primary transition-colors text-sm font-medium" href="/src/pages/marketplace/marketplace/">Browse</a>
+                <a class="text-slate-500 dark:text-slate-400 hover:text-primary transition-colors text-sm font-medium" href="/src/pages/mentorship/mentor-marketplace/index.html">Mentors</a>
+            </nav>
+
+            <!-- Right: GlobalProfile (desktop) -->
+            <div id="global-profile-header-container" class="hidden lg:flex items-center gap-2">
+                <!-- Global Profile Injected Below via TacliimiDB -->
             </div>
+            <!-- Placeholder on mobile so layout stays balanced -->
+            <div class="w-10 lg:hidden"></div>
         </div>
-    </nav>
-    <div class="flex pt-16">
-        <aside
-            class="fixed left-0 z-40 w-64 h-[calc(100vh-64px)] transition-transform -translate-x-full bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 lg:translate-x-0 overflow-y-auto custom-scrollbar">
+    </header>
+
+    <div class="flex relative min-h-[calc(100vh-64px)]">
+        <div id="sidebar-overlay" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-30 hidden lg:hidden"></div>
+        <aside id="settings-sidebar"
+            class="fixed top-16 left-0 z-40 w-64 h-[calc(100vh-64px)] transition-transform -translate-x-full bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 lg:translate-x-0 lg:sticky lg:top-16 lg:self-start lg:shrink-0 overflow-y-auto custom-scrollbar">
             <div class="py-6 space-y-1">
                 <a class="flex items-center gap-3 px-6 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer"
                     onclick="window.location.href='/src/pages/student/student-dashboard/index.html'">
@@ -132,10 +94,11 @@
                 </div>
             </div>
         </aside>
-        <main class="flex-1 lg:ml-64 min-h-screen">
-            <div id="content-personal-info" class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <main class="flex-1 min-w-0 min-h-[calc(100vh-64px)]">
+            <div id="content-personal-info" class="max-w-5xl px-4 sm:px-6 lg:px-10 py-10">
                 <header class="mb-10">
-                    <nav aria-label="Breadcrumb" class="flex mb-4 text-sm text-slate-500 dark:text-slate-400">
+                    <div class="flex items-center gap-4 mb-4">
+                        <nav aria-label="Breadcrumb" class="flex text-sm text-slate-500 dark:text-slate-400">
                         <ol class="inline-flex items-center space-x-1 md:space-x-3">
                             <li class="inline-flex items-center">
                                 <a class="hover:text-primary transition-colors" href="#">Account Settings</a>
@@ -147,7 +110,8 @@
                                 </div>
                             </li>
                         </ol>
-                    </nav>
+                        </nav>
+                    </div>
                     <h1 class="text-3xl font-bold text-slate-900 dark:text-white">Personal Information</h1>
                     <p class="text-slate-600 dark:text-slate-400 mt-1">Update your personal details and location
                         settings for a tailored experience.</p>
@@ -155,18 +119,15 @@
                 <div
                     class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
                     <div class="p-6 md:p-8">
+                        <div id="profile-msg" class="hidden mb-6 p-4 rounded-xl text-sm font-medium transition-all"></div>
                         <div class="mb-10 flex flex-col md:flex-row md:items-center gap-8">
                             <div class="relative group">
-                                <div
+                                <div id="avatar-skeleton" class="hidden w-28 h-28 rounded-2xl bg-slate-200 dark:bg-slate-800 animate-pulse"></div>
+                                <div id="avatar-container"
                                     class="w-28 h-28 rounded-2xl bg-slate-100 dark:bg-slate-800 border-2 border-dashed border-slate-300 dark:border-slate-700 flex items-center justify-center overflow-hidden">
-                                    <img alt="Profile Placeholder" class="w-full h-full object-cover"
-                                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuD4FTZaUk7CkHUwX29aasM_y7kKfVpuBSwtcCQ7doFqFTxVWXJsQkDkZhZRAafelhmHODnFgIeENSRpUgxVbTXcLEoYZ_6am_d2tipfNlO-pi87vPAls3Q7Wd2lZthnLSM1YYbt9puERj2oMPFobRioYNFOwy6NLwr1ZrMvZ0ZBfeyvluNg1PiByC4xueedvkHnMN-GYZIMEN7BnvNSMetMTq0GfQ3L-bd5Pgwa2a7rXqNBysDF2IULEUFSpKOhXCnANgn6wRrxk40F" />
-                                    <div
-                                        class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                                        <span class="material-symbols-outlined text-white text-3xl">photo_camera</span>
-                                    </div>
+                                    <span class="material-symbols-outlined text-slate-300 dark:text-slate-600 text-6xl">account_circle</span>
                                 </div>
-                                <button
+                                <button type="button"
                                     class="absolute -bottom-2 -right-2 bg-primary text-white p-2 rounded-lg shadow-lg">
                                     <span class="material-symbols-outlined text-sm">edit</span>
                                 </button>
@@ -187,53 +148,87 @@
                                 </div>
                             </div>
                         </div>
-                        <form id="profile-form" class="space-y-8">
+                        <form id="profile-form" class="space-y-8" novalidate>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                                <!-- Full Name -->
                                 <div class="space-y-2">
                                     <label class="text-sm font-bold text-slate-700 dark:text-slate-300"
                                         for="full-name">Full Name</label>
-                                    <input
-                                        class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
-                                        id="full-name" placeholder="Alex Thompson" type="text" value="Alex Thompson" />
+                                    <div class="relative">
+                                        <div class="form-skeleton hidden w-full h-12 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-xl"></div>
+                                        <input
+                                            class="form-input-field w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+                                            id="full-name" placeholder="Enter your full name" type="text" maxlength="60" required />
+                                    </div>
+                                    <p id="full-name-error" class="text-xs text-red-500 font-medium hidden mt-1"></p>
                                 </div>
                                 
+                                <!-- Email Address -->
                                 <div class="space-y-2">
                                     <label class="text-sm font-bold text-slate-700 dark:text-slate-300"
                                         for="email">Email Address</label>
-                                    <input
-                                        class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
-                                        id="email" placeholder="alex@example.com" type="email"
-                                        value="alex.thompson@example.com" / readonly disabled style="opacity: 0.7; cursor: not-allowed;" >
+                                    <div class="relative">
+                                        <div class="form-skeleton hidden w-full h-12 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-xl"></div>
+                                        <input
+                                            class="form-input-field w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none opacity-70 cursor-not-allowed"
+                                            id="email" placeholder="alex@example.com" type="email" readonly disabled />
+                                    </div>
                                 </div>
+
+                                <!-- Phone Number -->
                                 <div class="space-y-2">
                                     <label class="text-sm font-bold text-slate-700 dark:text-slate-300"
                                         for="phone-number">Phone Number</label>
-                                    <input
-                                        class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
-                                        id="phone-number" placeholder="+252 (00) 000-0000" type="tel"
-                                        value="+252 61 0000000" />
+                                    <div class="relative">
+                                        <div class="form-skeleton hidden w-full h-12 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-xl"></div>
+                                        <input
+                                            class="form-input-field w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+                                            id="phone-number" placeholder="+252 (00) 000-0000" type="tel" maxlength="20" />
+                                    </div>
+                                    <p id="phone-number-error" class="text-xs text-red-500 font-medium hidden mt-1"></p>
                                 </div>
+
+                                <!-- Country -->
                                 <div class="space-y-2">
                                     <label class="text-sm font-bold text-slate-700 dark:text-slate-300"
                                         for="country">Country</label>
-                                    <input
-                                        class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
-                                        id="country" placeholder="Somalia" type="text" value="Somalia" />
+                                    <div class="relative">
+                                        <div class="form-skeleton hidden w-full h-12 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-xl"></div>
+                                        <input
+                                            class="form-input-field w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+                                            id="country" placeholder="Somalia" type="text" maxlength="50" />
+                                    </div>
+                                    <p id="country-error" class="text-xs text-red-500 font-medium hidden mt-1"></p>
                                 </div>
+
+                                <!-- City -->
                                 <div class="space-y-2">
                                     <label class="text-sm font-bold text-slate-700 dark:text-slate-300" for="city">City
                                         / Location</label>
-                                    <input
-                                        class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
-                                        id="city" placeholder="Mogadishu" type="text" value="Mogadishu" />
+                                    <div class="relative">
+                                        <div class="form-skeleton hidden w-full h-12 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-xl"></div>
+                                        <input
+                                            class="form-input-field w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+                                            id="city" placeholder="Mogadishu" type="text" maxlength="50" />
+                                    </div>
+                                    <p id="city-error" class="text-xs text-red-500 font-medium hidden mt-1"></p>
                                 </div>
+
+                                <!-- Bio -->
                                 <div class="space-y-2 md:col-span-2">
-                                    <label class="text-sm font-bold text-slate-700 dark:text-slate-300"
-                                        for="bio">Bio</label>
-                                    <textarea
-                                        class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all min-h-[140px] outline-none resize-none"
-                                        id="bio"
-                                        placeholder="Tell us about yourself, your learning goals, and interests...">Passionate learner focusing on Advanced React patterns and UI/UX design. Currently exploring the intersection of AI and frontend development in the context of localized educational solutions.</textarea>
+                                    <div class="flex justify-between items-center">
+                                        <label class="text-sm font-bold text-slate-700 dark:text-slate-300"
+                                            for="bio">Short Bio</label>
+                                        <span id="bio-char-count" class="text-xs font-semibold text-slate-400">0 / 100</span>
+                                    </div>
+                                    <div class="relative">
+                                        <div class="form-skeleton hidden w-full h-28 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-xl"></div>
+                                        <textarea
+                                            class="form-input-field w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all min-h-[100px] outline-none resize-none"
+                                            id="bio" maxlength="100"
+                                            placeholder="Tell us about yourself and your learning goals (max 100 characters)..."></textarea>
+                                    </div>
+                                    <p id="bio-error" class="text-xs text-red-500 font-medium hidden mt-1"></p>
                                 </div>
                             </div>
 
@@ -247,41 +242,65 @@
                                         <label class="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
                                             <span class="material-symbols-outlined text-base">link</span> GitHub URL
                                         </label>
-                                        <input
-                                            class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
-                                            id="github-url" placeholder="https://github.com/username" type="url" />
+                                        <div class="relative">
+                                            <div class="form-skeleton hidden w-full h-12 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-xl"></div>
+                                            <input
+                                                class="form-input-field w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+                                                id="github-url" placeholder="https://github.com/username" type="url" />
+                                        </div>
+                                        <p id="github-url-error" class="text-xs text-red-500 font-medium hidden mt-1"></p>
                                     </div>
+
                                     <div class="space-y-2">
                                         <label class="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
                                             <span class="material-symbols-outlined text-base">link</span> LinkedIn URL
                                         </label>
-                                        <input
-                                            class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
-                                            id="linkedin-url" placeholder="https://linkedin.com/in/username" type="url" />
+                                        <div class="relative">
+                                            <div class="form-skeleton hidden w-full h-12 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-xl"></div>
+                                            <input
+                                                class="form-input-field w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+                                                id="linkedin-url" placeholder="https://linkedin.com/in/username" type="url" />
+                                        </div>
+                                        <p id="linkedin-url-error" class="text-xs text-red-500 font-medium hidden mt-1"></p>
                                     </div>
+
                                     <div class="space-y-2">
                                         <label class="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
                                             <span class="material-symbols-outlined text-base">link</span> Twitter / X
                                         </label>
-                                        <input
-                                            class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
-                                            id="twitter-url" placeholder="https://twitter.com/username" type="url" />
+                                        <div class="relative">
+                                            <div class="form-skeleton hidden w-full h-12 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-xl"></div>
+                                            <input
+                                                class="form-input-field w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+                                                id="twitter-url" placeholder="https://twitter.com/username" type="url" />
+                                        </div>
+                                        <p id="twitter-url-error" class="text-xs text-red-500 font-medium hidden mt-1"></p>
                                     </div>
+
                                     <div class="space-y-2">
                                         <label class="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
                                             <span class="material-symbols-outlined text-base">link</span> Personal Website
                                         </label>
-                                        <input
-                                            class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
-                                            id="website-url" placeholder="https://yourwebsite.com" type="url" />
+                                        <div class="relative">
+                                            <div class="form-skeleton hidden w-full h-12 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-xl"></div>
+                                            <input
+                                                class="form-input-field w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+                                                id="website-url" placeholder="https://yourwebsite.com" type="url" />
+                                        </div>
+                                        <p id="website-url-error" class="text-xs text-red-500 font-medium hidden mt-1"></p>
                                     </div>
+
                                     <div class="space-y-2">
                                         <label class="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
                                             <span class="material-symbols-outlined text-base">link</span> Facebook URL
                                         </label>
-                                        <input
-                                            class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
-                                            id="facebook-url" placeholder="https://facebook.com/username" type="url" />
+                                        <div class="relative">
+                                            <div class="form-skeleton hidden w-full h-12 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-xl"></div>
+                                            <input
+                                                class="form-input-field w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+                                                id="facebook-url" placeholder="https://facebook.com/username" type="url" />
+                                        </div>
+                                        <p id="facebook-url-error" class="text-xs text-red-500 font-medium hidden mt-1"></p>
                                     </div>
                                 </div>
                             </div>
@@ -289,10 +308,10 @@
                                 class="pt-8 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row justify-end gap-4">
                                 <button
                                     class="px-8 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl font-bold transition-all"
-                                    type="button">
+                                    type="button" onclick="location.reload()">
                                     Cancel
                                 </button>
-                                <button
+                                <button id="submit-profile-btn"
                                     class="bg-primary hover:bg-purple-600 text-white px-10 py-3 rounded-xl font-bold shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2"
                                     type="submit">
                                     Save Profile Changes
@@ -304,9 +323,10 @@
             </div>
 
             <!-- Learning Interests Panel -->
-            <div id="content-learning-interests" class="hidden max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+            <div id="content-learning-interests" class="hidden max-w-5xl px-4 sm:px-6 lg:px-10 py-10">
                 <header class="mb-8">
-                    <nav aria-label="Breadcrumb" class="flex mb-4 text-sm text-slate-500 dark:text-slate-400">
+                    <div class="flex items-center gap-4 mb-4">
+                        <nav aria-label="Breadcrumb" class="flex text-sm text-slate-500 dark:text-slate-400">
                         <ol class="inline-flex items-center space-x-1 md:space-x-3">
                             <li class="inline-flex items-center">
                                 <a class="hover:text-primary transition-colors" href="#">Account Settings</a>
@@ -318,7 +338,8 @@
                                 </div>
                             </li>
                         </ol>
-                    </nav>
+                        </nav>
+                    </div>
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div>
                             <h1 class="text-3xl font-bold text-slate-900 dark:text-white">What are you interested in?
@@ -449,9 +470,10 @@
             </div>
 
             <!-- Security Panel -->
-            <div id="content-security" class="hidden max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+            <div id="content-security" class="hidden max-w-5xl px-4 sm:px-6 lg:px-10 py-10">
                 <header class="mb-10">
-                    <nav aria-label="Breadcrumb" class="flex mb-4 text-sm text-slate-500 dark:text-slate-400">
+                    <div class="flex items-center gap-4 mb-4">
+                        <nav aria-label="Breadcrumb" class="flex text-sm text-slate-500 dark:text-slate-400">
                         <ol class="inline-flex items-center space-x-1 md:space-x-3">
                             <li class="inline-flex items-center">
                                 <a class="hover:text-primary transition-colors" href="#">Account Settings</a>
@@ -463,7 +485,8 @@
                                 </div>
                             </li>
                         </ol>
-                    </nav>
+                        </nav>
+                    </div>
                     <h1 class="text-3xl font-bold text-slate-900 dark:text-white">Security Settings</h1>
                     <p class="text-slate-600 dark:text-slate-400 mt-1">Manage your password and protect your account
                         from
@@ -532,8 +555,8 @@
     </div>
 
     
-    
+    <script type="module" src="/src/services/mobileNav.js"></script>
+    <script type="module" src="/src/services/globalProfile.js"></script>
     <script type="module" src="./accountSettings.js"></script>
 </body>
-
 </html>

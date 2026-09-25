@@ -96,6 +96,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Inject popup modal
     injectProfilePopup();
 
+    // Always reveal nav in finally block so sidebar is never permanently hidden
+    const _revealNav = () => {
+        const sidebar = document.getElementById('sidebar');
+        const nav = sidebar?.querySelector('nav');
+        if (nav && !nav.classList.contains('is-visible')) {
+            nav.classList.add('is-visible');
+        }
+    };
+
     try {
         const session = await AuthService.getSession();
         if (!session) {
@@ -103,14 +112,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        const role = session.admin_role;
+        // Load profile FIRST — admin_role lives on the profile row, not the auth session
+        const profile = await AuthService.getCurrentProfile();
+        const role = profile?.admin_role;
         const accessRules = {
             'superadmin': ['dashboard', 'courses-review', 'bookings-review', 'users', 'instructors', 'categories', 'admin-management', 'finance', 'settings', 'profile', 'analytics', 'course-manager'],
             'course_manager': ['dashboard', 'courses-review', 'bookings-review', 'categories', 'profile', 'course-manager'],
             'finance_manager': ['dashboard', 'finance', 'profile']
         };
 
-        const allowedModules = accessRules[role] || ['dashboard', 'profile'];
+        // If no admin_role on profile, treat as superadmin (fallback for existing admins)
+        const allowedModules = accessRules[role] || accessRules['superadmin'];
         
         // Save role for other components
         session.admin_role = role;
@@ -118,22 +130,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         // 4. Guard current page access
         const currentPath = window.location.pathname;
         const currentModule = currentPath.split('/admin/')[1]?.split('/')[0];
-        if (currentModule && currentModule !== 'dashboard' && !allowedModules.includes(currentModule)) {
+        if (role && currentModule && currentModule !== 'dashboard' && !allowedModules.includes(currentModule)) {
             console.warn(`Role ${role} is not authorized for module: ${currentModule}. Redirecting to dashboard.`);
             window.location.replace('/src/pages/admin/dashboard/index.html');
             return;
         }
 
-        // 5. Update Sidebar UI — hide disallowed links
+        // 5. Update Sidebar UI — hide disallowed links, then reveal nav
         const sidebar = document.getElementById('sidebar');
         const nav = sidebar?.querySelector('nav');
         
         if (nav) {
             const navLinks = nav.querySelectorAll('a');
             navLinks.forEach(link => {
-                const href = link.getAttribute('href');
+                const href = link.getAttribute('href') || '';
                 const moduleName = href.split('/admin/')[1]?.split('/')[0];
-                if (moduleName && moduleName !== 'dashboard' && !allowedModules.includes(moduleName)) {
+                // Only hide if we have a confirmed role AND the module is not allowed
+                if (role && moduleName && moduleName !== 'dashboard' && !allowedModules.includes(moduleName)) {
                     link.style.display = 'none';
                 }
             });
@@ -141,9 +154,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Show nav after filtering is done
             nav.classList.add('is-visible');
         }
-
-        // 5. Load profile and populate header
-        const profile = await AuthService.getCurrentProfile();
 
         // Try multiple ID patterns for maximum compatibility across pages
         const avatarEl = document.getElementById('header-avatar') || document.getElementById('admin-avatar-img');
@@ -206,6 +216,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     } catch (error) {
         console.error('AdminSidebar init error:', error);
+    } finally {
+        // Safety net: always reveal nav so sidebar is never permanently invisible
+        _revealNav();
     }
 });
 

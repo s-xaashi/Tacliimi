@@ -4,24 +4,12 @@
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title>Finance Dashboard | Tacliimi Admin</title>
-    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
+    <link rel="stylesheet" href="/public/assets/css/tacliimi.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
     <script type="module" src="/src/services/adminSidebar.js"></script>
-    <script>
-        tailwind.config = {
-            darkMode: "class",
-            theme: { extend: { colors: { primary: "#4F46E5" } } }
-        };
-    </script>
-    <style type="text/tailwindcss">
-        body { font-family: 'Inter', sans-serif; }
-        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
-        .stat-badge { @apply px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider; }
-        .tab-btn { @apply pb-4 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium flex items-center gap-2 border-b-2 border-transparent transition-colors; }
-        .tab-btn.active { @apply text-indigo-600 dark:text-indigo-400 font-bold border-indigo-600 dark:border-indigo-400; }
-        .status-badge { @apply px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider; }
-    </style>
+    
+    
 </head>
 <body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen">
     <div id="sidebar-overlay" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-20 hidden lg:hidden"></div>
@@ -71,7 +59,7 @@
                 </button>
                 <div>
                     <h2 class="text-xl font-black tracking-tight">Finance Dashboard</h2>
-                    <p class="text-xs text-slate-400 font-medium tracking-wide uppercase">Withdrawals · Refunds · Finance Tickets</p>
+                    <p class="text-xs text-slate-400 font-medium tracking-wide uppercase">Withdrawals · Refunds · Finance Tickets · Boosts</p>
                 </div>
             </div>
             <div class="flex items-center gap-4">
@@ -99,16 +87,25 @@
 
             <!-- Tabs -->
             <div class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-                <div class="px-8 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                    <div class="flex gap-8">
+                <div class="px-4 sm:px-8 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between overflow-x-auto hide-scrollbar gap-4">
+                    <div class="flex gap-4 sm:gap-8 shrink-0">
                         <button class="tab-btn active" id="tab-withdrawals" onclick="switchTab('withdrawals')">
                             <span class="material-symbols-outlined text-base">account_balance_wallet</span> Withdrawals
+                        </button>
+                        <button class="tab-btn" id="tab-finance-reports" onclick="switchTab('finance-reports')">
+                            <span class="material-symbols-outlined text-base">analytics</span> Finance Reports
                         </button>
                         <button class="tab-btn" id="tab-refunds" onclick="switchTab('refunds')">
                             <span class="material-symbols-outlined text-base">reply</span> Refunds
                         </button>
                         <button class="tab-btn" id="tab-finance-tickets" onclick="switchTab('finance-tickets')">
                             <span class="material-symbols-outlined text-base">confirmation_number</span> Finance Tickets
+                        </button>
+                        <button class="tab-btn" id="tab-settings" onclick="switchTab('settings')">
+                            <span class="material-symbols-outlined text-base">settings</span> Settings
+                        </button>
+                        <button class="tab-btn" id="tab-boosts" onclick="switchTab('boosts')">
+                            <span class="material-symbols-outlined text-base">stars</span> Boosts
                         </button>
                     </div>
                     <button id="refresh-btn" class="my-4 w-9 h-9 flex items-center justify-center bg-slate-50 dark:bg-slate-800 rounded-xl hover:bg-indigo-50 transition-all" title="Refresh">
@@ -126,13 +123,13 @@
 
                 <!-- Tab Contents -->
                 <div id="content-withdrawals">
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left">
+                    <div class="overflow-x-auto hide-scrollbar">
+                        <table class="w-full text-left min-w-[900px]">
                             <thead>
                                 <tr class="bg-slate-50 dark:bg-slate-800/50 text-[10px] uppercase tracking-widest text-slate-400">
                                     <th class="px-6 py-4 font-black">Instructor</th>
                                     <th class="px-6 py-4 font-black">Amount</th>
-                                    <th class="px-6 py-4 font-black">Method</th>
+                                    <th class="px-6 py-4 font-black">Method & Details</th>
                                     <th class="px-6 py-4 font-black">Status</th>
                                     <th class="px-6 py-4 font-black">Date</th>
                                     <th class="px-6 py-4 font-black text-right">Actions</th>
@@ -146,8 +143,8 @@
                 </div>
 
                 <div id="content-refunds" class="hidden">
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left">
+                    <div class="overflow-x-auto hide-scrollbar">
+                        <table class="w-full text-left min-w-[900px]">
                             <thead>
                                 <tr class="bg-slate-50 dark:bg-slate-800/50 text-[10px] uppercase tracking-widest text-slate-400">
                                     <th class="px-6 py-4 font-black">Student</th>
@@ -166,8 +163,8 @@
                 </div>
 
                 <div id="content-finance-tickets" class="hidden">
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left">
+                    <div class="overflow-x-auto hide-scrollbar">
+                        <table class="w-full text-left min-w-[900px]">
                             <thead>
                                 <tr class="bg-slate-50 dark:bg-slate-800/50 text-[10px] uppercase tracking-widest text-slate-400">
                                     <th class="px-6 py-4 font-black">Student</th>
@@ -179,6 +176,273 @@
                                 </tr>
                             </thead>
                             <tbody id="finance-tickets-body" class="divide-y divide-slate-100 dark:divide-slate-800">
+                                <tr><td colspan="6" class="px-6 py-8 text-center text-slate-400 italic">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="content-finance-reports" class="hidden p-8">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="reports-grid">
+                        <div class="col-span-full text-center text-slate-400 italic py-8">Loading finance reports...</div>
+                    </div>
+                </div>
+
+                <div id="content-settings" class="hidden p-8 max-w-3xl text-sm">
+                    <h3 class="text-xl font-black mb-6">Platform Monetization</h3>
+                    <form id="settings-form" class="space-y-6">
+                        <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-800">
+                            <div>
+                                <h4 class="font-bold">Enable Platform Commission</h4>
+                                <p class="text-xs text-slate-500 mt-1">If disabled, instructors keep 100% of sales. If enabled, the configured revenue split below will apply to all new purchases.</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="setting-commission-enabled" class="sr-only peer">
+                                <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                            </label>
+                        </div>
+
+                        <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-800">
+                            <div>
+                                <h4 class="font-bold">Enable Refund Requests</h4>
+                                <p class="text-xs text-slate-500 mt-1">If enabled, students will be able to initiate a refund request from the Help Center.</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="setting-refund-requests-enabled" class="sr-only peer">
+                                <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                            </label>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-6 p-4 border border-slate-200 dark:border-slate-800 rounded-xl opacity-50 transition-opacity" id="split-settings-container">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Instructor Percentage (%)</label>
+                                <input type="number" id="setting-instructor-pct" min="0" max="100" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white" value="100">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Platform Percentage (%)</label>
+                                <input type="number" id="setting-platform-pct" min="0" max="100" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white" value="0">
+                            </div>
+                        </div>
+                        <p id="split-error" class="text-xs text-red-500 font-medium hidden">Percentages must sum to exactly 100%.</p>
+
+                        <div class="mt-8">
+                            <h3 class="text-xl font-black mb-6">Withdrawal Controls</h3>
+                            <div class="p-4 border border-slate-200 dark:border-slate-800 rounded-xl">
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Minimum Withdrawal Amount ($)</label>
+                                <input type="number" id="setting-min-withdrawal" min="0" step="0.01" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white" value="10">
+                                <p class="text-xs text-slate-500 mt-2">Instructors cannot request a withdrawal if their available balance is below this amount.</p>
+                            </div>
+                        </div>
+
+                        <!-- Boost Settings & Pricing -->
+                        <div class="mt-8">
+                            <h3 class="text-xl font-black mb-4">Boost Settings</h3>
+                            <div class="space-y-4 mb-6">
+                                <div class="flex items-center justify-between p-4 border border-slate-200 dark:border-slate-800 rounded-xl bg-indigo-50/20 dark:bg-indigo-900/10">
+                                    <div>
+                                        <h4 class="font-bold text-slate-900 dark:text-white">Course Boosting Enabled</h4>
+                                        <p class="text-xs text-slate-500 mt-1">Allow instructors to purchase visibility boosts for courses. Doesn't affect active boosts.</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" id="setting-course-boost-enabled" class="sr-only peer">
+                                        <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                    </label>
+                                </div>
+                                <div class="flex items-center justify-between p-4 border border-slate-200 dark:border-slate-800 rounded-xl bg-indigo-50/20 dark:bg-indigo-900/10">
+                                    <div>
+                                        <h4 class="font-bold text-slate-900 dark:text-white">Course Banners Enabled</h4>
+                                        <p class="text-xs text-slate-500 mt-1">Allow instructors to purchase promotional banner ads for courses.</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" id="setting-course-banner-enabled" class="sr-only peer">
+                                        <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                    </label>
+                                </div>
+                                <div class="flex items-center justify-between p-4 border border-slate-200 dark:border-slate-800 rounded-xl bg-indigo-50/20 dark:bg-indigo-900/10">
+                                    <div>
+                                        <h4 class="font-bold text-slate-900 dark:text-white">Mentor Boosting Enabled</h4>
+                                        <p class="text-xs text-slate-500 mt-1">Allow mentors to purchase visibility boosts for their profiles.</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" id="setting-mentor-boost-enabled" class="sr-only peer">
+                                        <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                    </label>
+                                </div>
+                                <div class="flex items-center justify-between p-4 border border-slate-200 dark:border-slate-800 rounded-xl bg-indigo-50/20 dark:bg-indigo-900/10">
+                                    <div>
+                                        <h4 class="font-bold text-slate-900 dark:text-white">Mentor Banners Enabled</h4>
+                                        <p class="text-xs text-slate-500 mt-1">Allow mentors to purchase promotional banner ads.</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" id="setting-mentor-banner-enabled" class="sr-only peer">
+                                        <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <h3 class="text-xl font-black mb-2 mt-8">Boost Pricing</h3>
+                            <p class="text-xs text-slate-500 mb-6">Set per-day rates for instructor-purchased visibility boosts and promo banners.</p>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="p-4 border border-slate-200 dark:border-slate-800 rounded-xl">
+                                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Course Boost ($/day)</label>
+                                    <input type="number" id="setting-course-boost-price" min="0" step="0.01" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white" value="5">
+                                </div>
+                                <div class="p-4 border border-slate-200 dark:border-slate-800 rounded-xl">
+                                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Mentor Boost ($/day)</label>
+                                    <input type="number" id="setting-mentor-boost-price" min="0" step="0.01" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white" value="5">
+                                </div>
+                                <div class="p-4 border border-slate-200 dark:border-slate-800 rounded-xl">
+                                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Course Banner ($/day)</label>
+                                    <input type="number" id="setting-course-banner-price" min="0" step="0.01" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white" value="3">
+                                </div>
+                                <div class="p-4 border border-slate-200 dark:border-slate-800 rounded-xl">
+                                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Mentor Banner ($/day)</label>
+                                    <input type="number" id="setting-mentor-banner-price" min="0" step="0.01" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white" value="3">
+                                </div>
+                                <div class="p-4 border border-slate-200 dark:border-slate-800 rounded-xl">
+                                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Min Days</label>
+                                    <input type="number" id="setting-boost-min-days" min="1" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white" value="1">
+                                </div>
+                                <div class="p-4 border border-slate-200 dark:border-slate-800 rounded-xl">
+                                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Max Days</label>
+                                    <input type="number" id="setting-boost-max-days" min="1" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-bold focus:ring-2 focus:ring-indigo-600 outline-none transition-all dark:text-white" value="90">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pt-6 border-t border-slate-200 dark:border-slate-800 flex justify-end">
+                            <button type="submit" id="save-settings-btn" class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-all shadow-md flex items-center gap-2">
+                                <span class="material-symbols-outlined text-[18px]">save</span> Save Settings
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Boosts Tab -->
+                <div id="content-boosts" class="hidden p-8 space-y-6">
+                    <!-- Manual Grant Panel -->
+                    <div class="bg-indigo-50/30 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 mb-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 rounded-xl flex items-center justify-center border border-indigo-200 dark:border-indigo-800">
+                                    <span class="material-symbols-outlined">add_moderator</span>
+                                </div>
+                                <div>
+                                    <h3 class="font-black text-lg text-slate-900 dark:text-white">Manual Admin Grant</h3>
+                                    <p class="text-xs text-slate-500">Provide visibility features manually. Set Amount Collected to $0 for free grants.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <form id="admin-grant-form" class="space-y-5" onsubmit="event.preventDefault(); window.submitAdminGrant();">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Entity Type</label>
+                                    <select id="grant-entity-type" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-bold focus:ring-2 focus:ring-indigo-600 outline-none">
+                                        <option value="course">Course</option>
+                                        <option value="mentor">Mentor</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Entity ID</label>
+                                    <input type="text" id="grant-entity-id" required class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-mono text-sm focus:ring-2 focus:ring-indigo-600 outline-none" placeholder="uuid...">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-slate-200 dark:border-slate-800 pt-5">
+                                <div>
+                                    <label class="flex items-center gap-3 p-3 border border-slate-200 dark:border-slate-700 rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800/50 transition">
+                                        <input type="checkbox" id="grant-boost-cb" onchange="window.toggleGrantFields()" class="w-5 h-5 rounded text-indigo-600 border-slate-300 focus:ring-indigo-600">
+                                        <div>
+                                            <p class="font-bold text-sm text-slate-900 dark:text-white">Grant Boost</p>
+                                        </div>
+                                    </label>
+                                    <div id="grant-boost-amount-row" class="hidden mt-3 p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl">
+                                        <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Amount Collected ($)</label>
+                                        <input type="number" id="grant-boost-amount" min="0" step="0.01" value="0" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 font-bold focus:ring-2 focus:ring-indigo-600 outline-none h-10">
+                                        <p class="text-[10px] text-slate-400 mt-1">Leave $0 for free grant.</p>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="flex items-center gap-3 p-3 border border-slate-200 dark:border-slate-700 rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800/50 transition">
+                                        <input type="checkbox" id="grant-banner-cb" onchange="window.toggleGrantFields()" class="w-5 h-5 rounded text-indigo-600 border-slate-300 focus:ring-indigo-600">
+                                        <div>
+                                            <p class="font-bold text-sm text-slate-900 dark:text-white">Grant Banner</p>
+                                        </div>
+                                    </label>
+                                    <div id="grant-banner-fields" class="hidden mt-3 p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl space-y-3">
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Banner Text</label>
+                                            <input type="text" id="grant-banner-text" maxlength="60" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white font-bold focus:ring-2 focus:ring-indigo-600 outline-none h-10" placeholder="e.g. 50% Off Today!">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Amount Collected ($)</label>
+                                            <input type="number" id="grant-banner-amount" min="0" step="0.01" value="0" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 font-bold focus:ring-2 focus:ring-indigo-600 outline-none h-10">
+                                            <p class="text-[10px] text-slate-400 mt-1">Leave $0 for free grant.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-slate-200 dark:border-slate-800 pt-5 items-end">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Duration (Days)</label>
+                                    <input type="number" id="grant-days" min="1" max="90" value="7" required class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-bold focus:ring-2 focus:ring-indigo-600 outline-none">
+                                </div>
+                                <div>
+                                    <button type="submit" id="grant-submit-btn" disabled class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2">
+                                        <span class="material-symbols-outlined text-sm">check_circle</span> Create Grant
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Summary Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="boost-summary-cards">
+                        <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-5 rounded-2xl">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-amber-600 text-xl">bolt</span>
+                                </div>
+                                <p class="text-xs font-black uppercase tracking-widest text-amber-700 dark:text-amber-400">Boost Revenue</p>
+                            </div>
+                            <h3 class="text-2xl font-black text-amber-700 dark:text-amber-300" id="boost-total-revenue">—</h3>
+                            <p class="text-[11px] text-amber-600/70 dark:text-amber-500/70 mt-1" id="boost-active-count">Loading...</p>
+                        </div>
+                        <div class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 p-5 rounded-2xl">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="w-9 h-9 rounded-xl bg-purple-100 dark:bg-purple-900/40 flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-purple-600 text-xl">campaign</span>
+                                </div>
+                                <p class="text-xs font-black uppercase tracking-widest text-purple-700 dark:text-purple-400">Banner Revenue</p>
+                            </div>
+                            <h3 class="text-2xl font-black text-purple-700 dark:text-purple-300" id="boost-banner-revenue">—</h3>
+                            <p class="text-[11px] text-purple-600/70 dark:text-purple-500/70 mt-1" id="boost-banner-count">Loading...</p>
+                        </div>
+                        <div class="bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 p-5 rounded-2xl">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="w-9 h-9 rounded-xl bg-rose-100 dark:bg-rose-900/40 flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-rose-600 text-xl">cancel</span>
+                                </div>
+                                <p class="text-xs font-black uppercase tracking-widest text-rose-700 dark:text-rose-400">Cancelled</p>
+                            </div>
+                            <h3 class="text-2xl font-black text-rose-700 dark:text-rose-300" id="boost-cancel-count">—</h3>
+                            <p class="text-[11px] text-rose-600/70 dark:text-rose-500/70 mt-1">Early stops (non-refundable)</p>
+                        </div>
+                    </div>
+
+                    <!-- Boosts Table -->
+                    <div class="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800">
+                        <table class="w-full text-left">
+                            <thead>
+                                <tr class="bg-slate-50 dark:bg-slate-800/50 text-[10px] uppercase tracking-widest text-slate-400">
+                                    <th class="px-6 py-4 font-black">Instructor</th>
+                                    <th class="px-6 py-4 font-black">Type</th>
+                                    <th class="px-6 py-4 font-black">Amount</th>
+                                    <th class="px-6 py-4 font-black">Period</th>
+                                    <th class="px-6 py-4 font-black">Status</th>
+                                    <th class="px-6 py-4 font-black">Cancelled On</th>
+                                </tr>
+                            </thead>
+                            <tbody id="boosts-body" class="divide-y divide-slate-100 dark:divide-slate-800">
                                 <tr><td colspan="6" class="px-6 py-8 text-center text-slate-400 italic">Loading...</td></tr>
                             </tbody>
                         </table>
@@ -202,12 +466,26 @@
         </div>
     </div>
 
+    <!-- Confirm Modal -->
+    <div id="confirm-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeConfirmModal()"></div>
+        <div class="relative bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-md p-8 animate-fade-in">
+            <h3 class="text-xl font-bold dark:text-white mb-2" id="confirm-modal-title">Confirm Action</h3>
+            <p class="text-slate-500 mb-6 text-sm" id="confirm-modal-msg">Are you sure you want to proceed?</p>
+            <div class="flex gap-3">
+                <button onclick="closeConfirmModal()" class="flex-1 py-3 bg-slate-100 dark:bg-slate-800 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition-all">Cancel</button>
+                <button id="confirm-modal-btn" class="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-all">Confirm</button>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         import { supabase } from '/src/services/supabaseClient.js';
         import { AuthService } from '/src/services/authService.js';
         import { RefundService } from '/src/services/refundService.js';
         import { WithdrawalService } from '/src/services/withdrawalService.js';
         import { SupportService } from '/src/services/supportService.js';
+        import { financeSettingsService } from '/src/services/financeSettingsService.js';
 
         let currentTab = 'withdrawals';
         let currentFilter = 'all';
@@ -216,7 +494,7 @@
         let rejectTarget = null; // { type: 'withdrawal'|'refund', id: string }
 
         // Stat colors for badges
-        const statusBadge = (s) => {
+        const statusBadge = (s, item = null) => {
             const map = {
                 pending: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
                 approved: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
@@ -226,7 +504,11 @@
                 resolved: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
                 closed: 'bg-slate-100 text-slate-500'
             };
-            return `<span class="status-badge ${map[s] || 'bg-slate-100 text-slate-500'}">${s}</span>`;
+            let attr = '';
+            if (s === 'rejected' && item) {
+                attr = `title="${(item.rejection_reason || item.notes_to_instructor || 'No reason specified').replace(/"/g, '&quot;')}"`;
+            }
+            return `<span class="status-badge ${map[s] || 'bg-slate-100 text-slate-500'}" ${attr}>${s}</span>`;
         };
 
         const fmtDate = d => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -252,33 +534,35 @@
             const pendingR = allRefunds.filter(r => r.status === 'pending');
             const totalRev = allRefunds.filter(r => r.status === 'approved').reduce((s, r) => s + Number(r.amount || 0), 0);
             document.getElementById('finance-stats').innerHTML = `
-                <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                    <p class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Pending Withdrawals</p>
-                    <h3 class="text-2xl font-black text-amber-600">${pendingW.length}</h3>
-                    <p class="text-xs text-slate-400 mt-1">${fmtAmt(pendingW.reduce((s, w) => s + Number(w.amount || 0), 0))} total</p>
+                <div class="bg-white dark:bg-slate-900 p-3 sm:p-5 text-center sm:text-left rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-center">
+                    <p class="text-slate-400 text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-1">Pending Withdrawals</p>
+                    <h3 class="text-xl sm:text-2xl font-black text-amber-600">${pendingW.length}</h3>
+                    <p class="text-[10px] sm:text-xs text-slate-400 mt-1">${fmtAmt(pendingW.reduce((s, w) => s + Number(w.amount || 0), 0))} total</p>
                 </div>
-                <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                    <p class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Pending Refunds</p>
-                    <h3 class="text-2xl font-black text-purple-600">${pendingR.length}</h3>
-                    <p class="text-xs text-slate-400 mt-1">${fmtAmt(pendingR.reduce((s, r) => s + Number(r.amount || 0), 0))} total</p>
+                <div class="bg-white dark:bg-slate-900 p-3 sm:p-5 text-center sm:text-left rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-center">
+                    <p class="text-slate-400 text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-1">Pending Refunds</p>
+                    <h3 class="text-xl sm:text-2xl font-black text-purple-600">${pendingR.length}</h3>
+                    <p class="text-[10px] sm:text-xs text-slate-400 mt-1">${fmtAmt(pendingR.reduce((s, r) => s + Number(r.amount || 0), 0))} total</p>
                 </div>
-                <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                    <p class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Approved Refunds</p>
-                    <h3 class="text-2xl font-black text-emerald-600">${fmtAmt(totalRev)}</h3>
-                    <p class="text-xs text-slate-400 mt-1">${allRefunds.filter(r => r.status === 'approved').length} items</p>
+                <div class="bg-white dark:bg-slate-900 p-3 sm:p-5 text-center sm:text-left rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-center">
+                    <p class="text-slate-400 text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-1">Approved Refunds</p>
+                    <h3 class="text-xl sm:text-2xl font-black text-emerald-600">${fmtAmt(totalRev)}</h3>
+                    <p class="text-[10px] sm:text-xs text-slate-400 mt-1">${allRefunds.filter(r => r.status === 'approved').length} items</p>
                 </div>
-                <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                    <p class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Finance Tickets</p>
-                    <h3 class="text-2xl font-black text-blue-600">${allFinanceTickets.length}</h3>
-                    <p class="text-xs text-slate-400 mt-1">${allFinanceTickets.filter(t => t.status === 'open').length} open</p>
+                <div class="bg-white dark:bg-slate-900 p-3 sm:p-5 text-center sm:text-left rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-center">
+                    <p class="text-slate-400 text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-1">Finance Tickets</p>
+                    <h3 class="text-xl sm:text-2xl font-black text-blue-600">${allFinanceTickets.length}</h3>
+                    <p class="text-[10px] sm:text-xs text-slate-400 mt-1">${allFinanceTickets.filter(t => t.status === 'open').length} open</p>
                 </div>
             `;
         }
 
-        function renderCurrentTab() {
+        async function renderCurrentTab() {
             if (currentTab === 'withdrawals') renderWithdrawals();
             else if (currentTab === 'refunds') renderRefunds();
-            else renderFinanceTickets();
+            else if (currentTab === 'finance-reports') renderFinanceReports();
+            else if (currentTab === 'boosts') await renderBoostsTab();
+            else await renderFinanceTickets();
         }
 
         function filtered(arr) {
@@ -290,43 +574,120 @@
             const rows = filtered(allWithdrawals);
             const tbody = document.getElementById('withdrawals-body');
             if (!rows.length) { tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-10 text-center text-slate-400 italic">No withdrawals found</td></tr>`; return; }
-            tbody.innerHTML = rows.map(w => `
+            tbody.innerHTML = rows.map(w => {
+                let methodDetails = '';
+                const snap = w.payout_method_snapshot || {};
+                // Detect if instructor has both methods configured from the snapshot
+                const hasMM = !!(snap.phone_mobile_money || snap.provider_name);
+                const hasCOD = !!(snap.address && snap.city && snap.phone_cash_on_delivery);
+
+                if (w.payout_method === 'mobile_money') {
+                    const phone = snap.phone_mobile_money || 'N/A';
+                    const provider = snap.provider_name || 'N/A';
+                    methodDetails = `<div class="text-xs text-slate-500 mt-1 font-medium">Nmb: ${phone} <br>Prov: ${provider}</div>`;
+                } else if (w.payout_method === 'bank_transfer') {
+                    const accName = snap.bank_account_name || 'N/A';
+                    const accNmb = snap.bank_account_number || 'N/A';
+                    const bankName = snap.bank_name || 'N/A';
+                    methodDetails = `<div class="text-xs text-slate-500 mt-1 font-medium">Bank: ${bankName}<br>Name: ${accName} <br>Acc: ${accNmb}</div>`;
+                } else if (w.payout_method === 'cash_on_delivery') {
+                    const phone = snap.phone_cash_on_delivery || 'N/A';
+                    const addr = snap.address || 'N/A';
+                    const loc = [snap.city, snap.country].filter(Boolean).join(', ');
+                    methodDetails = `<div class="text-xs text-slate-500 mt-1 font-medium">Phone: ${phone} <br>Addr: ${addr}${loc ? ' (' + loc + ')' : ''}</div>`;
+                }
+                
+                if (w.status === 'pending' && hasMM && hasCOD) {
+                    methodDetails += `
+                        <div class="mt-2">
+                            <select onchange="window.updateWithdrawalMethod('${w.id}', this.value)" class="text-[10px] uppercase font-bold text-slate-600 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded px-1.5 py-1">
+                                <option value="mobile_money" ${w.payout_method === 'mobile_money' ? 'selected' : ''}>Switch to MM</option>
+                                <option value="cash_on_delivery" ${w.payout_method === 'cash_on_delivery' ? 'selected' : ''}>Switch to Cash</option>
+                            </select>
+                        </div>
+                    `;
+                }
+
+                let actions = `<span class="text-slate-300 text-xs italic">No actions</span>`;
+                if (w.status === 'pending') {
+                    actions = `
+                        <button onclick="approveWithdrawal('${w.id}')" class="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-700 transition-all mr-2 mb-1">Approve</button>
+                        <button onclick="openRejectModal('withdrawal', '${w.id}')" class="px-3 py-1.5 bg-red-100 text-red-600 rounded-lg text-xs font-bold hover:bg-red-200 transition-all mb-1">Reject</button>
+                    `;
+                } else if (w.status === 'approved') {
+                    actions = `
+                        <button onclick="markProcessing('${w.id}')" class="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700 transition-all mb-1">Mark Processing</button>
+                    `;
+                } else if (w.status === 'processing') {
+                    actions = `
+                        <button onclick="markPaid('${w.id}')" class="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-700 transition-all mb-1">Mark Paid</button>
+                    `;
+                }
+
+                const avatarStr = w.profiles?.avatar_url ? `<img src="${w.profiles.avatar_url}" class="w-full h-full object-cover rounded-xl" />` : `${(w.profiles?.full_name || 'U')[0]}`;
+
+                return `
                 <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                     <td class="px-6 py-4">
                         <div class="flex items-center gap-3">
-                            <div class="w-9 h-9 rounded-xl bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 font-black text-sm">${(w.profiles?.full_name || 'U')[0]}</div>
-                            <div><p class="font-bold text-sm">${w.profiles?.full_name || 'Unknown'}</p><p class="text-xs text-slate-400">${w.profiles?.email || ''}</p></div>
+                            <div class="cursor-pointer hover:opacity-80 transition-opacity" onclick="window.open('/src/pages/instructor/instructor-profile-public/index.html?id=${w.instructor_id || ''}', '_blank')">
+                                <div class="w-9 h-9 rounded-xl bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 font-black text-sm overflow-hidden border border-indigo-200 dark:border-indigo-800">${avatarStr}</div>
+                            </div>
+                            <div>
+                                <p class="font-bold text-sm cursor-pointer hover:underline text-indigo-600" onclick="window.open('/src/pages/instructor/instructor-profile-public/index.html?id=${w.instructor_id || ''}', '_blank')">${w.profiles?.full_name || 'Unknown'}</p>
+                                <p class="text-xs text-slate-400">${w.profiles?.email || ''}</p>
+                            </div>
                         </div>
                     </td>
                     <td class="px-6 py-4 font-black text-lg">${fmtAmt(w.amount)}</td>
-                    <td class="px-6 py-4 text-sm uppercase font-semibold">${w.payout_method || 'N/A'}</td>
-                    <td class="px-6 py-4">${statusBadge(w.status)}</td>
-                    <td class="px-6 py-4 text-slate-400 text-sm">${fmtDate(w.created_at)}</td>
+                    <td class="px-6 py-4 text-sm font-semibold">
+                        <div class="uppercase">${w.payout_method ? w.payout_method.replace('_', ' ') : 'N/A'}</div>
+                        ${methodDetails}
+                    </td>
+                    <td class="px-6 py-4">${statusBadge(w.status, w)}</td>
+                    <td class="px-6 py-4 text-slate-400 text-sm">
+                        ${fmtDate(w.created_at)}
+                        ${w.reference_number ? `<div class="text-[10px] uppercase font-bold text-slate-500 mt-1">Ref: ${w.reference_number}</div>` : ''}
+                    </td>
                     <td class="px-6 py-4 text-right">
-                        ${w.status === 'pending' ? `
-                            <button onclick="approveWithdrawal('${w.id}')" class="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-700 transition-all mr-2">Approve</button>
-                            <button onclick="openRejectModal('withdrawal', '${w.id}')" class="px-3 py-1.5 bg-red-100 text-red-600 rounded-lg text-xs font-bold hover:bg-red-200 transition-all">Reject</button>
-                        ` : `<span class="text-slate-300 text-xs italic">No actions</span>`}
+                        ${actions}
                     </td>
                 </tr>
-            `).join('');
+                `;
+            }).join('');
         }
 
         function renderRefunds() {
             const rows = filtered(allRefunds);
             const tbody = document.getElementById('refunds-body');
             if (!rows.length) { tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-10 text-center text-slate-400 italic">No refunds found</td></tr>`; return; }
-            tbody.innerHTML = rows.map(r => `
+            tbody.innerHTML = rows.map(r => {
+                const studentId = r.student_id || '';
+                const linkedTicket = r.support_tickets;
+
+                return `
                 <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                     <td class="px-6 py-4">
                         <div class="flex items-center gap-3">
                             <div class="w-9 h-9 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 font-black text-sm">${(r.profiles?.full_name || 'U')[0]}</div>
-                            <div><p class="font-bold text-sm">${r.profiles?.full_name || 'Unknown'}</p><p class="text-xs text-slate-400">${r.profiles?.email || ''}</p></div>
+                            <div>
+                                <p class="font-bold text-sm cursor-pointer hover:text-indigo-600 hover:underline transition-colors"
+                                   onclick="window.open('/src/pages/admin/users/index.html', '_blank')" title="View student in Admin Panel">
+                                    ${r.profiles?.full_name || 'Unknown'}
+                                </p>
+                                <p class="text-xs text-slate-400">${r.profiles?.email || ''}</p>
+                                ${linkedTicket ? `
+                                    <button onclick="switchTab('finance-tickets')" class="mt-1 inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-full text-[9px] font-black uppercase tracking-wider hover:bg-indigo-100 hover:text-indigo-600 transition-all">
+                                        <span class="material-symbols-outlined text-[10px]">receipt_long</span>
+                                        View Ticket · ${linkedTicket.entity_id || 'Finance Issue'}
+                                    </button>
+                                ` : ''}
+                            </div>
                         </div>
                     </td>
                     <td class="px-6 py-4 font-black text-lg">${fmtAmt(r.amount)}</td>
-                    <td class="px-6 py-4"><span class="text-xs font-bold text-slate-500 uppercase">${(r.request_type || 'course_refund').replace('_', ' ')}</span></td>
-                    <td class="px-6 py-4">${statusBadge(r.status)}</td>
+                    <td class="px-6 py-4"><span class="text-xs font-bold text-slate-500 uppercase">${(r.request_type || 'general_refund').replace(/_/g, ' ')}</span></td>
+                    <td class="px-6 py-4">${statusBadge(r.status, r)}</td>
                     <td class="px-6 py-4 text-slate-400 text-sm">${fmtDate(r.created_at)}</td>
                     <td class="px-6 py-4 text-right">
                         ${r.status === 'pending' ? `
@@ -337,43 +698,178 @@
                         `}
                     </td>
                 </tr>
-            `).join('');
+            `}).join('');
         }
 
-        function renderFinanceTickets() {
+        async function renderFinanceTickets() {
             const rows = filtered(allFinanceTickets);
             const tbody = document.getElementById('finance-tickets-body');
             if (!rows.length) { tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-10 text-center text-slate-400 italic">No finance tickets found</td></tr>`; return; }
-            tbody.innerHTML = rows.map(t => `
+
+            // Pre-fetch signed URLs for all attachments in parallel
+            const { SupportService } = await import('/src/services/supportService.js');
+            const allAttachments = rows.flatMap(t => t.support_ticket_attachments || []);
+            const signedUrlMap = {};
+            await Promise.all(allAttachments.map(async (att) => {
+                if (att.file_url) {
+                    signedUrlMap[att.id] = await SupportService.getSignedUrl(att.file_url);
+                }
+            }));
+
+            tbody.innerHTML = rows.map(t => {
+                const attachments = t.support_ticket_attachments || [];
+                const screenshotsHtml = attachments.length > 0
+                    ? `<div class="flex gap-1.5 mt-2 flex-wrap">${
+                        attachments.map(a => signedUrlMap[a.id]
+                            ? `<a href="${signedUrlMap[a.id]}" target="_blank" title="View screenshot" class="block">
+                                <img src="${signedUrlMap[a.id]}" class="w-12 h-12 rounded-xl object-cover border-2 border-slate-200 dark:border-slate-700 hover:border-indigo-400 hover:opacity-90 transition-all shadow-sm cursor-pointer" />
+                               </a>`
+                            : ''
+                        ).join('')
+                      }</div>`
+                    : '';
+
+                const linkedRefunds = t.refund_requests || [];
+                const refundBadge = linkedRefunds.length > 0
+                    ? `<button onclick="switchTab('refunds')" class="mt-1.5 inline-flex items-center gap-1 px-2 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 rounded-full text-[9px] font-black uppercase tracking-wider hover:bg-purple-200 dark:hover:bg-purple-900/60 transition-all border border-purple-200 dark:border-purple-800">
+                        <span class="material-symbols-outlined text-[10px]">reply</span>
+                        Refund Requested · ${fmtAmt(linkedRefunds[0].amount)}
+                      </button>`
+                    : '';
+
+                return `
                 <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                     <td class="px-6 py-4">
-                        <p class="font-bold text-sm">${t.profiles?.full_name || 'Unknown'}</p>
+                        <button onclick="window.openFinanceStudentProfile('${t.student_id}')" class="text-primary hover:underline font-bold text-sm cursor-pointer text-left" title="View Student Profile">${t.profiles?.full_name || 'Unknown'}</button>
                     </td>
-                    <td class="px-6 py-4 font-mono text-xs text-slate-500">${t.entity_id || '—'}</td>
+                    <td class="px-6 py-4 font-mono text-xs">
+                        ${t.entity_id?.toString().startsWith('PAY-') ? `
+                            <button onclick="window.routePaymentReference('${t.entity_id}', '${t.student_id}')" class="text-primary hover:underline flex items-center gap-1 font-bold" title="Trace Payment Origin">
+                                ${t.entity_id}
+                                <span class="material-symbols-outlined text-[12px]">open_in_new</span>
+                            </button>
+                        ` : `<span class="text-slate-500">${t.entity_id || '—'}</span>`}
+                    </td>
                     <td class="px-6 py-4 max-w-xs">
                         <p class="text-sm text-slate-600 dark:text-slate-400 truncate">${t.description}</p>
+                        ${screenshotsHtml}
+                        ${refundBadge}
                     </td>
-                    <td class="px-6 py-4">${statusBadge(t.status)}</td>
+                    <td class="px-6 py-4">${statusBadge(t.status, t)}</td>
                     <td class="px-6 py-4 text-slate-400 text-sm">${fmtDate(t.created_at)}</td>
                     <td class="px-6 py-4 text-right">
                         ${t.status === 'open' ? `
                             <button onclick="resolveTicket('${t.id}')" class="px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-bold hover:bg-indigo-700 transition-all">Mark Resolved</button>
                         ` : `<span class="text-slate-300 text-xs italic">Done</span>`}
                     </td>
-                </tr>
-            `).join('');
+                </tr>`;
+            }).join('');
         }
+
+        async function renderFinanceReports() {
+            const container = document.getElementById('reports-grid').parentElement;
+            document.getElementById('reports-grid').innerHTML = '<div class="col-span-full text-center text-slate-400 italic py-8">Loading finance reports...</div>';
+            
+            const [analyticsData, boostsResult, bannersResult] = await Promise.all([
+                financeSettingsService.getAdminAnalytics(),
+                supabase.from('boosts').select('entity_type, amount_paid').not('amount_paid', 'is', null),
+                supabase.from('promo_banners').select('entity_type, amount_paid').not('amount_paid', 'is', null)
+            ]);
+
+            const data = analyticsData;
+            if (!data) {
+                document.getElementById('reports-grid').innerHTML = '<div class="col-span-full text-center text-red-400 py-8">Failed to load finance reports.</div>';
+                return;
+            }
+
+            const boosts = boostsResult.data || [];
+            const banners = bannersResult.data || [];
+
+            const sum = (arr) => arr.reduce((s, r) => s + Number(r.amount_paid || 0), 0);
+
+            const courseBoostRev   = sum(boosts.filter(b => b.entity_type === 'course'));
+            const mentorBoostRev   = sum(boosts.filter(b => b.entity_type === 'mentor'));
+            const courseBannerRev  = sum(banners.filter(b => b.entity_type === 'course'));
+            const mentorBannerRev  = sum(banners.filter(b => b.entity_type === 'mentor'));
+            const courseTotal      = courseBoostRev + courseBannerRev;
+            const mentorTotal      = mentorBoostRev + mentorBannerRev;
+
+            const colorMap = {
+                indigo: { bg: 'bg-indigo-50 dark:bg-indigo-900/20', text: 'text-indigo-600 dark:text-indigo-400', icon: 'text-indigo-500', border: 'border-indigo-100 dark:border-indigo-800' },
+                emerald: { bg: 'bg-emerald-50 dark:bg-emerald-900/20', text: 'text-emerald-600 dark:text-emerald-400', icon: 'text-emerald-500', border: 'border-emerald-100 dark:border-emerald-800' },
+                purple: { bg: 'bg-purple-50 dark:bg-purple-900/20', text: 'text-purple-600 dark:text-purple-400', icon: 'text-purple-500', border: 'border-purple-100 dark:border-purple-800' },
+                blue: { bg: 'bg-blue-50 dark:bg-blue-900/20', text: 'text-blue-600 dark:text-blue-400', icon: 'text-blue-500', border: 'border-blue-100 dark:border-blue-800' },
+                amber: { bg: 'bg-amber-50 dark:bg-amber-900/20', text: 'text-amber-600 dark:text-amber-400', icon: 'text-amber-500', border: 'border-amber-100 dark:border-amber-800' },
+                red: { bg: 'bg-red-50 dark:bg-red-900/20', text: 'text-red-600 dark:text-red-400', icon: 'text-red-500', border: 'border-red-100 dark:border-red-800' },
+                sky: { bg: 'bg-sky-50 dark:bg-sky-900/20', text: 'text-sky-600 dark:text-sky-400', icon: 'text-sky-500', border: 'border-sky-100 dark:border-sky-800' },
+                violet: { bg: 'bg-violet-50 dark:bg-violet-900/20', text: 'text-violet-600 dark:text-violet-400', icon: 'text-violet-500', border: 'border-violet-100 dark:border-violet-800' },
+                orange: { bg: 'bg-orange-50 dark:bg-orange-900/20', text: 'text-orange-600 dark:text-orange-400', icon: 'text-orange-500', border: 'border-orange-100 dark:border-orange-800' },
+            };
+
+            const card = (label, value, icon, color, sub = '') => {
+                const cm = colorMap[color];
+                return `
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-shadow">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-10 h-10 ${cm.bg} rounded-xl flex items-center justify-center">
+                            <span class="material-symbols-outlined ${cm.icon}">${icon}</span>
+                        </div>
+                    </div>
+                    <h4 class="text-2xl font-black ${cm.text}">${value}</h4>
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-2">${label}</p>
+                    ${sub ? `<p class="text-[10px] text-slate-400 mt-1">${sub}</p>` : ''}
+                </div>`;
+            };
+
+            const sectionHeader = (title, icon) => `
+                <div class="col-span-full flex items-center gap-3 mt-4 mb-1">
+                    <span class="material-symbols-outlined text-slate-400">${icon}</span>
+                    <h3 class="text-sm font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">${title}</h3>
+                    <div class="flex-1 h-px bg-slate-200 dark:bg-slate-700"></div>
+                </div>`;
+
+            const mainCards = [
+                { label: 'Total Platform Revenue', value: fmtAmt(data.total_revenue), icon: 'trending_up', color: 'indigo' },
+                { label: 'Total Instructor Revenue', value: fmtAmt(data.instructor_payouts), icon: 'group', color: 'emerald' },
+                { label: 'Commission Collected', value: fmtAmt(data.platform_fees), icon: 'account_balance', color: 'purple' },
+                { label: 'Revenue This Month', value: fmtAmt(data.monthly_revenue), icon: 'calendar_month', color: 'blue' },
+                { label: 'Total Withdrawals (Paid)', value: fmtAmt(data.withdrawals_paid), icon: 'payments', color: 'emerald' },
+                { label: 'Pending Withdrawals', value: fmtAmt(data.withdrawals_pending), icon: 'hourglass_top', color: 'amber' },
+                { label: 'Refunded Amount', value: fmtAmt(data.refunds), icon: 'reply', color: 'red' },
+                { label: 'Revenue by Courses', value: fmtAmt(data.course_revenue), icon: 'school', color: 'sky' },
+                { label: 'Revenue by Mentorship', value: fmtAmt(data.mentorship_revenue), icon: 'people', color: 'violet' },
+            ];
+
+            document.getElementById('reports-grid').innerHTML =
+                mainCards.map(c => card(c.label, c.value, c.icon, c.color)).join('') +
+
+                sectionHeader('Course Promotions', 'school') +
+                card('Course Visibility Boost', fmtAmt(courseBoostRev), 'rocket_launch', 'sky', 'Paid for course priority placement') +
+                card('Course Banner', fmtAmt(courseBannerRev), 'campaign', 'amber', 'Custom text banner on course card') +
+                card('Course Boost + Banner Combined', fmtAmt(courseTotal), 'stars', 'orange', 'Total across all course promotions') +
+
+                sectionHeader('Mentor Promotions', 'person_pin') +
+                card('Mentor Profile Boost', fmtAmt(mentorBoostRev), 'rocket_launch', 'violet', 'Paid for mentor marketplace priority') +
+                card('Mentor Banner', fmtAmt(mentorBannerRev), 'campaign', 'purple', 'Custom text banner on mentor card') +
+                card('Mentor Boost + Banner Combined', fmtAmt(mentorTotal), 'stars', 'indigo', 'Total across all mentor promotions');
+        }
+
 
         // Tab switching
         window.switchTab = function(tab) {
             currentTab = tab;
             currentFilter = 'all';
-            ['withdrawals','refunds','finance-tickets'].forEach(t => {
-                document.getElementById('content-' + t).classList.add('hidden');
-                document.getElementById('tab-' + t).classList.remove('active');
+            ['withdrawals','refunds','finance-tickets', 'finance-reports', 'settings', 'boosts'].forEach(t => {
+                const contentEl = document.getElementById('content-' + t);
+                if (contentEl) contentEl.classList.add('hidden');
+                const tabEl = document.getElementById('tab-' + t);
+                if (tabEl) tabEl.classList.remove('active');
             });
             document.getElementById('content-' + tab).classList.remove('hidden');
             document.getElementById('tab-' + tab).classList.add('active');
+            
+            // Hide filter UI for settings, finance-reports, and boosts tabs
+            document.getElementById('status-filter').classList.toggle('hidden', tab === 'settings' || tab === 'finance-reports' || tab === 'boosts');
             // Reset filter UI
             document.querySelectorAll('.filter-btn').forEach(b => {
                 b.classList.toggle('bg-indigo-600', b.dataset.status === 'all');
@@ -399,25 +895,75 @@
         };
 
         // Actions
-        window.approveWithdrawal = async function(id) {
-            if (!confirm('Approve this withdrawal?')) return;
+        window.updateWithdrawalMethod = async function(id, newMethod) {
             try {
-                await WithdrawalService.approveWithdrawal(id, adminSession?.user?.id);
+                const { error } = await supabase.from('withdrawal_requests').update({ payout_method: newMethod }).eq('id', id);
+                if (error) throw error;
                 await loadAll();
-            } catch (e) { alert('Error: ' + e.message); }
+            } catch (err) {
+                console.error(err);
+                alert('Failed to update payout method: ' + err.message);
+            }
         };
 
-        window.approveRefund = async function(id) {
-            if (!confirm('Approve this refund?')) return;
-            try {
+        let confirmAction = null;
+        window.openConfirmModal = function(title, msg, onConfirm) {
+            document.getElementById('confirm-modal-title').innerText = title;
+            document.getElementById('confirm-modal-msg').innerText = msg;
+            confirmAction = onConfirm;
+            document.getElementById('confirm-modal').classList.remove('hidden');
+        };
+        window.closeConfirmModal = function() {
+            document.getElementById('confirm-modal').classList.add('hidden');
+            confirmAction = null;
+        };
+        document.getElementById('confirm-modal-btn').addEventListener('click', async () => {
+            if (confirmAction) {
+                const btn = document.getElementById('confirm-modal-btn');
+                const orig = btn.innerHTML;
+                btn.innerHTML = '<span class="material-symbols-outlined text-[18px] animate-spin">refresh</span>';
+                btn.disabled = true;
+                try {
+                    await confirmAction();
+                } catch (e) {
+                    alert('Error: ' + e.message);
+                }
+                btn.innerHTML = orig;
+                btn.disabled = false;
+                closeConfirmModal();
+            }
+        });
+
+        window.approveWithdrawal = function(id) {
+            openConfirmModal('Approve Withdrawal', 'Approve this withdrawal? It will transition from pending to approved.', async () => {
+                await WithdrawalService.approveWithdrawal(id, adminSession?.user?.id);
+                await loadAll();
+            });
+        };
+
+        window.markProcessing = function(id) {
+            openConfirmModal('Mark as Processing', 'Mark as processing? This indicates you are currently initiating the payment.', async () => {
+                await WithdrawalService.updateWithdrawalStatus(id, adminSession?.user?.id, 'processing');
+                await loadAll();
+            });
+        };
+
+        window.markPaid = function(id) {
+            openConfirmModal('Mark as Paid', 'Mark as Paid? This indicates the funds have left the platform.', async () => {
+                await WithdrawalService.updateWithdrawalStatus(id, adminSession?.user?.id, 'paid');
+                await loadAll();
+            });
+        };
+
+        window.approveRefund = function(id) {
+            openConfirmModal('Approve Refund', 'Approve this refund?', async () => {
                 await RefundService.approveRefund(id, adminSession?.user?.id);
                 await loadAll();
-            } catch (e) { alert('Error: ' + e.message); }
+            });
         };
 
         window.resolveTicket = async function(id) {
             try {
-                const { SupportService } = await import('/src/services/supportService.js');
                 await SupportService.updateTicketStatus(id, 'resolved');
                 await loadAll();
             } catch (e) { alert('Error: ' + e.message); }
@@ -450,7 +996,737 @@
 
         document.getElementById('refresh-btn').addEventListener('click', loadAll);
 
+        // Settings Logic
+        const commissionToggle = document.getElementById('setting-commission-enabled');
+        const splitContainer = document.getElementById('split-settings-container');
+        const instPctInput = document.getElementById('setting-instructor-pct');
+        const platPctInput = document.getElementById('setting-platform-pct');
+
+        commissionToggle.addEventListener('change', (e) => {
+            splitContainer.classList.toggle('opacity-50', !e.target.checked);
+            instPctInput.disabled = !e.target.checked;
+            platPctInput.disabled = !e.target.checked;
+        });
+
+        instPctInput.addEventListener('input', (e) => {
+            let val = parseInt(e.target.value) || 0;
+            if (val > 100) val = 100;
+            platPctInput.value = 100 - val;
+        });
+        platPctInput.addEventListener('input', (e) => {
+            let val = parseInt(e.target.value) || 0;
+            if (val > 100) val = 100;
+            instPctInput.value = 100 - val;
+        });
+
+        async function loadSettings() {
+            const settings = await financeSettingsService.getSettings();
+            commissionToggle.checked = settings.commission_enabled;
+            document.getElementById('setting-refund-requests-enabled').checked = settings.show_refund_request !== false;
+            instPctInput.value = settings.instructor_percentage;
+            platPctInput.value = settings.platform_percentage;
+            document.getElementById('setting-min-withdrawal').value = settings.min_withdrawal_amount;
+
+            // Boost toggles
+            document.getElementById('setting-course-boost-enabled').checked = settings.course_boost_enabled !== false;
+            document.getElementById('setting-course-banner-enabled').checked = settings.course_banner_enabled !== false;
+            document.getElementById('setting-mentor-boost-enabled').checked = settings.mentor_boost_enabled !== false;
+            document.getElementById('setting-mentor-banner-enabled').checked = settings.mentor_banner_enabled !== false;
+
+            // Boost pricing fields
+            document.getElementById('setting-course-boost-price').value = settings.course_boost_price_per_day ?? 5;
+            document.getElementById('setting-mentor-boost-price').value = settings.mentor_boost_price_per_day ?? 5;
+            document.getElementById('setting-course-banner-price').value = settings.course_banner_price_per_day ?? 3;
+            document.getElementById('setting-mentor-banner-price').value = settings.mentor_banner_price_per_day ?? 3;
+            document.getElementById('setting-boost-min-days').value = settings.boost_min_days ?? 1;
+            document.getElementById('setting-boost-max-days').value = settings.boost_max_days ?? 90;
+            
+            splitContainer.classList.toggle('opacity-50', !settings.commission_enabled);
+            instPctInput.disabled = !settings.commission_enabled;
+            platPctInput.disabled = !settings.commission_enabled;
+        }
+
+        document.getElementById('settings-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('save-settings-btn');
+            const errorLabel = document.getElementById('split-error');
+            
+            const instPct = parseInt(instPctInput.value);
+            const platPct = parseInt(platPctInput.value);
+
+            if (instPct + platPct !== 100) {
+                errorLabel.classList.remove('hidden');
+                return;
+            }
+            errorLabel.classList.add('hidden');
+
+            const prevText = btn.innerHTML;
+            btn.innerHTML = 'Saving...';
+            btn.disabled = true;
+
+            const res = await financeSettingsService.updateSettings({
+                commission_enabled: commissionToggle.checked,
+                instructor_percentage: instPct,
+                platform_percentage: platPct,
+                show_refund_request: document.getElementById('setting-refund-requests-enabled').checked,
+                min_withdrawal_amount: (v => isNaN(v) ? 10 : v)(parseFloat(document.getElementById('setting-min-withdrawal').value)),
+                course_boost_enabled: document.getElementById('setting-course-boost-enabled').checked,
+                course_banner_enabled: document.getElementById('setting-course-banner-enabled').checked,
+                mentor_boost_enabled: document.getElementById('setting-mentor-boost-enabled').checked,
+                mentor_banner_enabled: document.getElementById('setting-mentor-banner-enabled').checked,
+                course_boost_price_per_day: parseFloat(document.getElementById('setting-course-boost-price').value) || 5,
+                mentor_boost_price_per_day: parseFloat(document.getElementById('setting-mentor-boost-price').value) || 5,
+                course_banner_price_per_day: parseFloat(document.getElementById('setting-course-banner-price').value) || 3,
+                mentor_banner_price_per_day: parseFloat(document.getElementById('setting-mentor-banner-price').value) || 3,
+                boost_min_days: parseInt(document.getElementById('setting-boost-min-days').value) || 1,
+                boost_max_days: parseInt(document.getElementById('setting-boost-max-days').value) || 90
+            });
+
+            btn.disabled = false;
+            
+            if (res.success) {
+                const icon = '<span class="material-symbols-outlined text-[18px]">check</span>';
+                btn.innerHTML = icon + ' Saved Successfully!';
+                btn.classList.replace('bg-indigo-600', 'bg-emerald-600');
+                setTimeout(() => {
+                    btn.innerHTML = prevText;
+                    btn.classList.replace('bg-emerald-600', 'bg-indigo-600');
+                }, 2000);
+            } else {
+                alert('Error saving settings: ' + res.error);
+                btn.innerHTML = prevText;
+            }
+        });
+
+        async function loadAnalytics() {
+            try {
+                const { supabase } = await import('/src/services/supabaseClient.js');
+                const { data, error } = await supabase.rpc('get_finance_analytics');
+                if (error) throw error;
+                const stats = document.getElementById('finance-stats');
+                stats.innerHTML = `
+                    <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden">
+                        <div class="absolute -right-4 -top-4 w-24 h-24 bg-emerald-50 dark:bg-emerald-900/20 rounded-full transition-transform hover:scale-110"></div>
+                        <p class="text-xs font-bold text-slate-500 uppercase tracking-widest relative z-10">Total Revenue</p>
+                        <h3 class="text-3xl font-black text-slate-900 dark:text-white mt-2 relative z-10">${fmtAmt(data.total_revenue)}</h3>
+                        <p class="text-[10px] uppercase font-bold text-emerald-600 mt-2 relative z-10">${fmtAmt(data.monthly_revenue)} this month</p>
+                    </div>
+                    <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden">
+                        <div class="absolute -right-4 -top-4 w-24 h-24 bg-indigo-50 dark:bg-indigo-900/20 rounded-full transition-transform hover:scale-110"></div>
+                        <p class="text-xs font-bold text-slate-500 uppercase tracking-widest relative z-10">Net Platform Income</p>
+                        <h3 class="text-3xl font-black text-slate-900 dark:text-white mt-2 relative z-10">${fmtAmt(data.platform_fees)}</h3>
+                        <p class="text-[10px] uppercase font-bold text-indigo-600 mt-2 relative z-10">Platform share only</p>
+                    </div>
+                    <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden">
+                        <div class="absolute -right-4 -top-4 w-24 h-24 bg-blue-50 dark:bg-blue-900/20 rounded-full transition-transform hover:scale-110"></div>
+                        <p class="text-xs font-bold text-slate-500 uppercase tracking-widest relative z-10">Instructor Earnings</p>
+                        <h3 class="text-3xl font-black text-slate-900 dark:text-white mt-2 relative z-10">${fmtAmt(data.instructor_payouts)}</h3>
+                        <p class="text-[10px] uppercase font-bold text-slate-400 mt-2 relative z-10">Reserved for instructors</p>
+                    </div>
+                    <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden flex flex-col justify-between">
+                        <div class="absolute -right-4 -top-4 w-24 h-24 bg-rose-50 dark:bg-rose-900/20 rounded-full transition-transform hover:scale-110"></div>
+                        <div>
+                            <p class="text-xs font-bold text-slate-500 uppercase tracking-widest relative z-10">Withdrawals pending</p>
+                            <h3 class="text-xl font-black text-slate-900 dark:text-white mt-1 relative z-10">${fmtAmt(data.withdrawals_pending)}</h3>
+                        </div>
+                        <div class="mt-2 border-t border-slate-100 dark:border-slate-800 pt-2 pb-1 relative z-10 flex items-center justify-between">
+                            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Refunds</span>
+                            <span class="text-xs font-bold text-rose-600">${fmtAmt(data.refunds)}</span>
+                        </div>
+                    </div>
+                `;
+            } catch (e) {
+                console.error('Failed to load analytics', e);
+            }
+        }
+
+        document.getElementById('refresh-btn').addEventListener('click', () => {
+            loadAll();
+            loadAnalytics();
+        });
+
         loadAll();
+        loadAnalytics();
+        loadSettings();
+
+        // Boosts tab rendering
+        async function renderBoostsTab() {
+            const tbody = document.getElementById('boosts-body');
+            const totalRevEl = document.getElementById('boost-total-revenue');
+            const activeCountEl = document.getElementById('boost-active-count');
+            const bannerRevEl = document.getElementById('boost-banner-revenue');
+            const bannerCountEl = document.getElementById('boost-banner-count');
+            const cancelCountEl = document.getElementById('boost-cancel-count');
+            if (!tbody) return;
+
+            tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center text-slate-400 italic">Loading...</td></tr>';
+
+            try {
+                const { BoostService } = await import('/src/services/boostService.js');
+                const allBoosts = await BoostService.getAllBoostsAdmin();
+                
+                // Revenue stats
+                const now = new Date();
+                const activeBoosts = allBoosts.filter(b => b.entity_type !== 'banner' && new Date(b.ends_at) > now && !b.cancelled_at);
+                const activeBanners = allBoosts.filter(b => b.entity_type === 'banner' && new Date(b.ends_at) > now && !b.cancelled_at);
+                const cancelledBoosts = allBoosts.filter(b => b.cancelled_at);
+                const boostRevTotal = allBoosts.filter(b => b.entity_type !== 'banner').reduce((s, b) => s + Number(b.amount_paid || 0), 0);
+                const bannerRevTotal = allBoosts.filter(b => b.entity_type === 'banner').reduce((s, b) => s + Number(b.amount_paid || 0), 0);
+
+                totalRevEl.textContent = fmtAmt(boostRevTotal);
+                activeCountEl.textContent = `${activeBoosts.length} active boost${activeBoosts.length !== 1 ? 's' : ''}`;
+                bannerRevEl.textContent = fmtAmt(bannerRevTotal);
+                bannerCountEl.textContent = `${activeBanners.length} active banner${activeBanners.length !== 1 ? 's' : ''}`;
+                cancelCountEl.textContent = cancelledBoosts.length;
+
+                if (!allBoosts.length) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-10 text-center text-slate-400 italic">No boosts yet</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = allBoosts.map(b => {
+                    const isActive = !b.cancelled_at && new Date(b.ends_at) > now;
+                    const isCancelled = !!b.cancelled_at;
+                    const statusHtml = isCancelled
+                        ? '<span class="status-badge bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">Cancelled</span>'
+                        : isActive
+                        ? '<span class="status-badge bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">Active</span>'
+                        : '<span class="status-badge bg-slate-100 text-slate-500">Expired</span>';
+                    
+                    const isBanner = b.entity_type === 'banner';
+                    const typeHtml = `<div class="flex flex-col gap-1">
+                        <span class="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-200">${b.entity_type || 'course'} boost</span>
+                        ${isBanner ? '<span class="px-2 py-0.5 rounded-full bg-purple-100 text-purple-600 text-[10px] font-black inline-block w-fit">+ Banner</span>' : ''}
+                    </div>`;
+
+                    const cancellationHtml = isCancelled
+                        ? `<span class="text-xs text-rose-500 font-semibold">${fmtDate(b.cancelled_at)}</span>`
+                        : isActive
+                        ? `<button onclick="window.confirmAdminCancel('${b.id}', '${b.entity_type === 'banner' ? 'banner' : 'boost'}')" class="text-xs font-bold text-red-500 hover:text-red-700 bg-red-50 dark:bg-red-900/20 px-3 py-1 rounded transition-colors">Force Cancel</button>`
+                        : '<span class="text-slate-400 text-xs italic">—</span>';
+                    
+                    const avatar = b.instructor_avatar
+                        ? `<img src="${b.instructor_avatar}" class="w-full h-full object-cover rounded-xl" />`
+                        : `${(b.instructor_name || 'I')[0]}`;
+
+                    // Determine destination URL for the ROW
+                    const resolvedEntityType = b.entity_type === 'banner' ? (b.original_entity_type || 'course') : b.entity_type;
+                    
+                    const instructorProfileUrl = `/src/pages/instructor/public-profile/index.html?id=${encodeURIComponent(b.instructor_id)}`;
+                    const rowClickUrl = resolvedEntityType === 'mentor' 
+                        ? instructorProfileUrl 
+                        : `${instructorProfileUrl}&focusCourse=${encodeURIComponent(b.entity_id)}#taught-courses-section`;
+
+                    const entityUrl = resolvedEntityType === 'mentor'
+                        ? `/src/pages/mentorship/mentor-profile/index.html?id=${encodeURIComponent(b.entity_id)}`
+                        : `/src/pages/marketplace/course-details/index.html?id=${encodeURIComponent(b.entity_id)}`;
+
+                    const viewEntityBtn = `<a href="${entityUrl}" onclick="event.stopPropagation()" target="_blank" title="View ${resolvedEntityType === 'mentor' ? 'Mentor Profile' : 'Course Page'}" class="mt-1.5 inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 text-[10px] font-black uppercase tracking-wider border border-amber-200 dark:border-amber-700 hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-all">
+                        <span class="material-symbols-outlined text-[12px]">open_in_new</span>
+                        View ${resolvedEntityType === 'mentor' ? 'Profile' : 'Course'}
+                    </a>`;
+
+                    return `<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer" onclick="window.open('${rowClickUrl}', '_blank')">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 shrink-0 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 font-black text-sm overflow-hidden border border-amber-200 dark:border-amber-800">
+                                    ${avatar}
+                                </div>
+                                <div>
+                                    <p class="font-bold text-sm text-slate-900 dark:text-white group-hover:text-primary transition-colors">${b.instructor_name || 'Unknown'}</p>
+                                    <p class="text-[10px] text-slate-400 font-mono truncate max-w-[120px]">${b.entity_id?.substring(0,8) || ''}…</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="flex flex-col gap-1.5">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-200">${b.entity_type || 'course'} boost</span>
+                                    ${b.is_admin_granted ? '<span class="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 text-[9px] font-black uppercase tracking-widest border border-slate-200 dark:border-slate-700" title="Granted manually by an administrator">Admin Granted</span>' : ''}
+                                </div>
+                                ${isBanner ? '<span class="px-2 py-0.5 rounded-full bg-purple-100 text-purple-600 text-[10px] font-black inline-block w-fit">+ Banner</span>' : ''}
+                                ${viewEntityBtn}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 font-black text-lg">${fmtAmt(b.amount_paid)}</td>
+                        <td class="px-6 py-4 text-xs text-slate-500">
+                            <p>${fmtDate(b.starts_at)} →</p>
+                            <p class="font-bold text-slate-700 dark:text-slate-300">${fmtDate(b.ends_at)}</p>
+                        </td>
+                        <td class="px-6 py-4">${statusHtml}</td>
+                        <td class="px-6 py-4" onclick="event.stopPropagation()">${cancellationHtml}</td>
+                    </tr>`;
+                }).join('');
+
+            } catch (err) {
+                console.error('Boosts tab error:', err);
+                tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-10 text-center text-red-500 italic">Error loading boosts: ${err.message}</td></tr>`;
+                if (totalRevEl) totalRevEl.textContent = 'Error';
+            }
+        }
+            window.confirmAdminCancel = function(id, type) {
+            if (confirm("Are you sure you want to forcibly stop this boost? It will prevent it from displaying further. Admin actions should generally only be used for TOS violations.")) {
+                window.processAdminCancel(id, type);
+            }
+        };
+
+        window.processAdminCancel = async function(id, type) {
+            try {
+                if (type === 'banner') await (await import('/src/services/boostService.js')).boostService.adminCancelBanner(id, "Admin manual force cancel");
+                else await (await import('/src/services/boostService.js')).boostService.adminCancelBoost(id, "Admin manual force cancel");
+                
+                const { showToast } = await import('/src/services/uiUtils.js');
+                if (showToast) showToast("Boost forcibly cancelled.", "success");
+                
+                renderBoostsTab();
+                // Optionally reload analytics if available
+                if (window.loadAnalytics) loadAnalytics();
+            } catch (e) {
+                console.error("Failed to admin cancel:", e);
+                const { showToast } = await import('/src/services/uiUtils.js');
+                if (showToast) showToast("Failed to cancel boost. Check permissions.", "error");
+            }
+        };
+
+        window.toggleGrantFields = function() {
+            const hasBoost = document.getElementById('grant-boost-cb')?.checked;
+            const hasBanner = document.getElementById('grant-banner-cb')?.checked;
+            const subBtn = document.getElementById('grant-submit-btn');
+            
+            document.getElementById('grant-boost-amount-row')?.classList.toggle('hidden', !hasBoost);
+            document.getElementById('grant-banner-fields')?.classList.toggle('hidden', !hasBanner);
+            
+            if(subBtn) subBtn.disabled = (!hasBoost && !hasBanner);
+        };
+
+        window.submitAdminGrant = async function() {
+            const type = document.getElementById('grant-entity-type').value; 
+            const entityId = document.getElementById('grant-entity-id').value.trim();
+            const days = parseInt(document.getElementById('grant-days').value, 10);
+            
+            const hasBoost = document.getElementById('grant-boost-cb').checked;
+            const boostAmount = parseFloat(document.getElementById('grant-boost-amount').value || "0");
+            
+            const hasBanner = document.getElementById('grant-banner-cb').checked;
+            const bannerText = document.getElementById('grant-banner-text').value.trim();
+            const bannerAmount = parseFloat(document.getElementById('grant-banner-amount').value || "0");
+            
+            const { showToast } = await import('/src/services/uiUtils.js');
+            
+            if (!entityId) return showToast("Please enter an entity ID", "error");
+            if (!hasBoost && !hasBanner) return showToast("Select at least one grant type", "error");
+            if (hasBanner && !bannerText) return showToast("Please enter banner text", "error");
+
+            const subBtn = document.getElementById('grant-submit-btn');
+            subBtn.disabled = true;
+            const oldHtml = subBtn.innerHTML;
+            subBtn.innerHTML = '<span class="material-symbols-outlined text-sm animate-spin">progress_activity</span> Processing...';
+
+            try {
+                const { supabase } = await import('/src/services/supabaseClient.js');
+                
+                // Validate entity exists and resolve final UUID
+                let resolvedEntityId = entityId;
+                let instructorId = entityId;
+
+                if (type === 'course') {
+                    if (entityId.toLowerCase().startsWith('crs-')) {
+                        const serialId = parseInt(entityId.substring(4), 10);
+                        const { data: crs, error: crsErr } = await supabase.from('courses').select('id, instructor_id').eq('serial_id', serialId).single();
+                        if (crsErr || !crs) throw new Error("Course not found for this CRS ID.");
+                        resolvedEntityId = crs.id;
+                        instructorId = crs.instructor_id;
+                    } else {
+                        const { data: crs, error: crsErr } = await supabase.from('courses').select('id, instructor_id').eq('id', entityId).single();
+                        if (crsErr || !crs) throw new Error("Course not found for this ID.");
+                        resolvedEntityId = crs.id;
+                        instructorId = crs.instructor_id;
+                    }
+                } else if (type === 'mentor') {
+                    if (entityId.toLowerCase().startsWith('mtr-')) {
+                        const serialId = parseInt(entityId.substring(4), 10);
+                        const { data: mnt, error: mntErr } = await supabase.from('profiles').select('id').eq('serial_id', serialId).single();
+                        if (mntErr || !mnt) throw new Error("Mentor not found for this MTR ID.");
+                        resolvedEntityId = mnt.id;
+                        instructorId = mnt.id;
+                    } else {
+                        const { data: mnt, error: mntErr } = await supabase.from('profiles').select('id').eq('id', entityId).single();
+                        if (mntErr || !mnt) throw new Error("Mentor not found for this ID.");
+                        resolvedEntityId = mnt.id;
+                        instructorId = mnt.id;
+                    }
+                }
+
+                // Grant!
+                if (hasBoost && hasBanner) {
+                    const { error } = await supabase.rpc('admin_grant_boost_and_banner_atomic', {
+                        p_entity_type: type,
+                        p_entity_id: resolvedEntityId,
+                        p_instructor_id: instructorId,
+                        p_plan_days: days,
+                        p_boost_amount_paid: boostAmount,
+                        p_banner_amount_paid: bannerAmount,
+                        p_banner_text: bannerText
+                    });
+                    if (error) throw error;
+                } else if (hasBoost) {
+                    const { error } = await supabase.rpc('admin_grant_boost', {
+                        p_entity_type: type,
+                        p_entity_id: resolvedEntityId,
+                        p_instructor_id: instructorId,
+                        p_plan_days: days,
+                        p_amount_paid: boostAmount
+                    });
+                    if (error) throw error;
+                } else if (hasBanner) {
+                    const { error } = await supabase.rpc('admin_grant_promo_banner', {
+                        p_entity_type: type,
+                        p_entity_id: resolvedEntityId,
+                        p_instructor_id: instructorId,
+                        p_banner_text: bannerText,
+                        p_plan_days: days,
+                        p_amount_paid: bannerAmount
+                    });
+                    if (error) throw error;
+                }
+                
+                showToast("Manual grant successful!", "success");
+                
+                document.getElementById('grant-entity-id').value = '';
+                document.getElementById('grant-boost-cb').checked = false;
+                document.getElementById('grant-banner-cb').checked = false;
+                document.getElementById('grant-boost-amount').value = '0';
+                document.getElementById('grant-banner-amount').value = '0';
+                document.getElementById('grant-banner-text').value = '';
+                document.getElementById('grant-days').value = document.getElementById('setting-boost-min-days')?.value || '1';
+                window.toggleGrantFields();
+                
+                renderBoostsTab();
+            } catch (err) {
+                console.error("Grant error:", err);
+                showToast(err.message || "Failed to create manual grant. Check console.", "error");
+            } finally {
+                subBtn.disabled = false;
+                subBtn.innerHTML = oldHtml;
+            }
+        };
+
+        window.routePaymentReference = async function(entityId, studentId) {
+            try {
+                if (!entityId || !entityId.startsWith('PAY-')) return;
+                const serialId = parseInt(entityId.replace('PAY-', ''), 10);
+                if (isNaN(serialId)) return;
+                
+                const { supabase } = await import('/src/services/supabaseClient.js');
+                
+                // Fetch the payment along with course and student details
+                const { data: payment, error } = await supabase
+                    .from('payments')
+                    .select(`
+                        *,
+                        courses ( id, title, serial_id, instructor_id ),
+                        profiles!student_id ( full_name )
+                    `)
+                    .eq('serial_id', serialId)
+                    .single();
+                    
+                if (error || !payment) {
+                    const { showToast } = await import('/src/services/uiUtils.js');
+                    if (showToast) {
+                        showToast("Payment details not found.", "error");
+                    } else {
+                        alert("Payment details not found.");
+                    }
+                    return;
+                }
+
+                if (payment.mentorship_session_id || payment.mentorship_id) {
+                    const sessionId = payment.mentorship_session_id || payment.mentorship_id;
+                    window.open(`/src/pages/admin/bookings-review/index.html?focusSession=${sessionId}`, '_blank');
+                } else if (payment.course_id || payment.type === 'course') {
+                    // Fetch instructor
+                    if (payment.courses?.instructor_id) {
+                        const { data: inst } = await supabase.from('profiles').select('full_name, email, phone_number').eq('id', payment.courses.instructor_id).single();
+                        if (inst) {
+                             document.getElementById('receipt-instructor-name').textContent = inst.full_name || 'N/A';
+                             document.getElementById('receipt-instructor-email').textContent = inst.email || 'N/A';
+                             document.getElementById('receipt-instructor-phone').textContent = inst.phone_number || 'N/A';
+                        }
+                    }
+
+                    // Populate and show the modal
+                    document.getElementById('receipt-date').textContent = new Date(payment.created_at).toLocaleString();
+                    document.getElementById('receipt-pay-id').textContent = `PAY-${payment.serial_id}`;
+                    
+                    const statEl = document.getElementById('receipt-status');
+                    statEl.textContent = payment.payment_status || 'completed';
+                    statEl.classList.remove('hidden', 'bg-emerald-100', 'text-emerald-700', 'bg-rose-100', 'text-rose-700', 'bg-amber-100', 'text-amber-700');
+                    if (payment.payment_status === 'refunded') {
+                        statEl.classList.add('bg-rose-100', 'text-rose-700');
+                    } else if (payment.payment_status === 'held' || payment.payment_status === 'pending') {
+                        statEl.classList.add('bg-amber-100', 'text-amber-700');
+                    } else {
+                        statEl.classList.add('bg-emerald-100', 'text-emerald-700');
+                    }
+                    
+                    document.getElementById('receipt-crs-id').textContent = `CRS-${payment.courses?.serial_id || 'XXXX'}`;
+                    document.getElementById('receipt-course-details').classList.remove('hidden');
+
+                    document.getElementById('receipt-item-name').textContent = payment.courses?.title || 'Course Enrollment';
+                    document.getElementById('receipt-student').textContent = payment.profiles?.full_name || 'Unknown Student';
+                    document.getElementById('receipt-amount').textContent = `$${payment.amount ? payment.amount.toFixed(2) : '0.00'}`;
+                    
+                    document.getElementById('admin-payment-receipt-modal').classList.remove('hidden');
+                } else if (payment.type === 'boost' || payment.type === 'banner') {
+                     // For boosts/banners
+                     document.getElementById('receipt-date').textContent = new Date(payment.created_at).toLocaleString();
+                     document.getElementById('receipt-pay-id').textContent = `PAY-${payment.serial_id}`;
+                     
+                     const statEl = document.getElementById('receipt-status');
+                     statEl.textContent = payment.payment_status || 'completed';
+                     statEl.classList.remove('hidden', 'bg-emerald-100', 'text-emerald-700', 'bg-rose-100', 'text-rose-700', 'bg-amber-100', 'text-amber-700');
+                     statEl.classList.add(payment.payment_status === 'refunded' ? 'bg-rose-100' : 'bg-emerald-100', payment.payment_status === 'refunded' ? 'text-rose-700' : 'text-emerald-700');
+
+                     document.getElementById('receipt-course-details').classList.add('hidden');
+
+                     document.getElementById('receipt-item-name').textContent = `${payment.type.toUpperCase()}`;
+                     document.getElementById('receipt-student').textContent = payment.profiles?.full_name || 'Unknown User';
+                     document.getElementById('receipt-amount').textContent = `$${payment.amount ? payment.amount.toFixed(2) : '0.00'}`;
+                     
+                     document.getElementById('admin-payment-receipt-modal').classList.remove('hidden');
+                }
+            } catch (e) {
+                console.error("Routing error:", e);
+                window.showToast("An error occurred tracing the payment.", "error");
+            }
+        };
+
+
+
     </script>
+
+    <!-- Student Profile Modal (Finance View) -->
+    <div id="finance-student-profile-modal" class="fixed inset-0 z-[200] bg-slate-950/60 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-xl rounded-[32px] overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800 max-h-[90vh] overflow-y-auto">
+            <div class="h-32 bg-gradient-to-r from-indigo-600 to-purple-600"></div>
+            <div class="px-8 pb-8 transform -translate-y-12">
+                <div class="flex items-end justify-between mb-6">
+                    <div class="w-28 h-28 rounded-3xl overflow-hidden border-4 border-white dark:border-slate-900 shadow-xl bg-white">
+                        <img id="fsp-avatar" src="" class="w-full h-full object-cover" />
+                    </div>
+                    <button onclick="window.closeFinanceStudentModal()" class="w-10 h-10 bg-white dark:bg-slate-800 hover:bg-slate-50 rounded-full flex items-center justify-center transition-all shadow-md">
+                        <span class="material-symbols-outlined text-slate-500">close</span>
+                    </button>
+                </div>
+                <div class="space-y-6">
+                    <div>
+                        <h3 id="fsp-name" class="text-2xl font-bold text-slate-900 dark:text-white">Loading...</h3>
+                        <p id="fsp-title" class="text-slate-500 font-medium">Student</p>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Email</p>
+                            <p id="fsp-email" class="text-sm font-bold text-slate-700 dark:text-slate-200 truncate">loading...</p>
+                        </div>
+                        <div class="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Phone</p>
+                            <p id="fsp-phone" class="text-sm font-bold text-slate-700 dark:text-slate-200">Not provided</p>
+                        </div>
+                        <div class="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800 md:col-span-2">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Location</p>
+                            <p id="fsp-location" class="text-sm font-bold text-slate-700 dark:text-slate-200">Not provided</p>
+                        </div>
+                    </div>
+                    <div id="fsp-social-section" class="hidden">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Social Profiles</p>
+                        <div id="fsp-social-links" class="flex flex-wrap items-center gap-3"></div>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Interests / Bio</p>
+                        <div class="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
+                            <div id="fsp-interests" class="flex flex-wrap gap-2 mb-3"></div>
+                            <p id="fsp-bio" class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed italic">Loading...</p>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Enrolled Courses</p>
+                        <div id="fsp-courses" class="space-y-2">
+                            <div class="flex items-center gap-2 text-slate-400 text-xs">
+                                <span class="material-symbols-outlined text-sm">hourglass_top</span> Loading...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { supabase } from '/src/services/supabaseClient.js';
+        import { AuthService } from '/src/services/authService.js';
+
+        let _finAdminId = null;
+        (async () => {
+            const s = await AuthService.getSession();
+            _finAdminId = s?.user?.id;
+        })();
+
+        window.openFinanceStudentProfile = async function(studentId) {
+            const modal = document.getElementById('finance-student-profile-modal');
+            if (!modal) return;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.body.style.overflow = 'hidden';
+
+            // Reset fields
+            document.getElementById('fsp-name').textContent = 'Loading...';
+            document.getElementById('fsp-email').textContent = '—';
+            document.getElementById('fsp-phone').textContent = 'Loading...';
+            document.getElementById('fsp-location').textContent = 'Loading...';
+            document.getElementById('fsp-bio').textContent = 'Loading...';
+            document.getElementById('fsp-interests').innerHTML = '';
+            document.getElementById('fsp-courses').innerHTML = '<div class="flex items-center gap-2 text-slate-400 text-xs"><span class="material-symbols-outlined text-sm">hourglass_top</span> Loading courses...</div>';
+
+            try {
+                const { data: s, error } = await supabase
+                    .from('profiles')
+                    .select('full_name,avatar_url,professional_title,email,phone_number,city,country,short_bio,learning_interests,social_links')
+                    .eq('id', studentId)
+                    .single();
+                if (s) {
+                    document.getElementById('fsp-avatar').src = s.avatar_url || ('https://ui-avatars.com/api/?name=' + encodeURIComponent(s.full_name || 'S') + '&background=4F46E5&color=fff');
+                    document.getElementById('fsp-name').textContent = s.full_name || 'Unknown';
+                    document.getElementById('fsp-title').textContent = s.professional_title || 'Student';
+                    document.getElementById('fsp-email').textContent = s.email || 'No email shared';
+                    document.getElementById('fsp-phone').textContent = s.phone_number || 'Not provided';
+                    document.getElementById('fsp-location').textContent = (s.city && s.country) ? (s.city + ', ' + s.country) : (s.country || s.city || 'Not provided');
+                    document.getElementById('fsp-bio').textContent = s.short_bio ? ('"' + s.short_bio + '"') : '"No bio shared yet."';
+
+                    const ints = Array.isArray(s.learning_interests) ? s.learning_interests : [];
+                    const intEl = document.getElementById('fsp-interests');
+                    if (ints.length > 0) {
+                        intEl.innerHTML = ints.map(i => `<span class="px-3 py-1 bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300 rounded-lg text-[10px] font-black uppercase tracking-widest">${i}</span>`).join('');
+                    } else {
+                        intEl.innerHTML = '<span class="text-slate-400 text-[10px] font-bold uppercase tracking-widest">No interests listed</span>';
+                    }
+
+                    const html = window.renderSocialIconsHtml ? window.renderSocialIconsHtml(s.social_links, '475569') : '';
+                    document.getElementById('fsp-social-links').innerHTML = html;
+                    document.getElementById('fsp-social-section').classList.toggle('hidden', !html);
+                }
+            } catch (e) {
+                document.getElementById('fsp-name').textContent = 'Failed to load';
+                console.error('Finance student profile error:', e);
+            }
+
+            try {
+                const { data: enrls } = await supabase.rpc('admin_get_student_enrollments', {
+                    p_admin_id: _finAdminId,
+                    p_student_id: studentId
+                });
+                const c = document.getElementById('fsp-courses');
+                if (!enrls || enrls.length === 0) {
+                    c.innerHTML = '<p class="text-xs text-slate-400 italic">No courses enrolled yet.</p>';
+                    return;
+                }
+                c.innerHTML = enrls.map(r => {
+                    const th = r.thumbnail_url || ('https://ui-avatars.com/api/?name=' + encodeURIComponent(r.title) + '&background=4F46E5&color=fff&size=64');
+                    const dt = r.enrolled_at ? new Date(r.enrolled_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
+                    const pct = r.progress_percentage ?? 0;
+                    return `<div class="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
+                        <img src="${th}" class="w-12 h-12 rounded-lg object-cover shrink-0"/>
+                        <div class="min-w-0 flex-1">
+                            <p class="text-sm font-bold text-slate-800 dark:text-slate-200 truncate">${r.title}</p>
+                            <p class="text-[10px] text-indigo-400 font-mono uppercase tracking-widest">CRS-${r.serial_id || '—'}</p>
+                            <div class="flex items-center gap-2 mt-1">
+                                <div class="flex-1 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                                    <div class="h-full bg-indigo-500 rounded-full" style="width:${pct}%"></div>
+                                </div>
+                                <span class="text-[10px] text-slate-400">${pct}%</span>
+                            </div>
+                        </div>
+                        <span class="text-[10px] text-slate-400 whitespace-nowrap hidden sm:block">${dt}</span>
+                    </div>`;
+                }).join('');
+            } catch (e) {
+                document.getElementById('fsp-courses').innerHTML = '<p class="text-xs text-red-400">Failed to load courses.</p>';
+            }
+        };
+
+        window.closeFinanceStudentModal = function() {
+            const m = document.getElementById('finance-student-profile-modal');
+            if (m) { m.classList.add('hidden'); m.classList.remove('flex'); }
+            document.body.style.overflow = '';
+        };
+
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') window.closeFinanceStudentModal();
+        });
+
+        document.getElementById('finance-student-profile-modal')?.addEventListener('click', e => {
+            if (e.target.id === 'finance-student-profile-modal') window.closeFinanceStudentModal();
+        });
+    </script>
+    <!-- Admin Payment Receipt Modal -->
+    <div id="admin-payment-receipt-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800 relative">
+            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-primary to-purple-500"></div>
+            <button onclick="document.getElementById('admin-payment-receipt-modal').classList.add('hidden')" class="absolute top-4 right-4 z-10 w-8 h-8 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 rounded-full flex items-center justify-center transition-all">
+                <span class="material-symbols-outlined text-sm">close</span>
+            </button>
+            <div class="p-8 pb-6">
+                <div class="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 rounded-2xl flex items-center justify-center mb-6 shadow-inner mx-auto">
+                    <span class="material-symbols-outlined text-3xl font-bold">check_circle</span>
+                </div>
+                <h3 class="text-2xl font-black text-center mb-1 text-slate-900 dark:text-white">Payment Receipt</h3>
+                <p class="text-center text-slate-500 text-sm mb-8" id="receipt-date">Loading...</p>
+                
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center py-3 border-b border-slate-100 dark:border-slate-800">
+                        <span class="text-sm text-slate-500 font-bold uppercase tracking-wider text-[10px]">Reference</span>
+                        <div class="flex items-center gap-2">
+                            <span class="font-mono font-black text-primary bg-primary/10 px-2 py-1 rounded" id="receipt-pay-id">PAY-...</span>
+                            <span class="text-[10px] font-bold px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 hidden uppercase" id="receipt-status"></span>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center py-3 border-b border-slate-100 dark:border-slate-800">
+                        <span class="text-sm text-slate-500 font-bold uppercase tracking-wider text-[10px]">Item</span>
+                        <span class="font-bold text-slate-700 dark:text-slate-300 max-w-[200px] truncate text-right" id="receipt-item-name">...</span>
+                    </div>
+                    <div class="flex justify-between items-center py-3 border-b border-slate-100 dark:border-slate-800">
+                        <span class="text-sm text-slate-500 font-bold uppercase tracking-wider text-[10px]">Student / User</span>
+                        <span class="font-bold text-slate-700 dark:text-slate-300" id="receipt-student">...</span>
+                    </div>
+                    
+                    <!-- Appended specific details for Courses -->
+                    <div id="receipt-course-details" class="hidden flex-col gap-3 py-3 border-b border-slate-100 dark:border-slate-800">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-slate-500 font-bold uppercase tracking-wider text-[10px]">Course ID</span>
+                            <span class="font-mono font-black text-indigo-500 bg-indigo-500/10 px-2 py-1 rounded" id="receipt-crs-id">CRS-...</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-slate-500 font-bold uppercase tracking-wider text-[10px]">Instructor</span>
+                            <span class="font-bold text-slate-700 dark:text-slate-300" id="receipt-instructor-name">...</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-slate-500 font-bold uppercase tracking-wider text-[10px]">Email</span>
+                            <span class="text-xs font-medium text-slate-500" id="receipt-instructor-email">...</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-slate-500 font-bold uppercase tracking-wider text-[10px]">Phone</span>
+                            <span class="text-xs font-medium text-slate-500" id="receipt-instructor-phone">...</span>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center py-4 mt-2">
+                        <span class="font-black text-slate-900 dark:text-white text-lg">Amount Paid</span>
+                        <span class="font-black text-2xl text-primary" id="receipt-amount">$0.00</span>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-slate-50 dark:bg-slate-800 p-4 border-t border-slate-100 dark:border-slate-700 flex justify-center">
+                <button onclick="document.getElementById('admin-payment-receipt-modal').classList.add('hidden')" class="px-6 py-2 bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 font-bold rounded-xl hover:bg-slate-50 dark:hover:bg-slate-600 shadow-sm transition-all text-sm">Close</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

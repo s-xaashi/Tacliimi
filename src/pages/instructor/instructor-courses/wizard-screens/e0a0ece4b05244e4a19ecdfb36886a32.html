@@ -5,50 +5,14 @@
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title>Demo: Publish &amp; Preview - Tacliimi Learn</title>
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link rel="stylesheet" href="/public/assets/css/tacliimi.css">
     <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800;900&amp;display=swap"
         rel="stylesheet" />
     <link
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
         rel="stylesheet" />
-    <script id="tailwind-config">
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        "primary": "#7f13ec",
-                        "background-light": "#f7f6f8",
-                        "background-dark": "#191022",
-                    },
-                    fontFamily: {
-                        "display": ["Lexend", "sans-serif"]
-                    },
-                    borderRadius: {
-                        "DEFAULT": "0.25rem",
-                        "lg": "0.5rem",
-                        "xl": "0.75rem",
-                        "full": "9999px"
-                    },
-                },
-            },
-        }
-    </script>
-    <style type="text/tailwindcss">
-        body {
-            font-family: 'Lexend', sans-serif;
-        }
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        }
-        .demo-badge {
-            @apply text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700;
-        }
-        .skeleton-pattern {
-            background: linear-gradient(90deg, transparent 25%, rgba(127, 19, 236, 0.05) 50%, transparent 75%);
-            background-size: 200% 100%;
-        }
-    </style>
+    
+    
 </head>
 
 <body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col">
@@ -289,6 +253,7 @@
         </div>
     </footer>
 
+    <script type="module" src="/src/services/uiUtils.js"></script>
     <script type="module" src="/src/services/globalProfile.js"></script>
     <script>
         function publishCourse() {
@@ -321,8 +286,10 @@
                 console.error("Could not save to mock DB:", e);
             }
 
-            alert("Course Published Successfully!");
-            window.location.href = '/src/pages/marketplace/marketplace/index.html';
+            window.showToast("Course Published Successfully!", "success");
+            setTimeout(() => {
+                window.location.href = '/src/pages/marketplace/marketplace/index.html';
+            }, 1500);
         }
     </script>
 </body>

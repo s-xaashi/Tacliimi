@@ -5,50 +5,54 @@
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title>Instructor Profile Settings - Tacliimi Learn</title>
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link rel="stylesheet" href="/public/assets/css/tacliimi.css">
     <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap"
         rel="stylesheet" />
     <link
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
         rel="stylesheet" />
-    <script id="tailwind-config">
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        "primary": "#7f13ec",
-                        "background-light": "#f7f6f8",
-                        "background-dark": "#191022",
-                    },
-                    fontFamily: {
-                        "display": ["Lexend", "sans-serif"]
-                    },
-                    borderRadius: {
-                        "DEFAULT": "0.25rem",
-                        "lg": "0.5rem",
-                        "xl": "0.75rem",
-                        "full": "9999px"
-                    },
-                },
-            },
+    
+    <style>
+        /* Skeleton loader — applied until profile data loads */
+        .skeleton-node {
+            position: relative;
+            color: transparent !important;
+            background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+            background-size: 200% 100%;
+            animation: skeleton-shimmer 1.5s infinite;
+            border-color: transparent !important;
+            border-radius: 0.5rem;
+            pointer-events: none;
+            user-select: none;
         }
-    </script>
-    <style type="text/tailwindcss">
-        body {
-            font-family: 'Lexend', sans-serif;
+        .skeleton-node::placeholder { color: transparent !important; }
+        @keyframes skeleton-shimmer {
+            0%   { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
         }
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        html.dark .skeleton-node {
+            background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+            background-size: 200% 100%;
+            animation: skeleton-shimmer 1.5s infinite;
         }
-        .sidebar-item-active {
-            background-color: #7f13ec;
-            color: white;
+        /* Skeleton for select elements */
+        .skeleton-node-select {
+            color: transparent !important;
+            background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%) !important;
+            background-size: 200% 100% !important;
+            animation: skeleton-shimmer 1.5s infinite !important;
+            border-color: transparent !important;
+            pointer-events: none;
         }
-        input::placeholder, textarea::placeholder {
-            @apply opacity-40 font-light !important;
+        html.dark .skeleton-node-select {
+            background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%) !important;
+            background-size: 200% 100% !important;
+            animation: skeleton-shimmer 1.5s infinite !important;
         }
+        /* Validation error helper text */
+        .field-error { display:block; margin-top:4px; font-size:0.72rem; color:#ef4444; }
     </style>
+
     <script type="module" src="/src/services/globalProfile.js"></script>
     <script>
         // Removed synchronous Auth check
@@ -67,72 +71,58 @@
         }
     </script>
 
-    <!-- NOTIFICATION SYSTEM STYLES -->
-    <style>
-        #notif-wrapper .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        }
-        #notif-panel {
-            scrollbar-width: thin;
-        }
-    </style>
+
 </head>
 
 <body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100">
     <div class="relative flex min-h-screen w-full flex-col">
         <header
-            class="sticky top-0 z-50 flex h-16 w-full items-center justify-between border-b border-slate-200 bg-white px-4 md:px-10 dark:border-slate-800 dark:bg-background-dark">
-            <div class="flex items-center gap-8">
-                <div class="flex items-center gap-3 cursor-pointer" onclick="window.location.href='/index.html'">
-                    <div class="flex size-9 items-center justify-center rounded-lg bg-primary text-white">
-                        <span class="material-symbols-outlined">school</span>
-                    </div>
-                    <h2 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Tacliimi <span
-                            class="text-primary">Learn</span></h2>
+            class="sticky top-0 z-50 flex h-16 w-full items-center justify-between border-b border-slate-200 bg-white/90 backdrop-blur-md px-4 md:px-10 dark:border-slate-800 dark:bg-slate-900/90">
+            <div class="flex items-center justify-between relative w-full lg:w-auto">
+                <button class="settings-mobile-menu-btn lg:hidden p-2 -ml-2 text-slate-600 dark:text-slate-300 z-10" id="mobile-menu-btn" onclick="(function(){var s=document.getElementById('settings-sidebar'),o=document.getElementById('sidebar-overlay');if(s&&o){s.classList.toggle('-translate-x-full');o.classList.toggle('hidden');}})()">
+                    <span class="material-symbols-outlined">menu</span>
+                </button>
+                <div class="flex items-center gap-2 cursor-pointer absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 lg:static lg:top-auto lg:left-0 lg:transform-none z-10 shrink-0" onclick="window.location.href='/index.html'">
+                    <img src="/public/assets/images/IMG_7454.png" alt="Tacliimi" class="h-12 w-auto object-contain dark:hidden">
+                    <img src="/public/assets/images/logo-dark.png" alt="Tacliimi" class="h-12 w-auto object-contain hidden dark:block">
                 </div>
-                <nav class="hidden items-center gap-6 lg:flex">
-                    <a class="text-sm font-medium text-slate-600 hover:text-primary dark:text-slate-400 dark:hover:text-white transition-colors"
-                        href="/index.html">Home</a>
-                    <a class="text-sm font-medium text-slate-600 hover:text-primary dark:text-slate-400 dark:hover:text-white transition-colors"
-                        href="/src/pages/instructor/instructor-dashboard/index.html">Dashboard</a>
+                <!-- Desktop Nav -->
+                <nav class="hidden flex-1 justify-center items-center gap-6 lg:flex ml-8">
+                    <a class="text-sm font-medium text-slate-600 hover:text-primary dark:text-slate-400 dark:hover:text-white transition-colors" href="/index.html">Home</a>
+                    <a class="flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-primary dark:text-slate-400 dark:hover:text-white transition-colors" href="/src/pages/instructor/instructor-dashboard/index.html">
+                        <span class="material-symbols-outlined text-base">arrow_back</span>Dashboard
+                    </a>
                 </nav>
             </div>
-            <div class="flex items-center gap-4">
-                <!-- NOTIFICATION BELL -->
-                <div class="relative" id="notif-wrapper">
-                    <button id="notif-bell-btn" onclick="toggleNotifPanel()"
-                        class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 relative transition-colors">
-                        <span class="material-symbols-outlined">notifications</span>
-                        <span id="notif-badge"
-                            class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full hidden"></span>
-                    </button>
-                    <!-- DROPDOWN PANEL -->
-                    <div id="notif-panel"
-                        class="hidden absolute right-0 top-12 w-96 max-h-[520px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl flex flex-col z-50 overflow-hidden">
-                        <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800 shrink-0">
-                            <span class="font-bold text-slate-800 dark:text-white text-base">Notifications</span>
-                            <button onclick="markAllRead()"
-                                class="text-xs text-primary hover:underline font-medium">Mark all read</button>
-                        </div>
-                        <div id="notif-list" class="flex-1 overflow-y-auto divide-y divide-slate-50 dark:divide-slate-800">
-                            <div id="notif-empty" class="flex flex-col items-center justify-center py-16 text-center">
-                                <span class="material-symbols-outlined text-4xl text-slate-300 mb-3">notifications_none</span>
-                                <p class="text-slate-400 text-sm">You're all caught up!</p>
-                            </div>
-                        </div>
-                        <div class="p-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 text-center shrink-0">
-                            <button class="text-xs font-bold text-slate-500 hover:text-primary transition-colors">View All Notifications</button>
-                        </div>
-                    </div>
-                </div>
-                <div class="flex items-center gap-3 border-l border-slate-200 pl-4 ml-2 dark:border-slate-800">
+            <!-- hidden lg:flex ensures no profile on mobile -->
+            <div class="hidden lg:flex items-center gap-4 w-10 lg:w-auto justify-end">
+                <div id="global-profile-header-container" class="hidden lg:flex items-center gap-3 border-l border-slate-200 pl-4 ml-2 dark:border-slate-800">
                     <!-- Global Profile Injected Below via TacliimiDB -->
                 </div>
             </div>
         </header>
         <div class="flex flex-1 overflow-hidden">
-            <aside
-                class="hidden w-72 flex-col border-r border-slate-200 bg-white p-6 lg:flex dark:border-slate-800 dark:bg-background-dark">
+            <div id="sidebar-overlay" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-30 lg:hidden hidden" onclick="document.getElementById('settings-sidebar').classList.add('-translate-x-full'); this.classList.add('hidden');"></div>
+            <aside id="settings-sidebar"
+                class="fixed top-16 left-0 z-40 w-72 h-[calc(100vh-64px)] flex-col border-r border-slate-200 bg-white overflow-y-auto -translate-x-full transition-transform duration-300 lg:translate-x-0 lg:static lg:h-auto flex dark:border-slate-800 dark:bg-background-dark pb-20 lg:pb-6">
+                <!-- Mobile Only: Profile block at top -->
+                <a href="/src/pages/instructor/instructor-profile/index.html"
+                    class="lg:hidden flex items-center gap-3 px-4 py-4 border-b border-slate-100 dark:border-slate-800 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                    <div class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-primary/20 overflow-hidden flex-shrink-0" data-role="profile-image">
+                        <span class="material-symbols-outlined text-slate-400 w-full h-full flex items-center justify-center">person</span>
+                    </div>
+                    <div class="flex-1 overflow-hidden">
+                        <p class="font-bold text-slate-900 dark:text-white truncate user-display-name">Instructor</p>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Manage Profile</p>
+                    </div>
+                    <span class="material-symbols-outlined text-slate-400">chevron_right</span>
+                </a>
+                <!-- Mobile Only: Back to Dashboard -->
+                <div class="lg:hidden px-4 pt-3 pb-2 border-b border-slate-100 dark:border-slate-800/50">
+                    <a href="/src/pages/instructor/instructor-dashboard/index.html" class="flex items-center gap-2 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-primary transition-colors">
+                        <span class="material-symbols-outlined text-base">arrow_back</span> Back to Dashboard
+                    </a>
+                </div>
                 <nav class="flex flex-col gap-2">
                     <a class="sidebar-item-active flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-all"
                         href="#" onclick="switchPanel('panel-personal', event)">
@@ -148,17 +138,26 @@
                         href="#" onclick="switchPanel('panel-security', event)">
                         <span class="material-symbols-outlined text-[20px]">shield_person</span> Security </a>
                     <div class="my-4 border-t border-slate-100 dark:border-slate-800"></div>
-                    <a class="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
-                        href="#">
+                    <a class="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800" id="view-public-profile-link" href="#" onclick="viewPublicProfile(event)">
                         <span class="material-symbols-outlined text-[20px]">visibility</span>
                         View Public Profile
                     </a>
-                    <a onclick="TacliimiDB.logout(); window.location.href='/src/pages/auth/login-select/index.html';"
+                    <a id="sidebar-logout-btn"
                         class="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-bold text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/10 cursor-pointer transition-colors mt-2">
                         <span class="material-symbols-outlined text-[20px]">logout</span>
                         Logout
                     </a>
                 </nav>
+            
+                <!-- Mobile Only: Theme at bottom of drawer -->
+                <div class="lg:hidden mt-auto border-t border-slate-100 dark:border-slate-800/50 p-4 space-y-1">
+                    <button onclick="document.documentElement.classList.toggle('dark')" class="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors">
+                        <span class="material-symbols-outlined text-xl dark:hidden">dark_mode</span>
+                        <span class="material-symbols-outlined text-xl hidden dark:block">light_mode</span>
+                        <span class="dark:hidden">Dark Mode</span>
+                        <span class="hidden dark:block">Light Mode</span>
+                    </button>
+                </div>
             </aside>
             <main
                 class="flex-1 overflow-y-auto bg-slate-50 px-4 pb-4 md:px-10 md:pb-10 pt-2 md:pt-4 dark:bg-background-dark/50">
@@ -213,7 +212,7 @@
                                         <label class="text-sm font-semibold text-slate-700 dark:text-slate-300">Full
                                             Name</label>
                                         <input id="fullName"
-                                            class="h-12 rounded-lg border border-slate-200 px-4 text-slate-900 focus:border-primary focus:ring-1 focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white placeholder:opacity-40 placeholder:font-light"
+                                            class="h-12 rounded-lg border border-slate-200 px-4 text-slate-900 focus:border-primary focus:ring-1 focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white placeholder:opacity-40 placeholder:font-light skeleton-node"
                                             placeholder="Enter your full name" type="text" />
                                     </div>
                                     <div class="flex flex-col gap-2">
@@ -221,7 +220,7 @@
                                             for="professionalTitle">Professional
                                             Title</label>
                                         <input id="professionalTitle"
-                                            class="h-12 rounded-lg border border-slate-200 px-4 text-slate-900 focus:border-primary focus:ring-1 focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white placeholder:opacity-40 placeholder:font-light"
+                                            class="h-12 rounded-lg border border-slate-200 px-4 text-slate-900 focus:border-primary focus:ring-1 focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white placeholder:opacity-40 placeholder:font-light skeleton-node"
                                             placeholder="e.g. Senior Software Engineer" type="text" />
                                     </div>
                                     <div class="col-span-full flex flex-col gap-2">
@@ -232,7 +231,7 @@
                                             <span class="text-xs text-slate-400">142 / 500 characters</span>
                                         </div>
                                         <textarea id="shortBio"
-                                            class="rounded-lg border border-slate-200 p-4 text-slate-900 focus:border-primary focus:ring-1 focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white placeholder:opacity-40 placeholder:font-light"
+                                            class="rounded-lg border border-slate-200 p-4 text-slate-900 focus:border-primary focus:ring-1 focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white placeholder:opacity-40 placeholder:font-light skeleton-node"
                                             placeholder="Briefly describe your background and expertise"
                                             rows="4"></textarea>
                                     </div>
@@ -240,14 +239,14 @@
                                         <label class="text-sm font-semibold text-slate-700 dark:text-slate-300"
                                             for="country">Country</label>
                                         <input id="country"
-                                            class="h-12 rounded-lg border border-slate-200 px-4 text-slate-900 focus:border-primary focus:ring-1 focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white placeholder:opacity-40 placeholder:font-light"
+                                            class="h-12 rounded-lg border border-slate-200 px-4 text-slate-900 focus:border-primary focus:ring-1 focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white placeholder:opacity-40 placeholder:font-light skeleton-node"
                                             placeholder="e.g. Somalia" type="text" />
                                     </div>
                                     <div class="flex flex-col gap-2">
                                         <label class="text-sm font-semibold text-slate-700 dark:text-slate-300"
                                             for="city">City</label>
                                         <input id="city"
-                                            class="h-12 rounded-lg border border-slate-200 px-4 text-slate-900 focus:border-primary focus:ring-1 focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white placeholder:opacity-40 placeholder:font-light"
+                                            class="h-12 rounded-lg border border-slate-200 px-4 text-slate-900 focus:border-primary focus:ring-1 focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white placeholder:opacity-40 placeholder:font-light skeleton-node"
                                             placeholder="e.g. Hargeisa" type="text" />
                                     </div>
                                 </div>
@@ -266,9 +265,8 @@
                                             <label class="text-xs font-bold uppercase text-slate-400">LinkedIn
                                                 Profile</label>
                                             <input id="linkedinUrl"
-                                                class="mt-1 h-11 w-full rounded-lg border border-slate-200 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white placeholder:opacity-40 placeholder:font-light"
-                                                placeholder="https://linkedin.com/in/username" type="url"
-                                                value="https://linkedin.com/in/alex-richardson" />
+                                                class="mt-1 h-11 w-full rounded-lg border border-slate-200 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white placeholder:opacity-40 placeholder:font-light skeleton-node"
+                                                placeholder="https://linkedin.com/in/username" type="url" />
                                         </div>
                                     </div>
                                     <div class="flex items-center gap-3">
@@ -283,9 +281,8 @@
                                             <label class="text-xs font-bold uppercase text-slate-400">Twitter / X
                                                 Profile</label>
                                             <input id="twitterUrl"
-                                                class="mt-1 h-11 w-full rounded-lg border border-slate-200 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white placeholder:opacity-40 placeholder:font-light"
-                                                placeholder="https://twitter.com/username" type="url"
-                                                value="https://twitter.com/alexcloud" />
+                                                class="mt-1 h-11 w-full rounded-lg border border-slate-200 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white placeholder:opacity-40 placeholder:font-light skeleton-node"
+                                                placeholder="https://twitter.com/username" type="url" />
                                         </div>
                                     </div>
                                     <div class="flex items-center gap-3">
@@ -297,9 +294,8 @@
                                             <label class="text-xs font-bold uppercase text-slate-400">Facebook
                                                 Profile</label>
                                             <input id="facebookUrl"
-                                                class="mt-1 h-11 w-full rounded-lg border border-slate-200 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white placeholder:opacity-40 placeholder:font-light"
-                                                placeholder="https://facebook.com/username" type="url"
-                                                value="https://facebook.com/alex.richardson.teach" />
+                                                class="mt-1 h-11 w-full rounded-lg border border-slate-200 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white placeholder:opacity-40 placeholder:font-light skeleton-node"
+                                                placeholder="https://facebook.com/username" type="url" />
                                         </div>
                                     </div>
                                     <div class="flex items-center gap-3">
@@ -313,7 +309,7 @@
                                         <div class="flex-1">
                                             <label class="text-xs font-bold uppercase text-slate-400">GitHub Profile</label>
                                             <input id="githubUrl"
-                                                class="mt-1 h-11 w-full rounded-lg border border-slate-200 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white placeholder:opacity-40 placeholder:font-light"
+                                                class="mt-1 h-11 w-full rounded-lg border border-slate-200 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white placeholder:opacity-40 placeholder:font-light skeleton-node"
                                                 placeholder="https://github.com/username" type="url" />
                                         </div>
                                     </div>
@@ -337,29 +333,55 @@
                             <section
                                 class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-background-dark">
                                 <h3 class="text-sm font-bold text-slate-900 dark:text-white mb-2">Introduction Video
-                                </h3>
-                                <p class="mb-4 text-xs text-slate-500">Upload a short (1-3 minute) video introducing
-                                    yourself to students. This builds trust and increases bookings.</p>
+                                </h3>                                 <p class="mb-4 text-xs text-slate-500">Upload a short (1-3 minute) video introducing
+                                    yourself to students. This builds trust and increases bookings.
+                                    <span class="font-semibold text-primary">Max 150 MB</span>.</p>
                                 <div id="video-dropzone"
                                     class="mt-2 flex justify-center rounded-xl border-2 border-dashed border-slate-300 px-6 py-10 transition-colors hover:border-primary/50 dark:border-slate-700 dark:hover:border-primary/50 bg-slate-50 dark:bg-background-dark relative group">
-                                    <div class="text-center">
-                                        <div
-                                            class="mx-auto flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary mb-4 group-hover:scale-110 transition-transform">
-                                            <span class="material-symbols-outlined text-2xl">videocam</span>
+                                    <input type="hidden" id="staged-video-storage-key" value="" />
+                                    <div class="text-center w-full max-w-md">
+                                        <div id="video-idle-container">
+                                            <div
+                                                class="mx-auto flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary mb-4 group-hover:scale-110 transition-transform">
+                                                <span class="material-symbols-outlined text-2xl">videocam</span>
+                                            </div>
+                                            <div
+                                                class="mt-4 flex text-sm leading-6 text-slate-600 dark:text-slate-400 justify-center">
+                                                <label
+                                                    class="relative cursor-pointer rounded-md font-semibold text-primary focus-within:outline-none focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2 hover:text-primary/80"
+                                                    for="video-upload">
+                                                    <span>Upload a video</span>
+                                                    <input class="sr-only" id="video-upload" name="video-upload" type="file"
+                                                        accept="video/mp4,video/webm,video/quicktime"
+                                                        onchange="handleVideoUploadValidation(event)" />
+                                                </label>
+                                                <p class="pl-1">or drag and drop</p>
+                                            </div>
+                                            <p id="video-size-label" class="text-xs leading-5 text-slate-500 dark:text-slate-500 mt-2">MP4, WebM, MOV up to 200 MB</p>
                                         </div>
-                                        <div
-                                            class="mt-4 flex text-sm leading-6 text-slate-600 dark:text-slate-400 justify-center">
-                                            <label
-                                                class="relative cursor-pointer rounded-md font-semibold text-primary focus-within:outline-none focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2 hover:text-primary/80"
-                                                for="video-upload">
-                                                <span>Upload a video</span>
-                                                <input class="sr-only" id="video-upload" name="video-upload" type="file"
-                                                    accept="video/mp4,video/x-m4v,video/*" />
-                                            </label>
-                                            <p class="pl-1">or drag and drop</p>
+
+                                        <!-- Progress Bar Container (hidden until upload starts) -->
+                                        <div id="video-upload-progress-container" class="hidden space-y-3">
+                                            <div class="flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-300">
+                                                <span id="video-upload-status-label" class="flex items-center gap-1.5">
+                                                    <span class="material-symbols-outlined text-[16px] animate-spin text-primary">sync</span>
+                                                    Uploading introduction video...
+                                                </span>
+                                                <span id="video-upload-percent-label" class="text-primary font-mono font-bold">0%</span>
+                                            </div>
+                                            <div class="h-2.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+                                                <div id="video-upload-progress-bar" class="h-full w-0 bg-primary transition-all duration-200 rounded-full"></div>
+                                            </div>
+                                            <div class="flex justify-end pt-1">
+                                                <button id="video-upload-cancel-btn" type="button"
+                                                    class="inline-flex items-center gap-1 text-xs font-bold text-red-500 hover:text-red-700 dark:hover:text-red-400 transition-colors">
+                                                    <span class="material-symbols-outlined text-[16px]">cancel</span>
+                                                    Cancel Upload
+                                                </button>
+                                            </div>
                                         </div>
-                                        <p class="text-xs leading-5 text-slate-500 dark:text-slate-500 mt-2">MP4, WebM
-                                            up to 50MB</p>
+
+                                        <p id="video-error-msg" class="hidden text-xs font-semibold text-red-500 mt-2"></p>
                                     </div>
                                 </div>
                             </section>
@@ -392,16 +414,12 @@
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div>
                                             <label class="mb-4 block text-sm font-bold text-slate-900 dark:text-white" for="experience">Teaching Experience</label>
-                                            <select class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white" id="experience">
+                                            <select class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white skeleton-node-select" id="experience">
                                                 <option value="">Select experience</option>
                                                 <option value="1-3">1-3 years</option>
                                                 <option value="3-5">3-5 years</option>
                                                 <option value="5+">5+ years</option>
                                             </select>
-                                        </div>
-                                        <div>
-                                            <label class="mb-4 block text-sm font-bold text-slate-900 dark:text-white" for="mentorshipStyle">Mentorship Style</label>
-                                            <textarea class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white" id="mentorshipStyle" rows="3" placeholder="How do you mentor students?..."></textarea>
                                         </div>
                                     </div>
                             </div>
@@ -415,14 +433,14 @@
                                             <label class="mb-2 block text-xs font-medium text-slate-500"
                                                 for="university">University / Institution</label>
                                             <input
-                                                class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                                                class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white skeleton-node"
                                                 id="university" placeholder="e.g. Stanford University" type="text" />
                                         </div>
                                         <div>
                                             <label class="mb-2 block text-xs font-medium text-slate-500"
                                                 for="degree">Degree</label>
                                             <input
-                                                class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                                                class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white skeleton-node"
                                                 id="degree" placeholder="e.g. Master of Computer Science" type="text" />
                                         </div>
                                     </div>
@@ -474,10 +492,11 @@
                                         </div>
                                         <div>
                                             <p class="text-sm font-medium text-slate-500">Available Balance</p>
-                                            <h2 class="text-4xl font-black text-slate-900 dark:text-white">$0.00</h2>
+                                            <h2 id="profile-available-balance" class="text-4xl font-black text-slate-900 dark:text-white">$0.00</h2>
                                         </div>
                                     </div>
                                     <button
+                                        id="profile-withdraw-btn"
                                         class="flex h-12 items-center gap-2 rounded-lg bg-slate-200 px-8 text-sm font-bold text-slate-400 cursor-not-allowed dark:bg-slate-800 dark:text-slate-600"
                                         disabled="">
                                         <span class="material-symbols-outlined text-[20px]">payments</span>
@@ -542,7 +561,7 @@
                                                 <label class="mb-2 block text-xs font-bold uppercase text-slate-500"
                                                     for="mm-provider">Provider</label>
                                                 <select id="mm-provider"
-                                                    class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white">
+                                                    class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white skeleton-node-select">
                                                     <option value="">Select Provider</option>
                                                     <option value="zaad">Zaad Service</option>
                                                     <option value="edahab">eDahab</option>
@@ -556,8 +575,9 @@
                                                 <label class="mb-2 block text-xs font-bold uppercase text-slate-500"
                                                     for="mm-phone">Phone Number</label>
                                                 <input id="mm-phone" type="tel"
-                                                    class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                                                    class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white skeleton-node"
                                                     placeholder="+252 6X XXXXXXX" />
+                                                <span id="mm-phone-error" class="hidden text-xs text-red-500 mt-1"></span>
                                             </div>
                                         </div>
                                     </div>
@@ -571,30 +591,34 @@
                                                 <label class="mb-2 block text-xs font-bold uppercase text-slate-500"
                                                     for="cod-address">Street Address</label>
                                                 <input id="cod-address" type="text"
-                                                    class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                                                    class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white skeleton-node"
                                                     placeholder="123 Main St, Apartment 4B" />
+                                                 <span id="cod-address-error" class="hidden text-xs text-red-500 mt-1"></span>
                                             </div>
                                             <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
                                                 <div>
                                                     <label class="mb-2 block text-xs font-bold uppercase text-slate-500"
                                                         for="cod-city">City</label>
                                                     <input id="cod-city" type="text"
-                                                        class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                                                        class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white skeleton-node"
                                                         placeholder="Hargeisa" />
+                                                     <span id="cod-city-error" class="hidden text-xs text-red-500 mt-1"></span>
                                                 </div>
                                                 <div>
                                                     <label class="mb-2 block text-xs font-bold uppercase text-slate-500"
                                                         for="cod-country">Country</label>
                                                     <input id="cod-country" type="text"
-                                                        class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                                                        class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white skeleton-node"
                                                         placeholder="Somalia" />
+                                                     <span id="cod-country-error" class="hidden text-xs text-red-500 mt-1"></span>
                                                 </div>
                                                 <div>
                                                     <label class="mb-2 block text-xs font-bold uppercase text-slate-500"
                                                         for="cod-phone">Contact Phone</label>
                                                     <input id="cod-phone" type="tel"
-                                                        class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                                                        class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white skeleton-node"
                                                         placeholder="+252 6X XXXXXXX" />
+                                                    <span id="cod-phone-error" class="hidden text-xs text-red-500 mt-1"></span>
                                                 </div>
                                             </div>
                                         </div>
@@ -623,23 +647,27 @@
                                                         Status</th>
                                                 </tr>
                                             </thead>
-                                            <tbody>
-                                                <tr class="h-64">
-                                                    <td class="px-6 py-10" colspan="5">
-                                                        <div
-                                                            class="flex flex-col items-center justify-center text-center">
-                                                            <div
-                                                                class="mb-4 flex size-16 items-center justify-center rounded-full bg-slate-50 text-slate-300 dark:bg-slate-800/50">
-                                                                <span
-                                                                    class="material-symbols-outlined text-4xl">history</span>
-                                                            </div>
-                                                            <p
-                                                                class="text-base font-semibold text-slate-900 dark:text-white">
-                                                                No transactions yet</p>
-                                                            <p class="mt-1 text-sm text-slate-500">Your earnings history
-                                                                will appear here.</p>
-                                                        </div>
-                                                    </td>
+                                            <tbody id="payout-history-tbody">
+                                                <tr class="animate-pulse border-b border-slate-100 dark:border-slate-800">
+                                                    <td class="px-6 py-4"><div class="h-4 w-20 rounded bg-slate-200 dark:bg-slate-700"></div></td>
+                                                    <td class="px-6 py-4"><div class="h-4 w-24 rounded bg-slate-200 dark:bg-slate-700"></div></td>
+                                                    <td class="px-6 py-4"><div class="h-4 w-32 rounded bg-slate-200 dark:bg-slate-700"></div></td>
+                                                    <td class="px-6 py-4 text-right"><div class="ml-auto h-4 w-16 rounded bg-slate-200 dark:bg-slate-700"></div></td>
+                                                    <td class="px-6 py-4"><div class="h-6 w-16 rounded-full bg-slate-200 dark:bg-slate-700"></div></td>
+                                                </tr>
+                                                <tr class="animate-pulse border-b border-slate-100 dark:border-slate-800">
+                                                    <td class="px-6 py-4"><div class="h-4 w-20 rounded bg-slate-200 dark:bg-slate-700"></div></td>
+                                                    <td class="px-6 py-4"><div class="h-4 w-24 rounded bg-slate-200 dark:bg-slate-700"></div></td>
+                                                    <td class="px-6 py-4"><div class="h-4 w-32 rounded bg-slate-200 dark:bg-slate-700"></div></td>
+                                                    <td class="px-6 py-4 text-right"><div class="ml-auto h-4 w-16 rounded bg-slate-200 dark:bg-slate-700"></div></td>
+                                                    <td class="px-6 py-4"><div class="h-6 w-16 rounded-full bg-slate-200 dark:bg-slate-700"></div></td>
+                                                </tr>
+                                                <tr class="animate-pulse">
+                                                    <td class="px-6 py-4"><div class="h-4 w-20 rounded bg-slate-200 dark:bg-slate-700"></div></td>
+                                                    <td class="px-6 py-4"><div class="h-4 w-24 rounded bg-slate-200 dark:bg-slate-700"></div></td>
+                                                    <td class="px-6 py-4"><div class="h-4 w-32 rounded bg-slate-200 dark:bg-slate-700"></div></td>
+                                                    <td class="px-6 py-4 text-right"><div class="ml-auto h-4 w-16 rounded bg-slate-200 dark:bg-slate-700"></div></td>
+                                                    <td class="px-6 py-4"><div class="h-6 w-16 rounded-full bg-slate-200 dark:bg-slate-700"></div></td>
                                                 </tr>
                                             </tbody>
                                         </table>
@@ -669,32 +697,73 @@
                                         class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">
                                         Security Settings</h3>
                                 </div>
-                                <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                                <p id="security-error-msg" class="text-sm font-medium text-red-500 hidden mb-4 rounded-lg border border-red-500/20 bg-red-50 p-4 dark:border-red-500/30 dark:bg-red-900/10"></p>                                <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                                     <div class="md:col-span-2">
                                         <label
                                             class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2"
                                             for="current-password">Current Password</label>
-                                        <input
-                                            class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                                            id="current-password" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
-                                            type="password" />
+                                        <div class="relative flex items-center">
+                                            <input
+                                                class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 pr-10 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                                                id="current-password" placeholder="••••••••••••"
+                                                type="password" maxlength="128" autocomplete="current-password" />
+                                            <button type="button" class="toggle-password-btn absolute right-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 focus:outline-none" data-target="current-password" title="Toggle password visibility">
+                                                <span class="material-symbols-outlined text-[20px]">visibility</span>
+                                            </button>
+                                        </div>
+                                        <span id="current-password-error" class="hidden text-xs text-red-500 mt-1 block"></span>
                                     </div>
                                     <div>
                                         <label
                                             class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2"
                                             for="new-password">New Password</label>
-                                        <input
-                                            class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                                            id="new-password" placeholder="Min. 8 characters" type="password" />
+                                        <div class="relative flex items-center">
+                                            <input
+                                                class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 pr-10 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                                                id="new-password" placeholder="Min. 8 characters" type="password" maxlength="128" autocomplete="new-password" />
+                                            <button type="button" class="toggle-password-btn absolute right-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 focus:outline-none" data-target="new-password" title="Toggle password visibility">
+                                                <span class="material-symbols-outlined text-[20px]">visibility</span>
+                                            </button>
+                                        </div>
+                                        <span id="new-password-error" class="hidden text-xs text-red-500 mt-1 block"></span>
+
+                                        <!-- Password Strength Indicator & Checklist -->
+                                        <div id="password-strength-container" class="mt-3 hidden">
+                                            <div class="flex items-center justify-between text-xs font-semibold mb-1">
+                                                <span class="text-slate-500">Password Strength:</span>
+                                                <span id="password-strength-label" class="text-slate-400">Weak</span>
+                                            </div>
+                                            <div class="h-1.5 w-full bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                                                <div id="password-strength-bar" class="h-full w-0 bg-red-500 transition-all duration-300"></div>
+                                            </div>
+                                            <div class="mt-3 grid grid-cols-1 gap-1.5 sm:grid-cols-2 text-xs text-slate-500 dark:text-slate-400">
+                                                <div id="req-length" class="flex items-center gap-1.5 transition-colors"><span class="material-symbols-outlined text-[14px]">cancel</span> 8+ characters</div>
+                                                <div id="req-upper" class="flex items-center gap-1.5 transition-colors"><span class="material-symbols-outlined text-[14px]">cancel</span> Uppercase letter (A-Z)</div>
+                                                <div id="req-lower" class="flex items-center gap-1.5 transition-colors"><span class="material-symbols-outlined text-[14px]">cancel</span> Lowercase letter (a-z)</div>
+                                                <div id="req-number" class="flex items-center gap-1.5 transition-colors"><span class="material-symbols-outlined text-[14px]">cancel</span> Number (0-9)</div>
+                                                <div id="req-special" class="flex items-center gap-1.5 transition-colors sm:col-span-2"><span class="material-symbols-outlined text-[14px]">cancel</span> Special character (!@#$%^&*)</div>
+                                            </div>
+                                        </div>
                                     </div>
                                     <div>
                                         <label
                                             class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2"
                                             for="confirm-password">Confirm New Password</label>
-                                        <input
-                                            class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                                            id="confirm-password" placeholder="Re-type new password" type="password" />
+                                        <div class="relative flex items-center">
+                                            <input
+                                                class="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-3 pr-10 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                                                id="confirm-password" placeholder="Re-type new password" type="password" maxlength="128" autocomplete="new-password" />
+                                            <button type="button" class="toggle-password-btn absolute right-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 focus:outline-none" data-target="confirm-password" title="Toggle password visibility">
+                                                <span class="material-symbols-outlined text-[20px]">visibility</span>
+                                            </button>
+                                        </div>
+                                        <div id="password-match-badge" class="mt-2 hidden flex items-center gap-1.5 text-xs font-semibold">
+                                            <span id="password-match-icon" class="material-symbols-outlined text-[16px]">check_circle</span>
+                                            <span id="password-match-text">Passwords match</span>
+                                        </div>
+                                        <span id="confirm-password-error" class="hidden text-xs text-red-500 mt-1 block"></span>
                                     </div>
+                                </div>    </div>
                                 </div>
 
                             </section>
@@ -783,9 +852,12 @@
             </main>
         </div>
         <div
-            class="fixed bottom-0 z-50 flex w-full items-center justify-end border-t border-slate-200 bg-white/80 px-4 py-4 backdrop-blur-md lg:px-10 dark:border-slate-800 dark:bg-background-dark/80">
-            <div class="flex gap-4">
-                <button
+            class="fixed bottom-0 z-50 flex w-full items-center justify-between border-t border-slate-200 bg-white/80 px-4 py-4 backdrop-blur-md lg:px-10 dark:border-slate-800 dark:bg-background-dark/80">
+            
+            <div id="global-action-error" class="hidden text-sm font-medium text-red-500 bg-red-50 dark:bg-red-900/10 border border-red-500/20 px-4 py-2 rounded-lg max-w-lg truncate"></div>
+            
+            <div class="flex gap-4 ml-auto">
+                <button id="discard-profile-btn"
                     class="rounded-lg px-6 py-2 text-sm font-bold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">
                     Discard changes
                 </button>
@@ -855,6 +927,151 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
+
+            // --- Logout Handlers (AuthService) ---
+            async function doLogout() {
+                try {
+                    const { AuthService } = await import('/src/services/authService.js');
+                    await AuthService.logout();
+                } catch(e) {
+                    console.warn('Logout error:', e);
+                } finally {
+                    window.location.href = '/src/pages/auth/login-select/index.html';
+                }
+            }
+
+            const sidebarLogout = document.getElementById('sidebar-logout-btn');
+            if (sidebarLogout) sidebarLogout.addEventListener('click', doLogout);
+
+            const mobileLogout = document.getElementById('mobile-logout-btn');
+            if (mobileLogout) mobileLogout.addEventListener('click', doLogout);
+            // --- End Logout Handlers ---
+
+            window.containsUrl = function(v) {
+                return new RegExp('https?:\\/\\/|www\\.|ftp:\\/\\/|javascript:', 'i').test(v);
+            };
+            window.hasSQLInjection = function(v) {
+                return new RegExp("(['\"`]|--|[/][*]|[*][/]|\\bUNION\\b|\\bSELECT\\b|\\bDROP\\b|\\bINSERT\\b|\\bDELETE\\b|\\bUPDATE\\b|\\bEXEC\\b)", 'i').test(v);
+            };
+            window.isTextDirty = function(v) {
+                return v && (window.containsUrl(v) || window.hasSQLInjection(v));
+            };
+
+            // --- Password Eye Visibility Toggle & Real-time Validation ---
+            document.querySelectorAll('.toggle-password-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const targetId = btn.getAttribute('data-target');
+                    const input = document.getElementById(targetId);
+                    const icon = btn.querySelector('.material-symbols-outlined');
+                    if (!input) return;
+                    if (input.type === 'password') {
+                        input.type = 'text';
+                        if (icon) icon.textContent = 'visibility_off';
+                    } else {
+                        input.type = 'password';
+                        if (icon) icon.textContent = 'visibility';
+                    }
+                });
+            });
+
+            const newPwInput = document.getElementById('new-password');
+            const confirmPwInput = document.getElementById('confirm-password');
+
+            const checkPasswordMatch = () => {
+                if (!newPwInput || !confirmPwInput) return;
+                const newPw = newPwInput.value;
+                const confirmPw = confirmPwInput.value;
+                const matchBadge = document.getElementById('password-match-badge');
+                const matchIcon = document.getElementById('password-match-icon');
+                const matchText = document.getElementById('password-match-text');
+
+                if (!confirmPw) {
+                    if (matchBadge) matchBadge.classList.add('hidden');
+                    confirmPwInput.classList.remove('border-red-500', 'border-emerald-500', 'ring-1', 'ring-red-500', 'ring-emerald-500');
+                    return;
+                }
+
+                if (matchBadge) matchBadge.classList.remove('hidden');
+
+                if (newPw === confirmPw) {
+                    matchBadge.className = 'mt-2 flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400';
+                    if (matchIcon) matchIcon.textContent = 'check_circle';
+                    if (matchText) matchText.textContent = 'Passwords match';
+                    confirmPwInput.classList.remove('border-red-500', 'ring-1', 'ring-red-500');
+                    confirmPwInput.classList.add('border-emerald-500');
+                } else {
+                    matchBadge.className = 'mt-2 flex items-center gap-1.5 text-xs font-semibold text-red-500';
+                    if (matchIcon) matchIcon.textContent = 'cancel';
+                    if (matchText) matchText.textContent = 'Passwords do not match';
+                    confirmPwInput.classList.remove('border-emerald-500');
+                    confirmPwInput.classList.add('border-red-500');
+                }
+            };
+
+            const updatePasswordStrength = () => {
+                if (!newPwInput) return;
+                const val = newPwInput.value;
+                const strengthContainer = document.getElementById('password-strength-container');
+                const strengthLabel = document.getElementById('password-strength-label');
+                const strengthBar = document.getElementById('password-strength-bar');
+
+                if (!val) {
+                    if (strengthContainer) strengthContainer.classList.add('hidden');
+                    checkPasswordMatch();
+                    return;
+                }
+
+                if (strengthContainer) strengthContainer.classList.remove('hidden');
+
+                const hasLength = val.length >= 8;
+                const hasUpper = /[A-Z]/.test(val);
+                const hasLower = /[a-z]/.test(val);
+                const hasNumber = /[0-9]/.test(val);
+                const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(val);
+
+                const updateReq = (id, met) => {
+                    const el = document.getElementById(id);
+                    if (!el) return;
+                    const icon = el.querySelector('.material-symbols-outlined');
+                    if (met) {
+                        el.className = 'flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-medium transition-colors';
+                        if (icon) icon.textContent = 'check_circle';
+                    } else {
+                        el.className = 'flex items-center gap-1.5 text-slate-400 transition-colors';
+                        if (icon) icon.textContent = 'cancel';
+                    }
+                };
+
+                updateReq('req-length', hasLength);
+                updateReq('req-upper', hasUpper);
+                updateReq('req-lower', hasLower);
+                updateReq('req-number', hasNumber);
+                updateReq('req-special', hasSpecial);
+
+                const metCount = [hasLength, hasUpper, hasLower, hasNumber, hasSpecial].filter(Boolean).length;
+
+                if (metCount <= 2) {
+                    if (strengthLabel) { strengthLabel.textContent = 'Weak'; strengthLabel.className = 'text-red-500 font-bold'; }
+                    if (strengthBar) { strengthBar.className = 'h-full w-1/3 bg-red-500 transition-all duration-300'; }
+                } else if (metCount <= 4) {
+                    if (strengthLabel) { strengthLabel.textContent = 'Medium'; strengthLabel.className = 'text-amber-500 font-bold'; }
+                    if (strengthBar) { strengthBar.className = 'h-full w-2/3 bg-amber-500 transition-all duration-300'; }
+                } else {
+                    if (strengthLabel) { strengthLabel.textContent = 'Strong'; strengthLabel.className = 'text-emerald-500 font-bold'; }
+                    if (strengthBar) { strengthBar.className = 'h-full w-full bg-emerald-500 transition-all duration-300'; }
+                }
+
+                checkPasswordMatch();
+            };
+
+            if (newPwInput) newPwInput.addEventListener('input', updatePasswordStrength);
+            if (confirmPwInput) confirmPwInput.addEventListener('input', checkPasswordMatch);
+            // --- End Password Eye Visibility Toggle & Real-time Validation ---
+
+
+                    
+
+
             // Video Drag and Drop
             const videoDropzone = document.getElementById('video-dropzone');
             const videoInput = document.getElementById('video-upload');
@@ -935,11 +1152,19 @@
                     input.focus();
 
                     const saveExpertise = () => {
-                        const newExp = input.value;
-                        if (newExp && newExp.trim() !== "") {
+                        const newExp = input.value.trim();
+                        if (newExp) {
+                            const hint = document.getElementById('expertise-empty-hint');
+                            if (hint) hint.remove();
                             const span = document.createElement('span');
-                            span.className = "flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary";
-                            span.innerHTML = `${newExp} <button class="material-symbols-outlined text-[14px]">close</button>`;
+                            span.className = "flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary expertise-tag";
+                            // Use text node so close icon text doesn't contaminate on save
+                            span.appendChild(document.createTextNode(newExp + ' '));
+                            const closeBtn = document.createElement('button');
+                            closeBtn.className = 'material-symbols-outlined text-[14px]';
+                            closeBtn.type = 'button';
+                            closeBtn.textContent = 'close';
+                            span.appendChild(closeBtn);
                             expertiseContainer.insertBefore(span, inputContainer);
                         }
                         inputContainer.remove();
@@ -991,9 +1216,9 @@
                 });
             }
 
-            // Languages Spoken
+            // Languages Spoken — find edit button by ID
             const languagesContainer = document.getElementById('languages-container');
-            const editLanguagesBtn = languagesContainer ? languagesContainer.parentElement.querySelector('button.bg-primary\\/10') : null;
+            const editLanguagesBtn = document.getElementById('edit-languages-btn');
 
             if (editLanguagesBtn && languagesContainer) {
                 editLanguagesBtn.addEventListener('click', (e) => {
@@ -1017,12 +1242,18 @@
                     input.focus();
 
                     const saveLang = () => {
-                        const newLang = input.value;
-                        if (newLang && newLang.trim() !== "") {
+                        const newLang = input.value.trim();
+                        if (newLang) {
                             const span = document.createElement('span');
-                            span.className = "rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-300 flex items-center gap-1 group cursor-pointer hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/30";
-                            span.innerHTML = `${newLang} <span class="material-symbols-outlined text-[14px] opacity-0 group-hover:opacity-100 transition-opacity">close</span>`;
-                            languagesContainer.insertBefore(span, inputContainer);
+                            span.className = "rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-300 flex items-center gap-1 group cursor-pointer hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/30 lang-tag";
+                            // Use text node to keep text separate from icon text
+                            span.appendChild(document.createTextNode(newLang));
+                            const icon = document.createElement('span');
+                            icon.className = 'material-symbols-outlined text-[14px] opacity-0 group-hover:opacity-100 transition-opacity';
+                            icon.textContent = 'close';
+                            span.appendChild(icon);
+                            const currentEditBtn = document.getElementById('edit-languages-btn');
+                            languagesContainer.insertBefore(span, currentEditBtn || inputContainer);
                         }
                         inputContainer.remove();
                     };
@@ -1072,7 +1303,7 @@
                     const session = await AuthService.getSession();
                     if (!session) throw new Error("No active session");
 
-                    const updatedProfile = await ProfileService.uploadAvatar(session.user.id, file);
+                    const updatedProfile = await ProfileService.uploadAvatar(file);
 
                     if (window.currentProfile) {
                         window.currentProfile.avatar_url = updatedProfile.avatar_url;
@@ -1080,7 +1311,12 @@
 
                     const mainProfileNode = document.querySelector('.size-24');
                     if (mainProfileNode) {
-                        mainProfileNode.innerHTML = `<img src="${updatedProfile.avatar_url}" class="w-full h-full object-cover rounded-full" />`;
+                        // SECURITY: set src via setAttribute, not innerHTML
+                        const img = document.createElement('img');
+                        img.className = 'w-full h-full object-cover rounded-full';
+                        img.setAttribute('src', updatedProfile.avatar_url);
+                        mainProfileNode.innerHTML = '';
+                        mainProfileNode.appendChild(img);
                         mainProfileNode.classList.add('overflow-hidden');
                     }
 
@@ -1090,7 +1326,13 @@
                         TacliimiDB.applyGlobalProfile();
                     }
                 } catch (err) {
-                    alert("Failed to upload image: " + err.message);
+                    const globalErr = document.getElementById('global-action-error');
+                    if (globalErr) {
+                        globalErr.textContent = "Failed to upload image: " + err.message;
+                        globalErr.classList.remove('hidden');
+                        setTimeout(() => globalErr.classList.add('hidden'), 5000);
+                    }
+                    
                     if (document.getElementById('avatar-loading-toast')) {
                         document.getElementById('avatar-loading-toast').remove();
                     }
@@ -1125,18 +1367,62 @@
                     TacliimiDB.applyGlobalProfile();
                 }
             } catch (err) {
-                alert("Failed to remove image: " + err.message);
+                const globalErr = document.getElementById('global-action-error');
+                if (globalErr) {
+                    globalErr.textContent = "Failed to remove image: " + err.message;
+                    globalErr.classList.remove('hidden');
+                    setTimeout(() => globalErr.classList.add('hidden'), 5000);
+                }
+                
                 if (document.getElementById('avatar-loading-toast')) {
                     document.getElementById('avatar-loading-toast').remove();
                 }
             }
         }
+        window.handleVideoUploadValidation = function(event) {
+            const file = event.target.files[0];
+            const errEl   = document.getElementById('video-error-msg');
+            const labelEl = document.getElementById('video-size-label');
+            const MAX_BYTES = 150 * 1024 * 1024; // 150 MB
+            const ALLOWED_TYPES = ['video/mp4', 'video/x-m4v', 'video/webm', 'video/quicktime'];
+
+            if (!file) return;
+
+            // Reset error state
+            if (errEl) { errEl.textContent = ''; errEl.classList.add('hidden'); }
+
+            // Check MIME type
+            if (!ALLOWED_TYPES.includes(file.type)) {
+                if (errEl) { errEl.textContent = 'Invalid file type. Please upload an MP4, WebM or MOV video.'; errEl.classList.remove('hidden'); }
+                event.target.value = '';
+                return;
+            }
+
+            // Check file size
+            if (file.size > MAX_BYTES) {
+                const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
+                if (errEl) {
+                    errEl.textContent = `File too large (${sizeMB} MB). For a 1-3 min intro video, please keep it under 150 MB.`;
+                    errEl.classList.remove('hidden');
+                }
+                event.target.value = '';
+                return;
+            }
+
+            // All good — show selected file name
+            if (labelEl) {
+                labelEl.textContent = `Selected: ${file.name} (${(file.size / (1024 * 1024)).toFixed(1)} MB)`;
+                labelEl.classList.add('text-primary', 'font-bold');
+                labelEl.classList.remove('text-slate-500');
+            }
+        };
     </script>
 
     <script type="module">
         import { AuthService } from '/src/services/authService.js';
         import { ProfileService } from '/src/services/profileService.js';
         import { PayoutService } from '/src/services/payoutService.js';
+        import { instructorEarningsService } from '/src/services/instructorEarningsService.js';
         import { GlobalProfile } from '/src/services/globalProfile.js';
         import { supabase } from '/src/services/supabaseClient.js';
 
@@ -1153,9 +1439,24 @@
                 if (discardBtnEl) discardBtnEl.id = 'discard-profile-btn';
             }
 
+            // --- Reveal skeletons: remove skeleton-node after data arrives ---
+            const revealSkeletons = () => {
+                document.querySelectorAll('.skeleton-node').forEach(el => {
+                    el.classList.remove('skeleton-node');
+                    el.style.pointerEvents = '';
+                    el.style.userSelect = '';
+                });
+                document.querySelectorAll('.skeleton-node-select').forEach(el => {
+                    el.classList.remove('skeleton-node-select');
+                    el.style.pointerEvents = '';
+                });
+            };
+
             // Function to populate form
             const populateForm = (profile) => {
-                if (!profile) return;
+                const tos = document.getElementById('tos-checkbox');
+                if (tos && profile.agreed_to_instructor_tos !== undefined) { tos.checked = profile.agreed_to_instructor_tos; }
+                if (!profile) { revealSkeletons(); return; }
 
                 // Personal
                 if (profile.full_name) document.getElementById('fullName').value = profile.full_name;
@@ -1173,21 +1474,39 @@
 
                 // Teaching
                 if (profile.teaching_experience) document.getElementById('experience').value = profile.teaching_experience;
-                if (profile.mentorship_style) document.getElementById('mentorshipStyle').value = profile.mentorship_style;
 
-                // Expertise Tags
+                // Expertise Tags — clear ALL existing tags (including HTML placeholders) then repopulate
                 const expCont = document.getElementById('expertise-container');
-                if (expCont && profile.expertise_list) {
-                    // Keep the "Add Expertise" button
-                    const addBtn = expCont.querySelector('button.border-dashed');
+                if (expCont) {
+                    // Save the Add-Expertise button before clearing
+                    const addExpBtn = expCont.querySelector('button.border-dashed');
+                    // Remove ALL children (clears hardcoded placeholder tags too)
                     expCont.innerHTML = '';
-                    profile.expertise_list.forEach(exp => {
+                    // Re-add saved expertise tags
+                    const expList = profile.expertise_list || [];
+                    expList.forEach(exp => {
                         const span = document.createElement('span');
-                        span.className = "flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary";
-                        span.innerHTML = `${exp} <button class="material-symbols-outlined text-[14px]">close</button>`;
+                        span.className = "flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary expertise-tag";
+                        const textNode = document.createTextNode(exp + ' ');
+                        span.appendChild(textNode);
+                        const closeBtn = document.createElement('button');
+                        closeBtn.className = 'material-symbols-outlined text-[14px]';
+                        closeBtn.type = 'button';
+                        closeBtn.textContent = 'close';
+                        span.appendChild(closeBtn);
                         expCont.appendChild(span);
                     });
-                    if (addBtn) expCont.appendChild(addBtn);
+                    // Re-add the Add button
+                    if (addExpBtn) expCont.appendChild(addExpBtn);
+                    // If we got no expertise, show empty state hint
+                    if (expList.length === 0) {
+                        const hint = document.createElement('p');
+                        hint.className = 'text-xs text-slate-400';
+                        hint.textContent = 'No expertise added yet. Click "Add Expertise" to get started.';
+                        hint.id = 'expertise-empty-hint';
+                        if (addExpBtn) expCont.insertBefore(hint, addExpBtn);
+                        else expCont.appendChild(hint);
+                    }
                 }
 
                 // Education Blocks
@@ -1220,31 +1539,60 @@
                     });
                 }
 
-                // Language Tags
+                // Language Tags — use button ID (not class) to find the edit button
                 const langCont = document.getElementById('languages-container');
-                if (langCont && profile.language_list) {
-                    // Keep the "Add" button
-                    const addBtn = langCont.querySelector('button.bg-primary\\/10');
+                if (langCont) {
+                    // Save the edit button before clearing
+                    const editLangBtn = document.getElementById('edit-languages-btn');
                     langCont.innerHTML = '';
-                    profile.language_list.forEach(lang => {
+                    const langList = profile.language_list || [];
+                    langList.forEach(lang => {
                         const span = document.createElement('span');
-                        span.className = "rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-300 flex items-center gap-1 group cursor-pointer hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/30";
-                        span.innerHTML = `${lang} <span class="material-symbols-outlined text-[14px] opacity-0 group-hover:opacity-100 transition-opacity">close</span>`;
+                        span.className = "rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-300 flex items-center gap-1 group cursor-pointer hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/30 lang-tag";
+                        const textNode = document.createTextNode(lang);
+                        span.appendChild(textNode);
+                        const closeIcon = document.createElement('span');
+                        closeIcon.className = 'material-symbols-outlined text-[14px] opacity-0 group-hover:opacity-100 transition-opacity';
+                        closeIcon.textContent = 'close';
+                        span.appendChild(closeIcon);
                         langCont.appendChild(span);
                     });
-                    if (addBtn) langCont.appendChild(addBtn);
+                    // Re-add the edit button
+                    if (editLangBtn) langCont.appendChild(editLangBtn);
+                    else {
+                        // Rebuild edit button if it was lost
+                        const newEditBtn = document.createElement('button');
+                        newEditBtn.id = 'edit-languages-btn';
+                        newEditBtn.className = 'material-symbols-outlined rounded-lg bg-primary/10 p-1 text-primary';
+                        newEditBtn.textContent = 'edit';
+                        langCont.appendChild(newEditBtn);
+                    }
                 }
 
                 // Video Info
                 const videoDropzone = document.getElementById('video-dropzone');
-                if (videoDropzone && profile.introVideo) {
-                    const p = videoDropzone.querySelector('p.text-xs.leading-5');
-                    if (p) {
-                        p.textContent = `Current Video: ${profile.introVideo.split('/').pop()}`;
-                        p.classList.add('text-primary', 'font-bold');
+                if (videoDropzone) {
+                    const sizeLabel = document.getElementById('video-size-label');
+                    if (sizeLabel) {
+                        if (profile.introVideoStorageKey) {
+                            sizeLabel.textContent = 'Current Video: R2 Storage (Loading preview...)';
+                            sizeLabel.classList.add('text-primary', 'font-bold');
+                            ProfileService.getIntroVideoPlaybackUrl(profile.introVideoStorageKey).then(url => {
+                                if (url) {
+                                    sizeLabel.innerHTML = `Current Video: <a href="${url}" target="_blank" rel="noopener" class="underline hover:text-primary/80">Play Intro Video</a>`;
+                                }
+                            }).catch(() => {
+                                sizeLabel.textContent = 'Current Video: R2 Storage Video';
+                            });
+                        } else if (profile.introVideo) {
+                            const filename = profile.introVideo.split('/').pop() || 'Video';
+                            sizeLabel.innerHTML = `Current Video: <a href="${profile.introVideo}" target="_blank" rel="noopener" class="underline hover:text-primary/80">${filename}</a>`;
+                            sizeLabel.classList.add('text-primary', 'font-bold');
+                        }
                     }
                 }
 
+                // Payout
                 // Payout
                 if (profile.payout_method) {
                     const method = profile.payout_method;
@@ -1253,16 +1601,21 @@
                     const value = methodMap[method] || method;
 
                     document.getElementById('selectedPayoutMethod').value = value;
+                    
+                    // Always populate both fields if they exist so the user can see them
+                    if (details.provider) document.getElementById('mm-provider').value = details.provider;
+                    if (details.mm_phone) document.getElementById('mm-phone').value = details.mm_phone;
+                    if (details.cod_phone) document.getElementById('cod-phone').value = details.cod_phone;
+                    
+                    if (details.address) document.getElementById('cod-address').value = details.address;
+                    if (details.city) document.getElementById('cod-city').value = details.city;
+                    if (details.country) document.getElementById('cod-country').value = details.country;
+                    
+                    // Click the dominant one to show the tab
                     if (value === 'mm') {
                         document.getElementById('btn-mm').click();
-                        if (details.provider) document.getElementById('mm-provider').value = details.provider;
-                        if (details.phone) document.getElementById('mm-phone').value = details.phone;
                     } else if (value === 'cod') {
                         document.getElementById('btn-cod').click();
-                        if (details.address) document.getElementById('cod-address').value = details.address;
-                        if (details.city) document.getElementById('cod-city').value = details.city;
-                        if (details.country) document.getElementById('cod-country').value = details.country;
-                        if (details.phone) document.getElementById('cod-phone').value = details.phone;
                     }
                 }
 
@@ -1270,10 +1623,17 @@
                 if (profile.avatar_url) {
                     const mainProfileNode = document.querySelector('.size-24');
                     if (mainProfileNode) {
-                        mainProfileNode.innerHTML = `<img src="${profile.avatar_url}" class="w-full h-full object-cover rounded-full" />`;
+                        // SECURITY: set src via setAttribute, not innerHTML
+                        const img = document.createElement('img');
+                        img.className = 'w-full h-full object-cover rounded-full';
+                        img.setAttribute('src', profile.avatar_url);
+                        mainProfileNode.innerHTML = '';
+                        mainProfileNode.appendChild(img);
                         mainProfileNode.classList.add('overflow-hidden');
                     }
                 }
+                // Reveal skeletons once data is populated
+                revealSkeletons();
             };
 
             // Load profile on start
@@ -1284,6 +1644,79 @@
                     const profile = await ProfileService.getFullProfile(session.user.id);
                     window.currentProfile = profile;
                     populateForm(profile);
+                    
+                    // Also fire off payout history loader
+                    instructorEarningsService.getWithdrawalHistory(session.user.id).then(withdrawals => {
+                        const tb = document.getElementById('payout-history-tbody');
+                        if (tb) {
+                            if (withdrawals.length > 0) {
+                                 tb.innerHTML = '';
+                                 withdrawals.forEach(item => {
+                                 const reqDateStr = new Date(item.created_at).toLocaleDateString();
+                                 let statusClass = 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400';
+                                 let statusTitle = '';
+                                 if (item.status === 'pending')    statusClass = 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400';
+                                 if (item.status === 'processing') statusClass = 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
+                                 if (item.status === 'paid')       statusClass = 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400';
+                                 if (item.status === 'rejected') {
+                                     statusClass = 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
+                                     statusTitle = item.rejection_reason || item.notes_to_instructor || 'No reason specified';
+                                 }
+                                 if (item.status === 'approved')   statusClass = 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
+
+                                 let methodDetails = item.payout_method === 'mobile_money' ? 'Mobile Money' : (item.payout_method === 'bank_transfer' ? 'Bank Transfer' : 'Cash');
+                                 
+                                 let row = document.createElement('tr');
+                                 row.className = "border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors";
+                                 row.innerHTML = `
+                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-slate-500 dark:text-slate-400">${item.reference_number || 'N/A'}</td>
+                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">${reqDateStr}</td>
+                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900 dark:text-slate-300 font-medium">${methodDetails}</td>
+                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm text-slate-900 dark:text-white">$${parseFloat(item.amount).toFixed(2)}</td>
+                                     <td class="px-6 py-4 whitespace-nowrap">
+                                         <span class="px-2.5 py-1 text-xs font-medium rounded-full ${statusClass} capitalize" ${statusTitle ? `title="${statusTitle.replace(/"/g, '&quot;')}"` : ''}>${item.status}</span>
+                                     </td>
+                                 `;
+                                 tb.appendChild(row);
+                             });
+                            } else {
+                                tb.innerHTML = `
+                                    <tr class="h-64" id="payout-empty-state">
+                                        <td class="px-6 py-10" colspan="5">
+                                            <div class="flex flex-col items-center justify-center text-center">
+                                                <div class="mb-4 flex size-16 items-center justify-center rounded-full bg-slate-50 text-slate-300 dark:bg-slate-800/50">
+                                                    <span class="material-symbols-outlined text-4xl">history</span>
+                                                </div>
+                                                <p class="text-base font-semibold text-slate-900 dark:text-white">No transactions yet</p>
+                                                <p class="mt-1 text-sm text-slate-500">Your earnings history will appear here.</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                `;
+                            }
+                        }
+                    });
+                    
+                    // Fetch Earnings metrics to attach to the UI safely
+                    instructorEarningsService.getSummary(session.user.id).then(summary => {
+                        const balEl = document.getElementById('profile-available-balance');
+                        const wBtn = document.getElementById('profile-withdraw-btn');
+                        
+                        const withdrawableAmt = summary?.withdrawable_amount || 0;
+                        const minAmt = summary?.min_withdrawal_amount ?? 10;
+                        
+                        if (balEl) balEl.innerText = '$' + withdrawableAmt.toFixed(2);
+                        
+                        if (wBtn && withdrawableAmt >= minAmt) {
+                             wBtn.disabled = false;
+                             wBtn.classList.remove('bg-slate-200', 'text-slate-400', 'cursor-not-allowed', 'dark:bg-slate-800', 'dark:text-slate-600');
+                             wBtn.classList.add('bg-primary', 'text-white', 'hover:bg-primary/90');
+                             
+                             wBtn.addEventListener('click', () => {
+                                 window.location.href = '../instructor-earnings/index.html';
+                             });
+                        }
+                    });
                 }
             } catch (e) {
                 console.error("Failed to load profile:", e);
@@ -1292,7 +1725,12 @@
             if (discardBtnEl) {
                 discardBtnEl.addEventListener('click', async (e) => {
                     e.preventDefault();
-                    if (confirm('Are you sure you want to clear this tab data from the database?')) {
+                    window.showConfirmModal({
+                        title: "Discard Changes",
+                        message: "Are you sure you want to clear this tab data from the database?",
+                        confirmText: "Discard",
+                        variant: "danger"
+                    }, async () => {
                         const activeTab = document.querySelector('.profile-panel.block')?.id;
                         if (!activeTab || !window.currentSession) return;
 
@@ -1302,9 +1740,9 @@
                         const userId = window.currentSession.user.id;
                         try {
                             if (activeTab === 'panel-personal') {
-                                await ProfileService.updatePersonalInfo(userId, { full_name: '', professional_title: '', short_bio: '', social_links: null });
+                                await ProfileService.updatePersonalInfo({ full_name: '', professional_title: '', short_bio: '', social_links: null });
                             } else if (activeTab === 'panel-teaching') {
-                                await ProfileService.saveTeachingProfile(userId, { introVideo: '', experience: '', education: '[]', languages: '[]' }, []);
+                                await ProfileService.saveTeachingProfile({ introVideo: '', experience: '', education: '[]', languages: '[]' }, []);
                             } else if (activeTab === 'panel-payout') {
                                 await supabase.from('payout_methods').delete().eq('instructor_id', userId);
                             }
@@ -1324,18 +1762,25 @@
                                 GlobalProfile.applyProfile();
                             } catch (e) { console.error('Error refreshing UI:', e); }
                         } catch (err) {
-                            alert('Error clearing data: ' + err.message);
+                            const globalErr = document.getElementById('global-action-error');
+                            if (globalErr) {
+                                globalErr.textContent = "Error clearing data: " + err.message;
+                                globalErr.classList.remove('hidden');
+                                setTimeout(() => globalErr.classList.add('hidden'), 5000);
+                            }
                         } finally {
                             discardBtnEl.disabled = false;
                             discardBtnEl.innerHTML = `Discard changes`;
                         }
-                    }
+                    });
                 });
             }
 
             saveBtn.addEventListener('click', async (e) => {
                 e.preventDefault();
                 const profile = window.currentProfile;
+                const securityErr = document.getElementById('security-error-msg');
+                if (securityErr) securityErr.classList.add('hidden');
                 const isSetupMode = profile && profile.role === 'instructor' && !profile.profile_completed;
 
                 const activeTab = document.querySelector('.profile-panel.block');
@@ -1345,30 +1790,89 @@
                 let updates = {};
 
                 if (activeTabId === 'panel-personal') {
-                    const fullNameInput = document.getElementById('fullName');
-                    const titleInput = document.getElementById('professionalTitle');
-                    const bioInput = document.getElementById('shortBio');
+                    const fullNameInput   = document.getElementById('fullName');
+                    const titleInput     = document.getElementById('professionalTitle');
+                    const bioInput       = document.getElementById('shortBio');
+                    const countryInput   = document.getElementById('country');
+                    const cityInput      = document.getElementById('city');
+                    const linkedinInput  = document.getElementById('linkedinUrl');
+                    const twitterInput   = document.getElementById('twitterUrl');
+                    const facebookInput  = document.getElementById('facebookUrl');
+                    const githubInput    = document.getElementById('githubUrl');
 
-                    const fullName = fullNameInput.value.trim();
-                    const title = titleInput.value.trim();
-                    const bio = bioInput.value.trim();
+                    const fullName   = fullNameInput.value.trim();
+                    const title      = titleInput.value.trim();
+                    const bio        = bioInput.value.trim();
+                    const country    = countryInput ? countryInput.value.trim() : '';
+                    const city       = cityInput ? cityInput.value.trim() : '';
+                    const linkedinUrl  = linkedinInput  ? linkedinInput.value.trim()  : '';
+                    const twitterUrl   = twitterInput   ? twitterInput.value.trim()   : '';
+                    const facebookUrl  = facebookInput  ? facebookInput.value.trim()  : '';
+                    const githubUrl    = githubInput    ? githubInput.value.trim()    : '';
 
-                    [fullNameInput, titleInput, bioInput].forEach(el => el.classList.remove('border-red-500', 'ring-1', 'ring-red-500'));
+                    // Clear previous error states
+                    [fullNameInput, titleInput, bioInput, countryInput, cityInput, linkedinInput, twitterInput, facebookInput, githubInput].forEach(el => {
+                        if (el) { el.classList.remove('border-red-500', 'ring-1', 'ring-red-500'); }
+                    });
+                    document.querySelectorAll('.field-error').forEach(e => e.remove());
 
-                    // For instructor setup, they need an avatar, but profile logic gets complex. We check for full name, title, bio as required
-                    if (!fullName || !title || !bio) {
-                        if (!fullName) fullNameInput.classList.add('border-red-500', 'ring-1', 'ring-red-500');
-                        if (!title) titleInput.classList.add('border-red-500', 'ring-1', 'ring-red-500');
-                        if (!bio) bioInput.classList.add('border-red-500', 'ring-1', 'ring-red-500');
+                    // ── Validation helpers ────────────────────────────────────────────────
+                    // Block URLs / injection patterns in plain-text fields
+                    
+                    // Sanitise for typical SQL injection patterns
+
+                    // Social URL validators
+                    const socialRules = [
+                        { input: linkedinInput,  value: linkedinUrl,  regex: /^https?:\/\/(www\.)?linkedin\.com\/.*$/i,  label: 'LinkedIn' },
+                        { input: twitterInput,   value: twitterUrl,   regex: /^https?:\/\/(www\.)?(twitter|x)\.com\/.*$/i, label: 'Twitter/X' },
+                        { input: facebookInput,  value: facebookUrl,  regex: /^https?:\/\/(www\.)?facebook\.com\/.*$/i, label: 'Facebook' },
+                        { input: githubInput,    value: githubUrl,    regex: /^https?:\/\/(www\.)?github\.com\/.*$/i,    label: 'GitHub' },
+                    ];
+
+                    const showFieldError = (inputEl, msg) => {
+                        if (!inputEl) return;
+                        inputEl.classList.add('border-red-500', 'ring-1', 'ring-red-500');
+                        const err = document.createElement('span');
+                        err.className = 'field-error';
+                        err.textContent = msg;
+                        inputEl.parentNode.appendChild(err);
                         tabValid = false;
-                    } else {
-                        const linkedinUrl = document.getElementById('linkedinUrl')?.value.trim();
-                        const twitterUrl = document.getElementById('twitterUrl')?.value.trim();
-                        const facebookUrl = document.getElementById('facebookUrl')?.value.trim();
-                        const githubUrl = document.getElementById('githubUrl')?.value.trim();
-                        const country = document.getElementById('country')?.value.trim();
-                        const city = document.getElementById('city')?.value.trim();
+                    };
 
+                    // ── Text field checks ─────────────────────────────────────────────────
+                    if (!fullName) {
+                        showFieldError(fullNameInput, 'Full name is required.');
+                    } else if (window.containsUrl(fullName) || window.hasSQLInjection(fullName)) {
+                        showFieldError(fullNameInput, 'Name cannot contain links or special characters.');
+                    }
+
+                    if (!title) {
+                        showFieldError(titleInput, 'Professional title is required.');
+                    } else if (window.containsUrl(title) || window.hasSQLInjection(title)) {
+                        showFieldError(titleInput, 'Title cannot contain links or special characters.');
+                    }
+
+                    if (!bio) {
+                        showFieldError(bioInput, 'Short bio is required.');
+                    } else if (window.containsUrl(bio) || window.hasSQLInjection(bio)) {
+                        showFieldError(bioInput, 'Bio cannot contain links or injection patterns.');
+                    }
+
+                    if (country && (window.containsUrl(country) || window.hasSQLInjection(country))) {
+                        showFieldError(countryInput, 'Country cannot contain links or special characters.');
+                    }
+                    if (city && (window.containsUrl(city) || window.hasSQLInjection(city))) {
+                        showFieldError(cityInput, 'City cannot contain links or special characters.');
+                    }
+
+                    // ── Social URL checks ─────────────────────────────────────────────────
+                    socialRules.forEach(({ input, value, regex, label }) => {
+                        if (value && !regex.test(value)) {
+                            showFieldError(input, `Please enter a valid ${label} profile URL (e.g. https://${label.toLowerCase().replace('/x','')}.com/username).`);
+                        }
+                    });
+
+                    if (tabValid) {
                         updates = {
                             full_name: fullName,
                             professional_title: title,
@@ -1376,10 +1880,10 @@
                             country: country,
                             city: city,
                             social_links: { 
-                                linkedin: linkedinUrl, 
-                                twitter: twitterUrl, 
-                                facebook: facebookUrl,
-                                github: githubUrl
+                                linkedin: linkedinUrl  || null, 
+                                twitter: twitterUrl   || null, 
+                                facebook: facebookUrl || null,
+                                github: githubUrl     || null
                             }
                         };
                     }
@@ -1387,46 +1891,118 @@
                     const expertiseContainer = document.getElementById('expertise-container');
                     const expertiseInputWrapper = expertiseContainer.parentElement;
                     expertiseInputWrapper.classList.remove('border-red-500', 'ring-1', 'ring-red-500');
+                    document.querySelectorAll('.field-error').forEach(e => e.remove());
 
-                    const expertiseTags = expertiseContainer.querySelectorAll('span.rounded-full');
+                    // Shared validation helpers (same rules as personal tab)
+
+                    
+const showTFieldError = (inputEl, msg) => {
+                        if (!inputEl) return;
+                        inputEl.classList.add('border-red-500', 'ring-1', 'ring-red-500');
+                        const err = document.createElement('span');
+                        err.className = 'field-error';
+                        err.textContent = msg;
+                        inputEl.parentNode.appendChild(err);
+                        tabValid = false;
+                    };
+
+                    // Collect expertise tags — use .expertise-tag class to skip "Add" button
+                    const expertiseTags = expertiseContainer.querySelectorAll('span.expertise-tag');
                     if (expertiseTags.length === 0) {
                         expertiseInputWrapper.classList.add('border-red-500', 'ring-1', 'ring-red-500', 'p-2', 'rounded-lg');
                         tabValid = false;
                     } else {
                         const experience = document.getElementById('experience').value;
-                        const expertiseList = Array.from(expertiseTags).map(span => span.innerText.replace('close', '').trim());
+                        // Read text from first child text node only — excludes the 'close' icon text
+                        const expertiseList = Array.from(expertiseTags).map(span => {
+                            // Get only direct text nodes (excludes nested element text like 'close')
+                            const textNode = Array.from(span.childNodes).find(n => n.nodeType === Node.TEXT_NODE);
+                            return textNode ? textNode.textContent.trim() : span.childNodes[0]?.textContent?.trim() || '';
+                        }).filter(Boolean);
 
+                        // Validate expertise tags for injections
+                        let expertiseDirty = false;
+                        expertiseList.forEach(exp => {
+                            if (window.isTextDirty(exp)) expertiseDirty = true;
+                        });
+                        if (expertiseDirty) {
+                            expertiseInputWrapper.classList.add('border-red-500', 'ring-1', 'ring-red-500', 'p-2', 'rounded-lg');
+                            const err = document.createElement('p');
+                            err.className = 'field-error mt-2';
+                            err.textContent = 'Expertise tags contain invalid characters or links.';
+                            expertiseInputWrapper.parentElement.appendChild(err);
+                            tabValid = false;
+                        }
+
+                        // Education fields — collect and validate
                         const educationList = [];
                         document.querySelectorAll('.education-item').forEach(item => {
-                            const uni = item.querySelector('input[id^="university"]')?.value.trim();
-                            const deg = item.querySelector('input[id^="degree"]')?.value.trim();
-                            if (uni && deg) educationList.push({ university: uni, degree: deg });
+                            const uniInput = item.querySelector('input[id^="university"]');
+                            const degInput = item.querySelector('input[id^="degree"]');
+                            const uni = uniInput?.value.trim();
+                            const deg = degInput?.value.trim();
+
+                            if (uni && window.isTextDirty(uni)) {
+                                showTFieldError(uniInput, 'Institution name cannot contain links or special characters.');
+                            } else if (deg && window.isTextDirty(deg)) {
+                                showTFieldError(degInput, 'Degree cannot contain links or special characters.');
+                            } else if (uni && deg) {
+                                educationList.push({ university: uni, degree: deg });
+                            }
                         });
 
-                        const languageTags = document.querySelectorAll('#languages-container span.rounded-lg:not(.material-symbols-outlined)');
-                        const languageList = Array.from(languageTags).map(span => span.innerText.replace('close', '').trim());
+                        // Collect language tags — use .lang-tag class, read only text nodes
+                        const languageTags = document.querySelectorAll('#languages-container span.lang-tag, #languages-container span.rounded-lg');
+                        const languageList = Array.from(languageTags).map(span => {
+                            const textNode = Array.from(span.childNodes).find(n => n.nodeType === Node.TEXT_NODE);
+                            return textNode ? textNode.textContent.trim() : '';
+                        }).filter(Boolean);
 
-                        const mentorshipStyle = document.getElementById('mentorshipStyle').value.trim();
-
-                        updates = {
-                            teaching_experience: experience,
-                            mentorship_style: mentorshipStyle,
-                            expertise_list: expertiseList,
-                            education_list: educationList,
-                            language_list: languageList
-                        };
+                        if (tabValid) {
+                            updates = {
+                                teaching_experience: experience,
+                                expertise_list: expertiseList,
+                                education_list: educationList,
+                                language_list: languageList
+                            };
+                        }
                     }
                 } else if (activeTabId === 'panel-payout') {
                     const selectedMethod = document.getElementById('selectedPayoutMethod').value;
                     const mmProviderInput = document.getElementById('mm-provider');
-                    const mmPhoneInput = document.getElementById('mm-phone');
+                    const mmPhoneInput    = document.getElementById('mm-phone');
                     const codAddressInput = document.getElementById('cod-address');
-                    const codCityInput = document.getElementById('cod-city');
-                    const codPhoneInput = document.getElementById('cod-phone');
+                    const codCityInput    = document.getElementById('cod-city');
+                    const codPhoneInput   = document.getElementById('cod-phone');
+                    const codCountryInput = document.getElementById('cod-country');
 
-                    [mmProviderInput, mmPhoneInput, codAddressInput, codCityInput, codPhoneInput].forEach(el => {
+                    // Reset all error states
+                    [mmProviderInput, mmPhoneInput, codAddressInput, codCityInput, codPhoneInput, codCountryInput].forEach(el => {
                         if (el) el.classList.remove('border-red-500', 'ring-1', 'ring-red-500');
                     });
+                    ['mm-phone-error','cod-phone-error','cod-address-error','cod-city-error','cod-country-error'].forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el) { el.textContent = ''; el.classList.add('hidden'); }
+                    });
+
+                    // ── Payout-specific validation helpers ────────────────────────────
+                    // Phone: allow digits, +, spaces, dashes, parentheses — 7 to 15 digits total
+                    const isValidPhone   = (v) => /^[\+\d][\d\s\-\(\)]{5,18}$/.test(v) && v.replace(/\D/g,'').length >= 7;
+
+                    const showPayoutError = (inputEl, spanId, msg) => {
+                        if (inputEl) inputEl.classList.add('border-red-500', 'ring-1', 'ring-red-500');
+                        const span = document.getElementById(spanId);
+                        if (span) { span.textContent = msg; span.classList.remove('hidden'); }
+                        tabValid = false;
+                    };
+
+                    // Always extract values
+                    const mmProvider = mmProviderInput ? mmProviderInput.value : '';
+                    const mmPhone    = mmPhoneInput    ? mmPhoneInput.value.trim()    : '';
+                    const address    = codAddressInput ? codAddressInput.value.trim() : '';
+                    const city       = codCityInput    ? codCityInput.value.trim()    : '';
+                    const phone      = codPhoneInput   ? codPhoneInput.value.trim()   : '';
+                    const country    = codCountryInput ? codCountryInput.value.trim() : '';
 
                     if (!selectedMethod || selectedMethod === 'bank') {
                         document.querySelectorAll('.payout-method-btn').forEach(btn => {
@@ -1435,30 +2011,59 @@
                         });
                         tabValid = false;
                     } else if (selectedMethod === 'mm') {
-                        const mmProvider = mmProviderInput.value;
-                        const mmPhone = mmPhoneInput.value.trim();
-                        if (!mmProvider || !mmPhone) {
-                            if (!mmProvider) mmProviderInput.classList.add('border-red-500', 'ring-1', 'ring-red-500');
-                            if (!mmPhone) mmPhoneInput.classList.add('border-red-500', 'ring-1', 'ring-red-500');
+                        // Required: provider & phone
+                        if (!mmProvider) {
+                            showPayoutError(mmProviderInput, 'mm-phone-error', '');
+                            mmProviderInput.classList.add('border-red-500', 'ring-1', 'ring-red-500');
                             tabValid = false;
-                        } else {
-                            updates = { payout_method: 'Mobile Money', payout_details: { provider: mmProvider, phone: mmPhone } };
+                        }
+                        if (!mmPhone) {
+                            showPayoutError(mmPhoneInput, 'mm-phone-error', 'Phone number is required.');
+                        } else if (!isValidPhone(mmPhone)) {
+                            showPayoutError(mmPhoneInput, 'mm-phone-error', 'Enter a valid phone number (digits, +, spaces only).');
+                        } else if (window.isTextDirty(mmPhone)) {
+                            showPayoutError(mmPhoneInput, 'mm-phone-error', 'Phone number contains invalid characters.');
+                        }
+
+                        if (tabValid) {
+                            updates = {
+                                payout_method: 'Mobile Money',
+                                payout_details: { provider: mmProvider, mm_phone: mmPhone, address, city, cod_phone: phone, country }
+                            };
                         }
                     } else if (selectedMethod === 'cod') {
-                        const address = codAddressInput.value.trim();
-                        const city = codCityInput.value.trim();
-                        const phone = codPhoneInput.value.trim();
-                        const codCountryInput = document.getElementById('cod-country');
-                        if (codCountryInput) codCountryInput.classList.remove('border-red-500', 'ring-1', 'ring-red-500');
-                        const country = codCountryInput ? codCountryInput.value.trim() : '';
-                        if (!address || !city || !phone || !country) {
-                            if (!address) codAddressInput.classList.add('border-red-500', 'ring-1', 'ring-red-500');
-                            if (!city) codCityInput.classList.add('border-red-500', 'ring-1', 'ring-red-500');
-                            if (!phone) codPhoneInput.classList.add('border-red-500', 'ring-1', 'ring-red-500');
-                            if (!country && codCountryInput) codCountryInput.classList.add('border-red-500', 'ring-1', 'ring-red-500');
-                            tabValid = false;
-                        } else {
-                            updates = { payout_method: 'Cash on Delivery', payout_details: { address, city, phone, country } };
+                        // Required: address, city, phone, country
+                        if (!address) {
+                            showPayoutError(codAddressInput, 'cod-address-error', 'Street address is required.');
+                        } else if (window.isTextDirty(address)) {
+                            showPayoutError(codAddressInput, 'cod-address-error', 'Address cannot contain links or special characters.');
+                        }
+
+                        if (!city) {
+                            showPayoutError(codCityInput, 'cod-city-error', 'City is required.');
+                        } else if (window.isTextDirty(city)) {
+                            showPayoutError(codCityInput, 'cod-city-error', 'City cannot contain links or special characters.');
+                        }
+
+                        if (!country) {
+                            showPayoutError(codCountryInput, 'cod-country-error', 'Country is required.');
+                        } else if (window.isTextDirty(country)) {
+                            showPayoutError(codCountryInput, 'cod-country-error', 'Country cannot contain links or special characters.');
+                        }
+
+                        if (!phone) {
+                            showPayoutError(codPhoneInput, 'cod-phone-error', 'Contact phone is required.');
+                        } else if (!isValidPhone(phone)) {
+                            showPayoutError(codPhoneInput, 'cod-phone-error', 'Enter a valid phone number (digits, +, spaces only).');
+                        } else if (window.isTextDirty(phone)) {
+                            showPayoutError(codPhoneInput, 'cod-phone-error', 'Phone number contains invalid characters.');
+                        }
+
+                        if (tabValid) {
+                            updates = {
+                                payout_method: 'Cash on Delivery',
+                                payout_details: { address, city, cod_phone: phone, country, provider: mmProvider, mm_phone: mmPhone }
+                            };
                         }
                     }
                 } else if (activeTabId === 'panel-security') {
@@ -1468,6 +2073,80 @@
                     if (!tosCheckbox.checked) {
                         tosCheckbox.classList.add('ring-2', 'ring-red-500', 'border-red-500');
                         tabValid = false;
+                    }
+                    
+                    const securityErr = document.getElementById('security-error-msg');
+                    securityErr.classList.add('hidden');
+                    
+                    ['current-password', 'new-password', 'confirm-password'].forEach(id => {
+                        const input = document.getElementById(id);
+                        input.classList.remove('border-red-500', 'ring-1', 'ring-red-500');
+                        const err = document.getElementById(id + '-error');
+                        if (err) err.classList.add('hidden');
+                    });
+
+                    const currPwInput = document.getElementById('current-password');
+                    const newPwInput = document.getElementById('new-password');
+                    const confirmPwInput = document.getElementById('confirm-password');
+                    
+                    const currPw = currPwInput.value;
+                    const newPw = newPwInput.value;
+                    const confirmPw = confirmPwInput.value;
+                    
+                    // Strict rate limit: 3 attempts, then wait 30 seconds
+                    const now = Date.now();
+                    window.passwordAttempts = window.passwordAttempts || [];
+                    
+                    // Filter out any attempts older than 30 seconds to refresh the quota
+                    window.passwordAttempts = window.passwordAttempts.filter(time => now - time < 30000);
+                    
+                    if (currPw || newPw) {
+                        if (window.passwordAttempts.length >= 3) {
+                            tabValid = false;
+                            const oldestAttempt = window.passwordAttempts[0];
+                            const remainingSeconds = Math.ceil((30000 - (now - oldestAttempt)) / 1000);
+                            securityErr.textContent = `Too many attempts. Please wait ${remainingSeconds} seconds before trying again.`;
+                            securityErr.classList.remove('hidden');
+                            return;
+                        }
+                        // Log this new attempt
+                        window.passwordAttempts.push(now);
+                    }
+
+                    updates.agreed_to_instructor_tos = tosCheckbox.checked;
+
+                    // Local helper for password field errors - mirrors showPayoutError but uses per-field error spans
+                    const showSecurityError = (inputEl, spanId, msg) => {
+                        if (inputEl) inputEl.classList.add('border-red-500', 'ring-1', 'ring-red-500');
+                        const span = document.getElementById(spanId);
+                        if (span) { span.textContent = msg; span.classList.remove('hidden'); }
+                        tabValid = false;
+                    };
+
+                    if (newPw || confirmPw) {
+                        if (!currPw) {
+                            showSecurityError(currPwInput, 'current-password-error', 'Current password is required to set a new one.');
+                        } else if (window.isTextDirty(currPw)) {
+                            showSecurityError(currPwInput, 'current-password-error', 'Invalid characters detected.');
+                        }
+                        
+                        const hasLength  = newPw.length >= 8 && newPw.length <= 128;
+                        const hasUpper   = /[A-Z]/.test(newPw);
+                        const hasLower   = /[a-z]/.test(newPw);
+                        const hasNumber  = /[0-9]/.test(newPw);
+                        const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(newPw);
+
+                        if (!newPw) {
+                            showSecurityError(newPwInput, 'new-password-error', 'New password is required.');
+                        } else if (window.isTextDirty(newPw)) {
+                            showSecurityError(newPwInput, 'new-password-error', 'Invalid characters or links detected in new password.');
+                        } else if (!hasLength || !hasUpper || !hasLower || !hasNumber || !hasSpecial) {
+                            showSecurityError(newPwInput, 'new-password-error', 'Password must be 8-128 chars long and include uppercase, lowercase, number, and special character.');
+                        }
+                        
+                        if (newPw !== confirmPw) {
+                            showSecurityError(confirmPwInput, 'confirm-password-error', 'Passwords do not match.');
+                        }
                     }
                 }
 
@@ -1506,28 +2185,24 @@
                     const userId = window.currentSession.user.id;
 
                     if (activeTabId === 'panel-personal') {
-                        await ProfileService.updatePersonalInfo(userId, updates);
+                        await ProfileService.updatePersonalInfo(updates);
                         if (isSetupMode && updates.setup_progress) {
                             await AuthService.updateProfile({ setup_progress: updates.setup_progress });
                         }
                     } else if (activeTabId === 'panel-teaching') {
-                        const videoInput = document.getElementById('video-upload');
-                        let finalVideoUrl = profile.introVideo || "";
-
-                        if (videoInput && videoInput.files.length > 0) {
-                            saveBtn.innerHTML = `<span class="material-symbols-outlined text-[18px] animate-spin">refresh</span> Uploading Video`;
-                            finalVideoUrl = await ProfileService.uploadVideo(userId, videoInput.files[0]);
-                            saveBtn.innerHTML = `<span class="material-symbols-outlined text-[18px] animate-spin">refresh</span> Saving`;
-                        }
+                        const stagedKeyInput = document.getElementById('staged-video-storage-key');
+                        const stagedKey = stagedKeyInput ? stagedKeyInput.value.trim() : '';
 
                         const teachingData = {
-                            introVideo: finalVideoUrl,
+                            introVideoStorageKey: stagedKey || undefined,
+                            introVideo: stagedKey ? undefined : (profile.introVideo || ""),
                             experience: updates.teaching_experience,
                             mentorship_style: updates.mentorship_style,
                             education: JSON.stringify(updates.education_list),
                             languages: JSON.stringify(updates.language_list)
                         };
-                        await ProfileService.saveTeachingProfile(userId, teachingData, updates.expertise_list);
+                        await ProfileService.saveTeachingProfile(teachingData, updates.expertise_list);
+                        if (stagedKeyInput) stagedKeyInput.value = ''; // Reset staged key after saving
                         if (isSetupMode && updates.setup_progress) {
                             await AuthService.updateProfile({ setup_progress: updates.setup_progress });
                         }
@@ -1535,12 +2210,41 @@
                         if (updates.payout_method === 'Mobile Money') {
                             await PayoutService.savePayoutMethod(userId, 'mobile_money', updates.payout_details);
                         } else if (updates.payout_method === 'Cash on Delivery') {
-                            await PayoutService.savePayoutMethod(userId, 'cod', updates.payout_details);
+                            await PayoutService.savePayoutMethod(userId, 'cash_on_delivery', updates.payout_details);
                         }
                         if (isSetupMode && updates.setup_progress) {
                             await AuthService.updateProfile({ setup_progress: updates.setup_progress });
                         }
                     } else if (activeTabId === 'panel-security') {
+                        const newPw = document.getElementById('new-password').value;
+                        const currentPw = document.getElementById('current-password').value;
+                        
+                        if (newPw) {
+                            if (!currentPw) {
+                                document.getElementById('current-password').classList.add('border-red-500', 'ring-1', 'ring-red-500');
+                                throw new Error("Current password is required to set a new password.");
+                            }
+                            
+                            saveBtn.innerHTML = `<span class="material-symbols-outlined text-[18px] animate-spin">refresh</span> Verifying Password`;
+                            const isValid = await AuthService.verifyPassword(currentPw);
+                            if (!isValid) {
+                                document.getElementById('current-password').classList.add('border-red-500', 'ring-1', 'ring-red-500');
+                                throw new Error("Current password is incorrect.");
+                            }
+                            
+                            saveBtn.innerHTML = `<span class="material-symbols-outlined text-[18px] animate-spin">refresh</span> Updating Password`;
+                            await AuthService.updatePassword(newPw);
+                            
+                            // Clear password fields
+                            document.getElementById('new-password').value = '';
+                            document.getElementById('current-password').value = '';
+                            document.getElementById('confirm-password').value = '';
+                        }
+                        
+                        // Save the TOS agreement to the database
+                        const tosCheckbox = document.getElementById('tos-checkbox');
+                        await AuthService.updateProfile({ agreed_to_instructor_tos: tosCheckbox.checked });
+
                         if (isSetupMode && updates.profile_completed) {
                             await ProfileService.markProfileCompleted(userId);
                             await AuthService.updateProfile({ setup_progress: updates.setup_progress });
@@ -1602,8 +2306,45 @@
                     }
 
                 } catch (e) {
-                    alert("Error saving profile: " + e.message);
                     saveBtn.disabled = false;
+                    
+                    if (e.message && (e.message.includes('uniqueness') || e.message.includes('already registered'))) {
+                        const mmPhoneInput = document.getElementById('mm-phone');
+                        const codPhoneInput = document.getElementById('cod-phone');
+                        const mmErr = document.getElementById('mm-phone-error');
+                        const codErr = document.getElementById('cod-phone-error');
+                        const selectedMethod = document.getElementById('selectedPayoutMethod').value;
+                        
+                        if (mmPhoneInput.value) {
+                            mmPhoneInput.classList.add('border-red-500', 'ring-1', 'ring-red-500');
+                            if (mmErr) { mmErr.textContent = e.message; mmErr.classList.remove('hidden'); }
+                        }
+                        
+                        if (codPhoneInput.value) {
+                            codPhoneInput.classList.add('border-red-500', 'ring-1', 'ring-red-500');
+                            if (codErr) { codErr.textContent = e.message; codErr.classList.remove('hidden'); }
+                        }
+                        
+                        document.getElementById('payout-forms').scrollIntoView({ behavior: 'smooth' });
+                    } else if (e.message && e.message.includes('password')) {
+                        const securityErr = document.getElementById('security-error-msg');
+                        if (securityErr) {
+                            securityErr.textContent = e.message;
+                            securityErr.classList.remove('hidden');
+                        } else {
+                            const globalErr = document.getElementById('global-action-error');
+                            if (globalErr) { globalErr.textContent = "Error saving profile: " + e.message; globalErr.classList.remove('hidden'); setTimeout(() => globalErr.classList.add('hidden'), 5000); }
+                        }
+                    } else {
+                        const globalErr = document.getElementById('global-action-error');
+                        if (globalErr) { globalErr.textContent = "Error saving profile: " + e.message; globalErr.classList.remove('hidden'); setTimeout(() => globalErr.classList.add('hidden'), 5000); }
+                    }
+                    console.error("Save Error:", e);
+                    saveBtn.innerHTML = `<span class="material-symbols-outlined text-[18px]">error</span> Error`;
+                    setTimeout(() => {
+                        saveBtn.innerHTML = "Save Changes";
+                        saveBtn.disabled = false;
+                    }, 3000);
                 }
             });
 
@@ -1638,8 +2379,187 @@
             });
         });
     </script>
-    <!-- NOTIFICATION SYSTEM -->
-    <script type="module" src="/src/services/instructorNotifications.js"></script>
+
+
+<script>
+    // Instructor settings menu specific toggling logic
+    document.addEventListener('DOMContentLoaded', () => {
+
+        const _mBtn = document.getElementById('mobile-menu-btn');
+        const _sBar = document.getElementById('settings-sidebar');
+        const _over = document.getElementById('sidebar-overlay');
+
+        // Auto-close sidebar on nav click
+        const sidebarNav = document.querySelector('#settings-sidebar nav');
+        if (sidebarNav) {
+            sidebarNav.addEventListener('click', (e) => {
+                const link = e.target.closest('a');
+                if (link && window.innerWidth < 1024) {
+                    if (_sBar && _over) {
+                        _sBar.classList.add('-translate-x-full');
+                        _over.classList.add('hidden');
+                    }
+                }
+            });
+        }
+
+        
+        if (_mBtn && _sBar && _over) {
+            _mBtn.addEventListener('click', () => {
+                _sBar.classList.remove('-translate-x-full');
+                _over.classList.remove('hidden');
+            });
+            _over.addEventListener('click', () => {
+                _sBar.classList.add('-translate-x-full');
+                _over.classList.add('hidden');
+            });
+        }
+    });
+</script>
+
+<script type="module">
+import { AuthService } from '/src/services/authService.js';
+import { ProfileService } from '/src/services/profileService.js';
+
+let currentIntroVideoUpload = {
+    abortController: null,
+    objectKey: null,
+    uploadId: null
+};
+
+window.handleVideoUploadValidation = async function(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const errorMsg = document.getElementById('video-error-msg');
+    const idleContainer = document.getElementById('video-idle-container');
+    const progressContainer = document.getElementById('video-upload-progress-container');
+    const progressBar = document.getElementById('video-upload-progress-bar');
+    const percentLabel = document.getElementById('video-upload-percent-label');
+    const statusLabel = document.getElementById('video-upload-status-label');
+    const cancelBtn = document.getElementById('video-upload-cancel-btn');
+    const stagedKeyInput = document.getElementById('staged-video-storage-key');
+    const sizeLabel = document.getElementById('video-size-label');
+
+    if (errorMsg) errorMsg.classList.add('hidden');
+
+    const allowedTypes = ['video/mp4', 'video/webm', 'video/quicktime'];
+    const maxBytes = 200 * 1024 * 1024; // 200 MB
+
+    if (!allowedTypes.includes(file.type)) {
+        if (errorMsg) {
+            errorMsg.textContent = 'Invalid video format. Please upload MP4, WebM, or MOV.';
+            errorMsg.classList.remove('hidden');
+        }
+        event.target.value = '';
+        return;
+    }
+
+    if (file.size > maxBytes) {
+        if (errorMsg) {
+            errorMsg.textContent = 'Video exceeds maximum limit of 200 MB.';
+            errorMsg.classList.remove('hidden');
+        }
+        event.target.value = '';
+        return;
+    }
+
+    if (currentIntroVideoUpload.abortController) {
+        currentIntroVideoUpload.abortController.abort();
+    }
+
+    const abortController = new AbortController();
+    currentIntroVideoUpload = {
+        abortController,
+        objectKey: null,
+        uploadId: null
+    };
+
+    if (idleContainer) idleContainer.classList.add('hidden');
+    if (progressContainer) progressContainer.classList.remove('hidden');
+    if (progressBar) progressBar.style.width = '0%';
+    if (percentLabel) percentLabel.textContent = '0%';
+    if (statusLabel) {
+        statusLabel.innerHTML = `<span class="material-symbols-outlined text-[16px] animate-spin text-primary">sync</span> Uploading introduction video...`;
+    }
+
+    const handleCancel = async () => {
+        abortController.abort();
+        if (currentIntroVideoUpload.objectKey) {
+            ProfileService.discardProfileVideoUpload(currentIntroVideoUpload.objectKey, currentIntroVideoUpload.uploadId);
+        }
+        if (stagedKeyInput) stagedKeyInput.value = '';
+        if (progressContainer) progressContainer.classList.add('hidden');
+        if (idleContainer) idleContainer.classList.remove('hidden');
+        if (errorMsg) {
+            errorMsg.textContent = 'Upload cancelled.';
+            errorMsg.classList.remove('hidden');
+        }
+        event.target.value = '';
+        currentIntroVideoUpload = { abortController: null, objectKey: null, uploadId: null };
+    };
+
+    if (cancelBtn) {
+        cancelBtn.onclick = handleCancel;
+    }
+
+    try {
+        const { objectKey, uploadId } = await ProfileService.uploadIntroVideoToR2(
+            file,
+            (percent) => {
+                const p = Math.round(percent);
+                if (progressBar) progressBar.style.width = `${p}%`;
+                if (percentLabel) percentLabel.textContent = `${p}%`;
+            },
+            abortController.signal
+        );
+
+        currentIntroVideoUpload.objectKey = objectKey;
+        currentIntroVideoUpload.uploadId = uploadId;
+
+        if (stagedKeyInput) stagedKeyInput.value = objectKey;
+
+        if (progressContainer) progressContainer.classList.add('hidden');
+        if (idleContainer) idleContainer.classList.remove('hidden');
+        if (sizeLabel) {
+            sizeLabel.textContent = `Ready to save: ${file.name}`;
+            sizeLabel.className = 'text-xs leading-5 text-emerald-600 font-bold mt-2';
+        }
+    } catch (err) {
+        if (err.message === 'Upload cancelled') return;
+
+        if (progressContainer) progressContainer.classList.add('hidden');
+        if (idleContainer) idleContainer.classList.remove('hidden');
+        if (errorMsg) {
+            errorMsg.textContent = err.message || 'Video upload failed. Please try again.';
+            errorMsg.classList.remove('hidden');
+        }
+        event.target.value = '';
+    }
+};
+
+window.viewPublicProfile = async function(event) {
+    event.preventDefault();
+    const session = await AuthService.getSession();
+    if (session && session.user) {
+        window.location.href = '/src/pages/instructor/public-profile/index.html?id=' + session.user.id;
+    } else {
+        window.location.href = '/src/pages/auth/login-select/index.html';
+    }
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    const sidebarLogoutBtn = document.getElementById('sidebar-logout-btn');
+    if (sidebarLogoutBtn) {
+        sidebarLogoutBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            await AuthService.logout();
+            window.location.href = '/src/pages/auth/login-select/index.html';
+        });
+    }
+});
+</script>
+
 </body>
 
 

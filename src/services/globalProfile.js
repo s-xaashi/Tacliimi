@@ -1,19 +1,57 @@
 import { AuthService } from './authService.js';
 import { supabase } from './supabaseClient.js';
+import './uiUtils.js';
 
 export const GlobalProfile = {
     async init() {
+        this.injectGlobalCSS();
         this.initTheme();
+        this.preloadAuthState();
+        this.monitorNetwork();
         document.addEventListener('DOMContentLoaded', () => {
+            this.preloadAuthState();
             this.applyProfile();
             this.bindThemeToggles();
         });
 
         // Sometimes scripts load after DOMContentLoaded
         if (document.readyState === 'interactive' || document.readyState === 'complete') {
+            this.preloadAuthState();
             this.applyProfile();
             this.bindThemeToggles();
         }
+    },
+
+    hasPossibleSession() {
+        try {
+            return Object.keys(localStorage).some(key => key.includes('auth-token') || key.startsWith('sb-'));
+        } catch (e) {
+            return false;
+        }
+    },
+
+    preloadAuthState() {
+        if (!this.hasPossibleSession()) return;
+        const staticButtons = document.querySelectorAll('button[onclick*="login"], a[href*="login"], button.auth-login-btn');
+        staticButtons.forEach(btn => {
+            if (btn.closest('header') || btn.closest('nav')) {
+                btn.classList.add('opacity-0', 'pointer-events-none', 'tacliimi-auth-preload-hidden');
+            }
+        });
+    },
+
+    injectGlobalCSS() {
+        if (document.getElementById('tacliimi-global-css')) return;
+        const style = document.createElement('style');
+        style.id = 'tacliimi-global-css';
+        style.textContent = `
+            /* Fix native button styling inheritance causing white backgrounds in iOS/Safari */
+            button, select, input[type="submit"], input[type="button"] {
+                -webkit-appearance: none !important;
+                appearance: none !important;
+            }
+        `;
+        document.head.appendChild(style);
     },
 
     initTheme() {
@@ -50,6 +88,93 @@ export const GlobalProfile = {
         });
     },
 
+    monitorNetwork() {
+        const handleOffline = () => {
+            if (document.getElementById('global-offline-overlay')) return;
+            const overlay = document.createElement('div');
+            overlay.id = 'global-offline-overlay';
+            // Use extremely high z-index to cover sidebars, modals, and headers
+            overlay.className = 'fixed inset-0 z-[10000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-sm transition-opacity duration-300 pointer-events-auto';
+            overlay.innerHTML = `
+                <div class="bg-white dark:bg-slate-900 max-w-sm w-full rounded-2xl p-8 border border-slate-200 dark:border-slate-800 shadow-2xl text-center shadow-[0_0_50px_rgba(239,68,68,0.15)]">
+                    <div class="w-20 h-20 bg-red-50 dark:bg-red-900/30 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <span class="material-symbols-outlined text-[2.5rem]">wifi_off</span>
+                    </div>
+                    <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-3">No Internet Connection</h2>
+                    <p class="text-slate-500 dark:text-slate-400 mb-6">
+                        You have lost your connection to the internet. Please check your network to continue using Tacliimi.
+                    </p>
+                    <div class="flex items-center justify-center gap-2 text-sm text-slate-400 font-medium">
+                        <span class="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse relative top-px"></span> Offline Mode
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+            document.body.style.overflow = 'hidden';
+        };
+
+        const handleOnline = () => {
+            const overlay = document.getElementById('global-offline-overlay');
+            if (overlay) {
+                overlay.style.opacity = '0';
+                setTimeout(() => {
+                    overlay.remove();
+                    document.body.style.overflow = '';
+                }, 300);
+            }
+        };
+
+        window.addEventListener('offline', handleOffline);
+        window.addEventListener('online', handleOnline);
+
+        if (!navigator.onLine) {
+            if (document.body) {
+                handleOffline();
+            } else {
+                window.addEventListener('DOMContentLoaded', handleOffline, { once: true });
+            }
+        }
+    },
+
+    applyUnauthenticatedUI() {
+        document.querySelectorAll('.tacliimi-auth-preload-hidden').forEach(el => {
+            el.classList.remove('opacity-0', 'pointer-events-none', 'tacliimi-auth-preload-hidden');
+        });
+
+        const mobileMenu = document.getElementById('mobile-menu');
+        if (mobileMenu) {
+            const profileArea = mobileMenu.querySelector('#mobile-menu-profile');
+            const nameEl = mobileMenu.querySelector('.user-display-name');
+            const subEl = mobileMenu.querySelector('#mobile-menu-profile-sub');
+            const logoutBtn = mobileMenu.querySelector('#mobile-logout-btn');
+            const themeToggle = mobileMenu.querySelector('#mobile-theme-toggle');
+
+            if (nameEl) nameEl.innerText = 'Sign In / Register';
+            if (subEl) subEl.innerText = 'Access your account';
+            if (profileArea) {
+                profileArea.setAttribute('onclick', "window.location.href='/src/pages/auth/login-select/index.html'");
+            }
+            if (logoutBtn) {
+                logoutBtn.classList.add('hidden');
+                logoutBtn.classList.remove('flex');
+            }
+            if (themeToggle) {
+                themeToggle.classList.add('hidden');
+                themeToggle.classList.remove('flex');
+            }
+        }
+
+        const explicitContainer = document.getElementById('global-profile-header-container');
+        if (explicitContainer && !explicitContainer.querySelector('.tacliimi-injected-profile')) {
+            explicitContainer.innerHTML = `
+                <div class="hidden md:flex items-center gap-3 tacliimi-injected-profile">
+                    <a href="/src/pages/auth/login-select/index.html" class="px-4 py-2 text-sm font-bold text-primary hover:bg-primary/10 rounded-xl transition-colors">Sign In</a>
+                    <a href="/src/pages/auth/login-select/index.html" class="px-4 py-2 text-sm font-bold bg-primary text-white hover:bg-primary/90 rounded-xl shadow-md shadow-primary/20 transition-colors">Get Started</a>
+                </div>
+            `;
+        }
+    },
+
     async applyProfile() {
         let session = null;
         let profile = null;
@@ -63,7 +188,10 @@ export const GlobalProfile = {
             console.error("Error fetching session for global profile", e);
         }
 
-        if (!session) return;
+        if (!session) {
+            this.applyUnauthenticatedUI();
+            return;
+        }
 
         // --- ACCOUNT STATUS CHECK ---
         const accountStatus = profile?.account_status || 'active';
@@ -92,7 +220,24 @@ export const GlobalProfile = {
         const nameElements = document.querySelectorAll('.text-right p.font-semibold, .user-display-name, h1.text-3xl.font-bold, .profile-name, .auto-welcome-name');
 
         const isAdmin = profile ? (profile.role === 'admin' || profile.is_admin === true) : false;
-        const isInstructor = profile ? (profile.role === 'instructor') : false;
+        const userRole = (profile?.role || session?.user?.user_metadata?.role || '').toLowerCase();
+        let isInstructor = userRole === 'instructor' || userRole === 'mentor';
+
+        // Additional safeguard: check instructors table if role is not set on profile
+        if (!isInstructor && session?.user?.id) {
+            try {
+                const { data: instData } = await supabase
+                    .from('instructors')
+                    .select('id')
+                    .eq('user_id', session.user.id)
+                    .maybeSingle();
+                if (instData) {
+                    isInstructor = true;
+                }
+            } catch (e) {
+                // Ignore fallback check error
+            }
+        }
         let defaultName = isAdmin ? 'Admin' : (isInstructor ? 'Instructor' : 'Student');
         if (session.user.email && !isAdmin) {
             let prefix = session.user.email.split('@')[0];
@@ -143,39 +288,63 @@ export const GlobalProfile = {
             }
         });
         this.injectHeaderControls(session, profile, fullName, avatarUrl, isInstructor, isAdmin);
+        this.applyGlobalUIUpdates(session, isInstructor, isAdmin);
     },
 
     injectHeaderControls(session, profile, fullName, avatarUrl, isInstructor, isAdmin) {
+        if (document.querySelector('.tacliimi-injected-profile')) return;
+        
+        // Find potential placeholders to remove
         let authElements = Array.from(document.querySelectorAll('nav, header')).flatMap(parent => {
             return Array.from(parent.querySelectorAll('a, button, div')).filter(el => {
                 const href = el.getAttribute('href') || el.getAttribute('onclick') || '';
                 const html = el.innerHTML || '';
                 if (el.id === 'mobile-menu' || el.closest('#mobile-menu') || el.children.length > 3) return false;
+                const txt = (el.innerText || '').toLowerCase();
                 const isLoginLink = (href.includes('/src/pages/auth/login') && !href.includes('instructor-login') && !href.includes('login-select')) || 
                                     href.includes('user-login') || 
-                                    (el.tagName === 'BUTTON' && (el.innerText.toLowerCase().includes('log in') || el.innerText.toLowerCase().includes('sign up')));
-                const isPlaceholderProfile = (html.includes('account_circle') || html.includes('Student Name') || html.includes('Instructor account') || html.includes('Admin Account') || html.includes('ID: ') || html.includes('JD') || html.includes('User Profile') || html.includes('Student Profile') || html.includes('Admin Profile')) &&
-                    (el.tagName === 'DIV' || el.tagName === 'BUTTON' || el.tagName === 'A');
-                return isLoginLink || isPlaceholderProfile;
+                                    (el.tagName === 'BUTTON' && (txt.includes('log in') || txt.includes('sign up')));
+                const isLogoutLink = (el.tagName === 'BUTTON' || el.tagName === 'A' || el.tagName === 'DIV') && (txt.includes('logout') || txt.includes('log out') || html.includes('logout'));
+                const isPlaceholderProfile = (html.includes('account_circle') || html.includes('Student Name') || html.includes('Instructor account') || html.includes('Admin Account') || html.includes('ID: ') || html.includes('JD') || html.includes('User Profile') || html.includes('Student Profile') || html.includes('Admin Profile') || el.classList.contains('user-display-name') || el.querySelector('.user-display-name') || txt.includes('student') || (fullName && txt === fullName.toLowerCase())) &&
+                    (el.tagName === 'DIV' || el.tagName === 'BUTTON' || el.tagName === 'A' || el.tagName === 'SPAN');
+                return isLoginLink || isLogoutLink || isPlaceholderProfile;
             });
         });
 
         authElements = authElements.filter(el => {
+            if (el.closest('aside') || el.closest('#settings-sidebar')) return false;
+
             const isInsideHeader = el.closest('header') || el.closest('nav');
             if (!isInsideHeader) return false;
 
-            // Strict check: If it's in a <header> that contains an <h1>, it's likely a hero section, not a nav.
-            // We should only inject if it's NOT in a hero-style header unless there's no <nav> at all.
             const header = el.closest('header');
-            if (header && header.querySelector('h1') && document.querySelector('nav')) {
-                return false;
+            if (header && header.querySelector('h1')) {
+                const headerClasses = header.className || '';
+                const isDashboardHeader = headerClasses.includes('h-16') || headerClasses.includes('sticky') || header.id?.includes('header');
+                if (isDashboardHeader) return true;
+                
+                if (document.querySelector('nav')) return false;
             }
 
             return !authElements.some(other => other !== el && el.contains(other));
         });
 
-        const parentMap = new Map();
+        // Priority 0: Explicit container
+        const explicitContainer = document.getElementById('global-profile-header-container');
+        if (explicitContainer && !explicitContainer.closest('.tacliimi-injected-profile')) {
+            // Only pass elements that are NOT the explicit container itself, NOT its ancestors,
+            // and NOT its descendants — removing any of those would delete the freshly-injected content.
+            const safeToPrune = authElements.filter(el =>
+                el !== explicitContainer &&
+                !explicitContainer.contains(el) &&
+                !el.contains(explicitContainer)
+            );
+            this.renderToContainer(explicitContainer, session, profile, fullName, avatarUrl, isInstructor, isAdmin, safeToPrune);
+            this.applyGlobalUIUpdates(session, isInstructor, isAdmin);
+            return;
+        }
 
+        const parentMap = new Map();
         if (authElements.length === 0) {
             let fallbackContainer = null;
             document.querySelectorAll('div').forEach(div => {
@@ -184,15 +353,18 @@ export const GlobalProfile = {
                 }
             });
             if (!fallbackContainer) {
-                const navOrHeader = document.querySelector('nav') || document.querySelector('header');
+                const navOrHeader = document.querySelector('header') || document.querySelector('nav');
                 if (navOrHeader) {
-                    // Avoid injecting into hero-like headers with H1
                     if (navOrHeader.tagName === 'HEADER' && navOrHeader.querySelector('h1')) {
-                        // If it's a hero header, try to find a nav instead
-                        const nav = document.querySelector('nav');
-                        if (nav) {
-                            const navDivs = Array.from(nav.children).filter(c => c.tagName === 'DIV');
-                            fallbackContainer = navDivs.length > 0 ? navDivs[navDivs.length - 1] : nav;
+                        const headerClasses = navOrHeader.className || '';
+                        const isDashboardHeader = headerClasses.includes('h-16') || headerClasses.includes('sticky');
+                        
+                        if (!isDashboardHeader) {
+                            const nav = document.querySelector('nav');
+                            if (nav) {
+                                const navDivs = Array.from(nav.children).filter(c => c.tagName === 'DIV');
+                                fallbackContainer = navDivs.length > 0 ? navDivs[navDivs.length - 1] : nav;
+                            }
                         }
                     }
 
@@ -217,6 +389,21 @@ export const GlobalProfile = {
             parentMap.get(el.parentElement).push(el);
         });
 
+        parentMap.forEach((elementsToRemove, container) => {
+            this.renderToContainer(container, session, profile, fullName, avatarUrl, isInstructor, isAdmin, elementsToRemove);
+        });
+
+        this.applyGlobalUIUpdates(session, isInstructor, isAdmin);
+    },
+
+    renderToContainer(container, session, profile, fullName, avatarUrl, isInstructor, isAdmin, elementsToRemove = []) {
+        if (container.querySelector('.tacliimi-injected-profile')) return;
+
+        // Clear existing content if it's the explicit container or has placeholders
+        if (container.id === 'global-profile-header-container' || container.innerHTML.includes('Global Profile Injected Below')) {
+            container.innerHTML = '';
+        }
+
         let dashboardLink = '/src/pages/student/student-dashboard/index.html';
         let roleName = 'Student';
         let settingsLink = '/src/pages/student/account-settings/index.html';
@@ -233,35 +420,29 @@ export const GlobalProfile = {
 
         const isPublicPage = !window.location.pathname.includes('dashboard') && !window.location.pathname.includes('settings') && !window.location.pathname.includes('profile') && !window.location.pathname.includes('admin');
 
-        const picHtml = avatarUrl
-            ? `<img src="${avatarUrl}" class="w-full h-full object-cover rounded-full pointer-events-none" />`
-            : `<span class="material-symbols-outlined text-2xl relative top-0.5 pointer-events-none">account_circle</span>`;
+        // Static-only HTML — NOTE: picHtml is built from avatarUrl here but
+        // overwritten safely via setAttribute below after injection.
+        const picHtml = `<span class="material-symbols-outlined text-2xl relative top-0.5 pointer-events-none">account_circle</span>`;
 
         // Determine if we should show a dropdown or a simple profile block
         // Admins want a simplified view (no dropdown, just info)
+        // SECURITY: All text slots use empty placeholders — filled via textContent below
         const profileDisplayHtml = isAdmin ? `
             <div class="flex items-center gap-3" id="global-admin-profile-header">
-                <div class="hidden sm:block text-right">
-                    <p class="user-display-name text-sm font-bold text-slate-900 dark:text-white capitalize">${fullName}</p>
-                    <p class="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">${(profile?.admin_role || 'administrator').replace('_', ' ')}</p>
-                </div>
                 <div class="h-10 w-10 shrink-0 rounded-xl bg-slate-200 dark:bg-slate-700 flex items-center justify-center border-2 border-white dark:border-slate-800 shadow-sm overflow-hidden" data-role="profile-image">
                     ${picHtml}
                 </div>
             </div>
         ` : `
             <div class="relative group flex items-center gap-3 cursor-pointer" id="global-profile-dropdown">
-                <div class="hidden sm:block text-right group-hover:opacity-80 transition-opacity">
-                    <p class="user-display-name text-sm font-semibold text-slate-900 dark:text-white capitalize pointer-events-none">${fullName}</p>
-                </div>
                 <div class="h-10 w-10 shrink-0 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center border-2 border-primary/20 text-slate-400 overflow-hidden pointer-events-none" data-role="profile-image">
                     ${picHtml}
                 </div>
             
                 <div class="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-slate-800 rounded-xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[100] overflow-hidden text-left cursor-default">
                     <div class="p-4 border-b border-slate-100 dark:border-slate-700">
-                        <p class="text-sm font-semibold text-slate-900 dark:text-white">${fullName}</p>
-                        <p class="text-xs text-slate-500">${session.user.email || roleName}</p>
+                        <p class="text-sm font-semibold text-slate-900 dark:text-white" id="gp-dropdown-name"></p>
+                        <p class="text-xs text-slate-500" id="gp-dropdown-email"></p>
                     </div>
                     <a href="${dashboardLink}" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:text-primary transition-colors border-b border-slate-100 dark:border-slate-700/50">
                         <span class="material-symbols-outlined text-lg">dashboard</span> Dashboard
@@ -276,36 +457,28 @@ export const GlobalProfile = {
             </div>
         `;
 
-        parentMap.forEach((elementsToRemove, container) => {
-            document.querySelectorAll('nav button, header button').forEach(btn => {
-                const text = (btn.innerText + btn.innerHTML).toLowerCase();
-                const title = (btn.getAttribute('title') || '').toLowerCase();
-                const id = btn.id || '';
-                // Only remove theme-toggle duplicates — DO NOT remove notification buttons
-                if (text.includes('dark_mode') || text.includes('light_mode') || title.includes('theme') || id.includes('theme')) {
-                    if (!btn.closest('.tacliimi-injected-profile')) {
-                        btn.remove();
-                    }
+        document.querySelectorAll('nav button, header button').forEach(btn => {
+            const text = (btn.innerText + btn.innerHTML).toLowerCase();
+            const title = (btn.getAttribute('title') || '').toLowerCase();
+            const id = btn.id || '';
+            // Only remove theme-toggle duplicates — DO NOT remove notification buttons
+            if (text.includes('dark_mode') || text.includes('light_mode') || title.includes('theme') || id.includes('theme')) {
+                if (!btn.closest('.tacliimi-injected-profile')) {
+                    btn.remove();
                 }
-            });
+            }
+        });
 
-            const themeToggleHtml = `
+        const themeToggleHtml = `
             <button type="button" id="global-theme-toggle" class="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full flex items-center justify-center transition-colors !outline-none" title="Toggle Theme">
                 <span class="material-symbols-outlined dark:hidden text-[22px]">dark_mode</span>
                 <span class="material-symbols-outlined hidden dark:block text-[22px]">light_mode</span>
             </button>
         `;
 
-            const logoutHtml = `
-            <button id="global-logout" class="p-2 text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 dark:hover:text-red-400 rounded-full flex items-center justify-center transition-colors !outline-none" title="Log Out">
-                <span class="material-symbols-outlined text-[20px] pointer-events-none">logout</span>
-            </button>
-        `;
-
-            const headerControlsHtml = `
-            <div class="flex items-center gap-1 tacliimi-injected-profile">
+        const headerControlsHtml = `
+            <div class="hidden md:flex items-center gap-1 tacliimi-injected-profile">
                 ${themeToggleHtml}
-                ${(!isPublicPage || isAdmin) ? logoutHtml : ''}
 
                 <div class="flex items-center justify-end pl-3 ml-2 border-l border-slate-200 dark:border-slate-700">
                     ${profileDisplayHtml}
@@ -313,28 +486,66 @@ export const GlobalProfile = {
             </div>
         `;
 
-            if (!container.querySelector('.tacliimi-injected-profile')) {
-                container.insertAdjacentHTML('beforeend', headerControlsHtml);
-            }
-            elementsToRemove.forEach(el => {
-                if (el && el.parentNode) {
-                    const sibling = el.previousElementSibling;
-                    if (sibling && (sibling.innerText.includes(fullName) || sibling.innerText.includes('Student Name') || sibling.innerText.includes('Instructor Account') || sibling.innerText.includes('ID:'))) {
+        if (!container.querySelector('.tacliimi-injected-profile')) {
+            container.insertAdjacentHTML('beforeend', headerControlsHtml);
+        }
+
+        // SECURITY: Apply all user-controlled text via textContent AFTER injection.
+        // The HTML template above uses empty placeholders — user data never touches innerHTML.
+        const nameEls = container.querySelectorAll('.user-display-name');
+        nameEls.forEach(el => { el.textContent = fullName; });
+
+        const adminRoleLabel = container.querySelector('#gp-admin-role-label');
+        if (adminRoleLabel) {
+            adminRoleLabel.textContent = (profile?.admin_role || 'administrator').replace('_', ' ');
+        }
+
+        const dropdownNameEl = container.querySelector('#gp-dropdown-name');
+        if (dropdownNameEl) dropdownNameEl.textContent = fullName;
+
+        const dropdownEmailEl = container.querySelector('#gp-dropdown-email');
+        if (dropdownEmailEl) dropdownEmailEl.textContent = session.user.email || roleName;
+
+        // SECURITY: Set avatar image via setAttribute — never injected into innerHTML
+        if (avatarUrl) {
+            container.querySelectorAll('[data-role="profile-image"]').forEach(wrapper => {
+                let img = wrapper.querySelector('img');
+                if (!img) {
+                    // Replace the icon span with an img
+                    wrapper.innerHTML = '';
+                    img = document.createElement('img');
+                    img.className = 'w-full h-full object-cover rounded-full pointer-events-none';
+                    img.alt = '';
+                    wrapper.appendChild(img);
+                }
+                img.setAttribute('src', avatarUrl);
+            });
+        }
+
+        // Remove elements to replace
+        elementsToRemove.forEach(el => {
+            if (el && el.parentNode) {
+                const sibling = el.previousElementSibling;
+                // Try grabbing sibling text properly
+                if (sibling) {
+                    const siblingTxt = (sibling.innerText || sibling.textContent || '').toLowerCase();
+                    const n = fullName ? fullName.toLowerCase() : '';
+                    if (n && siblingTxt.includes(n) || siblingTxt.includes('student name') || siblingTxt.includes('instructor account') || siblingTxt.includes('id:') || siblingTxt.includes('logout')) {
                         sibling.remove();
                     }
-                    el.remove();
                 }
-            });
-
-            container.querySelectorAll('div').forEach(emptyDiv => {
-                if (emptyDiv !== container && emptyDiv.innerHTML.trim() === '<!-- Global Profile Injected Below via TacliimiDB -->') {
-                    emptyDiv.remove();
-                }
-            });
+                el.remove();
+            }
         });
 
-        // Rebind logout buttons
-        document.querySelectorAll('#global-logout, #global-dropdown-logout').forEach(btn => {
+        container.querySelectorAll('div').forEach(emptyDiv => {
+            if (emptyDiv !== container && emptyDiv.innerHTML.trim() === '<!-- Global Profile Injected Below via TacliimiDB -->') {
+                emptyDiv.remove();
+            }
+        });
+
+        // Rebind logout and theme buttons in THIS container
+        container.querySelectorAll('#global-logout, #global-dropdown-logout').forEach(btn => {
             btn.addEventListener('click', async () => {
                 await AuthService.logout();
                 window.location.href = '/src/pages/auth/login-select/index.html';
@@ -342,29 +553,115 @@ export const GlobalProfile = {
         });
 
         this.bindThemeToggles();
+    },
 
-        // Update mobile menu
-        const mobileMenuAuth = document.querySelectorAll('#mobile-menu button');
-        if (mobileMenuAuth.length >= 2) {
-            mobileMenuAuth[0].innerText = 'Dashboard';
-            mobileMenuAuth[0].onclick = () => window.location.href = dashboardLink;
-            mobileMenuAuth[1].innerText = 'Log Out';
-            mobileMenuAuth[1].classList.add('!text-red-500');
-            mobileMenuAuth[1].onclick = async () => {
-                await AuthService.logout();
-                window.location.href = '/src/pages/auth/login-select/index.html';
-            };
-        }
-
-        // Hide instructor CTA links for logged-in instructors
+    applyGlobalUIUpdates(session, isInstructor, isAdmin) {
+        // 1. Handle Instructor CTA Links FIRST across desktop and mobile menu
         if (isInstructor) {
+            // Hide for logged-in instructors across desktop nav, mobile drawer, and all page elements
+            document.querySelectorAll('a, button').forEach(el => {
+                const attr = el.getAttribute('href') || el.getAttribute('onclick') || '';
+                const txt = (el.innerText || el.textContent || '').toLowerCase().trim();
+                if (attr.includes('/src/pages/instructor/become-instructor/') || 
+                    txt.includes('become a teacher') || 
+                    txt.includes('teach on tacliimi') ||
+                    txt.includes('become a mentor')) {
+                    el.style.setProperty('display', 'none', 'important');
+                    el.classList.add('!hidden');
+                }
+            });
+        } else {
+            // Un-squeeze for others by shrinking padding/text
             document.querySelectorAll('a, button').forEach(el => {
                 const attr = el.getAttribute('href') || el.getAttribute('onclick') || '';
                 const txt = (el.innerText || '').toLowerCase();
-                if (attr.includes('/src/pages/instructor/become-instructor/') || txt.includes('become a teacher') || txt.includes('teach on tacliimi')) {
-                    el.style.display = 'none';
+                if ((attr.includes('/src/pages/instructor/become-instructor/') || txt.includes('become a teacher')) && (el.closest('nav') || el.closest('header'))) {
+                    el.classList.remove('whitespace-nowrap', 'px-4', 'py-2');
+                    el.classList.add('px-3', 'py-1.5', 'text-[13px]');
+                    if (txt.includes('become a teacher')) {
+                        el.innerHTML = el.innerHTML.replace(/Become a Teacher/gi, 'Teach');
+                    }
                 }
             });
+        }
+
+        let dashboardLink = '/src/pages/student/student-dashboard/index.html';
+        if (isAdmin) dashboardLink = '/src/pages/admin/dashboard/index.html';
+        else if (isInstructor) dashboardLink = '/src/pages/instructor/instructor-dashboard/index.html';
+
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        // NEW STRUCTURED MENU: If the menu already has #mobile-menu-profile (our new design),
+        // skip legacy injection and only populate profile info.
+        if (mobileMenu && mobileMenu.querySelector('#mobile-menu-profile')) {
+            // Populate name — grab from already-injected header profile name, fallback to email
+            const nameEl = mobileMenu.querySelector('.user-display-name');
+            if (nameEl) {
+                const headerName = document.querySelector('.tacliimi-injected-profile .user-display-name');
+                const displayName = headerName ? headerName.innerText :
+                    (session.user.email ? (session.user.email.split('@')[0].charAt(0).toUpperCase() + session.user.email.split('@')[0].slice(1)) : 'User');
+                nameEl.innerText = displayName;
+            }
+
+            // Wire profile area click to correct settings page
+            const profileArea = mobileMenu.querySelector('#mobile-menu-profile');
+            let settingsLink = '/src/pages/student/account-settings/index.html';
+            if (isAdmin) settingsLink = '/src/pages/admin/profile/index.html';
+            else if (isInstructor) settingsLink = '/src/pages/instructor/instructor-profile/index.html';
+            if (profileArea) profileArea.setAttribute('onclick', `window.location.href='${settingsLink}'`);
+
+            // Wire theme toggle in new menu
+            const mobileThemeToggle = document.getElementById('mobile-theme-toggle');
+            if (mobileThemeToggle && !mobileThemeToggle.dataset.themeBound) {
+                mobileThemeToggle.dataset.themeBound = 'true';
+                mobileThemeToggle.addEventListener('click', () => {
+                    const html = document.documentElement;
+                    if (html.classList.contains('dark')) {
+                        html.classList.remove('dark');
+                        localStorage.theme = 'light';
+                    } else {
+                        html.classList.add('dark');
+                        localStorage.theme = 'dark';
+                    }
+                });
+            }
+
+            return; // Skip legacy injection
+        }
+
+        // LEGACY MENU: Update mobile menu with old button-based structure
+        const legacyMenuAuth = document.querySelectorAll('#mobile-menu button:not(#mobile-theme-toggle):not(.tacliimi-mobile-injected)');
+        if (legacyMenuAuth.length >= 2) {
+            legacyMenuAuth[0].innerText = 'Dashboard';
+            legacyMenuAuth[0].onclick = () => window.location.href = dashboardLink;
+            legacyMenuAuth[1].innerText = 'Log Out';
+            legacyMenuAuth[1].classList.add('!text-red-500');
+            legacyMenuAuth[1].onclick = async () => {
+                await AuthService.logout();
+                window.location.href = '/src/pages/auth/login-select/index.html';
+            };
+        } else {
+            if (mobileMenu && !mobileMenu.querySelector('.tacliimi-mobile-injected') && mobileMenu.dataset.noInject !== 'true') {
+                let settingsLink = '/src/pages/student/account-settings/index.html';
+                if (isAdmin) settingsLink = '/src/pages/admin/profile/index.html';
+                else if (isInstructor) settingsLink = '/src/pages/instructor/instructor-profile/index.html';
+                
+                const settingsBtn = document.createElement('a');
+                settingsBtn.className = 'tacliimi-mobile-injected block text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors cursor-pointer';
+                settingsBtn.href = settingsLink;
+                settingsBtn.innerText = 'Settings';
+                
+                const logoutBtn = document.createElement('a');
+                logoutBtn.className = 'tacliimi-mobile-injected block text-base font-medium !text-red-500 hover:text-red-600 transition-colors cursor-pointer';
+                logoutBtn.innerText = 'Log Out';
+                logoutBtn.onclick = async () => {
+                    await AuthService.logout();
+                    window.location.href = '/src/pages/auth/login-select/index.html';
+                };
+                
+                mobileMenu.appendChild(settingsBtn);
+                mobileMenu.appendChild(logoutBtn);
+            }
         }
     },
 

@@ -1,191 +1,110 @@
 <!DOCTYPE html>
-<html lang="en">
 
+<html lang="en">
 <head>
-    <meta charset="utf-8" />
-    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>Instructor Dashboard | Tacliimi Learn</title>
-    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
-        rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
-        rel="stylesheet" />
-    <script type="module" src="/src/services/globalProfile.js"></script>
-    <script>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Instructor Dashboard | Tacliimi Learn</title>
+<link rel="stylesheet" href="/public/assets/css/tacliimi.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="/src/services/globalProfile.js" type="module"></script>
+<script>
         // Removed synchronous Auth check
     </script>
-    <script>
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        primary: "#4F46E5",
-                        "brand-purple": "#7c3aed",
-                        "background-light": "#F9FAFB",
-                        "background-dark": "#111827",
-                    },
-                    fontFamily: {
-                        display: ["Inter", "sans-serif"],
-                    },
-                    borderRadius: {
-                        DEFAULT: "0.5rem",
-                    },
-                },
-            },
-        };
+
+
+<script type="module">
+        import { requireRole } from '/src/services/dashboardGuard.js';
+
+        // Blocks rendering until role is verified
+        requireRole('instructor');
     </script>
-    <style type="text/tailwindcss">
-        body { font-family: 'Inter', sans-serif; }
-        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
-        
-        /* Hide content until router loads it */
-        #instructor-content-area {
-            opacity: 1;
-            transition: opacity 0.2s ease-in-out;
-        }
-        #instructor-content-area.loading {
-            opacity: 0.5;
-            pointer-events: none;
-        }
-    </style>
-
-    <script type="module">
-        import { AuthService } from '/src/services/authService.js';
-
-        // If the URL contains an access token from an email link or OAuth, do not prematurely redirect
-        const isOAuthRedirect = window.location.hash.includes('access_token=') || 
-                                window.location.search.includes('access_token=') ||
-                                window.location.hash.includes('type=signup');
-
-        if (!isOAuthRedirect) {
-            AuthService.getSession().then(session => {
-                if (!session) window.location.replace('/src/pages/auth/login-select/index.html');
-            });
-        }
-    </script>
-
 </head>
-
-<body
-    class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 transition-colors duration-200">
-    <aside
-        class="fixed left-0 top-0 h-full w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 hidden lg:flex flex-col z-20">
-        <div class="p-6 border-b border-slate-100 dark:border-slate-800">
-            <div class="flex items-center gap-2 cursor-pointer" onclick="window.location.href='/index.html'">
-                <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                    <span class="material-symbols-outlined text-white text-lg">school</span>
-                </div>
-                <span class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Tacliimi</span>
-            </div>
-        </div>
-        <nav class="flex-1 p-4 space-y-1" id="instructor-sidebar-nav">
-            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                href="/src/pages/instructor/instructor-dashboard/">
-                <span class="material-symbols-outlined">dashboard</span>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 transition-colors duration-200"><div class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[50] hidden lg:hidden" id="sidebar-overlay"></div>
+<aside class="fixed left-0 top-0 h-full w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex-col flex z-[60] -translate-x-full lg:translate-x-0" id="instructor-sidebar">
+<div class="p-6 border-b border-slate-100 dark:border-slate-800">
+<div class="flex items-center cursor-pointer" onclick="window.location.href='/index.html'">
+    <img src="/public/assets/images/IMG_7454.png" alt="Tacliimi Logo" class="h-14 w-auto object-contain dark:hidden">
+    <img src="/public/assets/images/logo-dark.png" alt="Tacliimi Logo" class="h-14 w-auto object-contain hidden dark:block">
+</div>
+</div>
+<nav class="flex-1 p-4 space-y-1" id="instructor-sidebar-nav">
+<a href="/src/pages/instructor/instructor-profile/index.html"
+   class="flex items-center gap-3 px-4 py-3 mb-2 border-b border-slate-100 dark:border-slate-800 cursor-pointer lg:hidden">
+    <div class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-primary/20 overflow-hidden flex-shrink-0" data-role="profile-image">
+        <span class="material-symbols-outlined text-slate-400 w-full h-full flex items-center justify-center">person</span>
+    </div>
+    <div class="flex-1 overflow-hidden">
+        <p class="font-bold text-slate-900 dark:text-white truncate user-display-name">Instructor</p>
+        <p class="text-xs text-slate-500 dark:text-slate-400 truncate">View and edit profile</p>
+    </div>
+    <span class="material-symbols-outlined text-slate-400">chevron_right</span>
+</a>
+<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-dashboard/">
+<span class="material-symbols-outlined">dashboard</span>
                 Dashboard
             </a>
-            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                href="/src/pages/instructor/instructor-courses/">
-                <span class="material-symbols-outlined">auto_stories</span>
+<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-courses/">
+<span class="material-symbols-outlined">auto_stories</span>
                 My Courses
             </a>
-            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                href="/src/pages/instructor/instructor-mentorship/">
-                <span class="material-symbols-outlined">groups</span>
+<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-mentorship/">
+<span class="material-symbols-outlined">groups</span>
                 Mentorship
             </a>
-            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                href="/src/pages/instructor/instructor-analytics/">
-                <span class="material-symbols-outlined">analytics</span>
+<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-analytics/">
+<span class="material-symbols-outlined">analytics</span>
                 Analytics
             </a>
-            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                href="/src/pages/instructor/instructor-earnings/">
-                <span class="material-symbols-outlined">payments</span>
+<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-earnings/">
+<span class="material-symbols-outlined">payments</span>
                 Earnings
             </a>
-            <a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                href="/src/pages/instructor/instructor-communications/">
-                <span class="material-symbols-outlined">message</span>
+<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-communications/">
+<span class="material-symbols-outlined">message</span>
                 Communications
             </a>
-        </nav>
-    </aside>
 
-    <div class="lg:ml-64 min-h-screen flex flex-col">
-        <header
-            class="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-8 sticky top-0 z-10 shrink-0">
-            <h1 class="text-lg font-semibold dark:text-white" id="header-page-title">Dashboard</h1>
-            <div class="flex items-center gap-4">
-                <!-- NOTIFICATION BELL -->
-                <div class="relative" id="notif-wrapper">
-                    <button id="notif-bell-btn" onclick="toggleNotifPanel()"
-                        class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 relative transition-colors">
-                        <span class="material-symbols-outlined">notifications</span>
-                        <span id="notif-badge"
-                            class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full hidden"></span>
-                    </button>
-                    <!-- DROPDOWN PANEL -->
-                    <div id="notif-panel"
-                        class="hidden absolute right-0 top-12 w-96 max-h-[520px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl flex flex-col z-50 overflow-hidden">
-                        <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800 shrink-0">
-                            <span class="font-bold text-slate-800 dark:text-white text-base">Notifications</span>
-                            <button onclick="markAllRead()"
-                                class="text-xs text-primary hover:underline font-medium">Mark all read</button>
-                        </div>
-                        <div id="notif-list" class="flex-1 overflow-y-auto divide-y divide-slate-50 dark:divide-slate-800">
-                            <div id="notif-empty" class="flex flex-col items-center justify-center py-16 text-center">
-                                <span class="material-symbols-outlined text-4xl text-slate-300 mb-3">notifications_none</span>
-                                <p class="text-slate-400 text-sm">You're all caught up!</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+</nav>
+</aside>
+<div class="lg:ml-64 min-h-screen flex flex-col">
+<header class="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-8 sticky top-0 z-10 shrink-0 w-full">
+<div class="flex items-center"><button aria-label="Open navigation menu" class="lg:hidden p-2.5 text-slate-500 bg-slate-100 dark:bg-slate-800 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors mr-3" id="instructor-mobile-menu-btn"><span class="material-symbols-outlined">menu_open</span></button><h1 class="text-lg font-semibold dark:text-white hidden lg:block" id="header-page-title">Dashboard</h1></div>
 
-                <button class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-                    onclick="document.documentElement.classList.toggle('dark')">
-                    <span class="material-symbols-outlined">dark_mode</span>
-                </button>
-                <div class="flex items-center gap-3 pl-4 border-l border-slate-200 dark:border-slate-800 cursor-pointer hover:opacity-80 transition-opacity"
-                    onclick="window.location.href='/src/pages/instructor/instructor-profile/index.html'">
-                    <div class="text-right hidden sm:block">
-                        <p class="user-display-name text-sm font-medium dark:text-white">Instructor account</p>
-                        <p class="text-xs text-slate-500" data-role="profile-meta">ID: 32342</p>
-                    </div>
-                    <div
-                        class="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-slate-100 text-slate-400 dark:bg-slate-800 border-2 border-primary/20 hover:border-primary transition-colors">
-                        <span class="material-symbols-outlined text-2xl">account_circle</span>
-                    </div>
-                </div>
-            </div>
-        </header>
 
-        <!-- DYNAMIC CONTENT AREA -->
-        <main id="instructor-content-area" class="flex-1 bg-background-light dark:bg-background-dark pb-20 relative">
-
-            <!-- MANDATORY PROFILE COMPLETION BLOCKER -->
-            <div id="mandatory-profile-blocker"
-                class="fixed inset-0 z-[100] bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-sm hidden items-center justify-center">
-                <div
-                    class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-8 max-w-lg w-full mx-4 shadow-2xl text-center">
-                    <div
-                        class="w-16 h-16 bg-amber-50 dark:bg-amber-900/30 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <span class="material-symbols-outlined text-3xl">how_to_reg</span>
-                    </div>
-                    <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-3">Profile Incomplete</h2>
-                    <p class="text-slate-500 dark:text-slate-400 mb-8">
+<a href="/index.html" class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 lg:hidden flex items-center gap-2 cursor-pointer transition-opacity hover:opacity-80">
+    <img src="/public/assets/images/7e3a1f5e-ba08-492e-87fa-6b1c28129e6c-removebg-preview.png" alt="Tacliimi Logo" class="h-10 w-auto object-contain drop-shadow-sm">
+</a>
+<div class="flex items-center gap-4 hidden lg:flex">
+<div class="flex items-center gap-3 pl-4 border-l border-slate-200 dark:border-slate-800 cursor-pointer hover:opacity-80 transition-opacity" id="global-profile-header-container" onclick="window.location.href='/src/pages/instructor/instructor-profile/index.html'">
+<div class="text-right hidden sm:block space-y-1">
+<div class="h-4 w-28 bg-slate-200 dark:bg-slate-700 animate-pulse rounded"></div>
+<div class="h-3 w-16 bg-slate-200 dark:bg-slate-700 animate-pulse rounded ml-auto"></div>
+</div>
+<div class="h-10 w-10 rounded-full bg-slate-200 dark:bg-slate-700 animate-pulse border-2 border-primary/20 shrink-0 flex items-center justify-center" data-role="profile-image"></div>
+</div>
+</div>
+</header>
+<!-- DYNAMIC CONTENT AREA -->
+<main class="flex-1 bg-background-light dark:bg-background-dark pb-20 relative" id="instructor-content-area">
+<!-- MANDATORY PROFILE COMPLETION BLOCKER -->
+<div class="fixed inset-0 z-[100] bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-sm hidden items-center justify-center" id="mandatory-profile-blocker">
+<div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-8 max-w-lg w-full mx-4 shadow-2xl text-center">
+<div class="w-16 h-16 bg-amber-50 dark:bg-amber-900/30 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-6">
+<span class="material-symbols-outlined text-3xl">how_to_reg</span>
+</div>
+<h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-3">Profile Incomplete</h2>
+<p class="text-slate-500 dark:text-slate-400 mb-8">
                         Complete your Instructor Profile to unlock your dashboard features. You must finish setting up
                         your personal info, teaching details, and payout methods before continuing.
                     </p>
-                    <button
-                        onclick="window.location.href='/src/pages/instructor/instructor-profile/index.html?setup=true'"
-                        class="w-full bg-primary hover:bg-indigo-700 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all">
+<button class="w-full bg-primary hover:bg-indigo-700 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all" onclick="window.location.href='/src/pages/instructor/instructor-profile/index.html?setup=true'">
                         Complete Profile Setup <span class="material-symbols-outlined text-xl">arrow_forward</span>
-                    </button>
-                </div>
-            </div>
-            <script type="module">
+</button>
+</div>
+</div>
+<script type="module">
                 import { AuthService } from '/src/services/authService.js';
 
                 document.addEventListener('DOMContentLoaded', async () => {
@@ -195,9 +114,28 @@
                             const profile = await AuthService.getCurrentProfile();
                             // If profile doesn't exist yet (brand new registration) or missing key fields
                             const missingFields = !profile || !profile.short_bio || !profile.professional_title;
-                            const isInstructor = profile ? profile.role === 'instructor' : true; // Assume instructor if missing but we are on instructor dashboard
+                            // FIXED: fail closed — no profile means no guarantee of instructor
+                            const isInstructor = profile?.role === 'instructor';
 
-                            if (isInstructor && missingFields) {
+                            if (!navigator.onLine) {
+                                const blocker = document.getElementById('mandatory-profile-blocker');
+                                if (blocker) {
+                                    blocker.innerHTML = `
+                                        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-8 max-w-lg w-full mx-4 shadow-2xl text-center">
+                                            <div class="w-16 h-16 bg-red-50 dark:bg-red-900/30 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                                                <span class="material-symbols-outlined text-3xl">wifi_off</span>
+                                            </div>
+                                            <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-3">No Internet Connection</h2>
+                                            <p class="text-slate-500 dark:text-slate-400 mb-8">
+                                                Please connect to the internet to access your instructor dashboard.
+                                            </p>
+                                        </div>
+                                    `;
+                                    blocker.classList.remove('hidden');
+                                    blocker.classList.add('flex');
+                                    document.body.style.overflow = 'hidden';
+                                }
+                            } else if (isInstructor && missingFields) {
                                 const blocker = document.getElementById('mandatory-profile-blocker');
                                 if (blocker) {
                                     blocker.classList.remove('hidden');
@@ -211,120 +149,541 @@
                     }
                 });
             </script>
-
-            <div class="px-8 pb-8 pt-2 max-w-7xl mx-auto">
-                <div class="mb-10">
-                    <h2 class="text-3xl font-bold dark:text-white">Welcome to Tacliimi, <span
-                            class="auto-welcome-name capitalize">Instructor</span>!</h2>
-                    <p class="text-slate-500 mt-2 text-lg">Your dashboard provides an overview of your teaching success.
+<div class="px-8 pb-8 pt-2 max-w-7xl mx-auto">
+<div class="mb-10">
+<h2 class="text-3xl font-bold dark:text-white flex items-center gap-2 flex-wrap">Welcome to Tacliimi, <span class="auto-welcome-name capitalize inline-flex items-center"><span class="h-8 w-36 bg-slate-200 dark:bg-slate-700 animate-pulse rounded-lg inline-block"></span></span>!</h2>
+<p class="text-slate-500 mt-2 text-lg">Your dashboard provides an overview of your teaching success.
                     </p>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-                    <div
-                        class="bg-white dark:bg-slate-900 p-8 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                        <div class="flex items-center gap-4 mb-4">
-                            <div
-                                class="w-12 h-12 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 rounded-lg flex items-center justify-center">
-                                <span class="material-symbols-outlined">payments</span>
-                            </div>
-                            <h3 class="font-semibold text-slate-600 dark:text-slate-400">Total Earnings</h3>
-                        </div>
-                        <div class="text-4xl font-bold dark:text-white mb-2">$0.00</div>
-                        <p class="text-slate-500 text-sm leading-relaxed">Statistics will appear once you start selling.
-                        </p>
-                    </div>
-                    <div
-                        class="bg-white dark:bg-slate-900 p-8 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                        <div class="flex items-center gap-4 mb-4">
-                            <div
-                                class="w-12 h-12 bg-indigo-50 dark:bg-indigo-900/30 text-primary rounded-lg flex items-center justify-center">
-                                <span class="material-symbols-outlined">auto_stories</span>
-                            </div>
-                            <h3 class="font-semibold text-slate-600 dark:text-slate-400">Total Courses</h3>
-                        </div>
-                        <div id="total-courses-metric" class="text-4xl font-bold dark:text-white mb-2">0</div>
-                        <p id="total-courses-desc" class="text-slate-500 text-sm leading-relaxed">Create your first
-                            course to begin.</p>
-                    </div>
-                </div>
-                <div
-                    class="bg-white dark:bg-slate-900 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 p-16 flex flex-col items-center text-center">
-                    <div
-                        class="w-24 h-24 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-6">
-                        <span
-                            class="material-symbols-outlined text-slate-300 dark:text-slate-600 text-5xl">auto_stories</span>
-                    </div>
-                    <h3 class="text-xl font-bold dark:text-white mb-2">You haven't created any courses yet</h3>
-                    <p class="text-slate-500 max-w-sm mb-8">Your journey as an educator starts here. Create your first
-                        course and reach thousands of students worldwide.</p>
-                    <button onclick="window.location.href='/src/pages/instructor/instructor-courses/wizard.html'"
-                        class="bg-primary hover:bg-indigo-700 text-white px-8 py-4 rounded-xl flex items-center gap-3 font-semibold transition-all shadow-xl shadow-indigo-200 dark:shadow-none hover:scale-105 active:scale-95">
-                        <span class="material-symbols-outlined text-2xl">add_circle</span>
-                        Create Your First Course
+</div>
+<!-- DASHBOARD WIDGETS -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+<!-- Total Earnings (Existing) -->
+<div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
+<div class="flex items-center gap-3 mb-3">
+<div class="w-10 h-10 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 rounded-xl flex items-center justify-center">
+<span class="material-symbols-outlined">payments</span>
+</div>
+<h3 class="font-semibold text-slate-500 dark:text-slate-400 text-sm">Total Earnings</h3>
+</div>
+<div class="text-3xl font-bold dark:text-white mb-1 h-9 flex items-center" id="total-earnings-metric">
+    <div class="h-8 w-24 bg-slate-200 dark:bg-slate-700 animate-pulse rounded-lg"></div>
+</div>
+<p class="text-slate-400 text-xs">All-time life revenue</p>
+</div>
+<!-- Total Courses (Existing) -->
+<div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
+<div class="flex items-center gap-3 mb-3">
+<div class="w-10 h-10 bg-indigo-50 dark:bg-indigo-900/30 text-primary rounded-xl flex items-center justify-center">
+<span class="material-symbols-outlined">auto_stories</span>
+</div>
+<h3 class="font-semibold text-slate-500 dark:text-slate-400 text-sm">Total Courses</h3>
+</div>
+<div class="text-3xl font-bold dark:text-white mb-1 h-9 flex items-center" id="total-courses-metric">
+    <div class="h-8 w-16 bg-slate-200 dark:bg-slate-700 animate-pulse rounded-lg"></div>
+</div>
+<p class="text-slate-400 text-xs" id="total-courses-desc">Your portfolio size</p>
+</div>
+<!-- Total Students (New) -->
+<div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
+<div class="flex items-center gap-3 mb-3">
+<div class="w-10 h-10 bg-amber-50 dark:bg-amber-900/30 text-amber-600 rounded-xl flex items-center justify-center">
+<span class="material-symbols-outlined">group</span>
+</div>
+<h3 class="font-semibold text-slate-500 dark:text-slate-400 text-sm">Enrolled Students</h3>
+</div>
+<div class="text-3xl font-bold dark:text-white mb-1 h-9 flex items-center" id="total-students-metric">
+    <div class="h-8 w-16 bg-slate-200 dark:bg-slate-700 animate-pulse rounded-lg"></div>
+</div>
+<p class="text-slate-400 text-xs">Global reach</p>
+</div>
+<!-- Mentorship Activity (New) -->
+<div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
+<div class="flex items-center gap-3 mb-3">
+<div class="w-10 h-10 bg-rose-50 dark:bg-rose-900/30 text-rose-600 rounded-xl flex items-center justify-center">
+<span class="material-symbols-outlined">forum</span>
+</div>
+<h3 class="font-semibold text-slate-500 dark:text-slate-400 text-sm">Active Mentorship</h3>
+</div>
+<div class="text-3xl font-bold dark:text-white mb-1 h-9 flex items-center" id="mentorship-sessions-metric">
+    <div class="h-8 w-16 bg-slate-200 dark:bg-slate-700 animate-pulse rounded-lg"></div>
+</div>
+<p class="text-slate-400 text-xs h-4" id="next-session-desc"></p>
+</div>
+</div>
+<!-- QUICK ACTIONS & FILTER BAR -->
+<div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 mb-8 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+<div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 flex-1 w-full sm:w-auto">
+<div class="relative flex-1 w-full max-w-none sm:max-w-md">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+<input class="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-transparent rounded-xl text-sm focus:ring-2 focus:ring-primary/20 transition-all dark:text-white" id="course-search-input" placeholder="Search courses by name, ID or category..." type="text"/>
+</div>
+<select class="bg-slate-50 dark:bg-slate-800 border border-transparent rounded-xl text-sm py-2.5 px-4 focus:ring-2 focus:ring-primary/20 dark:text-white w-full sm:w-auto" id="status-filter">
+<option value="all">All Statuses</option>
+<option value="published">Published</option>
+<option value="private">Private</option>
+<option value="pending_review">Pending Review</option>
+<option value="draft">Draft</option>
+<option value="rejected">Rejected</option>
+</select>
+</div>
+<button class="bg-primary hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl flex items-center justify-center gap-2 font-semibold transition-all shadow-lg shadow-indigo-100 dark:shadow-none whitespace-nowrap w-full sm:w-auto mt-2 sm:mt-0" onclick="window.location.href='/src/pages/instructor/instructor-courses/wizard.html'">
+<span class="material-symbols-outlined text-xl">add_circle</span>
+                        Create New Course
                     </button>
-                    <div class="mt-12 flex items-center gap-6 text-sm text-slate-400">
-                        <div class="flex items-center gap-2">
-                            <span class="material-symbols-outlined text-base">verified</span>
-                            Instructor Badge
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <span class="material-symbols-outlined text-base">group</span>
-                            Community Access
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <span class="material-symbols-outlined text-base">support_agent</span>
-                            24/7 Support
-                        </div>
-                    </div>
-                </div>
-                <footer class="mt-16 py-8 border-t border-slate-200 dark:border-slate-800 text-center">
-                    <p class="text-xs text-slate-400 font-mono uppercase tracking-widest">ONBOARDING PHASE: STEP 1</p>
-                    <div class="flex items-center justify-center gap-4 mt-2 text-xs text-slate-500">
-                        <span>Platform Status: <span class="text-emerald-500 font-medium uppercase">Active</span></span>
-                        <span class="text-slate-300 dark:text-slate-700">|</span>
-                        <a class="text-primary hover:underline" href="#">Help Center</a>
-                        <span class="text-slate-300 dark:text-slate-700">|</span>
-                        <a class="text-primary hover:underline" href="#">Privacy Policy</a>
-                    </div>
-                </footer>
-            </div>
-
-        </main>
-
-        <script type="module">
+</div>
+<!-- PORTFOLIO SECTION -->
+<div id="dashboard-portfolio-container">
+<!-- LOADING STATE -->
+<div class="py-20 flex flex-col items-center justify-center text-slate-400 hidden" id="portfolio-loading">
+<div class="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" role="status">
+</div>
+<p>Loading your portfolio...</p>
+</div>
+<!-- EMPTY STATE (Hidden by default) -->
+<div class="hidden bg-white dark:bg-slate-900 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 p-16 flex flex-col items-center text-center" id="portfolio-empty">
+<div class="w-24 h-24 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-6">
+<span class="material-symbols-outlined text-slate-300 dark:text-slate-600 text-5xl">auto_stories</span>
+</div>
+<h3 class="text-xl font-bold dark:text-white mb-2">You haven't created any courses yet</h3>
+<p class="text-slate-500 max-w-sm mb-8">Your journey as an educator starts here. Create your
+                            first course and reach thousands of students worldwide.</p>
+<button class="bg-primary hover:bg-indigo-700 text-white px-8 py-4 rounded-xl flex items-center gap-3 font-semibold transition-all shadow-xl shadow-indigo-200 dark:shadow-none hover:scale-105 active:scale-95" onclick="window.location.href='/src/pages/instructor/instructor-courses/wizard.html'">
+<span class="material-symbols-outlined text-2xl">add_circle</span>
+                            Create Your First Course
+                        </button>
+</div>
+<!-- DATA GRID -->
+<div class="hidden" id="portfolio-grid-wrapper">
+<div class="overflow-hidden sm:overflow-x-visible bg-transparent md:bg-white md:dark:bg-slate-900 md:rounded-2xl md:border md:border-slate-200 md:dark:border-slate-800">
+<table class="w-full text-left block md:table">
+<thead class="hidden md:table-header-group">
+<tr class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">
+<th class="px-6 py-4">Course Details</th>
+<th class="px-6 py-4">Category / ID</th>
+<th class="px-6 py-4">Status</th>
+<th class="px-6 py-4">Performance</th>
+<th class="px-6 py-4">Price</th>
+<th class="px-6 py-4 text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="block md:table-row-group divide-y-0 md:divide-y divide-slate-100 dark:divide-slate-800 text-sm max-md:space-y-4 w-full" id="portfolio-table-body">
+<!-- Dynamic Rows -->
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</footer>
+</div>
+</main>
+<script type="module">
             import { supabase } from '/src/services/supabaseClient.js';
             import { AuthService } from '/src/services/authService.js';
+            import { CourseService } from '/src/services/courseService.js';
+            import { MentorService } from '/src/services/mentorService.js';
+            import { PayoutService } from '/src/services/payoutService.js';
+            import { instructorEarningsService } from '/src/services/instructorEarningsService.js';
 
-            document.addEventListener('DOMContentLoaded', async () => {
+            let allCourses = [];
+
+            async function initDashboard() {
+                console.log("[Dashboard] Starting initialization...");
+                const loadingText = document.getElementById('portfolio-loading');
+
                 try {
                     const session = await AuthService.getSession();
-                    if (!session) return;
-
-                    const { count, error } = await supabase
-                        .from('courses')
-                        .select('*', { count: 'exact', head: true })
-                        .eq('instructor_id', session.user.id);
-
-                    if (!error && count !== null) {
-                        const metricEl = document.getElementById('total-courses-metric');
-                        const descEl = document.getElementById('total-courses-desc');
-                        if (metricEl) metricEl.innerText = count;
-                        if (descEl && count > 0) descEl.innerText = "Keep up the great work!";
+                    if (!session) {
+                        console.warn("[Dashboard] No session found, redirecting...");
+                        return;
                     }
+                    const instructorId = session.user.id;
+                    console.log("[Dashboard] Instructor ID:", instructorId);
+
+                    // 1. Fetch Summary Data with individual error handling to prevent total hang
+                    console.log("[Dashboard] Fetching data...");
+                    
+                    const metricsContainer = document.getElementById('dashboard-portfolio-container');
+                    if (metricsContainer) metricsContainer.setAttribute('aria-busy', 'true');
+                    
+                    document.getElementById('portfolio-grid-wrapper')?.classList.remove('hidden');
+                    const tbody = document.getElementById('portfolio-table-body');
+                    if (tbody) {
+                        tbody.innerHTML = buildPortfolioSkeletons(3);
+                    }
+
+                    const [stats, earnings, sessions, courses] = await Promise.all([
+                        CourseService.getInstructorStats(instructorId).catch(err => {
+                            console.error("[Dashboard] Stats fetch failed:", err);
+                            return { totalCourses: 0, totalStudents: 0 };
+                        }),
+                        instructorEarningsService.getSummary(instructorId).catch(err => {
+                            console.error("[Dashboard] Earnings calculation failed:", err);
+                            return { total_earned: 0 };
+                        }),
+                        MentorService.getMentorSessions(instructorId).catch(err => {
+                            console.error("[Dashboard] Mentor sessions fetch failed:", err);
+                            return [];
+                        }),
+                        CourseService.getInstructorCoursesForDisplay(instructorId).catch(err => {
+                            console.error("[Dashboard] Courses fetch failed:", err);
+                            return [];
+                        })
+                    ]);
+
+                    allCourses = courses || [];
+                    console.log("[Dashboard] Data fetched successfully:", { stats, earnings, sessionsCount: sessions?.length, coursesCount: allCourses.length });
+
+                    // 2. Populate Metrics
+                    updateMetrics({
+                        earnings: earnings?.cleared_earnings || 0,
+                        courses: allCourses.length,
+                        students: stats.totalStudents || 0,
+                        sessions: sessions.filter(s => s.booking_status === 'pending_review').length
+                    });
+
+                    // 3. Render Portfolio
+                    renderPortfolio(allCourses);
+
+                    // 4. Setup Search & Filters
+                    setupListeners();
+
                 } catch (e) {
-                    console.error("Failed to load metrics", e);
+                    console.error("[Dashboard] Critical Init Error:", e);
+                    if (loadingText) {
+                        loadingText.innerHTML = `
+                            <div class="text-red-500 flex flex-col items-center">
+                                <span class="material-symbols-outlined text-4xl mb-2">error</span>
+                                <p>Failed to load dashboard data. ${e.message || ''}</p>
+                                <button onclick="window.location.reload()" class="mt-4 px-4 py-2 bg-primary text-white rounded-lg">Retry</button>
+                            </div>
+                        `;
+                    }
                 }
-            });
+            }
+
+            function buildPortfolioSkeletons(count) {
+                return Array(count).fill(0).map(() => `
+                    <tr class="block md:table-row w-full bg-white dark:bg-slate-900 md:bg-transparent md:hover:bg-slate-50 dark:md:hover:bg-slate-800/50 transition-colors group rounded-2xl border border-slate-200 dark:border-slate-800 md:border-none shadow-sm flex flex-col md:shadow-none overflow-hidden animate-pulse">
+                        <td class="block md:table-cell px-4 py-4 md:px-6 md:py-5 border-b md:border-b-0 border-slate-100 dark:border-slate-800 w-full md:w-auto">
+                            <div class="flex flex-col sm:flex-row items-center md:items-center gap-4 text-center sm:text-left w-full">
+                                <div class="w-full sm:w-24 md:w-16 h-32 sm:h-16 md:h-12 rounded-xl md:rounded-lg bg-slate-200 dark:bg-slate-700 flex-shrink-0 mx-auto sm:mx-0">
+                                </div>
+                                <div class="flex-1 w-full flex flex-col justify-center items-center sm:items-start space-y-2">
+                                    <div class="h-4 w-3/4 max-w-[200px] bg-slate-200 dark:bg-slate-700 rounded"></div>
+                                    <div class="h-3 w-1/2 max-w-[120px] bg-slate-200 dark:bg-slate-700 rounded"></div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="block md:table-cell px-4 py-3 md:px-6 md:py-5 w-full md:w-auto">
+                            <div class="flex justify-between items-center w-full md:hidden mb-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                                <span>Category / ID</span>
+                            </div>
+                            <div class="flex flex-col md:block max-md:items-end w-full space-y-2">
+                                <div class="h-5 w-16 bg-slate-200 dark:bg-slate-700 rounded inline-block"></div>
+                                <div class="h-4 w-24 bg-slate-200 dark:bg-slate-700 rounded"></div>
+                            </div>
+                        </td>
+                        <td class="block md:table-cell px-4 py-3 md:px-6 md:py-5 w-full md:w-auto border-t md:border-none border-dashed border-slate-100 dark:border-slate-800/80">
+                            <div class="flex justify-between items-center w-full md:hidden mb-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                                <span>Status</span>
+                            </div>
+                            <div class="flex flex-col md:block max-md:items-end w-full">
+                                <div class="h-6 w-20 bg-slate-200 dark:bg-slate-700 rounded-full"></div>
+                            </div>
+                        </td>
+                        <td class="block md:table-cell px-4 py-3 md:px-6 md:py-5 w-full md:w-auto border-t md:border-none border-dashed border-slate-100 dark:border-slate-800/80">
+                            <div class="flex justify-between items-center w-full md:hidden mb-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                                <span>Performance</span>
+                            </div>
+                            <div class="flex items-center md:flex-col md:items-start max-md:justify-end gap-3 md:gap-1.5 w-full">
+                                <div class="h-4 w-12 bg-slate-200 dark:bg-slate-700 rounded"></div>
+                                <div class="h-4 w-16 bg-slate-200 dark:bg-slate-700 rounded"></div>
+                            </div>
+                        </td>
+                        <td class="block md:table-cell px-4 py-3 md:px-6 md:py-5 w-full md:w-auto border-t md:border-none border-dashed border-slate-100 dark:border-slate-800/80">
+                            <div class="flex justify-between items-center w-full md:hidden mb-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                                <span>Price</span>
+                            </div>
+                            <div class="flex flex-col md:block max-md:items-end w-full space-y-1">
+                                <div class="h-5 w-12 bg-slate-200 dark:bg-slate-700 rounded"></div>
+                                <div class="h-3 w-16 bg-slate-200 dark:bg-slate-700 rounded mt-1"></div>
+                            </div>
+                        </td>
+                        <td class="block md:table-cell px-4 py-4 md:px-6 md:py-5 w-full md:w-auto border-t md:border-none border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 md:bg-transparent md:text-right">
+                            <div class="flex justify-center items-center md:justify-end gap-3 w-full">
+                                <div class="h-9 w-24 md:w-10 max-md:flex-1 bg-slate-200 dark:bg-slate-700 rounded-lg"></div>
+                                <div class="h-9 w-24 md:w-10 max-md:flex-1 bg-slate-200 dark:bg-slate-700 rounded-lg"></div>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+
+            function updateMetrics({ earnings, courses, students, sessions }) {
+                document.getElementById('total-earnings-metric').innerText = `$${parseFloat(earnings).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                document.getElementById('total-courses-metric').innerText = courses;
+                document.getElementById('total-students-metric').innerText = students;
+                document.getElementById('mentorship-sessions-metric').innerText = sessions;
+
+                const nextSessionDesc = document.getElementById('next-session-desc');
+                if (nextSessionDesc) {
+                    if (sessions > 0) {
+                        nextSessionDesc.innerText = `${sessions} pending approval`;
+                        nextSessionDesc.classList.add('text-rose-500', 'font-medium');
+                    } else {
+                        nextSessionDesc.innerText = "No pending sessions";
+                        nextSessionDesc.classList.remove('text-rose-500', 'font-medium');
+                    }
+                }
+            }
+
+            function renderPortfolio(courses) {
+                const container = document.getElementById('dashboard-portfolio-container');
+                if (container) container.removeAttribute('aria-busy');
+                
+                const loading = document.getElementById('portfolio-loading');
+                const empty = document.getElementById('portfolio-empty');
+                const grid = document.getElementById('portfolio-grid-wrapper');
+                const tbody = document.getElementById('portfolio-table-body');
+
+                if (loading) loading.classList.add('hidden');
+
+                if (!courses || courses.length === 0) {
+                    if (empty) empty.classList.remove('hidden');
+                    if (grid) grid.classList.add('hidden');
+                    return;
+                }
+
+                if (empty) empty.classList.add('hidden');
+                if (grid) grid.classList.remove('hidden');
+
+                if (tbody) {
+                    tbody.innerHTML = courses.map(course => {
+                        const isPrivate = course.is_public === false && course.status === 'published';
+                        const normalizedStatus = course.status === 'approved' ? 'published' : course.status;
+                        const statusColors = {
+                            'published': isPrivate
+                                ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400'
+                                : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+                            'pending_review': 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+                            'draft': 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400',
+                            'rejected': 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                        };
+                        const statusClass = statusColors[normalizedStatus] || statusColors.draft;
+                        const statusLabel = isPrivate ? 'PRIVATE' : (normalizedStatus || 'draft').replace('_', ' ');
+                        const createdDate = new Date(course.created_at).toLocaleDateString();
+
+                        return `
+                            <tr class="block md:table-row w-full bg-white dark:bg-slate-900 md:bg-transparent md:hover:bg-slate-50 dark:md:hover:bg-slate-800/50 transition-colors group rounded-2xl border border-slate-200 dark:border-slate-800 md:border-none shadow-sm flex flex-col md:shadow-none overflow-hidden">
+                                <td class="block md:table-cell px-4 py-4 md:px-6 md:py-5 border-b md:border-b-0 border-slate-100 dark:border-slate-800 w-full md:w-auto">
+                                    <div class="flex flex-col sm:flex-row items-center md:items-center gap-4 text-center sm:text-left w-full">
+                                        <div class="w-full sm:w-24 md:w-16 h-32 sm:h-16 md:h-12 rounded-xl md:rounded-lg bg-slate-100 dark:bg-slate-800 overflow-hidden flex-shrink-0 border border-slate-200 dark:border-slate-700 mx-auto sm:mx-0">
+                                            ${course.thumbnail_url ? `<img src="${course.thumbnail_url}" class="w-full h-full object-cover">` : `<span class="material-symbols-outlined text-slate-400 w-full h-full flex items-center justify-center">image</span>`}
+                                        </div>
+                                        <div>
+                                            <div class="font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors text-base md:text-sm mb-1 md:mb-0 line-clamp-2">${course.title || 'Untitled Course'}</div>
+                                            <div class="text-xs text-slate-400 mt-1 flex items-center justify-center sm:justify-start gap-1">
+                                                <span class="material-symbols-outlined text-[14px]">calendar_today</span>
+                                                Created: ${createdDate}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="block md:table-cell px-4 py-3 md:px-6 md:py-5 w-full md:w-auto">
+                                    <div class="flex justify-between items-center w-full md:hidden mb-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                                        <span>Category / ID</span>
+                                    </div>
+                                    <div class="flex flex-col md:block max-md:items-end w-full">
+                                        <div class="text-xs font-mono bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded inline-block mb-1 text-slate-500 dark:text-slate-400">
+                                        ${course.serial_id || 'CRS-XXXX'}
+                                    </div>
+                                        <div class="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                                            ${course.category?.name || 'Uncategorized'}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="block md:table-cell px-4 py-3 md:px-6 md:py-5 w-full md:w-auto border-t md:border-none border-dashed border-slate-100 dark:border-slate-800/80">
+                                    <div class="flex justify-between items-center w-full md:hidden mb-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                                        <span>Status</span>
+                                    </div>
+                                    <div class="flex flex-col md:block max-md:items-end w-full">
+                                        <span class="px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider ${statusClass}">
+                                        ${statusLabel}
+                                        </span>
+                                        ${course.is_revision ? `<div class="mt-2 text-[10px] text-blue-600 dark:text-blue-400 font-semibold uppercase flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">edit_note</span> Revision Draft</div>` : ''}
+                                    </div>
+                                </td>
+                                <td class="block md:table-cell px-4 py-3 md:px-6 md:py-5 w-full md:w-auto border-t md:border-none border-dashed border-slate-100 dark:border-slate-800/80">
+                                    <div class="flex justify-between items-center w-full md:hidden mb-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                                        <span>Performance</span>
+                                    </div>
+                                    <div class="flex items-center md:flex-col md:items-start max-md:justify-end gap-3 md:gap-1.5 w-full">
+                                        <div class="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
+                                            <span class="material-symbols-outlined text-sm">group</span>
+                                            <span class="font-semibold">${course.enrolled_count || 0}</span>
+                                            <span class="text-[10px] text-slate-400 hidden md:inline">students</span>
+                                        </div>
+                                        <div class="flex items-center gap-1.5 text-amber-500">
+                                            <span class="material-symbols-outlined text-sm">star</span>
+                                            <span class="font-semibold">${course.avg_rating || '0.0'}</span>
+                                            <span class="text-[10px] text-slate-400 hidden md:inline">(${course.review_count || 0})</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="block md:table-cell px-4 py-3 md:px-6 md:py-5 w-full md:w-auto border-t md:border-none border-dashed border-slate-100 dark:border-slate-800/80">
+                                    <div class="flex justify-between items-center w-full md:hidden mb-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                                        <span>Price</span>
+                                    </div>
+                                    <div class="flex flex-col md:block max-md:items-end w-full">
+                                        <div class="font-bold text-slate-900 dark:text-white md:text-base">$${parseFloat(course.price || 0).toFixed(2)}</div>
+                                        <div class="text-[10px] text-slate-400 uppercase mt-0.5">${course.price > 0 ? 'One-time' : 'Free'}</div>
+                                    </div>
+                                </td>
+                                <td class="block md:table-cell px-4 py-4 md:px-6 md:py-5 w-full md:w-auto border-t md:border-none border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 md:bg-transparent md:text-right">
+                                    <div class="flex justify-center items-center md:justify-end gap-3 w-full">
+                                        ${normalizedStatus === 'pending_review' 
+                                            ? `<button onclick="withdrawReview('${course.id}')" class="px-4 py-2 md:px-3 md:py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400 rounded-lg text-xs font-bold transition-all max-md:flex-1 w-full" title="Withdraw submission to edit">Withdraw</button>`
+                                            : normalizedStatus === 'published'
+                                                ? `<button onclick="editPublishedCourse('${course.id}')" class="px-4 py-2 md:p-2 bg-white dark:bg-slate-800 md:bg-transparent border border-slate-200 dark:border-slate-700 md:border-none shadow-sm md:shadow-none hover:bg-primary/10 hover:text-primary rounded-lg transition-all text-slate-600 dark:text-slate-300 max-md:flex-1 w-full flex items-center justify-center gap-1.5" title="Edit Course"><span class="material-symbols-outlined text-lg">edit</span> <span class="md:hidden text-xs font-semibold">Edit</span></button>`
+                                                : `<button onclick="window.location.href='/src/pages/instructor/instructor-courses/wizard.html?id=${course.id}'" class="px-4 py-2 md:p-2 bg-white dark:bg-slate-800 md:bg-transparent border border-slate-200 dark:border-slate-700 md:border-none shadow-sm md:shadow-none hover:bg-primary/10 hover:text-primary rounded-lg transition-all text-slate-600 dark:text-slate-300 max-md:flex-1 w-full flex items-center justify-center gap-1.5" title="Edit Course"><span class="material-symbols-outlined text-lg">edit</span> <span class="md:hidden text-xs font-semibold">Edit</span></button>`
+                                        }
+                                        <button onclick="window.location.href='/src/pages/learning/learning-interface/index.html?id=${course.id}'" 
+                                            class="px-4 py-2 md:p-2 bg-white dark:bg-slate-800 md:bg-transparent border border-slate-200 dark:border-slate-700 md:border-none shadow-sm md:shadow-none hover:bg-emerald-500/10 hover:text-emerald-500 rounded-lg transition-all text-slate-600 dark:text-slate-300 max-md:flex-1 w-full flex items-center justify-center gap-1.5" title="Preview Course">
+                                            <span class="material-symbols-outlined text-lg">visibility</span> <span class="md:hidden text-xs font-semibold">Preview</span>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+            }
+
+            function setupListeners() {
+                const searchInput = document.getElementById('course-search-input');
+                const statusFilter = document.getElementById('status-filter');
+
+                if (searchInput && statusFilter) {
+                    const handleFilter = () => {
+                        const searchTerm = searchInput.value.toLowerCase();
+                        const statusValue = statusFilter.value;
+
+                        const filtered = allCourses.filter(course => {
+                            const matchesSearch = (course.title || '').toLowerCase().includes(searchTerm) ||
+                                (course.serial_id || '').toLowerCase().includes(searchTerm) ||
+                                (course.category?.name || '').toLowerCase().includes(searchTerm);
+
+                            const isPrivate = course.is_public === false && (course.status === 'published' || course.status === 'approved');
+                            const normalizedCourseStatus = course.status === 'approved' ? 'published' : course.status;
+
+                            let matchesStatus = false;
+                            if (statusValue === 'all') {
+                                matchesStatus = true;
+                            } else if (statusValue === 'published') {
+                                matchesStatus = normalizedCourseStatus === 'published' && !isPrivate;
+                            } else if (statusValue === 'private') {
+                                matchesStatus = isPrivate;
+                            } else {
+                                matchesStatus = normalizedCourseStatus === statusValue;
+                            }
+
+                            return matchesSearch && matchesStatus;
+                        });
+
+                        renderPortfolio(filtered);
+                    };
+
+                    searchInput.addEventListener('input', handleFilter);
+                    statusFilter.addEventListener('change', handleFilter);
+                }
+            }
+
+            window.editPublishedCourse = async (courseId) => {
+                const btn = event ? event.currentTarget : null;
+                const originalHtml = btn ? btn.innerHTML : '';
+                if (btn) {
+                    btn.innerHTML = '<span class="material-symbols-outlined text-xl animate-spin">autorenew</span>';
+                    btn.disabled = true;
+                }
+
+                try {
+                    const revisionId = await CourseService.getOrCreateCourseRevision(courseId);
+                    window.location.href = `/src/pages/instructor/instructor-courses/wizard.html?id=${revisionId}&revision=true`;
+                } catch (error) {
+                    console.error("Failed to edit course:", error);
+                    window.showToast("Failed to start editing. Please try again.", "error");
+                    if (btn) {
+                        btn.innerHTML = originalHtml;
+                        btn.disabled = false;
+                    }
+                }
+            };
+
+            window.withdrawReview = (courseId) => {
+                const btn = event ? event.currentTarget : null;
+                const originalHtml = btn ? btn.innerHTML : '';
+                
+                window.showConfirmModal({
+                    title: "Withdraw Course",
+                    message: "Are you sure you want to withdraw this course from review? It will be returned to Draft status.",
+                    confirmText: "Withdraw",
+                    variant: "danger"
+                }, async () => {
+                    if (btn) {
+                        btn.innerHTML = 'Withdrawing...';
+                        btn.disabled = true;
+                    }
+
+                    try {
+                        await CourseService.withdrawCourseReview(courseId);
+                        await initDashboard(); // refresh
+                        window.showToast("Course withdrawn to Draft status.", "success");
+                    } catch (error) {
+                        console.error("Failed to withdraw review:", error);
+                        window.showToast("Failed to withdraw submission. Please try again.", "error");
+                        if (btn) {
+                            btn.innerHTML = originalHtml;
+                            btn.disabled = false;
+                        }
+                    }
+                });
+            };
+
+            document.addEventListener('DOMContentLoaded', initDashboard);
         </script>
-    </div>
-
-    <!-- Router Logic -->
-    <script src="/src/utils/js/instructor-app.js"></script>
-    <script src="/src/pages/instructor/instructor-mentorship/mentorship.js"></script>
-
-    <!-- NOTIFICATION SYSTEM -->
-    <script type="module" src="/src/services/instructorNotifications.js"></script>
-
+</div>
+<!-- Router Logic -->
+<script src="/src/utils/js/instructor-app.js" type="module"></script>
+<script type="module" src="/src/pages/instructor/instructor-mentorship/mentorship.js"></script>
+<script>
+(function() {
+    var btn = document.getElementById('instructor-mobile-menu-btn');
+    var sidebar = document.getElementById('instructor-sidebar');
+    var overlay = document.getElementById('sidebar-overlay');
+    if (!btn || !sidebar || !overlay) return;
+    btn.addEventListener('click', function() {
+        sidebar.classList.toggle('-translate-x-full');
+        overlay.classList.toggle('hidden');
+    });
+    overlay.addEventListener('click', function() {
+        sidebar.classList.add('-translate-x-full');
+        overlay.classList.add('hidden');
+    });
+})();
+</script>
+<script>
+// Defer sidebar transition to avoid slide-in animation on desktop page load
+window.addEventListener('load', function() {
+    var sidebar = document.getElementById('instructor-sidebar');
+    if (sidebar) {
+        // Only enable transition on mobile (below lg=1024px)
+        if (window.innerWidth < 1024) {
+            sidebar.classList.add('transition-transform', 'duration-300');
+        }
+        // No transition on desktop � already at lg:translate-x-0, nothing to animate
+    }
+});
+</script>
 </body>
+</html>
 
-</html>

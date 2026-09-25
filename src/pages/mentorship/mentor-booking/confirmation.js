@@ -41,6 +41,11 @@ async function initConfirmation() {
                         .single();
                     if (directData) session.serial_id = directData.serial_id;
                 }
+
+                // Map payment_serial_id from RPC into the payments array format
+                if (raw.payment_serial_id) {
+                    session.payments = [{ serial_id: raw.payment_serial_id }];
+                }
             }
         } else {
             // Student/Mentor: Use direct query (honors RLS)
@@ -49,6 +54,10 @@ async function initConfirmation() {
                 .select(`
                     *,
                     mentor:profiles!mentorship_sessions_mentor_id_fkey (
+                        full_name,
+                        avatar_url
+                    ),
+                    student:profiles!mentorship_sessions_student_id_fkey (
                         full_name,
                         avatar_url
                     ),
@@ -68,9 +77,28 @@ async function initConfirmation() {
         }
 
         // Populate details
-        const mentorName = session.mentor?.full_name || 'Your Mentor';
-        document.getElementById('conf-mentor-name').textContent = mentorName;
-        document.getElementById('conf-mentor-display-name').textContent = mentorName;
+        const isMentor = authSession?.user?.id === session.mentor_id;
+
+        if (isMentor) {
+            const studentName = session.student?.full_name || 'a student';
+            const noticeParent = document.getElementById('conf-mentor-name')?.parentElement;
+            if (noticeParent) {
+                noticeParent.innerHTML = `Your student <span class="font-bold text-slate-900 dark:text-white">${studentName}</span> has booked a 1-on-1 session with you. <span id="conf-meeting-type-note"></span>`;
+            }
+            document.getElementById('conf-mentor-display-name').textContent = studentName;
+            
+            // Change the 'MENTOR' label to 'STUDENT'
+            const nameLabel = document.getElementById('conf-mentor-display-name').previousElementSibling;
+            if (nameLabel) nameLabel.textContent = 'STUDENT';
+            
+            // Hide prep tips since they are for student
+            const prepTips = document.querySelector('.bg-primary\\/5.rounded-xl.p-6');
+            if (prepTips) prepTips.classList.add('hidden');
+        } else {
+            const mentorName = session.mentor?.full_name || 'Your Mentor';
+            document.getElementById('conf-mentor-name').textContent = mentorName;
+            document.getElementById('conf-mentor-display-name').textContent = mentorName;
+        }
         
         const scheduledDate = new Date(session.scheduled_at);
         document.getElementById('conf-date').textContent = scheduledDate.toLocaleDateString('en-US', { 
@@ -91,8 +119,26 @@ async function initConfirmation() {
 
         // Populate Standardized IDs
         const sessId = session.serial_id ? `SES-${session.serial_id}` : 'SES-XXXX';
-        const payments = session.payments || [];
-        const payId = payments.length > 0 && payments[0].serial_id ? `PAY-${payments[0].serial_id}` : 'PAY-XXXX';
+        
+        let paySerialId = null;
+
+        // 1. Try from the joined payments data (works for students via RLS: student_id = auth.uid())
+        if (session.payments && session.payments.length > 0) {
+            paySerialId = session.payments[0].serial_id;
+        }
+
+        // 2. Fallback: explicit query using mentorship_session_id
+        if (!paySerialId) {
+            const { data: payData } = await supabase
+                .from('payments')
+                .select('serial_id')
+                .eq('mentorship_session_id', sessionId)
+                .limit(1)
+                .maybeSingle();
+            if (payData) paySerialId = payData.serial_id;
+        }
+
+        const payId = paySerialId ? `PAY-${paySerialId}` : '—';
         
         const confSessEl = document.getElementById('conf-session-id');
         const confPayEl = document.getElementById('conf-payment-id');
@@ -169,6 +215,11 @@ async function initConfirmation() {
 
     } catch (err) {
         console.error("Error loading confirmation details:", err);
+    } finally {
+        const skeletonLoader = document.getElementById('skeleton-loader');
+        const contentContainer = document.getElementById('content-container');
+        if (skeletonLoader) skeletonLoader.classList.add('hidden');
+        if (contentContainer) contentContainer.classList.remove('hidden');
     }
 }
 

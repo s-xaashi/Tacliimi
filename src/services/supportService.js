@@ -5,9 +5,9 @@ export const SupportService = {
     /**
      * Student creates a new support ticket.
      * @param {object} ticketData - { category, entityId, entityType, subject, description, refundRequested }
-     * @param {string[]} attachmentUrls - Optional screenshot URLs
+     * @param {string[]} attachmentPaths - Storage paths (not URLs) returned by uploadScreenshot
      */
-    async createTicket(ticketData, attachmentUrls = []) {
+    async createTicket(ticketData, attachmentPaths = []) {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error('Not authenticated');
 
@@ -27,12 +27,12 @@ export const SupportService = {
 
         if (error) throw error;
 
-        // Attach screenshots
-        if (attachmentUrls.length > 0) {
-            const attachments = attachmentUrls.map(url => ({
+        // Attach screenshots — store storage PATH (not a public URL; bucket is private)
+        if (attachmentPaths.length > 0) {
+            const attachments = attachmentPaths.map(path => ({
                 ticket_id: ticket.id,
-                file_url: url,
-                file_name: url.split('/').pop()
+                file_url: path,
+                file_name: path.split('/').pop()
             }));
             const { error: attErr } = await supabase
                 .from('support_ticket_attachments')
@@ -62,12 +62,17 @@ export const SupportService = {
 
     /**
      * Admin: get tickets filtered by categories.
-     * @param {string[]} categories - e.g. ['course','mentor']
+     * Joins student profile, attachments, and any linked refund request.
      */
     async getTicketsByCategory(categories) {
         const { data, error } = await supabase
             .from('support_tickets')
-            .select('*, profiles!support_tickets_student_id_fkey(full_name, avatar_url), support_ticket_attachments(*)')
+            .select(`
+                *,
+                profiles!support_tickets_student_id_fkey(full_name, avatar_url),
+                support_ticket_attachments(*),
+                refund_requests!refund_requests_support_ticket_id_fkey(id, status, amount)
+            `)
             .in('category', categories)
             .order('created_at', { ascending: false });
 
@@ -81,7 +86,12 @@ export const SupportService = {
     async getAllTickets() {
         const { data, error } = await supabase
             .from('support_tickets')
-            .select('*, profiles!support_tickets_student_id_fkey(full_name, avatar_url), support_ticket_attachments(*)')
+            .select(`
+                *,
+                profiles!support_tickets_student_id_fkey(full_name, avatar_url),
+                support_ticket_attachments(*),
+                refund_requests!refund_requests_support_ticket_id_fkey(id, status, amount)
+            `)
             .order('created_at', { ascending: false });
 
         if (error) throw error;
@@ -104,24 +114,40 @@ export const SupportService = {
     },
 
     /**
-     * Upload a screenshot to Supabase Storage (returns public URL).
-     * Falls back to returning a placeholder if storage bucket not configured.
+     * Upload a screenshot to the private support-attachments bucket.
+     * Returns the raw STORAGE PATH — NOT a public URL.
+     * Use getSignedUrl() when you need to display it.
+     * THROWS on failure so callers can surface the error.
      */
     async uploadScreenshot(file, ticketId) {
-        const fileName = `${ticketId}/${Date.now()}_${file.name}`;
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('Not authenticated');
+
+        const fileName = `${user.id}/${ticketId}/${Date.now()}_${file.name}`;
         const { data, error } = await supabase.storage
             .from('support-attachments')
             .upload(fileName, file, { upsert: true });
 
         if (error) {
-            console.warn('Storage upload failed, using data URL fallback:', error.message);
-            return null;
+            throw new Error(`Screenshot upload failed: ${error.message}`);
         }
 
-        const { data: publicData } = supabase.storage
-            .from('support-attachments')
-            .getPublicUrl(fileName);
+        return data.path;
+    },
 
-        return publicData.publicUrl;
+    /**
+     * Generate a short-lived signed URL for a private storage path.
+     * @param {string} path - Storage path returned by uploadScreenshot
+     * @param {number} expiresIn - Seconds until expiry (default 1 hour)
+     */
+    async getSignedUrl(path, expiresIn = 3600) {
+        const { data, error } = await supabase.storage
+            .from('support-attachments')
+            .createSignedUrl(path, expiresIn);
+        if (error) {
+            console.warn('Could not sign URL for attachment:', error.message);
+            return null;
+        }
+        return data.signedUrl;
     }
 };
