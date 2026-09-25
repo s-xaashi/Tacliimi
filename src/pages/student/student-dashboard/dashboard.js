@@ -998,7 +998,13 @@ async function loadMentors(forceRefresh = false) {
         });
 
         // "Active Requests" captures all other states (pending, negotiating, link pending, etc.)
-        const pendingSessions = sessions.filter(s => !upcomingSessions.includes(s) && !historySessions.includes(s));
+        const pendingSessions = sessions
+            .filter(s => !upcomingSessions.includes(s) && !historySessions.includes(s))
+            .sort((a, b) => {
+                const dateA = new Date(a.created_at || 0).getTime();
+                const dateB = new Date(b.created_at || 0).getTime();
+                return dateB - dateA;
+            });
 
         // Updated: Removed auto-switching of tabs to allow viewing empty states as requested.
 
