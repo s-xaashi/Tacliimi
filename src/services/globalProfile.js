@@ -603,6 +603,10 @@ export const GlobalProfile = {
                 nameEl.innerText = displayName;
             }
 
+            // Show the dashboard only when an authenticated session exists.
+            const dashboardLinkEl = mobileMenu.querySelector('#mobile-dashboard-link');
+            if (dashboardLinkEl) dashboardLinkEl.classList.remove('hidden');
+
             // Wire profile area click to correct settings page
             const profileArea = mobileMenu.querySelector('#mobile-menu-profile');
             let settingsLink = '/src/pages/student/account-settings/index.html';
