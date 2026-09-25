@@ -995,6 +995,10 @@ async function loadMentors(forceRefresh = false) {
             const isProgramStillActive = s.mentorship_type === 'program' && s.end_date && now < end && status !== 'cancelled';
             if (isProgramStillActive) return false;
             return ['completed', 'cancelled'].includes(status) || ((status === 'confirmed' || status === 'upcoming') && now >= end);
+        });.sort((a, b) => {
+            const dateA = new Date(a.created_at || 0).getTime();
+            const dateB = new Date(b.created_at || 0).getTime();
+            return dateB - dateA;
         });
 
         // "Active Requests" captures all other states (pending, negotiating, link pending, etc.)
