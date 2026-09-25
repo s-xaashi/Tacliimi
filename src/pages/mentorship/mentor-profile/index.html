@@ -83,76 +83,68 @@
 
   <!-- Mobile Menu Drawer -->
   <div id="mobile-menu-overlay" class="fixed inset-0 bg-black/50 z-40 hidden md:hidden transition-opacity duration-300" aria-hidden="true"></div>
-  <div class="fixed top-0 left-0 z-[60] w-72 max-w-[82vw] h-full bg-white dark:bg-slate-900 shadow-2xl overflow-y-auto flex flex-col px-4 py-8 -translate-x-full transition-transform duration-300 ease-in-out md:hidden" id="mobile-menu">
-    <!-- Top: Close Button -->
-    <div class="flex items-center justify-end mb-2">
-        <button id="close-mobile-menu-btn" class="p-2 -mr-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" aria-label="Close menu">
-            <span class="material-symbols-outlined text-xl">close</span>
-        </button>
-    </div>
-    
-    <!-- Top: Mobile Profile Area (Defaults to Sign In for unauthenticated guests) -->
-    <div id="mobile-menu-profile" class="flex items-center gap-4 mb-6 pb-6 border-b border-slate-100 dark:border-slate-800 cursor-pointer" onclick="window.location.href='/src/pages/auth/login-select/index.html'">
-        <div class="w-12 h-12 rounded-full bg-primary/10 text-primary border-2 border-primary/20 overflow-hidden flex-shrink-0 flex items-center justify-center" id="mobile-menu-avatar-wrapper" data-role="profile-image">
-            <span class="material-symbols-outlined text-primary text-2xl">account_circle</span>
+  <div class="fixed top-0 left-0 z-[60] w-[20rem] max-w-[88vw] h-fit max-h-[calc(100dvh-1rem)] bg-white dark:bg-slate-900 rounded-r-2xl shadow-2xl ring-1 ring-slate-900/5 dark:ring-white/5 overflow-y-auto flex flex-col px-5 py-6 -translate-x-full transition-transform duration-300 ease-in-out md:hidden" id="mobile-menu">
+    <div id="mobile-menu-profile" class="flex items-center gap-4 mb-5 pb-5 border-b border-slate-100 dark:border-slate-800 cursor-pointer" onclick="window.location.href='/src/pages/auth/login-select/index.html'">
+        <div class="w-14 h-14 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-primary/20 overflow-hidden flex-shrink-0 flex items-center justify-center" id="mobile-menu-avatar-wrapper" data-role="profile-image">
+            <span class="material-symbols-outlined text-slate-400 text-[27px] leading-none">person</span>
         </div>
         <div class="flex-1 overflow-hidden">
             <h4 class="font-bold text-slate-900 dark:text-white truncate user-display-name">Sign In / Register</h4>
             <p class="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5" id="mobile-menu-profile-sub">Access your account</p>
         </div>
-        <span class="material-symbols-outlined text-slate-400">chevron_right</span>
+        <span class="material-symbols-outlined text-slate-400 text-2xl leading-none">chevron_right</span>
     </div>
-    
-    <!-- Navigation Links in exact order -->
-    <div class="flex flex-col space-y-5 flex-1">
-        <a class="flex items-center gap-3 text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/index.html">
-            <span class="material-symbols-outlined text-xl text-slate-400">home</span> Home
+
+    <div class="flex flex-col gap-2">
+        <a class="flex items-center gap-3 rounded-xl px-3 py-3 text-base font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/70 hover:text-primary transition-colors" href="/index.html">
+            <span class="w-8 flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-xl text-slate-400">home</span></span>
+            <span>Home</span>
         </a>
-        <details class="group">
-            <summary class="flex items-center justify-between text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors cursor-pointer list-none [&::-webkit-details-marker]:hidden">
-                <div class="flex items-center gap-3">
-                    <span class="material-symbols-outlined text-xl text-slate-400">explore</span> Browse Courses
+
+        <details class="group rounded-xl">
+            <summary class="flex items-center rounded-xl px-3 py-3 text-base font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/70 hover:text-primary transition-colors cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                <div class="flex items-center">
+                    <span class="w-8 flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-xl text-slate-400">explore</span></span>
+                    <span class="ml-3">Browse Courses</span>
                 </div>
-                <span class="material-symbols-outlined text-sm group-open:-rotate-180 transition-transform duration-300">expand_more</span>
+                <span class="material-symbols-outlined text-sm ml-3 group-open:-rotate-180 transition-transform duration-300">expand_more</span>
             </summary>
-            <div class="flex flex-col pl-9 mt-3 space-y-3">
+            <div class="flex flex-col pl-12 pr-2 mt-1.5 mb-2 space-y-1 border-l-2 border-slate-100 dark:border-slate-800 ml-6">
                 <a href="/src/pages/marketplace/marketplace/" class="text-sm font-bold text-primary transition-colors">All Courses</a>
                 <a href="/src/pages/marketplace/marketplace/?category=Computer%20Science" class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">Computer Science</a>
-                <a href="/src/pages/marketplace/marketplace/?category=Business%20%26%20Finance" class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">Business & Finance</a>
+                <a href="/src/pages/marketplace/marketplace/?category=Business%20%26%20Finance" class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">Business &amp; Finance</a>
                 <a href="/src/pages/marketplace/marketplace/?category=Design" class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">Design</a>
-                <a href="/src/pages/marketplace/marketplace/?category=Health%20%26%20Fitness" class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">Health & Fitness</a>
-                <a href="/src/pages/marketplace/marketplace/?category=Music%20%26%20Media" class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">Music & Media</a>
+                <a href="/src/pages/marketplace/marketplace/?category=Health%20%26%20Fitness" class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">Health &amp; Fitness</a>
+                <a href="/src/pages/marketplace/marketplace/?category=Music%20%26%20Media" class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">Music &amp; Media</a>
             </div>
         </details>
-        <details class="group">
-            <summary class="flex items-center justify-between text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors cursor-pointer list-none [&::-webkit-details-marker]:hidden">
-                <div class="flex items-center gap-3">
-                    <span class="material-symbols-outlined text-xl text-slate-400">groups</span> Browse Mentors
+
+        <details class="group rounded-xl">
+            <summary class="flex items-center rounded-xl px-3 py-3 text-base font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/70 hover:text-primary transition-colors cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                <div class="flex items-center">
+                    <span class="w-8 flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-xl text-slate-400">groups</span></span>
+                    <span class="ml-3">Browse Mentors</span>
                 </div>
-                <span class="material-symbols-outlined text-sm group-open:-rotate-180 transition-transform duration-300">expand_more</span>
+                <span class="material-symbols-outlined text-sm ml-3 group-open:-rotate-180 transition-transform duration-300">expand_more</span>
             </summary>
-            <div class="flex flex-col pl-9 mt-3 space-y-3">
+            <div class="flex flex-col pl-12 pr-2 mt-1.5 mb-2 space-y-1 border-l-2 border-slate-100 dark:border-slate-800 ml-6">
                 <a href="/src/pages/mentorship/mentor-marketplace/index.html" class="text-sm font-bold text-primary transition-colors">All Mentors</a>
-                <a href="/src/pages/mentorship/mentor-marketplace/index.html?category=Technology%20%26%20Code" class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">Technology & Code</a>
-                <a href="/src/pages/mentorship/mentor-marketplace/index.html?category=Business%20%26%20Leadership" class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">Business & Leadership</a>
-                <a href="/src/pages/mentorship/mentor-marketplace/index.html?category=Design%20%26%20Creative" class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">Design & Creative</a>
-                <a href="/src/pages/mentorship/mentor-marketplace/index.html?category=Career%20%26%20Resume" class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">Career & Resume</a>
-                <a href="/src/pages/mentorship/mentor-marketplace/index.html?category=Academics%20%26%20Science" class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">Academics & Science</a>
+                <a href="/src/pages/mentorship/mentor-marketplace/index.html?category=Technology%20%26%20Code" class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">Technology &amp; Code</a>
+                <a href="/src/pages/mentorship/mentor-marketplace/index.html?category=Business%20%26%20Leadership" class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">Business &amp; Leadership</a>
+                <a href="/src/pages/mentorship/mentor-marketplace/index.html?category=Design%20%26%20Creative" class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">Design &amp; Creative</a>
+                <a href="/src/pages/mentorship/mentor-marketplace/index.html?category=Career%20%26%20Resume" class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">Career &amp; Resume</a>
+                <a href="/src/pages/mentorship/mentor-marketplace/index.html?category=Academics%20%26%20Science" class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">Academics &amp; Science</a>
             </div>
         </details>
-        <a class="flex items-center gap-3 text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/src/pages/instructor/become-instructor/">
-            <span class="material-symbols-outlined text-xl text-slate-400">school</span> Teach on Tacliimi
+
+        <a class="flex items-center gap-3 rounded-xl px-3 py-3 text-base font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/70 hover:text-primary transition-colors" href="/src/pages/instructor/become-instructor/">
+            <span class="w-8 flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-xl text-slate-400">school</span></span>
+            <span>Teach on Tacliimi</span>
         </a>
     </div>
   </div>
 
-  <!-- Promo Banner -->
-  <div id="mentor-promo-banner-container" class="hidden overflow-hidden bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 shadow-md relative perspective-1000 z-40 transition-all duration-[1000ms] ease-out transform-gpu -translate-y-full rotate-x-90 max-h-0 opacity-0 origin-top border-b border-amber-600/20">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-center gap-3">
-          <span class="material-symbols-outlined text-white text-[28px] animate-pulse drop-shadow-md">campaign</span>
-          <p id="mentor-promo-text" class="text-white font-black text-sm sm:text-base tracking-wide drop-shadow-md uppercase"></p>
-      </div>
-  </div>
+
 
   <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
     <!-- Mobile: flex-col with order classes. Desktop: 3-col grid -->
@@ -463,7 +455,7 @@
   <!-- Mobile Menu Toggle Script -->
   <script>
     const mobileMenuBtn = document.getElementById('mobile-menu-btn');
-    const closeMobileMenuBtn = document.getElementById('close-mobile-menu-btn');
+
     const mobileMenu = document.getElementById('mobile-menu');
     const mobileMenuOverlay = document.getElementById('mobile-menu-overlay');
 
@@ -483,7 +475,7 @@
 
     if (mobileMenuBtn && mobileMenu) {
         mobileMenuBtn.addEventListener('click', openMobileMenu);
-        closeMobileMenuBtn?.addEventListener('click', closeMobileMenu);
+
         mobileMenuOverlay?.addEventListener('click', closeMobileMenu);
     }
   </script>
