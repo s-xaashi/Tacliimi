@@ -97,7 +97,7 @@
 
     <!-- Middle: Navigation Links -->
     <div class="flex flex-col gap-2">
-        <a id="mobile-dashboard-link" class="hidden items-center gap-3 rounded-xl px-3 py-3 text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/src/pages/student/student-dashboard/index.html">
+        <a id="mobile-dashboard-link" class="hidden flex items-center gap-3 rounded-xl px-3 py-3 text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors" href="/src/pages/student/student-dashboard/index.html">
             <span class="material-symbols-outlined text-xl text-slate-400">dashboard</span> Dashboard
         </a>
         <details class="group rounded-xl">
@@ -116,14 +116,14 @@
                 <a href="/src/pages/marketplace/marketplace/?category=Music%20%26%20Media" class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">Music &amp; Media</a>
             </div>
         </details>
-        <details class="group">
-            <summary class="flex items-center justify-between text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+        <details class="group rounded-xl">
+            <summary class="flex items-center justify-between rounded-xl px-3 py-3 text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors cursor-pointer list-none [&::-webkit-details-marker]:hidden">
                 <div class="flex items-center gap-3">
                     <span class="material-symbols-outlined text-xl text-slate-400">supervisor_account</span> Find a Mentor
                 </div>
                 <span class="material-symbols-outlined text-sm group-open:-rotate-180 transition-transform duration-300">expand_more</span>
             </summary>
-            <div class="flex flex-col pl-9 mt-4 space-y-4">
+            <div class="flex flex-col pl-12 pr-2 mt-1.5 mb-2 space-y-1 border-l-2 border-slate-100 dark:border-slate-800 ml-6">
                 <a href="/src/pages/mentorship/mentor-marketplace/index.html" class="text-sm font-bold text-primary transition-colors">All Mentors</a>
                 <a href="/src/pages/mentorship/mentor-marketplace/index.html?category=Technology%20%26%20Code" class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">Technology &amp; Code</a>
                 <a href="/src/pages/mentorship/mentor-marketplace/index.html?category=Business%20%26%20Leadership" class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">Business &amp; Leadership</a>
@@ -138,7 +138,7 @@
     </div>
 
     <!-- Bottom: Footer Actions (Logout Removed as per request) -->
-    <div id="mobile-menu-footer" class="pt-5 mt-4 border-t border-slate-100 dark:border-slate-800 space-y-2 pb-4">
+    <div id="mobile-menu-footer" class="hidden pt-5 mt-4 border-t border-slate-100 dark:border-slate-800 space-y-2 pb-4">
         <button id="mobile-theme-toggle" class="flex items-center gap-3 w-full text-left text-base font-medium text-slate-700 dark:text-slate-200 hover:text-primary transition-colors">
             <span class="material-symbols-outlined text-xl text-slate-400">dark_mode</span> Toggle Theme
         </button>
