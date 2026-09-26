@@ -8,6 +8,25 @@ export const GlobalProfile = {
         this.initTheme();
         this.preloadAuthState();
         this.monitorNetwork();
+        window.addEventListener('tacliimi:profile-ready', (event) => {
+            const profile = event.detail;
+            if (!profile) return;
+            const fullName = profile.full_name || 'Student';
+            document.querySelectorAll('.user-display-name').forEach(el => {
+                el.textContent = fullName;
+            });
+            document.querySelectorAll('h1.text-3xl.font-bold').forEach(el => {
+                if (el.textContent.includes('Welcome back')) {
+                    el.innerText = `Welcome back, ${fullName}! 👋`;
+                }
+            });
+            if (profile.avatar_url) {
+                document.querySelectorAll('[data-role="profile-image"] img, img.profile-picture-img').forEach(img => {
+                    img.src = profile.avatar_url;
+                });
+            }
+        });
+
         document.addEventListener('DOMContentLoaded', () => {
             this.preloadAuthState();
             this.applyProfile();
@@ -185,6 +204,9 @@ export const GlobalProfile = {
             session = await AuthService.getSession();
             if (session) {
                 profile = await AuthService.getCurrentProfile();
+                if (!profile && window.__tacliimiProfile?.id === session.user.id) {
+                    profile = window.__tacliimiProfile;
+                }
             }
         } catch (e) {
             console.error("Error fetching session for global profile", e);
@@ -240,12 +262,11 @@ export const GlobalProfile = {
                 // Ignore fallback check error
             }
         }
-        let defaultName = isAdmin ? 'Admin' : (isInstructor ? 'Instructor' : 'Student');
-        if (session.user.email && !isAdmin) {
-            let prefix = session.user.email.split('@')[0];
-            defaultName = prefix.charAt(0).toUpperCase() + prefix.slice(1);
-        }
+        const metadataName = session?.user?.user_metadata?.full_name?.trim();
+        let defaultName = isAdmin ? 'Admin' : (isInstructor ? 'Instructor' : (metadataName || 'Student'));
 
+        // Never use the email address as the visible profile name.
+        // The editable name in public.profiles is the authoritative display name.
         const fullName = (profile && profile.full_name) ? profile.full_name : defaultName;
 
         nameElements.forEach(el => {
