@@ -262,11 +262,10 @@ export const GlobalProfile = {
                 // Ignore fallback check error
             }
         }
-        const metadataName = session?.user?.user_metadata?.full_name?.trim();
-        let defaultName = isAdmin ? 'Admin' : (isInstructor ? 'Instructor' : (metadataName || 'Student'));
-
-        // Never use the email address as the visible profile name.
         // The editable name in public.profiles is the authoritative display name.
+        // Do not fall back to Auth metadata here because it can contain an old
+        // or email-derived name and can overwrite the name saved in Account Settings.
+        let defaultName = isAdmin ? 'Admin' : (isInstructor ? 'Instructor' : 'Student');
         const fullName = (profile && profile.full_name) ? profile.full_name : defaultName;
 
         nameElements.forEach(el => {
@@ -617,13 +616,14 @@ export const GlobalProfile = {
         // NEW STRUCTURED MENU: If the menu already has #mobile-menu-profile (our new design),
         // skip legacy injection and only populate profile info.
         if (mobileMenu && mobileMenu.querySelector('#mobile-menu-profile')) {
-            // Populate name — grab from already-injected header profile name, fallback to email
+            // Populate the mobile menu from the same authoritative profile name.
+            // Never derive a visible name from the student's email address.
             const nameEl = mobileMenu.querySelector('.user-display-name');
             if (nameEl) {
                 const headerName = document.querySelector('.tacliimi-injected-profile .user-display-name');
-                const displayName = headerName ? headerName.innerText :
-                    (session.user.email ? (session.user.email.split('@')[0].charAt(0).toUpperCase() + session.user.email.split('@')[0].slice(1)) : 'User');
+                const displayName = (fullName || window.__tacliimiProfile?.full_name || 'Student').trim();
                 nameEl.innerText = displayName;
+                if (headerName) headerName.innerText = displayName;
             }
 
             // Show the dashboard only when an authenticated session exists.
