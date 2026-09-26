@@ -649,9 +649,9 @@
                             <!-- Inner wrapper: row on mobile (thumbnail beside content), col on md+ (thumbnail above content) -->
                             <div class="flex flex-row md:flex-col flex-1 min-h-0">
 
-                                <!-- Thumbnail: narrow left col on mobile, full-width top on md+ -->
+                                <!-- Thumbnail: true 16:9 rectangle on mobile; existing desktop/tablet layout remains unchanged -->
                                 <div class="relative overflow-hidden shrink-0
-                                            w-[120px] self-stretch md:w-full md:aspect-[16/10]">
+                                            w-[120px] aspect-video self-start md:w-full md:aspect-[16/10]">
                                     <img alt="${course.title}"
                                         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                                         src="${course.thumbnail_url || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80'}" />
@@ -698,6 +698,10 @@
                                            text-sm md:text-lg mb-1.5 md:mb-4
                                            ${isBoosted ? 'group-hover:text-amber-500' : 'group-hover:text-primary'} transition-colors">
                                     ${course.title}</h3>
+
+                                <!-- Course subtitle: mobile only, limited to two lines -->
+                                <p class="md:hidden text-[10px] leading-[1.35] text-gray-500 dark:text-gray-400 line-clamp-2 mb-2">
+                                    ${course.subtitle || ''}</p>
 
                                 <!-- Instructor name (desktop only) -->
                                 <div class="hidden md:flex items-center gap-2 mb-6">
