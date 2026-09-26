@@ -162,8 +162,9 @@ async function initDashboard() {
         .single();
     
     currentProfile = profile;
-    
+    window.__tacliimiProfile = profile || null;
     if (profile) {
+        window.dispatchEvent(new CustomEvent('tacliimi:profile-ready', { detail: profile }));
         const displayNames = document.querySelectorAll('.user-display-name');
         displayNames.forEach(el => el.textContent = profile.full_name || 'Student Name');
     }
