@@ -550,8 +550,8 @@
         function buildMarketplaceSkeletons(count) {
             return Array(count).fill(0).map(() => `
                 <div class="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-sm border border-gray-100 dark:border-gray-700/50 flex flex-col h-full animate-pulse">
-                    <div class="flex flex-row md:flex-col flex-1 min-h-0">
-                        <div class="relative overflow-hidden shrink-0 w-[120px] self-stretch md:w-full md:aspect-[16/10] bg-slate-200 dark:bg-slate-700"></div>
+                    <div class="flex flex-col md:flex-col flex-1 min-h-0">
+                        <div class="relative overflow-hidden shrink-0 w-full aspect-video md:w-full md:aspect-[16/10] bg-slate-200 dark:bg-slate-700"></div>
                         <div class="p-3 md:p-5 flex-1 flex flex-col min-w-0">
                             <div class="flex items-center justify-between mb-1.5 md:mb-3">
                                 <div class="h-3 w-16 bg-slate-200 dark:bg-slate-700 rounded"></div>
@@ -646,12 +646,12 @@
                             class="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 group border border-gray-100 dark:border-gray-700/50 hover:border-primary/30 cursor-pointer
                                    flex flex-col h-full ${boostRing}">
 
-                            <!-- Inner wrapper: row on mobile (thumbnail beside content), col on md+ (thumbnail above content) -->
-                            <div class="flex flex-row md:flex-col flex-1 min-h-0">
+                            <!-- Inner wrapper: stacked course card on mobile; existing desktop/tablet layout remains unchanged -->
+                            <div class="flex flex-col md:flex-col flex-1 min-h-0">
 
-                                <!-- Thumbnail: true 16:9 rectangle on mobile; existing desktop/tablet layout remains unchanged -->
+                                <!-- Thumbnail: full-width 16:9 on mobile; existing desktop/tablet ratio remains unchanged -->
                                 <div class="relative overflow-hidden shrink-0
-                                            w-[120px] aspect-video self-start md:w-full md:aspect-[16/10]">
+                                            w-full aspect-video md:w-full md:aspect-[16/10]">
                                     <img alt="${course.title}"
                                         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                                         src="${course.thumbnail_url || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80'}" />
@@ -675,7 +675,7 @@
                                 </div>
 
                                 <!-- Content -->
-                                <div class="p-3 md:p-5 flex-1 flex flex-col min-w-0">
+                                <div class="p-3.5 md:p-5 flex-1 flex flex-col min-w-0">
 
                                 <!-- Category & Level -->
                                 <div class="flex items-center justify-between mb-1.5 md:mb-3">
