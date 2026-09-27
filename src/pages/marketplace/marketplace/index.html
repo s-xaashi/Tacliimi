@@ -13,6 +13,77 @@
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
         rel="stylesheet" />
     <script type="module" src="/src/services/globalProfile.js"></script>
+    <style>
+        /* Marketplace filters: polished custom checkboxes while keeping native input semantics. */
+        .marketplace-filter-sidebar .filter-input[type="checkbox"] {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            min-width: 20px;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 7px;
+            background: #ffffff;
+            color: #4f46e5;
+            display: inline-block;
+            margin: 0;
+            cursor: pointer;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+            transition: background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+        }
+
+        .marketplace-filter-sidebar .filter-input[type="checkbox"]:hover {
+            border-color: #818cf8;
+            box-shadow: 0 2px 6px rgba(79, 70, 229, 0.14);
+        }
+
+        .marketplace-filter-sidebar .filter-input[type="checkbox"]:checked {
+            background-color: #4f46e5;
+            border-color: #4f46e5;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 16 16'%3E%3Cpath stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m3.5 8 3 3 6-6'/%3E%3C/svg%3E");
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: 13px 13px;
+            box-shadow: 0 3px 8px rgba(79, 70, 229, 0.22);
+        }
+
+        .marketplace-filter-sidebar .filter-input[type="checkbox"]:active {
+            transform: scale(0.92);
+        }
+
+        .marketplace-filter-sidebar .filter-input[type="checkbox"]:focus-visible {
+            outline: 2px solid rgba(99, 102, 241, 0.55);
+            outline-offset: 3px;
+        }
+
+        /* The existing decorative check element is no longer needed because the input draws the check. */
+        .marketplace-filter-sidebar .filter-input[type="checkbox"] + .filter-check {
+            display: none;
+        }
+
+        .dark .marketplace-filter-sidebar .filter-input[type="checkbox"] {
+            border-color: #475569;
+            background: #1e293b;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+
+        .dark .marketplace-filter-sidebar .filter-input[type="checkbox"]:hover {
+            border-color: #818cf8;
+            background: #273449;
+        }
+
+        .dark .marketplace-filter-sidebar .filter-input[type="checkbox"]:checked {
+            background-color: #6366f1;
+            border-color: #6366f1;
+            box-shadow: 0 3px 10px rgba(99, 102, 241, 0.28);
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .marketplace-filter-sidebar .filter-input[type="checkbox"] {
+                transition: none;
+            }
+        }
+    </style>
     
     
 </head>
@@ -126,7 +197,7 @@
 </nav>
     <main class="max-w-[1440px] mx-auto px-4 py-8">
         <div class="flex flex-col lg:flex-row gap-8">
-            <aside class="w-full lg:w-64 flex-shrink-0">
+            <aside class="marketplace-filter-sidebar w-full lg:w-64 flex-shrink-0">
                 <div class="sticky top-24 space-y-8">
                     <div class="flex items-center justify-between mb-6">
                         <h2 class="font-bold text-sm uppercase tracking-[0.2em] text-gray-900 dark:text-white">Filters</h2>
