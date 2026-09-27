@@ -203,9 +203,17 @@ export const GlobalProfile = {
         try {
             session = await AuthService.getSession();
             if (session) {
-                profile = await AuthService.getCurrentProfile();
-                if (!profile && window.__tacliimiProfile?.id === session.user.id) {
-                    profile = window.__tacliimiProfile;
+                // Role-sensitive navigation must never default to Student while
+                // the authoritative profile is still loading. Retry briefly so
+                // slow/mobile connections cannot expose the wrong dashboard/settings links.
+                for (let attempt = 0; attempt < 3 && !profile; attempt++) {
+                    profile = await AuthService.getCurrentProfile();
+                    if (!profile && window.__tacliimiProfile?.id === session.user.id) {
+                        profile = window.__tacliimiProfile;
+                    }
+                    if (!profile && attempt < 2) {
+                        await new Promise(resolve => setTimeout(resolve, 250));
+                    }
                 }
             }
         } catch (e) {
