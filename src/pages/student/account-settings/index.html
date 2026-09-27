@@ -556,7 +556,11 @@
 
     
     <script type="module" src="/src/services/mobileNav.js"></script>
-    <script type="module" src="/src/services/globalProfile.js"></script>
+    <script type="module">
+        import { requireRole } from '/src/services/dashboardGuard.js';
+        requireRole('student');
+    </script>
+<script type="module" src="/src/services/globalProfile.js"></script>
     <script type="module" src="./accountSettings.js"></script>
 </body>
 </html>
