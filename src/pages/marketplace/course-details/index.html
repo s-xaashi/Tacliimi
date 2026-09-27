@@ -166,8 +166,8 @@
                         </div>
                     </div>
                     <div class="mt-0 lg:mt-12 order-4 lg:order-none">
-                        <div class="flex items-center justify-between mb-6">
-                            <h2 class="text-xl font-bold text-slate-900 dark:text-white">Course Content</h2>
+                        <div class="flex items-start justify-between gap-4 mb-6">
+                            <h2 class="text-xl font-bold text-slate-900 dark:text-white shrink-0">Course Content</h2>
                             <span id="cd-content-meta" class="text-sm text-slate-500"></span>
                         </div>
                         <div id="cd-curriculum" class="space-y-4">
@@ -362,16 +362,14 @@
             <div class="flex flex-col md:flex-row justify-between items-center gap-8">
                 <div class="flex items-center gap-2">
                     <a href="/" class="hover:opacity-80 transition-opacity">
-                        <!-- LOGO SIZE (footer): Adjust h-10 md:h-12 to resize footer logo manually -->
-                        <img src="/public/assets/images/IMG_7454.png" alt="Tacliimi Learn" class="h-10 md:h-12 w-auto object-contain dark:hidden">
-                        <img src="/public/assets/images/logo-dark.png" alt="Tacliimi Learn" class="h-10 md:h-12 w-auto object-contain hidden dark:block">
+                        <!-- Slightly larger footer logo -->
+                        <img src="/public/assets/images/IMG_7454.png" alt="Tacliimi Learn" class="h-14 md:h-16 w-auto object-contain dark:hidden">
+                        <img src="/public/assets/images/logo-dark.png" alt="Tacliimi Learn" class="h-14 md:h-16 w-auto object-contain hidden dark:block">
                     </a>
                 </div>
-                <div class="flex gap-8 text-sm font-medium text-slate-500 dark:text-slate-400">
-                    <a class="hover:text-primary transition-colors" href="#">About Us</a>
-                    <a class="hover:text-primary transition-colors" href="#">Support</a>
-                    <a class="hover:text-primary transition-colors" href="#">Terms</a>
-                    <a class="hover:text-primary transition-colors" href="#">Privacy</a>
+                <div class="flex items-center justify-center gap-8 text-sm font-medium text-slate-500 dark:text-slate-400">
+                    <a class="hover:text-primary transition-colors" href="/src/pages/legal/terms-of-service/">Terms</a>
+                    <a class="hover:text-primary transition-colors" href="/src/pages/legal/privacy-policy/">Privacy</a>
                 </div>
                 <p class="text-sm text-slate-400">© 2026 Tacliimi Learn. All rights reserved.</p>
             </div>
@@ -794,13 +792,24 @@
 
                         currContainer.innerHTML = html;
 
-                        // Build meta string
-                        let metaParts = [];
-                        metaParts.push(`${sortedCurriculum.length} section${sortedCurriculum.length !== 1 ? 's' : ''}`);
-                        metaParts.push(`${totalLessons} lesson${totalLessons !== 1 ? 's' : ''}`);
-                        if (totalQuizzes > 0) metaParts.push(`${totalQuizzes} quiz${totalQuizzes !== 1 ? 'zes' : ''}`);
-                        if (totalResources > 0) metaParts.push(`${totalResources} resource${totalResources !== 1 ? 's' : ''}`);
-                        if (currMetaEl) currMetaEl.textContent = metaParts.join(' • ');
+                        // Build responsive course-content summary:
+                        // mobile uses a compact 2-column grid; md+ keeps the existing inline summary.
+                        const sectionLabel = `${sortedCurriculum.length} section${sortedCurriculum.length !== 1 ? 's' : ''}`;
+                        const lessonLabel = `${totalLessons} lesson${totalLessons !== 1 ? 's' : ''}`;
+                        const quizLabel = `${totalQuizzes} quiz${totalQuizzes !== 1 ? 'zes' : ''}`;
+                        const resourceLabel = `${totalResources} resource${totalResources !== 1 ? 's' : ''}`;
+
+                        if (currMetaEl) {
+                            currMetaEl.innerHTML = `
+                                <span class="md:hidden grid grid-cols-2 gap-x-5 gap-y-1 text-sm leading-snug text-slate-500 dark:text-slate-400">
+                                    <span>${sectionLabel}</span>
+                                    <span class="${totalQuizzes > 0 ? '' : 'invisible'}">${quizLabel}</span>
+                                    <span>${lessonLabel}</span>
+                                    <span class="${totalResources > 0 ? '' : 'invisible'}">${resourceLabel}</span>
+                                </span>
+                                <span class="hidden md:inline">${sectionLabel} • ${lessonLabel}${totalQuizzes > 0 ? ' • ' + quizLabel : ''}${totalResources > 0 ? ' • ' + resourceLabel : ''}</span>
+                            `;
+                        }
                     }
                 }
 
