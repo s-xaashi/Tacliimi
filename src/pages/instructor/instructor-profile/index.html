@@ -53,7 +53,11 @@
         .field-error { display:block; margin-top:4px; font-size:0.72rem; color:#ef4444; }
     </style>
 
-    <script type="module" src="/src/services/globalProfile.js"></script>
+    <script type="module">
+        import { requireRole } from '/src/services/dashboardGuard.js';
+        requireRole('instructor');
+    </script>
+<script type="module" src="/src/services/globalProfile.js"></script>
     <script>
         // Removed synchronous Auth check
     </script>
