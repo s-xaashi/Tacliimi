@@ -754,6 +754,18 @@
         const homeSearchInput = document.getElementById('home-search-input');
         const homeSearchBtn = document.getElementById('home-search-btn');
 
+        // Keep the mobile placeholder short enough to remain visible beside the search button.
+        if (homeSearchInput) {
+            const mobilePlaceholder = window.matchMedia('(max-width: 639px)');
+            const updateHomeSearchPlaceholder = () => {
+                homeSearchInput.placeholder = mobilePlaceholder.matches
+                    ? 'Search courses...'
+                    : 'Search for over 50+ courses';
+            };
+            updateHomeSearchPlaceholder();
+            mobilePlaceholder.addEventListener('change', updateHomeSearchPlaceholder);
+        }
+
         function executeHomeSearch() {
             if (homeSearchInput) {
                 const keyword = homeSearchInput.value.trim();
