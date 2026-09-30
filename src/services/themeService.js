@@ -7,7 +7,7 @@ export const ThemeService = {
      * Initialize theme based on saved preference or system default.
      */
     init() {
-        const savedTheme = localStorage.getItem('tacliimi-theme');
+        const savedTheme = localStorage.theme || localStorage.getItem('tacliimi-theme') || localStorage.getItem('theme');
         if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark');
         } else {
@@ -21,7 +21,10 @@ export const ThemeService = {
      */
     toggle() {
         const isDark = document.documentElement.classList.toggle('dark');
-        localStorage.setItem('tacliimi-theme', isDark ? 'dark' : 'light');
+        const themeVal = isDark ? 'dark' : 'light';
+        localStorage.theme = themeVal;
+        try { localStorage.setItem('tacliimi-theme', themeVal); } catch (e) {}
+        try { localStorage.setItem('theme', themeVal); } catch (e) {}
         this.updateToggleIcons();
         return isDark;
     },
@@ -31,11 +34,11 @@ export const ThemeService = {
      */
     updateToggleIcons() {
         const isDark = document.documentElement.classList.contains('dark');
-        const toggles = document.querySelectorAll('#theme-toggle, .theme-toggle');
+        const toggles = document.querySelectorAll('#theme-toggle, #themeToggle, #global-theme-toggle, #mobile-theme-toggle, .theme-toggle, button[aria-label*="theme" i], button[title*="theme" i]');
         toggles.forEach(btn => {
-            const icon = btn.querySelector('.material-symbols-outlined, .material-icons-outlined');
-            if (icon) {
-                icon.textContent = isDark ? 'light_mode' : 'dark_mode';
+            const singleIcon = btn.querySelector('.material-symbols-outlined:not(.dark\\:hidden):not(.hidden), .material-icons-outlined:not(.dark\\:hidden):not(.hidden)');
+            if (singleIcon && !singleIcon.classList.contains('dark:hidden') && !singleIcon.classList.contains('hidden')) {
+                singleIcon.textContent = isDark ? 'light_mode' : 'dark_mode';
             }
         });
     }

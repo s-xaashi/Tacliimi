@@ -118,6 +118,12 @@ async function fetchAuthorizedUser() {
         // Fallback: getUser() queries Supabase Auth server if session isn't in memory
         const { data: { user: authUser }, error: userError } = await supabase.auth.getUser();
         if (userError || !authUser) {
+            if (sessionError || userError) {
+                // Clear stale/invalid refresh token from localStorage to prevent repeated 400 errors
+                try {
+                    await supabase.auth.signOut({ scope: 'local' });
+                } catch (e) {}
+            }
             return { error: userError || sessionError, errorType: 'unauthenticated' };
         }
         user = authUser;
