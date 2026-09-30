@@ -172,7 +172,11 @@ export const GlobalProfile = {
             if (nameEl) nameEl.innerText = 'Sign In / Register';
             if (subEl) subEl.innerText = 'Access your account';
             if (profileArea) {
-                profileArea.setAttribute('onclick', "window.location.href='/src/pages/auth/login-select/index.html'");
+                if (profileArea.tagName === 'A') {
+                    profileArea.setAttribute('href', '/src/pages/auth/login-select/index.html');
+                } else {
+                    profileArea.setAttribute('onclick', "window.location.href='/src/pages/auth/login-select/index.html'");
+                }
             }
             if (logoutBtn) {
                 logoutBtn.classList.add('hidden');
@@ -646,7 +650,13 @@ export const GlobalProfile = {
             let settingsLink = '/src/pages/student/account-settings/index.html';
             if (isAdmin) settingsLink = '/src/pages/admin/profile/index.html';
             else if (isInstructor) settingsLink = '/src/pages/instructor/instructor-profile/index.html';
-            if (profileArea) profileArea.setAttribute('onclick', `window.location.href='${settingsLink}'`);
+            if (profileArea) {
+                if (profileArea.tagName === 'A') {
+                    profileArea.setAttribute('href', settingsLink);
+                } else {
+                    profileArea.setAttribute('onclick', `window.location.href='${settingsLink}'`);
+                }
+            }
 
             // Wire theme toggle in new menu
             const mobileThemeToggle = document.getElementById('mobile-theme-toggle');
