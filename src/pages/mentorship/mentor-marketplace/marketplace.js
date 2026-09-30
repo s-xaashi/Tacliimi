@@ -393,6 +393,14 @@ function setupEventListeners() {
         if (!catBtn) return;
         setActiveCategory(catBtn.dataset.category);
     });
+
+    // The empty-state is rendered dynamically, so handle its clear action at the grid level.
+    const mentorGrid = document.querySelector('.grid.grid-cols-1.md\\:grid-cols-2.xl\\:grid-cols-3');
+    mentorGrid?.addEventListener('click', (e) => {
+        const clearButton = e.target.closest('[data-clear-mentor-filters]');
+        if (!clearButton) return;
+        clearAllMentorFilters();
+    });
 }
 
 
@@ -579,7 +587,7 @@ function renderEmptyState(container, isFiltered = false) {
             <h3 class="text-xl font-bold mb-2">${isFiltered ? 'No mentors match your filters' : 'No mentors found'}</h3>
             <p class="text-slate-500">${isFiltered ? 'Try adjusting your search or filters to find what you are looking for.' : 'We couldn\'t find any public mentors at the moment. Check back later!'}</p>
             ${isFiltered ? `
-                <button onclick="clearAllMentorFilters()" class="mt-6 text-primary font-bold text-sm hover:underline">
+                <button type="button" data-clear-mentor-filters class="mt-6 text-primary font-bold text-sm hover:underline">
                     Clear all filters
                 </button>
             ` : ''}
