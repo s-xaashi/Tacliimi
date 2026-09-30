@@ -553,6 +553,25 @@ function renderMentors(mentors) {
     });
 }
 
+function clearAllMentorFilters() {
+    activeFilters.search = '';
+    activeFilters.category = 'all';
+    activeFilters.country = 'all';
+    activeFilters.city = 'all';
+
+    const searchInput = document.getElementById('marketplace-search');
+    const countrySelect = document.getElementById('country-filter');
+    const citySelect = document.getElementById('city-filter');
+
+    if (searchInput) searchInput.value = '';
+    if (countrySelect) countrySelect.value = 'all';
+    updateCityOptions(allMentors);
+    if (citySelect) citySelect.value = 'all';
+
+    window.history.replaceState({}, document.title, window.location.pathname);
+    setActiveCategory('all');
+}
+
 function renderEmptyState(container, isFiltered = false) {
     container.innerHTML = `
         <div class="col-span-full py-20 text-center bg-white dark:bg-slate-900 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">
@@ -560,7 +579,7 @@ function renderEmptyState(container, isFiltered = false) {
             <h3 class="text-xl font-bold mb-2">${isFiltered ? 'No mentors match your filters' : 'No mentors found'}</h3>
             <p class="text-slate-500">${isFiltered ? 'Try adjusting your search or filters to find what you are looking for.' : 'We couldn\'t find any public mentors at the moment. Check back later!'}</p>
             ${isFiltered ? `
-                <button onclick="window.location.reload()" class="mt-6 text-primary font-bold text-sm hover:underline">
+                <button onclick="clearAllMentorFilters()" class="mt-6 text-primary font-bold text-sm hover:underline">
                     Clear all filters
                 </button>
             ` : ''}
