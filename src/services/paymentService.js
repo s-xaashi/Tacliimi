@@ -154,6 +154,10 @@ export const PaymentService = {
    */
   async createCourseCheckout(courseId, amount, currency = 'USD') {
     const result = await callEdgeFn('createCheckout', { type: 'course', referenceId: courseId, amount, currency });
+    if (result.already_paid) {
+      window.location.href = '/src/pages/student/student-dashboard/index.html';
+      return;
+    }
     if (!result.checkout_url) throw new Error('No checkout URL returned from gateway.');
     window.location.href = result.checkout_url;
   },
