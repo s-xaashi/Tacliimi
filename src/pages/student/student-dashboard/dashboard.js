@@ -956,7 +956,7 @@ async function loadMentors(forceRefresh = false) {
                     </div>
                     <h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-2">No Mentors Yet</h3>
                     <p class="text-slate-500 dark:text-slate-400 max-w-sm mb-8">You haven't booked any mentorship sessions yet. Find a mentor to guide your learning journey.</p>
-                    <button onclick="window.location.href='/src/pages/marketplace/marketplace/'"
+                    <button onclick="window.location.href='/src/pages/mentorship/mentor-marketplace/'"
                         class="bg-primary hover:bg-purple-600 text-white font-semibold py-3 px-8 rounded-lg shadow-lg shadow-primary/20 transition-all flex items-center gap-2">
                         <span class="material-symbols-outlined">search</span>
                         Browse Mentors
@@ -1262,7 +1262,7 @@ async function loadMentors(forceRefresh = false) {
                         <span class="material-symbols-outlined text-4xl">${emptyIcon}</span>
                     </div>
                     <h4 class="text-xl font-bold text-slate-400">${emptyMessage}</h4>
-                    <button onclick="window.location.href='/src/pages/marketplace/marketplace/'" class="mt-6 px-6 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold rounded-xl hover:text-primary transition-all flex items-center gap-2">
+                    <button onclick="window.location.href='/src/pages/mentorship/mentor-marketplace/'" class="mt-6 px-6 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold rounded-xl hover:text-primary transition-all flex items-center gap-2">
                         Browse Mentors <span class="material-symbols-outlined text-sm">arrow_forward</span>
                     </button>
                 </div>
