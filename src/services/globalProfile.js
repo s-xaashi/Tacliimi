@@ -8,6 +8,25 @@ export const GlobalProfile = {
         this.initTheme();
         this.preloadAuthState();
         this.monitorNetwork();
+        window.addEventListener('tacliimi:profile-ready', (event) => {
+            const profile = event.detail;
+            if (!profile) return;
+            const fullName = profile.full_name || 'Student';
+            document.querySelectorAll('.user-display-name').forEach(el => {
+                el.textContent = fullName;
+            });
+            document.querySelectorAll('h1.text-3xl.font-bold').forEach(el => {
+                if (el.textContent.includes('Welcome back')) {
+                    el.innerText = `Welcome back, ${fullName}! 👋`;
+                }
+            });
+            if (profile.avatar_url) {
+                document.querySelectorAll('[data-role="profile-image"] img, img.profile-picture-img').forEach(img => {
+                    img.src = profile.avatar_url;
+                });
+            }
+        });
+
         document.addEventListener('DOMContentLoaded', () => {
             this.preloadAuthState();
             this.applyProfile();
@@ -57,11 +76,8 @@ export const GlobalProfile = {
     initTheme() {
         const savedTheme = localStorage.theme || localStorage.getItem('tacliimi-theme') || localStorage.getItem('theme');
         const isDark = savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches);
-        if (isDark) {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-        }
+        if (isDark) document.documentElement.classList.add('dark');
+        else document.documentElement.classList.remove('dark');
         this.updateToggleIcons();
     },
 
@@ -70,25 +86,19 @@ export const GlobalProfile = {
         const themeToggleButtons = document.querySelectorAll('#theme-toggle, #themeToggle, #global-theme-toggle, #mobile-theme-toggle, .theme-toggle, button[aria-label*="theme" i], button[title*="theme" i]');
         themeToggleButtons.forEach(btn => {
             const singleIcon = btn.querySelector('.material-symbols-outlined:not(.dark\\:hidden):not(.hidden), .material-icons-outlined:not(.dark\\:hidden):not(.hidden)');
-            if (singleIcon && !singleIcon.classList.contains('dark:hidden') && !singleIcon.classList.contains('hidden')) {
-                singleIcon.textContent = isDark ? 'light_mode' : 'dark_mode';
-            }
+            if (singleIcon && !singleIcon.classList.contains('dark:hidden') && !singleIcon.classList.contains('hidden')) singleIcon.textContent = isDark ? 'light_mode' : 'dark_mode';
         });
     },
 
     bindThemeToggles() {
         const html = document.documentElement;
         const themeToggleButtons = document.querySelectorAll('#theme-toggle, #themeToggle, #global-theme-toggle, #mobile-theme-toggle, .theme-toggle, button[aria-label*="theme" i], button[title*="theme" i], button[onclick*="dark"]');
-
         themeToggleButtons.forEach(btn => {
-            if (btn.hasAttribute('onclick') && (btn.getAttribute('onclick').includes('toggle') || btn.getAttribute('onclick').includes('dark'))) {
-                btn.removeAttribute('onclick');
-            }
+            if (btn.hasAttribute('onclick') && (btn.getAttribute('onclick').includes('toggle') || btn.getAttribute('onclick').includes('dark'))) btn.removeAttribute('onclick');
             if (!btn.dataset.themeBound) {
                 btn.dataset.themeBound = 'true';
                 btn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
+                    e.preventDefault(); e.stopPropagation();
                     const isDarkNow = html.classList.toggle('dark');
                     const themeVal = isDarkNow ? 'dark' : 'light';
                     localStorage.theme = themeVal;
@@ -161,20 +171,26 @@ export const GlobalProfile = {
             const subEl = mobileMenu.querySelector('#mobile-menu-profile-sub');
             const logoutBtn = mobileMenu.querySelector('#mobile-logout-btn');
             const themeToggle = mobileMenu.querySelector('#mobile-theme-toggle');
+            const menuFooter = mobileMenu.querySelector('#mobile-menu-footer');
 
             if (nameEl) nameEl.innerText = 'Sign In / Register';
             if (subEl) subEl.innerText = 'Access your account';
             if (profileArea) {
-                profileArea.setAttribute('onclick', "window.location.href='/src/pages/auth/login-select/index.html'");
+                if (profileArea.tagName === 'A') {
+                    profileArea.setAttribute('href', '/src/pages/auth/login-select/index.html');
+                } else {
+                    profileArea.setAttribute('onclick', "window.location.href='/src/pages/auth/login-select/index.html'");
+                }
             }
             if (logoutBtn) {
                 logoutBtn.classList.add('hidden');
                 logoutBtn.classList.remove('flex');
             }
             if (themeToggle) {
-                themeToggle.classList.remove('hidden');
-                themeToggle.classList.add('flex');
+                themeToggle.classList.add('hidden');
+                themeToggle.classList.remove('flex');
             }
+            if (menuFooter) menuFooter.classList.add('hidden');
         }
 
         const themeToggleHtml = `
@@ -196,9 +212,7 @@ export const GlobalProfile = {
         } else if (!explicitContainer) {
             let placeholderContainer = null;
             document.querySelectorAll('div').forEach(div => {
-                if (div.innerHTML.includes('Global Profile Injected Below') && (div.closest('header') || div.closest('nav'))) {
-                    placeholderContainer = div;
-                }
+                if (div.innerHTML.includes('Global Profile Injected Below') && (div.closest('header') || div.closest('nav'))) placeholderContainer = div;
             });
             if (placeholderContainer && !placeholderContainer.querySelector('.tacliimi-injected-profile')) {
                 placeholderContainer.innerHTML = `
@@ -219,7 +233,18 @@ export const GlobalProfile = {
         try {
             session = await AuthService.getSession();
             if (session) {
-                profile = await AuthService.getCurrentProfile();
+                // Role-sensitive navigation must never default to Student while
+                // the authoritative profile is still loading. Retry briefly so
+                // slow/mobile connections cannot expose the wrong dashboard/settings links.
+                for (let attempt = 0; attempt < 3 && !profile; attempt++) {
+                    profile = await AuthService.getCurrentProfile();
+                    if (!profile && window.__tacliimiProfile?.id === session.user.id) {
+                        profile = window.__tacliimiProfile;
+                    }
+                    if (!profile && attempt < 2) {
+                        await new Promise(resolve => setTimeout(resolve, 250));
+                    }
+                }
             }
         } catch (e) {
             console.error("Error fetching session for global profile", e);
@@ -275,12 +300,10 @@ export const GlobalProfile = {
                 // Ignore fallback check error
             }
         }
+        // The editable name in public.profiles is the authoritative display name.
+        // Do not fall back to Auth metadata here because it can contain an old
+        // or email-derived name and can overwrite the name saved in Account Settings.
         let defaultName = isAdmin ? 'Admin' : (isInstructor ? 'Instructor' : 'Student');
-        if (session.user.email && !isAdmin) {
-            let prefix = session.user.email.split('@')[0];
-            defaultName = prefix.charAt(0).toUpperCase() + prefix.slice(1);
-        }
-
         const fullName = (profile && profile.full_name) ? profile.full_name : defaultName;
 
         nameElements.forEach(el => {
@@ -631,21 +654,35 @@ export const GlobalProfile = {
         // NEW STRUCTURED MENU: If the menu already has #mobile-menu-profile (our new design),
         // skip legacy injection and only populate profile info.
         if (mobileMenu && mobileMenu.querySelector('#mobile-menu-profile')) {
-            // Populate name — grab from already-injected header profile name, fallback to email
+            // Populate the mobile menu from the same authoritative profile name.
+            // Never derive a visible name from the student's email address.
             const nameEl = mobileMenu.querySelector('.user-display-name');
             if (nameEl) {
                 const headerName = document.querySelector('.tacliimi-injected-profile .user-display-name');
-                const displayName = headerName ? headerName.innerText :
-                    (session.user.email ? (session.user.email.split('@')[0].charAt(0).toUpperCase() + session.user.email.split('@')[0].slice(1)) : 'User');
+                const displayName = (fullName || window.__tacliimiProfile?.full_name || 'Student').trim();
                 nameEl.innerText = displayName;
+                if (headerName) headerName.innerText = displayName;
             }
+
+            // Show the dashboard only when an authenticated session exists.
+            const dashboardLinkEl = mobileMenu.querySelector('#mobile-dashboard-link');
+            if (dashboardLinkEl) dashboardLinkEl.classList.remove('hidden');
+
+            const menuFooter = mobileMenu.querySelector('#mobile-menu-footer');
+            if (menuFooter) menuFooter.classList.remove('hidden');
 
             // Wire profile area click to correct settings page
             const profileArea = mobileMenu.querySelector('#mobile-menu-profile');
             let settingsLink = '/src/pages/student/account-settings/index.html';
             if (isAdmin) settingsLink = '/src/pages/admin/profile/index.html';
             else if (isInstructor) settingsLink = '/src/pages/instructor/instructor-profile/index.html';
-            if (profileArea) profileArea.setAttribute('onclick', `window.location.href='${settingsLink}'`);
+            if (profileArea) {
+                if (profileArea.tagName === 'A') {
+                    profileArea.setAttribute('href', settingsLink);
+                } else {
+                    profileArea.setAttribute('onclick', `window.location.href='${settingsLink}'`);
+                }
+            }
 
             // Wire theme toggle in new menu
             const mobileThemeToggle = document.getElementById('mobile-theme-toggle');
