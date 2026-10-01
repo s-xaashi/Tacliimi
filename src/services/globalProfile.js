@@ -74,37 +74,41 @@ export const GlobalProfile = {
     },
 
     initTheme() {
-        const isDark = localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
-        if (isDark) {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-        }
+        const savedTheme = localStorage.theme || localStorage.getItem('tacliimi-theme') || localStorage.getItem('theme');
+        const isDark = savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        if (isDark) document.documentElement.classList.add('dark');
+        else document.documentElement.classList.remove('dark');
+        this.updateToggleIcons();
+    },
+
+    updateToggleIcons() {
+        const isDark = document.documentElement.classList.contains('dark');
+        const themeToggleButtons = document.querySelectorAll('#theme-toggle, #themeToggle, #global-theme-toggle, #mobile-theme-toggle, .theme-toggle, button[aria-label*="theme" i], button[title*="theme" i]');
+        themeToggleButtons.forEach(btn => {
+            const singleIcon = btn.querySelector('.material-symbols-outlined:not(.dark\\:hidden):not(.hidden), .material-icons-outlined:not(.dark\\:hidden):not(.hidden)');
+            if (singleIcon && !singleIcon.classList.contains('dark:hidden') && !singleIcon.classList.contains('hidden')) singleIcon.textContent = isDark ? 'light_mode' : 'dark_mode';
+        });
     },
 
     bindThemeToggles() {
         const html = document.documentElement;
-        const themeToggleButtons = document.querySelectorAll('#theme-toggle, #themeToggle, #global-theme-toggle, button[onclick*="dark"]');
-
+        const themeToggleButtons = document.querySelectorAll('#theme-toggle, #themeToggle, #global-theme-toggle, #mobile-theme-toggle, .theme-toggle, button[aria-label*="theme" i], button[title*="theme" i], button[onclick*="dark"]');
         themeToggleButtons.forEach(btn => {
-            if (btn.hasAttribute('onclick') && (btn.getAttribute('onclick').includes('toggle') || btn.getAttribute('onclick').includes('dark'))) {
-                btn.removeAttribute('onclick');
-            }
+            if (btn.hasAttribute('onclick') && (btn.getAttribute('onclick').includes('toggle') || btn.getAttribute('onclick').includes('dark'))) btn.removeAttribute('onclick');
             if (!btn.dataset.themeBound) {
                 btn.dataset.themeBound = 'true';
                 btn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (html.classList.contains('dark')) {
-                        html.classList.remove('dark');
-                        localStorage.theme = 'light';
-                    } else {
-                        html.classList.add('dark');
-                        localStorage.theme = 'dark';
-                    }
+                    e.preventDefault(); e.stopPropagation();
+                    const isDarkNow = html.classList.toggle('dark');
+                    const themeVal = isDarkNow ? 'dark' : 'light';
+                    localStorage.theme = themeVal;
+                    try { localStorage.setItem('tacliimi-theme', themeVal); } catch (e) {}
+                    try { localStorage.setItem('theme', themeVal); } catch (e) {}
+                    this.updateToggleIcons();
                 });
             }
         });
+        this.updateToggleIcons();
     },
 
     monitorNetwork() {
@@ -189,15 +193,37 @@ export const GlobalProfile = {
             if (menuFooter) menuFooter.classList.add('hidden');
         }
 
+        const themeToggleHtml = `
+            <button type="button" id="global-theme-toggle" class="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full flex items-center justify-center transition-colors !outline-none" title="Toggle Theme" aria-label="Toggle Theme">
+                <span class="material-symbols-outlined dark:hidden text-[22px]">dark_mode</span>
+                <span class="material-symbols-outlined hidden dark:block text-[22px]">light_mode</span>
+            </button>
+        `;
+
         const explicitContainer = document.getElementById('global-profile-header-container');
         if (explicitContainer && !explicitContainer.querySelector('.tacliimi-injected-profile')) {
             explicitContainer.innerHTML = `
                 <div class="hidden md:flex items-center gap-3 tacliimi-injected-profile">
+                    ${themeToggleHtml}
                     <a href="/src/pages/auth/login-select/index.html" class="px-4 py-2 text-sm font-bold text-primary hover:bg-primary/10 rounded-xl transition-colors">Sign In</a>
                     <a href="/src/pages/auth/login-select/index.html" class="px-4 py-2 text-sm font-bold bg-primary text-white hover:bg-primary/90 rounded-xl shadow-md shadow-primary/20 transition-colors">Get Started</a>
                 </div>
             `;
+        } else if (!explicitContainer) {
+            let placeholderContainer = null;
+            document.querySelectorAll('div').forEach(div => {
+                if (div.innerHTML.includes('Global Profile Injected Below') && (div.closest('header') || div.closest('nav'))) placeholderContainer = div;
+            });
+            if (placeholderContainer && !placeholderContainer.querySelector('.tacliimi-injected-profile')) {
+                placeholderContainer.innerHTML = `
+                    <div class="hidden md:flex items-center gap-3 tacliimi-injected-profile">
+                        ${themeToggleHtml}
+                        <a href="/src/pages/auth/login-select/index.html" class="px-4 py-2 text-sm font-bold text-slate-700 dark:text-white rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">Sign In</a>
+                    </div>
+                `;
+            }
         }
+        this.bindThemeToggles();
     },
 
     async applyProfile() {
