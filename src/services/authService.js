@@ -288,17 +288,51 @@ export const AuthService = {
     _sessionCacheTs: 0,
     SESSION_TTL: 30_000,
 
+    /**
+     * Purge invalid or stale Supabase auth token state from browser storage
+     */
+    async clearStaleAuthStorage() {
+        this._sessionCache = null;
+        this._sessionCacheTs = 0;
+        try {
+            await supabase.auth.signOut({ scope: 'local' });
+        } catch (e) {}
+        try {
+            Object.keys(localStorage).forEach(key => {
+                if (key.includes('auth-token') || (key.startsWith('sb-') && key.endsWith('-token'))) {
+                    localStorage.removeItem(key);
+                }
+            });
+        } catch (e) {}
+    },
+
     async getSession() {
         // Return cached session if fresh
         if (this._sessionCache && (Date.now() - this._sessionCacheTs) < this.SESSION_TTL) {
             return this._sessionCache;
         }
 
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError || !session) {
+        let sessionData = null;
+        let sessionError = null;
+
+        try {
+            const { data, error } = await supabase.auth.getSession();
+            sessionData = data?.session;
+            sessionError = error;
+        } catch (err) {
+            sessionError = err;
+        }
+
+        if (sessionError || !sessionData) {
+            if (sessionError) {
+                console.warn('[AuthService] Clearing invalid refresh token state:', sessionError.message || sessionError);
+                await this.clearStaleAuthStorage();
+            }
             this._sessionCache = null;
             return null;
         }
+
+        const session = sessionData;
 
         // Extend session with admin role if it exists
         const { data: adminRecord, error: adminError } = await supabase
@@ -321,8 +355,7 @@ export const AuthService = {
             .maybeSingle();
 
         if (profile?.account_status === 'blocked') {
-            await supabase.auth.signOut();
-            this._sessionCache = null;
+            await this.clearStaleAuthStorage();
             return null;
         }
 

@@ -558,7 +558,11 @@
                                      confirmBtn.disabled = true;
                                      confirmBtn.classList.add('opacity-50', 'cursor-not-allowed');
                                      const reserve = availableForWithdrawal - withdrawableAmount;
-                                     errorEl.innerHTML = `<span class="text-red-500 font-medium text-xs">Insufficient balance. Only $${withdrawableAmount.toFixed(2)} is permitted to leave the $${reserve.toFixed(2)} reserve intact.</span>`;
+                                     if (reserve > 0) {
+                                         errorEl.innerHTML = `<span class="text-red-500 font-medium text-xs">Insufficient balance. Only ${withdrawableAmount.toFixed(2)} is permitted to leave the ${reserve.toFixed(2)} reserve intact.</span>`;
+                                     } else {
+                                         errorEl.innerHTML = `<span class="text-red-500 font-medium text-xs">You cannot withdraw more than your available balance of ${withdrawableAmount.toFixed(2)}.</span>`;
+                                     }
                                      errorEl.classList.remove('hidden');
                                  } else {
                                      confirmBtn.disabled = false;
