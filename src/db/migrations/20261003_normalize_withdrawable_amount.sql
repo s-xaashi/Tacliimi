@@ -29,10 +29,12 @@ DECLARE
     v_weekly               numeric;
     v_today                numeric;
 BEGIN
+    -- Verify the caller is the instructor requesting their own summary (or an admin)
     IF auth.uid() != p_instructor_id AND NOT check_is_finance_admin() AND NOT check_is_superadmin() THEN
         RAISE EXCEPTION 'Not authorized';
     END IF;
 
+    -- Total earned (instructor share from paid payments)
     SELECT COALESCE(SUM(ie.instructor_share), 0),
            COALESCE(SUM(ie.platform_fee), 0)
     INTO v_total_earned, v_total_platform_fees
@@ -41,18 +43,21 @@ BEGIN
     WHERE ie.instructor_id = p_instructor_id
       AND p.payment_status = 'paid';
 
+    -- Total withdrawn (approved + processing + paid)
     SELECT COALESCE(SUM(wr.amount), 0)
     INTO v_total_withdrawn
     FROM public.withdrawal_requests wr
     WHERE wr.instructor_id = p_instructor_id
       AND wr.status IN ('approved', 'processing', 'paid');
 
+    -- Pending withdrawals
     SELECT COALESCE(SUM(wr.amount), 0)
     INTO v_pending_withdrawals
     FROM public.withdrawal_requests wr
     WHERE wr.instructor_id = p_instructor_id
       AND wr.status = 'pending';
 
+    -- Held balance: mentorship earnings only, while still within hold window.
     SELECT COALESCE(SUM(ie.instructor_share), 0)
     INTO v_held_balance
     FROM public.instructor_earnings ie
@@ -66,9 +71,13 @@ BEGIN
        OR (ms.mentorship_type = 'program' AND now() < ms.end_date)
       );
 
+    -- Cleared earnings (Gross total minus what is still held)
     v_cleared_earnings := v_total_earned - v_held_balance;
+
+    -- Available (Cleared minus already withdrawn)
     v_available := v_cleared_earnings - v_total_withdrawn - v_pending_withdrawals;
 
+    -- Fetch min withdrawal & reserve settings
     SELECT
         COALESCE(ps.min_withdrawal_amount, 10),
         COALESCE(ps.withdrawal_reserve_enabled, true),
@@ -87,6 +96,7 @@ BEGIN
     -- two-decimal monetary display without changing the underlying balance.
     v_withdrawable := ROUND(GREATEST(0, v_available - v_reserve), 2);
 
+    -- Monthly earnings
     SELECT COALESCE(SUM(ie.instructor_share), 0)
     INTO v_monthly
     FROM public.instructor_earnings ie
@@ -95,6 +105,7 @@ BEGIN
       AND p.payment_status = 'paid'
       AND ie.created_at >= date_trunc('month', now());
 
+    -- Weekly earnings
     SELECT COALESCE(SUM(ie.instructor_share), 0)
     INTO v_weekly
     FROM public.instructor_earnings ie
@@ -103,6 +114,7 @@ BEGIN
       AND p.payment_status = 'paid'
       AND ie.created_at >= date_trunc('week', now());
 
+    -- Today's earnings
     SELECT COALESCE(SUM(ie.instructor_share), 0)
     INTO v_today
     FROM public.instructor_earnings ie
@@ -119,14 +131,15 @@ BEGIN
         'total_withdrawn',       v_total_withdrawn,
         'pending_withdrawals',   v_pending_withdrawals,
         'held_balance',          v_held_balance,
+        'available_balance',     v_available,
         'min_withdrawal_amount', v_min_withdrawal,
         'withdrawal_reserve_enabled', COALESCE(v_reserve_enabled, true),
         'withdrawal_reserve_percent', COALESCE(v_reserve_percent, 50),
         'withdrawable_amount',   v_withdrawable,
         'reserve_amount',        v_reserve,
-        'monthly',               v_monthly,
-        'weekly',                v_weekly,
-        'today',                 v_today
+        'monthly',                v_monthly,
+        'weekly',                 v_weekly,
+        'today',                  v_today
     );
 END;
 $function$;
