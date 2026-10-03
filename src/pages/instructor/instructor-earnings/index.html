@@ -363,7 +363,7 @@
         // to $0.12 can make a valid "withdraw all" request look over the balance.
         const formatExactWithdrawalAmount = (amount) => {
             const value = Number(amount);
-            return Number.isFinite(value) ? value.toFixed(6).replace(/\\.?0+$/, '') : '0';
+            return Number.isFinite(value) ? value.toFixed(6).replace(/\.?0+$/, '') : '0';
         };
 
         window.openTransactionDetail = function(rawItemStr) {
