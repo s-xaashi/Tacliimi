@@ -542,7 +542,6 @@
             };
             let attr = '';
             if (s === 'rejected' && item) {
-                const reason = item.rejection_reason || item.notes_to_instructor || 'No reason specified';
                 return `<button type="button" class="status-badge ${map[s] || 'bg-slate-100 text-slate-500'} cursor-pointer hover:opacity-80 transition-opacity" onclick="event.stopPropagation(); window.openWithdrawalNoteModal('${item.id}')">${s}</button>`;
             }
             return `<span class="status-badge ${map[s] || 'bg-slate-100 text-slate-500'}">${s}</span>`;
