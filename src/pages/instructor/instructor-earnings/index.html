@@ -396,7 +396,7 @@
                         <span class="text-slate-500 text-sm">Date</span>
                         <span class="font-medium text-slate-900 dark:text-white">${new Date(item.created_at).toLocaleString()}</span>
                     </div>
-                    ${item.notes_to_instructor ? `<div class="mt-2 text-sm text-slate-500 bg-slate-50 dark:bg-slate-800 p-3 rounded-lg"><strong>Admin Note:</strong> ${item.notes_to_instructor}</div>` : ''}
+                    ${(item.rejection_reason || item.notes_to_instructor) ? `<div class="mt-4 text-sm text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 whitespace-pre-wrap break-words"><strong class="block mb-2">${item.status === 'rejected' ? 'Rejection Reason' : 'Admin Note'}</strong>${item.rejection_reason || item.notes_to_instructor}</div>` : ''}
                 `;
             } else {
                 const desc = item.earning_type === 'mentorship' ? 'Mentorship Session' : 'Course Sale';
@@ -728,11 +728,18 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900 dark:text-white">$${parseFloat(item.amount).toFixed(2)}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">${methodDetails}</td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="px-2.5 py-1 text-xs font-medium rounded-full ${statusClass} capitalize" ${statusTitle ? `title="${statusTitle.replace(/"/g, '&quot;')}"` : ''}>${item.status}</span>
+                                <span class="px-2.5 py-1 text-xs font-medium rounded-full ${statusClass} capitalize ${statusTitle ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}" ${statusTitle ? 'title="Click to view full note" onclick="event.stopPropagation(); openTransactionDetail(\\'' + rawItemStr + '\\')"': ''}>${item.status}</span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">${reqDateStr}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">${processedDateStr}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 truncate max-w-[150px]" title="${item.notes_to_instructor || ''}">${item.notes_to_instructor || '-'}</td>
+                            <td class="px-6 py-4 text-sm max-w-[220px]">
+                                ${(() => {
+                                    const note = item.rejection_reason || item.notes_to_instructor || '';
+                                    if (!note) return '<span class="text-slate-400">-</span>';
+                                    const preview = note.length > 42 ? note.slice(0, 42).trimEnd() + '...' : note;
+                                    return `<button type="button" class="max-w-[220px] truncate block text-left text-slate-500 dark:text-slate-400 hover:text-indigo-500 hover:underline" title="Click to view full note" onclick="event.stopPropagation(); openTransactionDetail('${rawItemStr}')">${preview}</button>`;
+                                })()}
+                            </td>
                             </tr>`;
                     });
 
