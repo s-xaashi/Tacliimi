@@ -132,11 +132,12 @@
                                     <th class="px-6 py-4 font-black">Method & Details</th>
                                     <th class="px-6 py-4 font-black">Status</th>
                                     <th class="px-6 py-4 font-black">Date</th>
+                                    <th class="px-6 py-4 font-black">Notes</th>
                                     <th class="px-6 py-4 font-black text-right">Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="withdrawals-body" class="divide-y divide-slate-100 dark:divide-slate-800">
-                                <tr><td colspan="6" class="px-6 py-8 text-center text-slate-400 italic">Loading...</td></tr>
+                                <tr><td colspan="7" class="px-6 py-8 text-center text-slate-400 italic">Loading...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -483,6 +484,24 @@
         </div>
     </div>
 
+    <!-- Withdrawal Note Modal -->
+    <div id="withdrawal-note-modal" class="fixed inset-0 z-[10000] hidden flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="window.closeWithdrawalNoteModal()"></div>
+        <div class="relative bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-lg p-7">
+            <div class="flex items-start justify-between gap-4 mb-5">
+                <div>
+                    <p class="text-[10px] font-black uppercase tracking-widest text-indigo-500 mb-1">Withdrawal</p>
+                    <h3 id="withdrawal-note-modal-title" class="text-xl font-bold text-slate-900 dark:text-white">Rejection Note</h3>
+                </div>
+                <button type="button" onclick="window.closeWithdrawalNoteModal()" class="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-700">
+                    <span class="material-symbols-outlined text-lg">close</span>
+                </button>
+            </div>
+            <div id="withdrawal-note-modal-content" class="max-h-[55vh] overflow-y-auto whitespace-pre-wrap break-words rounded-2xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 p-5 text-sm leading-6 text-slate-700 dark:text-slate-200"></div>
+            <button type="button" onclick="window.closeWithdrawalNoteModal()" class="mt-5 w-full py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-all">Close</button>
+        </div>
+    </div>
+
     <!-- Confirm Modal -->
     <div id="confirm-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4">
         <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeConfirmModal()"></div>
@@ -523,9 +542,10 @@
             };
             let attr = '';
             if (s === 'rejected' && item) {
-                attr = `title="${(item.rejection_reason || item.notes_to_instructor || 'No reason specified').replace(/"/g, '&quot;')}"`;
+                const reason = item.rejection_reason || item.notes_to_instructor || 'No reason specified';
+                return `<button type="button" class="status-badge ${map[s] || 'bg-slate-100 text-slate-500'} cursor-pointer hover:opacity-80 transition-opacity" onclick="event.stopPropagation(); window.openWithdrawalNoteModal('${item.id}')">${s}</button>`;
             }
-            return `<span class="status-badge ${map[s] || 'bg-slate-100 text-slate-500'}" ${attr}>${s}</span>`;
+            return `<span class="status-badge ${map[s] || 'bg-slate-100 text-slate-500'}">${s}</span>`;
         };
 
         const fmtDate = d => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -590,7 +610,7 @@
         function renderWithdrawals() {
             const rows = filtered(allWithdrawals);
             const tbody = document.getElementById('withdrawals-body');
-            if (!rows.length) { tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-10 text-center text-slate-400 italic">No withdrawals found</td></tr>`; return; }
+            if (!rows.length) { tbody.innerHTML = `<tr><td colspan="7" class="px-6 py-10 text-center text-slate-400 italic">No withdrawals found</td></tr>`; return; }
             tbody.innerHTML = rows.map(w => {
                 let methodDetails = '';
                 const snap = w.payout_method_snapshot || {};
@@ -665,6 +685,14 @@
                     <td class="px-6 py-4 text-slate-400 text-sm">
                         ${fmtDate(w.created_at)}
                         ${w.reference_number ? `<div class="text-[10px] uppercase font-bold text-slate-500 mt-1">Ref: ${w.reference_number}</div>` : ''}
+                    </td>
+                    <td class="px-6 py-4 text-sm">
+                        ${(() => {
+                            const note = w.rejection_reason || w.notes_to_instructor || '';
+                            if (!note) return '<span class="text-slate-400">-</span>';
+                            const preview = note.length > 42 ? note.slice(0, 42).trimEnd() + '...' : note;
+                            return `<button type="button" class="max-w-[220px] truncate block text-left text-slate-500 dark:text-slate-400 hover:text-indigo-500 hover:underline" title="View full note" onclick="event.stopPropagation(); window.openWithdrawalNoteModal('${w.id}')">${preview}</button>`;
+                        })()}
                     </td>
                     <td class="px-6 py-4 text-right">
                         ${actions}
