@@ -316,6 +316,7 @@ BEGIN
     'mentor_banner_price_per_day', ps.mentor_banner_price_per_day,
     'boost_min_days', ps.boost_min_days,
     'boost_max_days', ps.boost_max_days,
+    'boost_rotation_window_minutes', ps.boost_rotation_window_minutes,
     'course_boost_enabled', ps.course_boost_enabled,
     'course_banner_enabled', ps.course_banner_enabled,
     'mentor_boost_enabled', ps.mentor_boost_enabled,
