@@ -28,8 +28,9 @@ BEGIN
 
     RETURN is_duplicate;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = '';
 
 -- Grant execution privileges
-GRANT EXECUTE ON FUNCTION check_profile_phone_unique(text, uuid) TO anon;
-GRANT EXECUTE ON FUNCTION check_profile_phone_unique(text, uuid) TO authenticated;
+REVOKE ALL ON FUNCTION public.check_profile_phone_unique(text, uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.check_profile_phone_unique(text, uuid) TO anon;
+GRANT EXECUTE ON FUNCTION public.check_profile_phone_unique(text, uuid) TO authenticated;
