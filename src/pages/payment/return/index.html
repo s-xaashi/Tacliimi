@@ -60,6 +60,29 @@
     </div>
   </div>
 
+  <!-- State: Success (Certificate) -->
+  <div id="state-success-certificate" class="hidden text-center animate-fade-in max-w-sm w-full">
+    <div class="w-24 h-24 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center mx-auto mb-6 animate-check-pop">
+      <span class="material-symbols-outlined text-amber-600 text-5xl">workspace_premium</span>
+    </div>
+    <h1 class="text-3xl font-black text-slate-900 dark:text-white mb-2">Certificate Payment Successful!</h1>
+    <p class="text-slate-500 dark:text-slate-400 mb-8">Your payment is confirmed. We’re returning you to the course so your certificate can be generated and downloaded.</p>
+    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 mb-6 text-left space-y-3 shadow-sm">
+      <div class="flex justify-between items-center">
+        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Order ID</span>
+        <span id="scert-order-id" class="text-sm font-bold text-primary font-mono"></span>
+      </div>
+      <div class="flex justify-between items-center">
+        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Status</span>
+        <span class="px-2 py-0.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-xs font-black rounded-full uppercase">Paid</span>
+      </div>
+    </div>
+    <button id="scert-return-btn" class="w-full py-4 bg-primary hover:bg-indigo-700 text-white font-black rounded-2xl shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2">
+      <span class="material-symbols-outlined text-[20px]">workspace_premium</span>
+      Return to Certificate
+    </button>
+  </div>
+
   <!-- State: Success (Booking) -->
   <div id="state-success-booking" class="hidden text-center animate-fade-in max-w-sm w-full">
     <div class="w-24 h-24 bg-indigo-100 dark:bg-indigo-900/30 rounded-full flex items-center justify-center mx-auto mb-6 animate-check-pop">
@@ -128,7 +151,7 @@
 
   // Helpers
   function showState(id) {
-    ['state-verifying','state-success-course','state-success-booking','state-failed','state-error']
+    ['state-verifying','state-success-course','state-success-booking','state-success-certificate','state-failed','state-error']
       .forEach(s => document.getElementById(s).classList.add('hidden'));
     document.getElementById(id).classList.remove('hidden');
   }
@@ -159,6 +182,20 @@
         } else if (result.type === 'booking') {
           document.getElementById('sb-order-id').textContent = orderId;
           showState('state-success-booking');
+
+        } else if (result.type === 'certificate') {
+          document.getElementById('scert-order-id').textContent = orderId;
+          const courseId = result.referenceId;
+          const returnUrl = courseId
+            ? `/src/pages/learning/learning-interface/index.html?id=${encodeURIComponent(courseId)}&certificate_paid=1`
+            : '/src/pages/student/student-dashboard/index.html';
+          document.getElementById('scert-return-btn').onclick = () => {
+            window.location.href = returnUrl;
+          };
+          showState('state-success-certificate');
+          if (courseId) {
+            setTimeout(() => { window.location.href = returnUrl; }, 1800);
+          }
 
         } else {
           // Unknown type — generic success, go to dashboard
