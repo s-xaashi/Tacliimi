@@ -15,7 +15,7 @@ interface CreateCheckoutPayload {
 }
 
 interface DirectPaymentPayload {
-  type: 'course' | 'booking' | 'boost' | 'banner' | 'boost_and_banner';
+  type: 'course' | 'booking' | 'boost' | 'banner' | 'boost_and_banner' | 'certificate';
   entityType?: 'course' | 'mentor' | 'mentorship_sessions';
   bannerText?: string;
   planDays?: number;
