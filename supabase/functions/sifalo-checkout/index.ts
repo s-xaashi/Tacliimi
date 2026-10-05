@@ -350,31 +350,6 @@ async function createCheckout(userId: string, payload: CreateCheckoutPayload): P
   
   if (type === 'boost' || type === 'banner' || type === 'boost_and_banner') {
 
-    if (resolvedType === 'certificate') {
-      const { data: order } = await supabase
-        .from('certificate_orders')
-        .select('course_id')
-        .eq('id', payment.certificate_order_id)
-        .single();
-
-      const now = new Date().toISOString();
-      await supabase.from('certificate_orders').update({
-        payment_status: 'paid',
-        verification_status: 'verified',
-        sifalo_sid: verifyData.sid ?? sid,
-        paid_at: now,
-        updated_at: now
-      }).eq('id', payment.certificate_order_id);
-
-      await supabase.from('certificates').update({
-        payment_unlocked: true,
-        payment_unlocked_at: now,
-        payment_order_id: payment.certificate_order_id
-      }).eq('student_id', payment.student_id).eq('course_id', order?.course_id);
-
-      return json({ status: 'success', type: 'certificate', referenceId: order?.course_id || null, order_id: orderId });
-    }
-
     const { data: settings } = await supabase.rpc('get_platform_settings');
     const isCourse = (payload.entityType || 'course') === 'course';
     if (type === 'boost' || type === 'boost_and_banner') {
@@ -712,6 +687,31 @@ async function verifyTransaction(_userId: string, payload: VerifyPayload): Promi
       payment_provider: paymentType ? `sifalo_${paymentType.toLowerCase()}` : 'sifalo_checkout',
       gateway_response: verifyData, verification_status: 'verified',
     }).eq('id', payment.id);
+
+    if (resolvedType === 'certificate') {
+      const { data: order } = await supabase
+        .from('certificate_orders')
+        .select('course_id')
+        .eq('id', payment.certificate_order_id)
+        .single();
+
+      const now = new Date().toISOString();
+      await supabase.from('certificate_orders').update({
+        payment_status: 'paid',
+        verification_status: 'verified',
+        sifalo_sid: verifyData.sid ?? sid,
+        paid_at: now,
+        updated_at: now
+      }).eq('id', payment.certificate_order_id);
+
+      await supabase.from('certificates').update({
+        payment_unlocked: true,
+        payment_unlocked_at: now,
+        payment_order_id: payment.certificate_order_id
+      }).eq('student_id', payment.student_id).eq('course_id', order?.course_id);
+
+      return json({ status: 'success', type: 'certificate', referenceId: order?.course_id || null, order_id: orderId });
+    }
 
     const { data: settings } = await supabase.rpc('get_platform_settings');
     const commEnabled = settings?.commission_enabled === true;
