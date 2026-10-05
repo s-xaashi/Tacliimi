@@ -62,7 +62,10 @@ export const financeSettingsService = {
                 course_banner_enabled: true,
                 mentor_boost_enabled: true,
                 mentor_banner_enabled: true,
-                self_hosted_video_uploads_enabled: false
+                self_hosted_video_uploads_enabled: false,
+                certificate_payment_enabled: false,
+                certificate_price: 1,
+                certificate_free_generation_limit: 3
             };
         }
     },
