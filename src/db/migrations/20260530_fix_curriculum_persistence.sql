@@ -68,8 +68,8 @@ CREATE OR REPLACE FUNCTION public.sync_course_curriculum(
 )
 RETURNS JSONB
 LANGUAGE plpgsql
-SECURITY DEFINER -- Runs with elevated privileges to ensure transactional consistency
-SET search_path = public -- Security best practice
+SECURITY DEFINER -- Required to perform the atomic sync despite child-table RLS
+SET search_path = '' -- Harden SECURITY DEFINER against search_path hijacking
 AS $$
 DECLARE
     v_instructor_id UUID;
@@ -83,7 +83,7 @@ DECLARE
     v_lessons_count INT := 0;
 BEGIN
     -- A. Ownership Verification
-    SELECT instructor_id INTO v_instructor_id FROM courses WHERE id = p_course_id;
+    SELECT instructor_id INTO v_instructor_id FROM public.courses WHERE id = p_course_id;
     IF v_instructor_id IS NULL THEN
         RAISE EXCEPTION 'Course not found' USING ERRCODE = 'P0002';
     END IF;
@@ -93,20 +93,20 @@ BEGIN
     END IF;
 
     -- B. Concurrency Lock (Row-level lock on course)
-    PERFORM 1 FROM courses WHERE id = p_course_id FOR UPDATE;
+    PERFORM 1 FROM public.courses WHERE id = p_course_id FOR UPDATE;
 
     -- C. Sync Sections and Lessons
     FOR v_section_item IN SELECT * FROM jsonb_array_elements(p_curriculum)
     LOOP
         -- Upsert Section
-        INSERT INTO course_sections (
+        INSERT INTO public.course_sections (
             id, 
             course_id, 
             title, 
             order_index
         )
         VALUES (
-            COALESCE((v_section_item->>'id')::UUID, gen_random_uuid()),
+            COALESCE((v_section_item->>'id')::UUID, extensions.gen_random_uuid()),
             p_course_id,
             v_section_item->>'title',
             COALESCE((v_section_item->>'order_index')::INT, v_sections_count)
@@ -124,7 +124,7 @@ BEGIN
             FOR v_lesson_item IN SELECT * FROM jsonb_array_elements(v_section_item->'course_lessons')
             LOOP
                 -- Upsert Lesson
-                INSERT INTO course_lessons (
+                INSERT INTO public.course_lessons (
                     id,
                     section_id,
                     title,
@@ -155,12 +155,12 @@ BEGIN
 
     -- E. Cleanup Removed Items (Staged Replacement)
     -- Remove lessons that are no longer in the curriculum but belong to this course's sections
-    DELETE FROM course_lessons
-    WHERE section_id IN (SELECT id FROM course_sections WHERE course_id = p_course_id)
+    DELETE FROM public.course_lessons
+    WHERE section_id IN (SELECT id FROM public.course_sections WHERE course_id = p_course_id)
       AND id != ALL(v_processed_lesson_ids);
 
     -- Remove sections that are no longer in the curriculum
-    DELETE FROM course_sections
+    DELETE FROM public.course_sections
     WHERE course_id = p_course_id
       AND id != ALL(v_processed_section_ids);
 
@@ -175,7 +175,11 @@ EXCEPTION
         -- PostgreSQL functions inside a transaction will automatically rollback on EXCEPTION
         RAISE EXCEPTION 'Failed to sync curriculum: %', SQLERRM;
 END;
-$$;
+$;
+
+REVOKE ALL ON FUNCTION public.sync_course_curriculum(uuid, jsonb) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.sync_course_curriculum(uuid, jsonb) FROM anon;
+GRANT EXECUTE ON FUNCTION public.sync_course_curriculum(uuid, jsonb) TO authenticated;
 
 -- 6. Ensure Storage Buckets exist
 -- Note: inserting into storage.buckets if they don't exist
