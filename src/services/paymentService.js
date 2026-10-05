@@ -72,6 +72,37 @@ export const PaymentService = {
     return { method: 'redirect' };
   },
 
+
+  /**
+   * Initiate a certificate payment using the existing Sifalo checkout.
+   * The server is authoritative for the configured certificate price.
+   */
+  async startCertificatePayment(courseId, currency = 'USD') {
+    const result = await callEdgeFn('createCheckout', {
+      type: 'certificate',
+      referenceId: courseId,
+      currency
+    });
+    if (result.already_paid) return { method: 'already_paid', type: 'certificate', courseId };
+    if (!result.checkout_url) throw new Error('No checkout URL returned from gateway.');
+    window.location.href = result.checkout_url;
+    return { method: 'redirect', type: 'certificate', orderId: result.order_id };
+  },
+
+  /**
+   * Charge a certificate through a Somali e-wallet.
+   * The Edge Function ignores any client-supplied price and uses platform settings.
+   */
+  async createCertificateDirectPayment({ courseId, currency = 'USD', gateway, account }) {
+    return callEdgeFn('createDirectPayment', {
+      type: 'certificate',
+      referenceId: courseId,
+      currency,
+      gateway,
+      account
+    });
+  },
+
   /**
    * Initiate a mentor booking payment.
    * Same geo-detection logic as course payments.
