@@ -15,7 +15,7 @@ interface CreateCheckoutPayload {
 }
 
 interface DirectPaymentPayload {
-  type: 'course' | 'booking' | 'boost' | 'banner' | 'boost_and_banner' | 'certificate';
+  type: 'course' | 'booking' | 'boost' | 'banner' | 'boost_and_banner';
   entityType?: 'course' | 'mentor' | 'mentorship_sessions';
   bannerText?: string;
   planDays?: number;
@@ -105,29 +105,11 @@ async function getCanonicalPrice(supabase: any, type: string, referenceId: strin
     }
     return basePrice;
   } else if (type === 'booking') {
-    const { data: session, error } = await supabase.from('mentorship_sessions').select('mentor_id, mentorship_type, notes, booking_status').eq('id', referenceId).single();
+    const { data: session, error } = await supabase.from('mentorship_sessions').select('price, booking_status').eq('id', referenceId).single();
     if (error || !session) return null;
     // ensure booking hasn't been paid already/is in valid state (pending or pending_payment)
     if (session.booking_status !== 'pending' && session.booking_status !== 'pending_payment') return null;
-
-    const { data: profile, error: pErr } = await supabase.from('mentorship_profiles').select('hourly_rate, monthly_rate').eq('instructor_id', session.mentor_id).single();
-    if (pErr || !profile) return null;
-
-    const isMonthly = session.mentorship_type === 'program' || session.mentorship_type === 'monthly' || (session.notes && session.notes.includes('monthly'));
-    const hourlyRate = Number(profile.hourly_rate || 0);
-    const monthlyRate = profile.monthly_rate ? Number(profile.monthly_rate) : (hourlyRate * 20);
-
-    let basePrice = isMonthly ? monthlyRate : hourlyRate;
-
-    if (payload.couponCode) {
-      const { data: coupon, error: cErr } = await supabase.from('mentorship_coupons').select('discount_percentage, expires_at').eq('mentor_id', session.mentor_id).eq('code', payload.couponCode.toUpperCase()).single();
-      if (!cErr && coupon && new Date(coupon.expires_at) > new Date()) {
-         let dp = Number(coupon.discount_percentage || 0);
-         basePrice = basePrice * (1 - (dp / 100));
-      }
-    }
-
-    return basePrice;
+    return Number(session.price);
   } else if (type === 'boost' || type === 'banner' || type === 'boost_and_banner') {
     if (!payload.promotionOrderId) return null;
     const { data: order, error: orderErr } = await supabase.from('promotion_orders').select('canonical_amount, status, payer_id').eq('id', payload.promotionOrderId).single();
@@ -137,7 +119,6 @@ async function getCanonicalPrice(supabase: any, type: string, referenceId: strin
   }
   return null;
 }
-
 
 async function getCertificateContext(supabase: any, userId: string, courseId: string) {
   const { data: course, error: courseErr } = await supabase
@@ -349,7 +330,6 @@ async function createCheckout(userId: string, payload: CreateCheckoutPayload): P
   const supabase = adminClient();
   
   if (type === 'boost' || type === 'banner' || type === 'boost_and_banner') {
-
     const { data: settings } = await supabase.rpc('get_platform_settings');
     const isCourse = (payload.entityType || 'course') === 'course';
     if (type === 'boost' || type === 'boost_and_banner') {
@@ -364,28 +344,6 @@ async function createCheckout(userId: string, payload: CreateCheckoutPayload): P
 
   const orderId  = generateOrderId();
   const returnUrl = `${RETURN_URL_BASE}/src/pages/payment/return/index.html?order_id=${orderId}`;
-
-  // Reuse the single payment row allowed for a student/course.
-  // Failed or pending attempts must not block a legitimate retry.
-  let existingCoursePayment: { id: string; payment_status: string; verification_status: string } | null = null;
-  if (type === 'course') {
-    const { data: existing } = await supabase
-      .from('payments')
-      .select('id, payment_status, verification_status')
-      .eq('student_id', userId)
-      .eq('course_id', referenceId)
-      .maybeSingle();
-
-    existingCoursePayment = existing;
-
-    if (existingCoursePayment?.payment_status === 'paid' || existingCoursePayment?.verification_status === 'verified') {
-      await supabase.from('enrollments').upsert(
-        { student_id: userId, course_id: referenceId },
-        { onConflict: 'student_id,course_id', ignoreDuplicates: true }
-      );
-      return json({ status: 'already_paid', already_paid: true, type: 'course', referenceId });
-    }
-  }
 
   // ==========================================
   // CRITICAL PHASE 5 FIX: CANONICAL PRICE 
@@ -428,13 +386,9 @@ async function createCheckout(userId: string, payload: CreateCheckoutPayload): P
     await supabase.from('mentorship_sessions').update({ booking_status: 'pending_payment' }).eq('id', referenceId);
   }
 
-  const payQuery = existingCoursePayment
-    ? supabase.from('payments').update(paymentRow).eq('id', existingCoursePayment.id)
-    : supabase.from('payments').insert(paymentRow);
-
-  const { error: payErr } = await payQuery;
+  const { error: payErr } = await supabase.from('payments').insert(paymentRow);
   if (payErr) {
-    console.error('Payment record error:', payErr);
+    console.error('Payment insert error:', payErr);
     return err('Failed to initialize payment record.', 500, payErr);
   }
 
@@ -465,28 +419,6 @@ async function createDirectPayment(userId: string, token: string, payload: Direc
   }
 
   const orderId  = generateOrderId();
-
-  // Reuse the single payment row allowed for a student/course.
-  // Failed or pending attempts must not block a legitimate retry.
-  let existingCoursePayment: { id: string; payment_status: string; verification_status: string } | null = null;
-  if (type === 'course') {
-    const { data: existing } = await supabase
-      .from('payments')
-      .select('id, payment_status, verification_status')
-      .eq('student_id', userId)
-      .eq('course_id', referenceId)
-      .maybeSingle();
-
-    existingCoursePayment = existing;
-
-    if (existingCoursePayment?.payment_status === 'paid' || existingCoursePayment?.verification_status === 'verified') {
-      await supabase.from('enrollments').upsert(
-        { student_id: userId, course_id: referenceId },
-        { onConflict: 'student_id,course_id', ignoreDuplicates: true }
-      );
-      return json({ status: 'already_paid', already_paid: true, type: 'course', referenceId });
-    }
-  }
 
   // ==========================================
   // CRITICAL PHASE 5 FIX: CANONICAL PRICE 
@@ -524,33 +456,12 @@ async function createDirectPayment(userId: string, token: string, payload: Direc
     paymentRow.mentorship_session_id = referenceId;
   }
 
-  let safePaymentId: string;
-  if (existingCoursePayment) {
-    const { data: updatedPayment, error: payErr } = await supabase
-      .from('payments')
-      .update(paymentRow)
-      .eq('id', existingCoursePayment.id)
-      .select('id')
-      .single();
-
-    if (payErr || !updatedPayment) {
-      console.error('Payment update error:', payErr);
-      return err('Failed to record payment.', 500, payErr);
-    }
-    safePaymentId = updatedPayment.id;
-  } else {
-    const { data: insertedPayment, error: payErr } = await supabase
-      .from('payments')
-      .insert(paymentRow)
-      .select('id')
-      .single();
-
-    if (payErr || !insertedPayment) {
-      console.error('Payment insert error:', payErr);
-      return err('Failed to record payment.', 500, payErr);
-    }
-    safePaymentId = insertedPayment.id;
+  const { data: insertedPayment, error: payErr } = await supabase.from('payments').insert(paymentRow).select('id').single();
+  if (payErr || !insertedPayment) {
+    console.error('Payment insert error:', payErr);
+    return err('Failed to record payment.', 500, payErr);
   }
+  const safePaymentId = insertedPayment.id;
 
   const { data: settings } = await supabase.rpc('get_platform_settings');
   const commEnabled = settings?.commission_enabled === true;
