@@ -90,6 +90,7 @@ GRANT SELECT ON public.certificate_orders TO authenticated;
 CREATE OR REPLACE FUNCTION public.get_certificate_generation_status(p_student_id uuid, p_course_id uuid)
 RETURNS jsonb
 LANGUAGE plpgsql
+STABLE
 SECURITY DEFINER
 SET search_path = ''
 AS $function$
@@ -129,8 +130,7 @@ BEGIN
 
   SELECT * INTO v_cert
   FROM public.certificates
-  WHERE student_id = p_student_id AND course_id = p_course_id
-  FOR UPDATE;
+  WHERE student_id = p_student_id AND course_id = p_course_id;
 
   SELECT COALESCE(ps.certificate_payment_enabled, false),
          COALESCE(ps.certificate_price, 1),
