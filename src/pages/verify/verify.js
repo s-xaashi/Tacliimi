@@ -11,23 +11,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const urlCode = urlParams.get('code') || urlParams.get('id');
 
     if (urlCode) {
-        input.value = urlCode.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8);
+        input.value = normalizeCode(urlCode);
         if (input.value.length === 8) {
             verifyCode(input.value);
         }
     }
 
     input.addEventListener('input', (event) => {
-        event.target.value = event.target.value
-            .replace(/[^A-Za-z0-9]/g, '')
-            .toUpperCase()
-            .slice(0, 8);
+        event.target.value = normalizeCode(event.target.value);
         clearResult();
     });
 
     form.addEventListener('submit', (event) => {
         event.preventDefault();
-        const code = input.value.trim();
+        const code = normalizeCode(input.value);
+        input.value = code;
 
         if (code.length !== 8) {
             showError('Please enter the complete 8-character verification code.');
@@ -64,8 +62,8 @@ document.addEventListener('DOMContentLoaded', () => {
         resultContainer.classList.add('hidden');
 
         btn.innerHTML = isLoading
-            ? '<span class="material-symbols-outlined spin">sync</span><span>Verifying...</span>'
-            : '<span class="material-symbols-outlined">search</span><span>Verify certificate</span>';
+            ? '<svg class="btn-icon loading-icon spin" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M20 5v5h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Verifying...</span>'
+            : '<svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="m16 16 5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>Verify certificate</span>';
     }
 
     function showValidCertificate(cert) {
@@ -76,7 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="result-card valid">
                 <div class="result-header">
                     <div class="result-icon">
-                        <span class="material-symbols-outlined">verified</span>
+                        <svg class="result-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2 1.2 2.3-.1 1.1 2 2 1.1-.1 2.3 1.2 2-1.2 2 .1 2.3-2 1.1-1.1 2-2.3-.1L12 21l-2-1.2-2.3.1-1.1-2-2-1.1.1-2.3-1.2-2 1.2-2-.1-2.3 2-1.1 1.1-2 2.3.1L12 3z" fill="currentColor"/><path d="m8.5 12 2.2 2.2 4.8-5" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </div>
                     <div>
                         <h2 class="result-title">Certificate verified</h2>
@@ -117,13 +115,24 @@ document.addEventListener('DOMContentLoaded', () => {
         resultContainer.innerHTML = `
             <div class="result-card invalid">
                 <div class="result-icon">
-                    <span class="material-symbols-outlined">error</span>
+                    <svg class="result-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4a8 8 0 1 0 8 8 8 8 0 0 0-8-8z" fill="currentColor"/><path d="M12 8v5" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="16.5" r="1" fill="#fff"/></svg>
                 </div>
                 <h2 class="result-title">Verification unsuccessful</h2>
                 <p class="invalid-message">${escapeHtml(message)}</p>
             </div>
         `;
         resultContainer.classList.remove('hidden');
+    }
+
+    function normalizeCode(value) {
+        const withoutPrefix = String(value ?? '')
+            .toUpperCase()
+            .trim()
+            .replace(/^CERT[\s-]*/, '');
+
+        return withoutPrefix
+            .replace(/[^A-Z0-9]/g, '')
+            .slice(0, 8);
     }
 
     function clearResult() {
