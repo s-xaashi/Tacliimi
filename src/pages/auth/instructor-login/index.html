@@ -44,7 +44,6 @@
 
             <script type="module">
                 import { AuthService } from '/src/services/authService.js';
-                import { supabase } from '/src/services/supabaseClient.js';
 
                 // Prevent access if already logged in
                 AuthService.getSession().then(async session => {
@@ -63,7 +62,7 @@
                 // Google OAuth Flow
                 document.getElementById('google-login-btn').addEventListener('click', async () => {
                     const btn = document.getElementById('google-login-btn');
-                    btn.innerHTML = '<span class="material-symbols-outlined animate-spin mr-2">refresh</span> Connecting...';
+                    btn.innerText = 'Connecting to Google...';
                     try {
                         await AuthService.signInWithGoogle('instructor');
                     } catch (err) {
