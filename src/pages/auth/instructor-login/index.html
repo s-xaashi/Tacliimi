@@ -23,34 +23,7 @@
         <div class="relative z-10">
             <div class="flex items-center justify-center mb-8 cursor-pointer"
                 onclick="window.location.href='/index.html'">
-                <img src="/public/assets/images/IMG_7454.png" alt="Tacliimi" class="h-11 w-auto mx-auto object-contain dark:hidden">
-                <img src="/public/assets/images/logo-dark.png" alt="Tacliimi" class="h-11 w-auto mx-auto object-contain hidden dark:block">
-            </div>
-
-            <div class="mb-10 text-center">
-                <h1 class="text-2xl font-extrabold mb-2">Welcome Back, Instructor</h1>
-                <p class="text-slate-500 text-sm">Log in to manage your courses and students.</p>
-            </div>
-
-            <button type="button" id="google-login-btn"
-                class="w-full flex items-center justify-center gap-3 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold py-3.5 rounded-xl transition-all shadow-sm mb-6">
-                <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" class="w-5 h-5">
-                Sign in with Google
-            </button>
-
-            <div class="relative flex py-5 items-center">
-                <div class="flex-grow border-t border-slate-200"></div>
-                <span class="flex-shrink-0 mx-4 text-slate-400 text-sm">Or continue with email</span>
-                <div class="flex-grow border-t border-slate-200"></div>
-            </div>
-
-            <form id="instructorLoginForm" class="space-y-6">
-                <div>
-                    <label class="block text-sm font-semibold mb-2" for="email">Email address</label>
-                    <input
-                        class="w-full bg-slate-50 border-slate-200 rounded-xl px-4 py-3.5 focus:ring-primary focus:border-primary transition-all text-slate-900 placeholder:text-slate-400"
-                        id="email" type="email" placeholder="you@institution.edu" required />
-                </div>
+                <img src="/public/assets/images/IMG_7454.png" alt="Tacliimi" class="h-12 w-auto mx-auto object-contain"></div>
                 <div>
                     <div class="flex items-center justify-between mb-2">
                         <label class="block text-sm font-semibold" for="password">Password</label>
@@ -116,28 +89,10 @@
                         btn.disabled = true;
 
                         // Log them in via Supabase
-                        const data = await AuthService.login(email, password);
+                        const data = await AuthService.login(email, password, 'instructor');
                         const profile = await AuthService.getCurrentProfile();
 
                         // Enforce Role Separation: Reject student accounts trying to log in on Instructor page
-                        if (profile && profile.role === 'student') {
-                            await supabase.auth.signOut();
-                            
-                            const errDiv = document.createElement('div');
-                            errDiv.id = 'login-error';
-                            errDiv.className = 'text-red-600 text-sm font-medium mt-2 p-3 bg-red-50 rounded-xl border border-red-200 flex items-center gap-2';
-                            errDiv.innerHTML = `<span class="material-icons-round text-lg text-red-500">error_outline</span> Student accounts cannot log in on the Instructor Login page. Redirecting to Student Login...`;
-                            e.target.insertBefore(errDiv, btn);
-
-                            btn.innerText = 'Redirecting to Student Login...';
-                            btn.disabled = true;
-                            setTimeout(() => {
-                                window.location.href = '/src/pages/auth/user-login/index.html';
-                            }, 1500);
-                            return;
-                        }
-
-                        // Admin Redirection
                         if (profile && profile.role === 'admin') {
                             btn.innerHTML = 'Admin Success <span class="material-icons-round text-xl">check</span>';
                             btn.classList.replace('bg-primary', 'bg-emerald-500');
