@@ -92,7 +92,7 @@
                         const data = await AuthService.login(email, password, 'instructor');
                         const profile = await AuthService.getCurrentProfile();
 
-                        // Enforce Role Separation: Reject student accounts trying to log in on Instructor page
+                        // Role separation is enforced centrally by AuthService
                         if (profile && profile.role === 'admin') {
                             btn.innerHTML = 'Admin Success <span class="material-icons-round text-xl">check</span>';
                             btn.classList.replace('bg-primary', 'bg-emerald-500');
