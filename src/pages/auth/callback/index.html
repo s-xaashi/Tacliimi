@@ -69,9 +69,11 @@
 
                 // 1. New users default to 'student' to prevent privilege escalation.
                 // Privileged roles must be created via trusted backend API flows, not raw OAuth metadata.
-                const pendingRole = 'student';
-                    
-                localStorage.removeItem('tacliimi_pending_role'); // Clean up unused legacy key
+                const pendingRole = sessionStorage.getItem('tacliimi_pending_role') || 'student';
+                const requestedRole = pendingRole === 'mentor' ? 'instructor' : pendingRole;
+
+                sessionStorage.removeItem('tacliimi_pending_role');
+                localStorage.removeItem('tacliimi_pending_role');
 
                 // 2. Fetch authoritative profile from the database
                 const { data: existingProfile, error: profileError } = await supabase
@@ -93,7 +95,7 @@
                         .insert([{
                             id: session.user.id,
                             email: session.user.email,
-                            role: pendingRole,
+                            role: requestedRole
                             full_name: session.user.user_metadata?.full_name || session.user.email.split('@')[0],
                             avatar_url: session.user.user_metadata?.avatar_url || ''
                         }]);
@@ -105,8 +107,29 @@
                     }
                     actualRole = pendingRole;
                 } else {
-                    // Existing user - DB role ALWAYS wins. Never trust localStorage/metadata over DB.
+                    // Existing OAuth account: database role always wins.
                     actualRole = existingProfile.role;
+
+                    const allowedForRequest = requestedRole === 'instructor'
+                        ? ['instructor', 'mentor', 'admin']
+                        : ['student', 'admin'];
+
+                    if (!allowedForRequest.includes(actualRole)) {
+                        await supabase.auth.signOut();
+
+                        const correctPage = actualRole === 'instructor' || actualRole === 'mentor'
+                            ? '/src/pages/auth/instructor-login/index.html'
+                            : '/src/pages/auth/user-login/index.html';
+
+                        showError(
+                            actualRole === 'instructor' || actualRole === 'mentor'
+                                ? 'This Google account belongs to an instructor. Please use Instructor Login.'
+                                : 'This Google account belongs to a student. Please use Student Login.'
+                        );
+
+                        setTimeout(() => window.location.replace(correctPage), 1800);
+                        return;
+                    }
                 }
 
                 document.getElementById('status-title').textContent = 'Success!';
