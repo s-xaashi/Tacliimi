@@ -77,7 +77,7 @@
                         const profile = await AuthService.getCurrentProfile();
                         if (profile && profile.role === 'admin') {
                             window.location.href = '/src/pages/admin/dashboard/index.html';
-                        } else if (profile && profile.role === 'instructor') {
+                        } else if (profile && (profile.role === 'instructor' || profile.role === 'mentor')) {
                             window.location.href = '/src/pages/instructor/instructor-dashboard/index.html';
                         } else {
                             window.location.href = '/src/pages/student/student-dashboard/index.html';
