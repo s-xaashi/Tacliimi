@@ -67,7 +67,7 @@
             try {
                 if (!session) throw new Error("No active session found.");
 
-                // 1. New users default to 'student' to prevent privilege escalation.
+                // 1. Read the role selected by the page that initiated this OAuth flow.
                 // Privileged roles must be created via trusted backend API flows, not raw OAuth metadata.
                 const pendingRole = sessionStorage.getItem('tacliimi_pending_role') || 'student';
                 const requestedRole = pendingRole === 'mentor' ? 'instructor' : pendingRole;
@@ -95,7 +95,7 @@
                         .insert([{
                             id: session.user.id,
                             email: session.user.email,
-                            role: requestedRole
+                            role: requestedRole,
                             full_name: session.user.user_metadata?.full_name || session.user.email.split('@')[0],
                             avatar_url: session.user.user_metadata?.avatar_url || ''
                         }]);
@@ -105,7 +105,7 @@
                         window.location.replace('/src/pages/auth/login-select/index.html?error=profile_creation_failed');
                         return;
                     }
-                    actualRole = pendingRole;
+                    actualRole = requestedRole;
                 } else {
                     // Existing OAuth account: database role always wins.
                     actualRole = existingProfile.role;
