@@ -96,7 +96,8 @@ export const AuthService = {
      */
     async signInWithGoogle(role = 'student') {
         // Store intended role before redirecting so callback knows what to create
-        localStorage.setItem('tacliimi_pending_role', role);
+        sessionStorage.setItem('tacliimi_pending_role', role);
+        localStorage.removeItem('tacliimi_pending_role');
 
         const { data, error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
@@ -117,7 +118,7 @@ export const AuthService = {
      * Login existing user (Student/Instructor) or Administrator
      * Supports either email or username for Admins.
      */
-    async login(emailOrUsername, password) {
+    async login(emailOrUsername, password, expectedRole = null) {
         let email = emailOrUsername ? emailOrUsername.trim() : '';
 
         // 1. Check if it's a username (no '@' sign)
@@ -224,13 +225,29 @@ export const AuthService = {
             // Priority 2: Check global account status (blocked/suspended)
             const { data: profile } = await supabase
                 .from('profiles')
-                .select('account_status')
+                .select('account_status, role')
                 .eq('id', data.user.id)
                 .maybeSingle();
 
             if (profile?.account_status === 'blocked' || profile?.account_status === 'suspended') {
                 await supabase.auth.signOut();
                 throw new Error('Your account has been blocked by an administrator. Please contact support if you believe this is an error.');
+            }
+
+            if (expectedRole && !adminAuth) {
+                const allowedRoles = expectedRole === 'instructor'
+                    ? ['instructor', 'mentor']
+                    : [expectedRole];
+
+                if (!profile?.role || !allowedRoles.includes(profile.role)) {
+                    await supabase.auth.signOut();
+
+                    if (expectedRole === 'student') {
+                        throw new Error('This is an instructor account. Please use the Instructor Login page.');
+                    }
+
+                    throw new Error('This is a student account. Please use the Student Login page.');
+                }
             }
         }
 
