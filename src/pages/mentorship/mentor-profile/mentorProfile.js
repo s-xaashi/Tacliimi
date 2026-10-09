@@ -57,7 +57,7 @@ function renderProfile(mentor) {
     // 1. Booking Button - Do this FIRST so it works even if other rendering fails
     const bookBtn = document.getElementById('book-session-btn');
     if (bookBtn) {
-        const bookingUrl = `/src/pages/mentorship/mentor-booking/index.html?id=${mentor.instructor_id}`;
+        const bookingUrl = `/mentor-booking/?id=${mentor.instructor_id}`;
         bookBtn.setAttribute('href', bookingUrl);
         // Add a click handler as fallback
         bookBtn.onclick = (e) => {
