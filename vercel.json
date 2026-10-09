@@ -32,6 +32,101 @@
       "source": "/src/pages/auth/login/",
       "destination": "/login/",
       "permanent": true
+    },
+    {
+      "source": "/src/pages/auth/user-login/index.html",
+      "destination": "/student-login/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/auth/user-login/",
+      "destination": "/student-login/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/auth/instructor-login/index.html",
+      "destination": "/instructor-login/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/auth/instructor-login/",
+      "destination": "/instructor-login/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/auth/login-select/index.html",
+      "destination": "/login-options/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/auth/login-select/",
+      "destination": "/login-options/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/auth/callback/index.html",
+      "destination": "/auth/callback/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/auth/forgot-password/index.html",
+      "destination": "/forgot-password/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/auth/forgot-password/",
+      "destination": "/forgot-password/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/instructor/become-instructor/index.html",
+      "destination": "/become-instructor/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/instructor/become-instructor/",
+      "destination": "/become-instructor/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/student/student-dashboard/index.html",
+      "destination": "/student/dashboard/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/student/student-dashboard/",
+      "destination": "/student/dashboard/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/instructor/instructor-dashboard/index.html",
+      "destination": "/instructor/dashboard/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/instructor/instructor-dashboard/",
+      "destination": "/instructor/dashboard/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/admin/dashboard/index.html",
+      "destination": "/admin/dashboard/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/admin/dashboard/",
+      "destination": "/admin/dashboard/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/auth/user-register/index.html",
+      "destination": "/register/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/auth/instructor-register/index.html",
+      "destination": "/instructor-register/",
+      "permanent": false
     }
   ],
   "rewrites": [
@@ -50,6 +145,46 @@
     {
       "source": "/auth/callback/",
       "destination": "/src/pages/auth/callback/index.html"
+    },
+    {
+      "source": "/student-login/",
+      "destination": "/src/pages/auth/user-login/index.html"
+    },
+    {
+      "source": "/instructor-login/",
+      "destination": "/src/pages/auth/instructor-login/index.html"
+    },
+    {
+      "source": "/login-options/",
+      "destination": "/src/pages/auth/login-select/index.html"
+    },
+    {
+      "source": "/forgot-password/",
+      "destination": "/src/pages/auth/forgot-password/index.html"
+    },
+    {
+      "source": "/become-instructor/",
+      "destination": "/src/pages/instructor/become-instructor/index.html"
+    },
+    {
+      "source": "/student/dashboard/",
+      "destination": "/src/pages/student/student-dashboard/index.html"
+    },
+    {
+      "source": "/instructor/dashboard/",
+      "destination": "/src/pages/instructor/instructor-dashboard/index.html"
+    },
+    {
+      "source": "/admin/dashboard/",
+      "destination": "/src/pages/admin/dashboard/index.html"
+    },
+    {
+      "source": "/register/",
+      "destination": "/src/pages/auth/user-register/index.html"
+    },
+    {
+      "source": "/instructor-register/",
+      "destination": "/src/pages/auth/instructor-register/index.html"
     }
   ]
 }
