@@ -127,6 +127,31 @@
       "source": "/src/pages/auth/instructor-register/index.html",
       "destination": "/instructor-register/",
       "permanent": false
+    },
+    {
+      "source": "/src/pages/marketplace/marketplace/index.html",
+      "destination": "/courses/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/mentorship/mentor-marketplace/index.html",
+      "destination": "/mentors/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/auth/login/index.html",
+      "destination": "/login/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/auth/instructor-register/",
+      "destination": "/instructor-register/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/auth/user-register/",
+      "destination": "/register/",
+      "permanent": false
     }
   ],
   "rewrites": [
