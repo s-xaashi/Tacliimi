@@ -157,6 +157,46 @@
       "source": "/src/pages/auth/user-register/",
       "destination": "/register/",
       "permanent": false
+    },
+    {
+      "source": "/src/pages/mentorship/mentor-profile/index.html",
+      "destination": "/mentor-profile/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/mentorship/mentor-profile/",
+      "destination": "/mentor-profile/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/mentorship/mentor-booking/index.html",
+      "destination": "/mentor-booking/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/mentorship/mentor-booking/",
+      "destination": "/mentor-booking/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/marketplace/course-details/index.html",
+      "destination": "/course-details/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/marketplace/course-details/",
+      "destination": "/course-details/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/learning/learning-interface/index.html",
+      "destination": "/learn/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/learning/learning-interface/",
+      "destination": "/learn/",
+      "permanent": false
     }
   ],
   "rewrites": [
@@ -219,6 +259,22 @@
     {
       "source": "/",
       "destination": "/public/index.html"
+    },
+    {
+      "source": "/mentor-profile/",
+      "destination": "/src/pages/mentorship/mentor-profile/index.html"
+    },
+    {
+      "source": "/mentor-booking/",
+      "destination": "/src/pages/mentorship/mentor-booking/index.html"
+    },
+    {
+      "source": "/course-details/",
+      "destination": "/src/pages/marketplace/course-details/index.html"
+    },
+    {
+      "source": "/learn/",
+      "destination": "/src/pages/learning/learning-interface/index.html"
     }
   ]
 }
