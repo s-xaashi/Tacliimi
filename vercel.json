@@ -207,6 +207,71 @@
       "source": "/src/pages/learning/learning-interface/",
       "destination": "/learn/",
       "permanent": false
+    },
+    {
+      "source": "/src/pages/instructor/instructor-courses/",
+      "destination": "/instructor/courses/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/instructor/instructor-courses/index.html",
+      "destination": "/instructor/courses/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/instructor/instructor-mentorship/",
+      "destination": "/instructor/mentorship/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/instructor/instructor-mentorship/index.html",
+      "destination": "/instructor/mentorship/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/instructor/instructor-analytics/",
+      "destination": "/instructor/analytics/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/instructor/instructor-analytics/index.html",
+      "destination": "/instructor/analytics/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/instructor/instructor-earnings/",
+      "destination": "/instructor/earnings/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/instructor/instructor-earnings/index.html",
+      "destination": "/instructor/earnings/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/instructor/instructor-communications/",
+      "destination": "/instructor/communications/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/instructor/instructor-communications/index.html",
+      "destination": "/instructor/communications/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/instructor/instructor-profile/",
+      "destination": "/instructor/profile/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/instructor/instructor-profile/index.html",
+      "destination": "/instructor/profile/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/instructor/instructor-courses/wizard.html",
+      "destination": "/instructor/course-editor/",
+      "permanent": false
     }
   ],
   "rewrites": [
@@ -269,6 +334,34 @@
     {
       "source": "/instructor-register/",
       "destination": "/src/pages/auth/instructor-register/index.html"
+    },
+    {
+      "source": "/instructor/courses/",
+      "destination": "/src/pages/instructor/instructor-courses/index.html"
+    },
+    {
+      "source": "/instructor/mentorship/",
+      "destination": "/src/pages/instructor/instructor-mentorship/index.html"
+    },
+    {
+      "source": "/instructor/analytics/",
+      "destination": "/src/pages/instructor/instructor-analytics/index.html"
+    },
+    {
+      "source": "/instructor/earnings/",
+      "destination": "/src/pages/instructor/instructor-earnings/index.html"
+    },
+    {
+      "source": "/instructor/communications/",
+      "destination": "/src/pages/instructor/instructor-communications/index.html"
+    },
+    {
+      "source": "/instructor/profile/",
+      "destination": "/src/pages/instructor/instructor-profile/index.html"
+    },
+    {
+      "source": "/instructor/course-editor/",
+      "destination": "/src/pages/instructor/instructor-courses/wizard.html"
     },
     {
       "source": "/",
