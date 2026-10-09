@@ -1596,4 +1596,25 @@ window.enrollCourse = async function(courseId) {
     window.location.href = '/src/pages/learning/learning-interface/index.html?course=' + encodeURIComponent(courseId);
 };
 
-document.addEventListener('DOMContentLoaded', initDashboard);
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        await initDashboard();
+    } catch (error) {
+        console.error('Student dashboard initialization failed:', error);
+
+        // Never leave the dashboard marked as loading after an initialization failure.
+        document.querySelectorAll('[aria-busy="true"]').forEach(element => {
+            element.removeAttribute('aria-busy');
+        });
+
+        const dashboardRoot = document.querySelector('main') || document.body;
+        if (!document.getElementById('dashboard-load-error')) {
+            const errorNotice = document.createElement('div');
+            errorNotice.id = 'dashboard-load-error';
+            errorNotice.className = 'mx-auto my-6 max-w-4xl rounded-xl border border-amber-500/40 bg-amber-50 p-4 text-amber-900 dark:bg-amber-950/40 dark:text-amber-100';
+            errorNotice.setAttribute('role', 'alert');
+            errorNotice.innerHTML = '<p class="font-semibold">We could not fully load your dashboard.</p><p class="mt-1 text-sm">Please check your connection and refresh the page. If the problem continues, try signing out and back in.</p><button type="button" class="mt-3 rounded-lg bg-amber-700 px-4 py-2 text-sm font-semibold text-white" onclick="window.location.reload()">Retry</button>';
+            dashboardRoot.prepend(errorNotice);
+        }
+    }
+});
