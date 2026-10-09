@@ -2546,7 +2546,7 @@ window.viewPublicProfile = async function(event) {
     event.preventDefault();
     const session = await AuthService.getSession();
     if (session && session.user) {
-        window.location.href = '/src/pages/instructor/public-profile/index.html?id=' + session.user.id;
+        window.location.href = '/instructor/public-profile/?id=' + session.user.id;
     } else {
         window.location.href = '/login-options/';
     }
