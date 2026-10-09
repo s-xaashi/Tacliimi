@@ -4,6 +4,11 @@
   "outputDirectory": ".",
   "redirects": [
     {
+      "source": "/public/index.html",
+      "destination": "/",
+      "permanent": false
+    },
+    {
       "source": "/src/pages/marketplace/marketplace",
       "destination": "/courses/",
       "permanent": true
@@ -210,6 +215,10 @@
     {
       "source": "/instructor-register/",
       "destination": "/src/pages/auth/instructor-register/index.html"
+    },
+    {
+      "source": "/",
+      "destination": "/public/index.html"
     }
   ]
 }
