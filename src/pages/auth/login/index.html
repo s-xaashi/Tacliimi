@@ -63,6 +63,7 @@
                 </div>
                 <div class="mb-8">
                     <button
+                        id="google-login-btn" type="button"
                         class="w-full flex items-center justify-center px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors group shadow-sm">
                         <svg class="w-5 h-5 mr-3" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
                             <path
@@ -223,6 +224,40 @@
 
             const loginForm = document.getElementById('login-form');
             const errorDiv = document.getElementById('login-error');
+            const googleButton = document.getElementById('google-login-btn');
+
+            // Wire the Google button on this shared login page to the existing OAuth service.
+            // Keep the selected role so student and legacy instructor contexts retain their intent.
+            if (googleButton && roleContext !== 'admin') {
+                const originalGoogleButtonContent = googleButton.innerHTML;
+                googleButton.addEventListener('click', async () => {
+                    if (googleButton.disabled) return;
+                    if (errorDiv) {
+                        errorDiv.textContent = '';
+                        errorDiv.classList.add('hidden');
+                    }
+
+                    const label = googleButton.querySelector('span');
+                    googleButton.disabled = true;
+                    googleButton.setAttribute('aria-busy', 'true');
+                    if (label) label.textContent = 'Connecting to Google...';
+
+                    try {
+                        await AuthService.signInWithGoogle(
+                            roleContext === 'instructor' ? 'instructor' : 'student'
+                        );
+                    } catch (err) {
+                        googleButton.innerHTML = originalGoogleButtonContent;
+                        googleButton.disabled = false;
+                        googleButton.removeAttribute('aria-busy');
+                        if (errorDiv) {
+                            errorDiv.textContent = err.message || 'Google sign-in could not be started. Please try again.';
+                            errorDiv.classList.remove('hidden');
+                        }
+                        console.error('Google sign-in failed to start:', err);
+                    }
+                });
+            }
 
             if (loginForm) {
                 loginForm.addEventListener('submit', async (e) => {
