@@ -1,5 +1,55 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "npm run build:css",
-  "outputDirectory": "."
+  "outputDirectory": ".",
+  "redirects": [
+    {
+      "source": "/src/pages/marketplace/marketplace",
+      "destination": "/courses/",
+      "permanent": true
+    },
+    {
+      "source": "/src/pages/marketplace/marketplace/",
+      "destination": "/courses/",
+      "permanent": true
+    },
+    {
+      "source": "/src/pages/mentorship/mentor-marketplace",
+      "destination": "/mentors/",
+      "permanent": true
+    },
+    {
+      "source": "/src/pages/mentorship/mentor-marketplace/",
+      "destination": "/mentors/",
+      "permanent": true
+    },
+    {
+      "source": "/src/pages/auth/login",
+      "destination": "/login/",
+      "permanent": true
+    },
+    {
+      "source": "/src/pages/auth/login/",
+      "destination": "/login/",
+      "permanent": true
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/courses/",
+      "destination": "/src/pages/marketplace/marketplace/"
+    },
+    {
+      "source": "/mentors/",
+      "destination": "/src/pages/mentorship/mentor-marketplace/index.html"
+    },
+    {
+      "source": "/login/",
+      "destination": "/src/pages/auth/login/index.html"
+    },
+    {
+      "source": "/auth/callback/",
+      "destination": "/src/pages/auth/callback/index.html"
+    }
+  ]
 }
