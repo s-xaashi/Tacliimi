@@ -26,25 +26,35 @@
     <script type="module" src="/src/services/globalProfile.js"></script>
     <script type="module">
         import { AuthService } from '/src/services/authService.js';
-        window.addEventListener('DOMContentLoaded', () => {
-            const googleBtn = document.getElementById('google-login-btn');
-            if (!googleBtn) return;
+        // Module scripts in the head run after HTML parsing, so bind directly to the
+        // student Google button. Keep this flow student-specific; instructor login is untouched.
+        const googleBtn = document.getElementById('google-login-btn');
+        if (googleBtn) {
             googleBtn.addEventListener('click', async () => {
                 const originalText = googleBtn.innerHTML;
+                const errorText = document.getElementById('login-error-text');
+                const errorAlert = document.getElementById('login-error-alert');
+
+                if (errorAlert) errorAlert.classList.add('hidden');
+                if (errorText) errorText.textContent = '';
+
                 googleBtn.disabled = true;
+                googleBtn.setAttribute('aria-busy', 'true');
                 googleBtn.innerHTML = 'Connecting to Google...';
+
                 try {
+                    // This stores the student role intent and redirects through Supabase OAuth.
                     await AuthService.signInWithGoogle('student');
                 } catch (err) {
                     googleBtn.disabled = false;
+                    googleBtn.removeAttribute('aria-busy');
                     googleBtn.innerHTML = originalText;
-                    const errorText = document.getElementById('login-error-text');
-                    const errorAlert = document.getElementById('login-error-alert');
-                    if (errorText) errorText.textContent = err.message || 'Google Sign-In failed.';
+
+                    if (errorText) errorText.textContent = err?.message || 'Google Sign-In failed. Please try again.';
                     if (errorAlert) errorAlert.classList.remove('hidden');
                 }
             });
-        });
+        }
 
         // Prevent access if already logged in
         AuthService.getSession().then(async session => {
