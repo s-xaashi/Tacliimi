@@ -38,7 +38,7 @@
         <div class="spinner mx-auto mb-6"></div>
         <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-2" id="status-title">Authenticating...</h2>
         <p class="text-slate-500 dark:text-slate-400" id="status-message">Please wait while we log you in.</p>
-        <button id="error-btn" onclick="window.location.href='/src/pages/auth/login-select/index.html'"
+        <button id="error-btn" onclick="window.location.href='/login-options/'"
             class="hidden mt-6 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 px-6 py-2 rounded-xl text-sm font-semibold hover:bg-slate-800 dark:hover:bg-white transition">Return
             to Login</button>
     </div>
@@ -100,7 +100,7 @@
 
                     if (insertError) {
                         console.error("Profile insertion failed:", insertError);
-                        window.location.replace('/src/pages/auth/login-select/index.html?error=profile_creation_failed');
+                        window.location.replace('/login-options/?error=profile_creation_failed');
                         return;
                     }
                     actualRole = pendingRole;
@@ -114,11 +114,11 @@
 
                 // 3. Route to correct dashboard instantly
                 if (actualRole === 'instructor' || actualRole === 'mentor') {
-                    window.location.replace('/src/pages/instructor/instructor-dashboard/index.html');
+                    window.location.replace('/instructor/dashboard/');
                 } else if (actualRole === 'admin') {
-                    window.location.replace('/src/pages/admin/dashboard/index.html');
+                    window.location.replace('/admin/dashboard/');
                 } else {
-                    window.location.replace('/src/pages/student/student-dashboard/index.html');
+                    window.location.replace('/student/dashboard/');
                 }
 
             } catch (err) {
