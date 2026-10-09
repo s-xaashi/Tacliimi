@@ -25,7 +25,7 @@
 <aside class="fixed left-0 top-0 h-full w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex-col flex z-[60] -translate-x-full lg:translate-x-0" id="instructor-sidebar">
 
 <nav class="flex-1 p-4 space-y-1" id="instructor-sidebar-nav">
-<a href="/src/pages/instructor/instructor-profile/index.html"
+<a href="/instructor/profile/"
    class="flex items-center gap-3 px-4 py-3 mb-2 border-b border-slate-100 dark:border-slate-800 cursor-pointer lg:hidden">
     <div class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-primary/20 overflow-hidden flex-shrink-0" data-role="profile-image">
         <span class="material-symbols-outlined text-slate-400 w-full h-full flex items-center justify-center">person</span>
@@ -36,27 +36,27 @@
     </div>
     <span class="material-symbols-outlined text-slate-400">chevron_right</span>
 </a>
-<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-dashboard/">
+<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/instructor/dashboard/">
 <span class="material-symbols-outlined">dashboard</span>
                 Dashboard
             </a>
-<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-courses/">
+<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/instructor/courses/">
 <span class="material-symbols-outlined">auto_stories</span>
                 My Courses
             </a>
-<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-mentorship/">
+<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/instructor/mentorship/">
 <span class="material-symbols-outlined">groups</span>
                 Mentorship
             </a>
-<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-analytics/">
+<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/instructor/analytics/">
 <span class="material-symbols-outlined">analytics</span>
                 Analytics
             </a>
-<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-earnings/">
+<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/instructor/earnings/">
 <span class="material-symbols-outlined">payments</span>
                 Earnings
             </a>
-<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-communications/">
+<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/instructor/communications/">
 <span class="material-symbols-outlined">message</span>
                 Communications
             </a>
@@ -73,7 +73,7 @@
     <img src="/public/assets/images/7e3a1f5e-ba08-492e-87fa-6b1c28129e6c-removebg-preview.png" alt="Tacliimi Logo" class="h-10 w-auto object-contain drop-shadow-sm hidden dark:block">
 </a>
 <div class="flex items-center gap-4 hidden lg:flex">
-<div class="flex items-center gap-3 pl-4 border-l border-slate-200 dark:border-slate-800 cursor-pointer hover:opacity-80 transition-opacity" id="global-profile-header-container" onclick="window.location.href='/src/pages/instructor/instructor-profile/index.html'">
+<div class="flex items-center gap-3 pl-4 border-l border-slate-200 dark:border-slate-800 cursor-pointer hover:opacity-80 transition-opacity" id="global-profile-header-container" onclick="window.location.href='/instructor/profile/'">
 <div class="text-right hidden sm:block space-y-1">
 <div class="h-4 w-28 bg-slate-200 dark:bg-slate-700 animate-pulse rounded"></div>
 <div class="h-3 w-16 bg-slate-200 dark:bg-slate-700 animate-pulse rounded ml-auto"></div>
@@ -95,7 +95,7 @@
                         Complete your Instructor Profile to unlock your dashboard features. You must finish setting up
                         your personal info, teaching details, and payout methods before continuing.
                     </p>
-<button class="w-full bg-primary hover:bg-indigo-700 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all" onclick="window.location.href='/src/pages/instructor/instructor-profile/index.html?setup=true'">
+<button class="w-full bg-primary hover:bg-indigo-700 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all" onclick="window.location.href='/instructor/profile/?setup=true'">
                         Complete Profile Setup <span class="material-symbols-outlined text-xl">arrow_forward</span>
 </button>
 </div>
@@ -222,7 +222,7 @@
 <option value="rejected">Rejected</option>
 </select>
 </div>
-<button class="bg-primary hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl flex items-center justify-center gap-2 font-semibold transition-all shadow-lg shadow-indigo-100 dark:shadow-none whitespace-nowrap w-full sm:w-auto mt-2 sm:mt-0" onclick="window.location.href='/src/pages/instructor/instructor-courses/wizard.html'">
+<button class="bg-primary hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl flex items-center justify-center gap-2 font-semibold transition-all shadow-lg shadow-indigo-100 dark:shadow-none whitespace-nowrap w-full sm:w-auto mt-2 sm:mt-0" onclick="window.location.href='/instructor/course-editor/'">
 <span class="material-symbols-outlined text-xl">add_circle</span>
                         Create New Course
                     </button>
@@ -243,7 +243,7 @@
 <h3 class="text-xl font-bold dark:text-white mb-2">You haven't created any courses yet</h3>
 <p class="text-slate-500 max-w-sm mb-8">Your journey as an educator starts here. Create your
                             first course and reach thousands of students worldwide.</p>
-<button class="bg-primary hover:bg-indigo-700 text-white px-8 py-4 rounded-xl flex items-center gap-3 font-semibold transition-all shadow-xl shadow-indigo-200 dark:shadow-none hover:scale-105 active:scale-95" onclick="window.location.href='/src/pages/instructor/instructor-courses/wizard.html'">
+<button class="bg-primary hover:bg-indigo-700 text-white px-8 py-4 rounded-xl flex items-center gap-3 font-semibold transition-all shadow-xl shadow-indigo-200 dark:shadow-none hover:scale-105 active:scale-95" onclick="window.location.href='/instructor/course-editor/'">
 <span class="material-symbols-outlined text-2xl">add_circle</span>
                             Create Your First Course
                         </button>
@@ -541,9 +541,9 @@
                                             ? `<button onclick="withdrawReview('${course.id}')" class="px-4 py-2 md:px-3 md:py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400 rounded-lg text-xs font-bold transition-all max-md:flex-1 w-full" title="Withdraw submission to edit">Withdraw</button>`
                                             : normalizedStatus === 'published'
                                                 ? `<button onclick="editPublishedCourse('${course.id}')" class="px-4 py-2 md:p-2 bg-white dark:bg-slate-800 md:bg-transparent border border-slate-200 dark:border-slate-700 md:border-none shadow-sm md:shadow-none hover:bg-primary/10 hover:text-primary rounded-lg transition-all text-slate-600 dark:text-slate-300 max-md:flex-1 w-full flex items-center justify-center gap-1.5" title="Edit Course"><span class="material-symbols-outlined text-lg">edit</span> <span class="md:hidden text-xs font-semibold">Edit</span></button>`
-                                                : `<button onclick="window.location.href='/src/pages/instructor/instructor-courses/wizard.html?id=${course.id}'" class="px-4 py-2 md:p-2 bg-white dark:bg-slate-800 md:bg-transparent border border-slate-200 dark:border-slate-700 md:border-none shadow-sm md:shadow-none hover:bg-primary/10 hover:text-primary rounded-lg transition-all text-slate-600 dark:text-slate-300 max-md:flex-1 w-full flex items-center justify-center gap-1.5" title="Edit Course"><span class="material-symbols-outlined text-lg">edit</span> <span class="md:hidden text-xs font-semibold">Edit</span></button>`
+                                                : `<button onclick="window.location.href='/instructor/course-editor/?id=${course.id}'" class="px-4 py-2 md:p-2 bg-white dark:bg-slate-800 md:bg-transparent border border-slate-200 dark:border-slate-700 md:border-none shadow-sm md:shadow-none hover:bg-primary/10 hover:text-primary rounded-lg transition-all text-slate-600 dark:text-slate-300 max-md:flex-1 w-full flex items-center justify-center gap-1.5" title="Edit Course"><span class="material-symbols-outlined text-lg">edit</span> <span class="md:hidden text-xs font-semibold">Edit</span></button>`
                                         }
-                                        <button onclick="window.location.href='/src/pages/learning/learning-interface/index.html?id=${course.id}'" 
+                                        <button onclick="window.location.href='/learn/?id=${course.id}'" 
                                             class="px-4 py-2 md:p-2 bg-white dark:bg-slate-800 md:bg-transparent border border-slate-200 dark:border-slate-700 md:border-none shadow-sm md:shadow-none hover:bg-emerald-500/10 hover:text-emerald-500 rounded-lg transition-all text-slate-600 dark:text-slate-300 max-md:flex-1 w-full flex items-center justify-center gap-1.5" title="Preview Course">
                                             <span class="material-symbols-outlined text-lg">visibility</span> <span class="md:hidden text-xs font-semibold">Preview</span>
                                         </button>
@@ -604,7 +604,7 @@
 
                 try {
                     const revisionId = await CourseService.getOrCreateCourseRevision(courseId);
-                    window.location.href = `/src/pages/instructor/instructor-courses/wizard.html?id=${revisionId}&revision=true`;
+                    window.location.href = `/instructor/course-editor/?id=${revisionId}&revision=true`;
                 } catch (error) {
                     console.error("Failed to edit course:", error);
                     window.showToast("Failed to start editing. Please try again.", "error");
@@ -650,7 +650,7 @@
 </div>
 <!-- Router Logic -->
 <script src="/src/utils/js/instructor-app.js" type="module"></script>
-<script type="module" src="/src/pages/instructor/instructor-mentorship/mentorship.js"></script>
+<script type="module" src="/instructor/mentorship/mentorship.js"></script>
 <script>
 (function() {
     var btn = document.getElementById('instructor-mobile-menu-btn');
