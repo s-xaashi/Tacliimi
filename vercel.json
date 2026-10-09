@@ -94,6 +94,16 @@
       "permanent": false
     },
     {
+      "source": "/src/pages/student/account-settings/index.html",
+      "destination": "/student/account-settings/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/student/account-settings/",
+      "destination": "/student/account-settings/",
+      "permanent": false
+    },
+    {
       "source": "/src/pages/student/student-dashboard/index.html",
       "destination": "/student/dashboard/",
       "permanent": false
@@ -235,6 +245,10 @@
     {
       "source": "/become-instructor/",
       "destination": "/src/pages/instructor/become-instructor/index.html"
+    },
+    {
+      "source": "/student/account-settings/",
+      "destination": "/src/pages/student/account-settings/index.html"
     },
     {
       "source": "/student/dashboard/",
