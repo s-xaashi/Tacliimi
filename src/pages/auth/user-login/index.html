@@ -271,6 +271,24 @@
                         checkAndRestoreLockout(emailInput.value.trim());
                     });
 
+                    // The Google button must explicitly start Supabase OAuth.
+                    const googleLoginBtn = document.getElementById('student-google-login-btn');
+                    if (googleLoginBtn) {
+                        const originalGoogleButton = googleLoginBtn.innerHTML;
+                        googleLoginBtn.addEventListener('click', async () => {
+                            hideError();
+                            googleLoginBtn.disabled = true;
+                            googleLoginBtn.innerHTML = '<span class="text-sm font-semibold">Connecting to Google...</span>';
+                            try {
+                                await AuthService.signInWithGoogle('student');
+                            } catch (err) {
+                                googleLoginBtn.disabled = false;
+                                googleLoginBtn.innerHTML = originalGoogleButton;
+                                showError(err?.message || 'Google sign-in could not be started. Please try again.');
+                            }
+                        });
+                    }
+
                     loginForm.addEventListener('submit', async (e) => {
                         e.preventDefault();
                         hideError();
