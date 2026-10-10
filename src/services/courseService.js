@@ -903,6 +903,16 @@ export const CourseService = {
         return data;
     },
 
+    async getCertificateGenerationStatus(studentId, courseId) {
+        const { data, error } = await supabase
+            .rpc('get_certificate_generation_status', {
+                p_student_id: studentId,
+                p_course_id: courseId
+            });
+        if (error) throw error;
+        return data;
+    },
+
     async generateCertificate(studentId, courseId) {
         const { data, error } = await supabase
             .rpc('generate_certificate', { p_student_id: studentId, p_course_id: courseId })
