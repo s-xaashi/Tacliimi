@@ -101,7 +101,7 @@ export const AuthService = {
         const { data, error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
-                redirectTo: `${window.location.origin}/src/pages/auth/callback/index.html`
+                redirectTo: `${window.location.origin}/auth/callback/`
             }
         });
 
