@@ -22,7 +22,7 @@ BEGIN
 
     RETURN is_found;
 END;
-$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = '';
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = '';
 
 -- Grant execution to anonymous and authenticated users so prospective students can check email availability
 REVOKE ALL ON FUNCTION public.check_email_exists(text) FROM PUBLIC;
