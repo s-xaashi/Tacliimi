@@ -151,6 +151,49 @@
 
             <div class="settings-card">
                 <h3 class="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2 mb-6">
+                    <span class="material-symbols-outlined text-amber-500">workspace_premium</span>
+                    Certificate Payments
+                </h3>
+                <div class="space-y-6">
+                    <div class="flex items-start justify-between gap-6 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
+                        <div class="flex-1">
+                            <p class="text-sm font-bold text-slate-900 dark:text-white">Require Payment for Certificates</p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">When enabled, students must pay the configured certificate price before generating a certificate. The free-generation limit is ignored while payment is required.</p>
+                            <p id="certificate-payment-toggle-status" class="text-[10px] text-slate-400 uppercase tracking-widest font-black mt-2">Status: Loading...</p>
+                        </div>
+                        <button id="certificate-payment-toggle-btn"
+                            class="flex-shrink-0 w-12 h-6 rounded-full relative transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 bg-slate-300 dark:bg-slate-600"
+                            aria-label="Toggle certificate payments">
+                            <div id="certificate-payment-toggle-thumb" class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200"></div>
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="space-y-2">
+                            <label for="certificate-price-input" class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Certificate Price (USD)</label>
+                            <input id="certificate-price-input" type="number" min="0" step="0.01"
+                                class="w-full px-4 py-3.5 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-indigo-500 transition-all"
+                                placeholder="1.00">
+                        </div>
+                        <div class="space-y-2">
+                            <label for="certificate-free-limit-input" class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Free Generation Limit</label>
+                            <input id="certificate-free-limit-input" type="number" min="0" step="1"
+                                class="w-full px-4 py-3.5 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-indigo-500 transition-all"
+                                placeholder="3">
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-3 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-100 dark:border-amber-800/30">
+                        <span class="material-symbols-outlined text-amber-500 text-lg flex-shrink-0 mt-0.5">info</span>
+                        <p class="text-xs text-amber-700 dark:text-amber-400 leading-relaxed">
+                            <span class="font-black">Free mode:</span> students can generate/download their certificate up to the configured limit. Once the limit is reached, the certificate payment checkout is shown. A successful payment unlocks further generations for that course.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-card">
+                <h3 class="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2 mb-6">
                     <span class="material-symbols-outlined text-indigo-600">video_library</span>
                     Video Hosting
                 </h3>
@@ -197,6 +240,40 @@
             themeToggle.innerHTML = `<span class="material-symbols-outlined">${isDark ? 'light_mode' : 'dark_mode'}</span>`;
         });
 
+        // ---- Certificate Payment Controls ----
+        const certToggleBtn = document.getElementById('certificate-payment-toggle-btn');
+        const certToggleThumb = document.getElementById('certificate-payment-toggle-thumb');
+        const certToggleStatus = document.getElementById('certificate-payment-toggle-status');
+        const certPriceInput = document.getElementById('certificate-price-input');
+        const certLimitInput = document.getElementById('certificate-free-limit-input');
+
+        function applyCertificatePaymentState(enabled) {
+            if (enabled) {
+                certToggleBtn.classList.remove('bg-slate-300', 'dark:bg-slate-600');
+                certToggleBtn.classList.add('bg-indigo-600');
+                certToggleThumb.style.transform = 'translateX(24px)';
+                certToggleStatus.textContent = 'Status: Enabled — payment required';
+            } else {
+                certToggleBtn.classList.remove('bg-indigo-600');
+                certToggleBtn.classList.add('bg-slate-300', 'dark:bg-slate-600');
+                certToggleThumb.style.transform = 'translateX(0)';
+                certToggleStatus.textContent = 'Status: Disabled — free generation limit applies';
+            }
+            _settings.certificate_payment_enabled = enabled;
+        }
+
+        certToggleBtn?.addEventListener('click', () => {
+            applyCertificatePaymentState(!_settings.certificate_payment_enabled);
+        });
+
+        certPriceInput?.addEventListener('input', () => {
+            _settings.certificate_price = Math.max(0, Number(certPriceInput.value || 0));
+        });
+
+        certLimitInput?.addEventListener('input', () => {
+            _settings.certificate_free_generation_limit = Math.max(0, Math.floor(Number(certLimitInput.value || 0)));
+        });
+
         // ---- Video Upload Toggle ----
         let _settings = {}; // in-memory settings object for Commit Changes
 
@@ -230,6 +307,9 @@
                 }
             }
             applyToggleState(!!_settings.self_hosted_video_uploads_enabled);
+            applyCertificatePaymentState(!!_settings.certificate_payment_enabled);
+            if (certPriceInput) certPriceInput.value = Number(_settings.certificate_price ?? 1).toFixed(2);
+            if (certLimitInput) certLimitInput.value = Math.max(0, Math.floor(Number(_settings.certificate_free_generation_limit ?? 3)));
         })();
 
         toggleBtn?.addEventListener('click', () => {
@@ -239,6 +319,13 @@
         // ---- Commit Changes ----
         document.getElementById('settings-commit-btn')?.addEventListener('click', async () => {
             const btn = document.getElementById('settings-commit-btn');
+            _settings.certificate_price = Math.max(0, Number(certPriceInput?.value || 0));
+            _settings.certificate_free_generation_limit = Math.max(0, Math.floor(Number(certLimitInput?.value || 0)));
+            if (!Number.isFinite(_settings.certificate_price) || !Number.isFinite(_settings.certificate_free_generation_limit)) {
+                btn.textContent = 'Invalid certificate settings';
+                setTimeout(() => { btn.textContent = 'Commit Changes'; btn.disabled = false; }, 2500);
+                return;
+            }
             btn.textContent = 'Saving...';
             btn.disabled = true;
             const result = await financeSettingsService.updateSettings(_settings);

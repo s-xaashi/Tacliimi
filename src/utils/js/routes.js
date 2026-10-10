@@ -12,23 +12,23 @@
 
 /** Instructor-area routes */
 export const INSTRUCTOR = {
-    DASHBOARD:       '/src/pages/instructor/instructor-dashboard/',
-    COURSES:         '/src/pages/instructor/instructor-courses/',
-    MENTORSHIP:      '/src/pages/instructor/instructor-mentorship/',
-    MENTORSHIP_REQ:  '/src/pages/instructor/instructor-mentorship/#requests',
-    ANALYTICS:       '/src/pages/instructor/instructor-analytics/',
-    EARNINGS:        '/src/pages/instructor/instructor-earnings/',
-    COMMUNICATIONS:  '/src/pages/instructor/instructor-communications/',
-    PROFILE:         '/src/pages/instructor/instructor-profile/',
-    AVAILABILITY:    '/src/pages/instructor/instructor-availability/',
-    BECOME:          '/src/pages/instructor/become-instructor/',
+    DASHBOARD:       '/instructor/dashboard/',
+    COURSES:         '/instructor/courses/',
+    MENTORSHIP:      '/instructor/mentorship/',
+    MENTORSHIP_REQ:  '/instructor/mentorship/#requests',
+    ANALYTICS:       '/instructor/analytics/',
+    EARNINGS:        '/instructor/earnings/',
+    COMMUNICATIONS:  '/instructor/communications/',
+    PROFILE:         '/instructor/profile/',
+    AVAILABILITY:    '/instructor/availability/',
+    BECOME:          '/become-instructor/',
 };
 
 /** Student-area routes */
 export const STUDENT = {
-    DASHBOARD:       '/src/pages/student/student-dashboard/',
-    DASHBOARD_MENTORS: '/src/pages/student/student-dashboard/#my-mentors',
-    ACCOUNT:         '/src/pages/student/account-settings/',
+    DASHBOARD:       '/student/dashboard/',
+    DASHBOARD_MENTORS: '/student/dashboard/#my-mentors',
+    ACCOUNT:         '/student/account-settings/',
 };
 
 /** Admin-area routes */
@@ -45,10 +45,10 @@ export const ADMIN = {
 /** Public-facing routes */
 export const PUBLIC = {
     HOME:            '/index.html',
-    MARKETPLACE:     '/src/pages/marketplace/',
+    MARKETPLACE:     '/courses/',
     MENTOR_PROFILE:  (serialId) => `/src/pages/instructor/public-profile/?id=${serialId}`,
-    COURSE_DETAIL:   (courseId)  => `/src/pages/course-detail/?id=${courseId}`,
-    VERIFY:          '/src/pages/verify/',
+    COURSE_DETAIL:   (courseId)  => `/course-details/?id=${courseId}`,
+    VERIFY:          '/verify/',
 };
 
 /** Consolidated ROUTES export for convenience */

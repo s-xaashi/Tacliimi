@@ -474,7 +474,7 @@ function renderMentors(mentors) {
 
         // Added flex flex-col h-full and boost ring
         card.className = `group bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-4 md:p-5 hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-none transition-all duration-300 flex flex-col h-full cursor-pointer ${boostRing}`;
-        card.onclick = () => window.location.href = `/src/pages/mentorship/mentor-profile/index.html?id=${mentor.instructor_id}`;
+        card.onclick = () => window.location.href = `/mentor-profile/?id=${mentor.instructor_id}`;
         
         const isWishlisted = wishlistedMentorIds.has(mentor.instructor_id);
         const favIcon = isWishlisted ? 'favorite' : 'favorite_border';
@@ -514,7 +514,7 @@ function renderMentors(mentors) {
             <div class="mb-3 md:mb-4">
                 <div class="flex items-center gap-2 mb-1">
                     <h3 class="text-sm md:text-base font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors line-clamp-1 cursor-pointer" 
-                        onclick="window.location.href='/src/pages/mentorship/mentor-profile/index.html?id=${mentor.instructor_id}'">
+                        onclick="window.location.href='/mentor-profile/?id=${mentor.instructor_id}'">
                         ${mentor.full_name}
                     </h3>
                     ${mentor.country ? `<span class="text-[9px] md:text-[10px] text-slate-400">📍 ${mentor.country}</span>` : ''}
@@ -552,7 +552,7 @@ function renderMentors(mentors) {
 
             ${bannerHtml}
 
-            <a href="/src/pages/mentorship/mentor-profile/index.html?id=${mentor.instructor_id}" 
+            <a href="/mentor-profile/?id=${mentor.instructor_id}" 
                class="mt-auto block w-full py-2.5 md:py-3 rounded-xl bg-slate-900 dark:bg-primary text-white text-center text-sm font-bold hover:bg-primary dark:hover:bg-primary/90 transition-all shadow-lg shadow-slate-200 dark:shadow-none">
                 View Profile
             </a>

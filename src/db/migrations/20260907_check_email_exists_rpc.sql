@@ -22,7 +22,8 @@ BEGIN
 
     RETURN is_found;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = '';
 
 -- Grant execution to anonymous and authenticated users so prospective students can check email availability
-GRANT EXECUTE ON FUNCTION check_email_exists(text) TO anon, authenticated;
+REVOKE ALL ON FUNCTION public.check_email_exists(text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.check_email_exists(text) TO anon, authenticated;

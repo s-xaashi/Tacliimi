@@ -24,7 +24,7 @@
         
         if (!isOAuthRedirect) {
             AuthService.getSession().then(session => {
-                if (!session) window.location.href = '/src/pages/auth/login-select/index.html';
+                if (!session) window.location.href = '/login-options/';
             });
         }
     </script>
@@ -33,7 +33,7 @@
 <aside class="fixed left-0 top-0 h-full w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex-col flex z-[60] -translate-x-full lg:translate-x-0" id="instructor-sidebar">
 
 <nav class="flex-1 p-4 space-y-1" id="instructor-sidebar-nav">
-<a href="/src/pages/instructor/instructor-profile/index.html"
+<a href="/instructor/profile/"
    class="flex items-center gap-3 px-4 py-3 mb-2 border-b border-slate-100 dark:border-slate-800 cursor-pointer lg:hidden">
     <div class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-primary/20 overflow-hidden flex-shrink-0" data-role="profile-image">
         <span class="material-symbols-outlined text-slate-400 w-full h-full flex items-center justify-center">person</span>
@@ -44,27 +44,27 @@
     </div>
     <span class="material-symbols-outlined text-slate-400">chevron_right</span>
 </a>
-<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-dashboard/">
+<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/instructor/dashboard/">
 <span class="material-symbols-outlined">dashboard</span>
                 Dashboard
             </a>
-<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-courses/">
+<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/instructor/courses/">
 <span class="material-symbols-outlined">auto_stories</span>
                 My Courses
             </a>
-<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-mentorship/">
+<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/instructor/mentorship/">
 <span class="material-symbols-outlined">groups</span>
                 Mentorship
             </a>
-<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-analytics/">
+<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/instructor/analytics/">
 <span class="material-symbols-outlined">analytics</span>
                 Analytics
             </a>
-<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-earnings/">
+<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/instructor/earnings/">
 <span class="material-symbols-outlined">payments</span>
                 Earnings
             </a>
-<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/src/pages/instructor/instructor-communications/">
+<a class="nav-link flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="/instructor/communications/">
 <span class="material-symbols-outlined">message</span>
                 Communications
             </a>
@@ -84,7 +84,7 @@
 <button class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" onclick="document.documentElement.classList.toggle('dark')">
 <span class="material-symbols-outlined">dark_mode</span>
 </button>
-<div class="flex items-center gap-3 pl-4 border-l border-slate-200 dark:border-slate-800 cursor-pointer hover:opacity-80 transition-opacity" id="global-profile-header-container" onclick="window.location.href='/src/pages/instructor/instructor-profile/index.html'">
+<div class="flex items-center gap-3 pl-4 border-l border-slate-200 dark:border-slate-800 cursor-pointer hover:opacity-80 transition-opacity" id="global-profile-header-container" onclick="window.location.href='/instructor/profile/'">
 <div class="text-right hidden sm:block">
 <p class="text-sm font-medium dark:text-white">Instructor account</p>
 <p class="text-xs text-slate-500">ID: 32342</p>

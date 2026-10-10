@@ -32,7 +32,10 @@ export const financeSettingsService = {
                     course_banner_enabled: true,
                     mentor_boost_enabled: true,
                     mentor_banner_enabled: true,
-                    self_hosted_video_uploads_enabled: false
+                    self_hosted_video_uploads_enabled: false,
+                    certificate_payment_enabled: false,
+                    certificate_price: 1,
+                    certificate_free_generation_limit: 3
                 };
             }
             
@@ -59,7 +62,10 @@ export const financeSettingsService = {
                 course_banner_enabled: true,
                 mentor_boost_enabled: true,
                 mentor_banner_enabled: true,
-                self_hosted_video_uploads_enabled: false
+                self_hosted_video_uploads_enabled: false,
+                certificate_payment_enabled: false,
+                certificate_price: 1,
+                certificate_free_generation_limit: 3
             };
         }
     },
@@ -98,6 +104,9 @@ export const financeSettingsService = {
                     mentor_boost_enabled: settings.mentor_boost_enabled,
                     mentor_banner_enabled: settings.mentor_banner_enabled,
                     self_hosted_video_uploads_enabled: settings.self_hosted_video_uploads_enabled,
+                    certificate_payment_enabled: settings.certificate_payment_enabled,
+                    certificate_price: settings.certificate_price,
+                    certificate_free_generation_limit: settings.certificate_free_generation_limit,
                     updated_by: user.user.id,
                     updated_at: new Date().toISOString()
                 })

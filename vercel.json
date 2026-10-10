@@ -1,5 +1,451 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "npm run build:css",
-  "outputDirectory": "."
+  "outputDirectory": ".",
+  "redirects": [
+    {
+      "source": "/public/index.html",
+      "destination": "/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/marketplace/marketplace",
+      "destination": "/courses/",
+      "permanent": true
+    },
+    {
+      "source": "/src/pages/marketplace/marketplace/",
+      "destination": "/courses/",
+      "permanent": true
+    },
+    {
+      "source": "/src/pages/mentorship/mentor-marketplace",
+      "destination": "/mentors/",
+      "permanent": true
+    },
+    {
+      "source": "/src/pages/mentorship/mentor-marketplace/",
+      "destination": "/mentors/",
+      "permanent": true
+    },
+    {
+      "source": "/src/pages/auth/login",
+      "destination": "/login/",
+      "permanent": true
+    },
+    {
+      "source": "/src/pages/auth/login/",
+      "destination": "/login/",
+      "permanent": true
+    },
+    {
+      "source": "/src/pages/auth/user-login/index.html",
+      "destination": "/student-login/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/auth/user-login/",
+      "destination": "/student-login/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/auth/instructor-login/index.html",
+      "destination": "/instructor-login/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/auth/instructor-login/",
+      "destination": "/instructor-login/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/auth/login-select/index.html",
+      "destination": "/login-options/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/auth/login-select/",
+      "destination": "/login-options/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/auth/callback/index.html",
+      "destination": "/auth/callback/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/auth/forgot-password/index.html",
+      "destination": "/forgot-password/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/auth/forgot-password/",
+      "destination": "/forgot-password/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/instructor/become-instructor/index.html",
+      "destination": "/become-instructor/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/instructor/become-instructor/",
+      "destination": "/become-instructor/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/student/account-settings/index.html",
+      "destination": "/student/account-settings/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/student/account-settings/",
+      "destination": "/student/account-settings/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/student/student-dashboard/index.html",
+      "destination": "/student/dashboard/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/student/student-dashboard/",
+      "destination": "/student/dashboard/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/instructor/instructor-dashboard/index.html",
+      "destination": "/instructor/dashboard/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/instructor/instructor-dashboard/",
+      "destination": "/instructor/dashboard/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/admin/dashboard/index.html",
+      "destination": "/admin/dashboard/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/admin/dashboard/",
+      "destination": "/admin/dashboard/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/auth/user-register/index.html",
+      "destination": "/register/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/auth/instructor-register/index.html",
+      "destination": "/instructor-register/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/marketplace/marketplace/index.html",
+      "destination": "/courses/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/mentorship/mentor-marketplace/index.html",
+      "destination": "/mentors/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/auth/login/index.html",
+      "destination": "/login/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/auth/instructor-register/",
+      "destination": "/instructor-register/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/auth/user-register/",
+      "destination": "/register/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/mentorship/mentor-profile/index.html",
+      "destination": "/mentor-profile/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/mentorship/mentor-profile/",
+      "destination": "/mentor-profile/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/mentorship/mentor-booking/index.html",
+      "destination": "/mentor-booking/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/mentorship/mentor-booking/",
+      "destination": "/mentor-booking/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/marketplace/course-details/index.html",
+      "destination": "/course-details/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/marketplace/course-details/",
+      "destination": "/course-details/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/learning/learning-interface/index.html",
+      "destination": "/learn/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/learning/learning-interface/",
+      "destination": "/learn/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/instructor/instructor-courses/",
+      "destination": "/instructor/courses/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/instructor/instructor-courses/index.html",
+      "destination": "/instructor/courses/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/instructor/instructor-mentorship/",
+      "destination": "/instructor/mentorship/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/instructor/instructor-mentorship/index.html",
+      "destination": "/instructor/mentorship/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/instructor/instructor-analytics/",
+      "destination": "/instructor/analytics/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/instructor/instructor-analytics/index.html",
+      "destination": "/instructor/analytics/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/instructor/instructor-earnings/",
+      "destination": "/instructor/earnings/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/instructor/instructor-earnings/index.html",
+      "destination": "/instructor/earnings/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/instructor/instructor-communications/",
+      "destination": "/instructor/communications/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/instructor/instructor-communications/index.html",
+      "destination": "/instructor/communications/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/instructor/instructor-profile/",
+      "destination": "/instructor/profile/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/instructor/instructor-profile/index.html",
+      "destination": "/instructor/profile/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/instructor/instructor-courses/wizard.html",
+      "destination": "/instructor/course-editor/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/student/help-center/",
+      "destination": "/help-center/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/student/help-center/index.html",
+      "destination": "/help-center/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/legal/terms-of-service/",
+      "destination": "/terms-of-service/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/legal/terms-of-service/index.html",
+      "destination": "/terms-of-service/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/legal/privacy-policy/",
+      "destination": "/privacy-policy/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/legal/privacy-policy/index.html",
+      "destination": "/privacy-policy/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/legal/contact-us/",
+      "destination": "/contact-us/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/legal/contact-us/index.html",
+      "destination": "/contact-us/",
+      "permanent": false
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/courses/",
+      "destination": "/src/pages/marketplace/marketplace/"
+    },
+    {
+      "source": "/mentors/",
+      "destination": "/src/pages/mentorship/mentor-marketplace/index.html"
+    },
+    {
+      "source": "/login/",
+      "destination": "/src/pages/auth/login/index.html"
+    },
+    {
+      "source": "/auth/callback/",
+      "destination": "/src/pages/auth/callback/index.html"
+    },
+    {
+      "source": "/student-login/",
+      "destination": "/src/pages/auth/user-login/index.html"
+    },
+    {
+      "source": "/instructor-login/",
+      "destination": "/src/pages/auth/instructor-login/index.html"
+    },
+    {
+      "source": "/login-options/",
+      "destination": "/src/pages/auth/login-select/index.html"
+    },
+    {
+      "source": "/forgot-password/",
+      "destination": "/src/pages/auth/forgot-password/index.html"
+    },
+    {
+      "source": "/become-instructor/",
+      "destination": "/src/pages/instructor/become-instructor/index.html"
+    },
+    {
+      "source": "/student/account-settings/",
+      "destination": "/src/pages/student/account-settings/index.html"
+    },
+    {
+      "source": "/student/dashboard/",
+      "destination": "/src/pages/student/student-dashboard/index.html"
+    },
+    {
+      "source": "/instructor/dashboard/",
+      "destination": "/src/pages/instructor/instructor-dashboard/index.html"
+    },
+    {
+      "source": "/admin/dashboard/",
+      "destination": "/src/pages/admin/dashboard/index.html"
+    },
+    {
+      "source": "/register/",
+      "destination": "/src/pages/auth/user-register/index.html"
+    },
+    {
+      "source": "/instructor-register/",
+      "destination": "/src/pages/auth/instructor-register/index.html"
+    },
+    {
+      "source": "/instructor/courses/",
+      "destination": "/src/pages/instructor/instructor-courses/index.html"
+    },
+    {
+      "source": "/instructor/mentorship/",
+      "destination": "/src/pages/instructor/instructor-mentorship/index.html"
+    },
+    {
+      "source": "/instructor/analytics/",
+      "destination": "/src/pages/instructor/instructor-analytics/index.html"
+    },
+    {
+      "source": "/instructor/earnings/",
+      "destination": "/src/pages/instructor/instructor-earnings/index.html"
+    },
+    {
+      "source": "/instructor/communications/",
+      "destination": "/src/pages/instructor/instructor-communications/index.html"
+    },
+    {
+      "source": "/instructor/profile/",
+      "destination": "/src/pages/instructor/instructor-profile/index.html"
+    },
+    {
+      "source": "/instructor/course-editor/",
+      "destination": "/src/pages/instructor/instructor-courses/wizard.html"
+    },
+    {
+      "source": "/help-center/",
+      "destination": "/src/pages/student/help-center/index.html"
+    },
+    {
+      "source": "/terms-of-service/",
+      "destination": "/src/pages/legal/terms-of-service/index.html"
+    },
+    {
+      "source": "/privacy-policy/",
+      "destination": "/src/pages/legal/privacy-policy/index.html"
+    },
+    {
+      "source": "/contact-us/",
+      "destination": "/src/pages/legal/contact-us/index.html"
+    },
+    {
+      "source": "/",
+      "destination": "/public/index.html"
+    },
+    {
+      "source": "/mentor-profile/",
+      "destination": "/src/pages/mentorship/mentor-profile/index.html"
+    },
+    {
+      "source": "/mentor-booking/",
+      "destination": "/src/pages/mentorship/mentor-booking/index.html"
+    },
+    {
+      "source": "/course-details/",
+      "destination": "/src/pages/marketplace/course-details/index.html"
+    },
+    {
+      "source": "/learn/",
+      "destination": "/src/pages/learning/learning-interface/index.html"
+    },
+    {
+      "source": "/verify",
+      "destination": "/src/pages/verify/index.html"
+    },
+    {
+      "source": "/verify/",
+      "destination": "/src/pages/verify/index.html"
+    }
+  ]
 }
