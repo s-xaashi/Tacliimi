@@ -438,6 +438,14 @@
     {
       "source": "/learn/",
       "destination": "/src/pages/learning/learning-interface/index.html"
+    },
+    {
+      "source": "/verify",
+      "destination": "/src/pages/verify/index.html"
+    },
+    {
+      "source": "/verify/",
+      "destination": "/src/pages/verify/index.html"
     }
   ]
 }
