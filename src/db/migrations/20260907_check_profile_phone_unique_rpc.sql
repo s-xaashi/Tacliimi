@@ -28,7 +28,7 @@ BEGIN
 
     RETURN is_duplicate;
 END;
-$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = '';
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = '';
 
 -- Grant execution privileges
 REVOKE ALL ON FUNCTION public.check_profile_phone_unique(text, uuid) FROM PUBLIC;
