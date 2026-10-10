@@ -86,7 +86,7 @@
                     <p class="text-gray-500 dark:text-gray-400">Please enter your details to sign in.</p>
                 </div>
                 <div class="mb-8">
-                    <button
+                    <button id="student-google-login-btn" type="button"
                         class="w-full flex items-center justify-center px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors group shadow-sm">
                         <svg class="w-5 h-5 mr-3" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
                             <path
@@ -270,6 +270,24 @@
                     emailInput.addEventListener('blur', () => {
                         checkAndRestoreLockout(emailInput.value.trim());
                     });
+
+                    // The Google button must explicitly start Supabase OAuth.
+                    const googleLoginBtn = document.getElementById('student-google-login-btn');
+                    if (googleLoginBtn) {
+                        const originalGoogleButton = googleLoginBtn.innerHTML;
+                        googleLoginBtn.addEventListener('click', async () => {
+                            hideError();
+                            googleLoginBtn.disabled = true;
+                            googleLoginBtn.innerHTML = '<span class="text-sm font-semibold">Connecting to Google...</span>';
+                            try {
+                                await AuthService.signInWithGoogle('student');
+                            } catch (err) {
+                                googleLoginBtn.disabled = false;
+                                googleLoginBtn.innerHTML = originalGoogleButton;
+                                showError(err?.message || 'Google sign-in could not be started. Please try again.');
+                            }
+                        });
+                    }
 
                     loginForm.addEventListener('submit', async (e) => {
                         e.preventDefault();

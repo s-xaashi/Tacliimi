@@ -1,5 +1,6 @@
 import { supabase } from '/src/services/supabaseClient.js';
 import { CourseService } from '/src/services/courseService.js';
+import { PaymentService } from '/src/services/paymentService.js';
 
 import { CANVAS_W, CANVAS_H, GOLD, NAVY, ORIG, FS, PHOTO_NAME_GAP } from './certFieldConfig.js';
 
@@ -100,6 +101,129 @@ function drawStudentPhotoAndName(ctx, name, photoImg, r) {
 }
 
 // ─── Main certificate generator ───────────────────────────────────────────────
+function certificateModalStep(step) {
+    ['method', 'phone', 'processing', 'result'].forEach(name => {
+        document.getElementById('cp-step-' + name)?.classList.add('hidden');
+    });
+    document.getElementById('cp-step-' + step)?.classList.remove('hidden');
+}
+
+function showCertificatePaymentResult(success, title, message, onContinue) {
+    const container = document.getElementById('cp-result-container');
+    const icon = document.getElementById('cp-result-icon');
+    const btn = document.getElementById('cp-result-btn');
+    if (!container || !icon || !btn) return;
+    container.style.background = success ? 'rgba(16,185,129,.1)' : 'rgba(239,68,68,.1)';
+    container.style.color = success ? '#10b981' : '#ef4444';
+    container.style.border = '2px solid ' + (success ? 'rgba(16,185,129,.2)' : 'rgba(239,68,68,.2)');
+    icon.textContent = success ? 'check_circle' : 'error_outline';
+    document.getElementById('cp-result-title').textContent = title;
+    document.getElementById('cp-result-message').textContent = message;
+    btn.style.background = success ? 'linear-gradient(135deg,#10b981,#059669)' : 'linear-gradient(135deg,#6c63ff,#4f46e5)';
+    btn.textContent = success ? 'Generate Certificate' : 'Try Again';
+    btn.onclick = onContinue || (() => certificateModalStep('method'));
+    certificateModalStep('result');
+}
+
+window.closeCertificatePaymentModal = function () {
+    const modal = document.getElementById('certificate-payment-modal');
+    if (modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); }
+    document.body.style.overflow = '';
+};
+
+async function openCertificatePaymentModal(status) {
+    const modal = document.getElementById('certificate-payment-modal');
+    if (!modal) throw new Error('Certificate payment window is unavailable.');
+    document.getElementById('cp-course-title').textContent = window.currentCourseData?.title || 'Course Certificate';
+    document.getElementById('cp-student-name').textContent = window.currentUser?.user_metadata?.full_name || 'Student';
+    document.getElementById('cp-price').textContent = '$' + Number(status.certificate_price || 0).toFixed(2);
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    document.body.style.overflow = 'hidden';
+    certificateModalStep('method');
+}
+
+window.handleCertificateRequest = async function () {
+    const studentId = window.currentUser?.id;
+    const courseId = window.currentCourseData?.id;
+    if (!studentId || !courseId) return;
+    const desktopBtn = document.getElementById('li-certificate-btn');
+    const mobileBtn = document.getElementById('li-certificate-btn-mobile');
+    [desktopBtn, mobileBtn].forEach(btn => {
+        if (btn) { btn.disabled = true; btn.innerHTML = '<span class="animate-spin inline-block w-4 h-4 border-2 border-current/30 border-t-current rounded-full"></span> Checking...'; }
+    });
+    try {
+        const status = await CourseService.getCertificateGenerationStatus(studentId, courseId);
+        if (!status?.eligible) {
+            throw new Error(status?.reason === 'course_not_completed' ? 'Complete all lessons to unlock your certificate.' : 'Certificates are not enabled for this course.');
+        }
+        if (!status.requires_payment) { await window.generateCertificate(); return; }
+        await openCertificatePaymentModal(status);
+    } catch (e) {
+        alert(e.message || 'Could not check certificate access.');
+    } finally {
+        const resetHtml = '<span class="material-symbols-outlined text-lg">workspace_premium</span> Generate My Certificate';
+        [desktopBtn, mobileBtn].forEach(btn => { if (btn) { btn.disabled = false; btn.innerHTML = resetHtml; } });
+    }
+};
+
+window.selectCertificateWallet = function (gateway, name, prefixDigit) {
+    window._certificatePaymentGateway = gateway;
+    document.getElementById('cp-wallet-name').textContent = name;
+    const input = document.getElementById('cp-phone-input');
+    input.value = '';
+    input.placeholder = prefixDigit + 'xxxxxxx';
+    document.getElementById('cp-phone-error').classList.add('hidden');
+    certificateModalStep('phone');
+    setTimeout(() => input.focus(), 250);
+};
+
+window.backToCertificateMethod = function () { certificateModalStep('method'); };
+
+window.redirectCertificateToSifalo = async function () {
+    certificateModalStep('processing');
+    document.getElementById('cp-processing-title').textContent = 'Opening secure checkout...';
+    document.getElementById('cp-processing-message').textContent = 'Redirecting you to Sifalo Pay.';
+    try {
+        const result = await PaymentService.startCertificatePayment(window.currentCourseData.id, 'USD');
+        if (result?.already_paid) { window.closeCertificatePaymentModal(); await window.generateCertificate(); }
+    } catch (e) { showCertificatePaymentResult(false, 'Checkout Failed', e.message, () => certificateModalStep('method')); }
+};
+
+async function pollCertificatePayment(orderId, sid) {
+    for (let attempt = 0; attempt < 10; attempt++) {
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        try {
+            const result = await PaymentService.verifyTransaction(orderId, sid || null);
+            if (result.status === 'success' && result.type === 'certificate') return true;
+            if (result.status === 'failed') return false;
+        } catch (_) {}
+    }
+    return false;
+}
+
+window.submitCertificateDirectPayment = async function () {
+    const input = document.getElementById('cp-phone-input');
+    const errorEl = document.getElementById('cp-phone-error');
+    const phone = input?.value.trim() || '';
+    if (!phone || phone.length < 7) { errorEl.textContent = 'Please enter a valid phone number.'; errorEl.classList.remove('hidden'); return; }
+    errorEl.classList.add('hidden');
+    certificateModalStep('processing');
+    document.getElementById('cp-processing-title').textContent = 'Confirm payment on your phone';
+    document.getElementById('cp-processing-message').textContent = 'Approve the Sifalo payment request. We will verify it automatically.';
+    try {
+        const result = await PaymentService.createCertificateDirectPayment({ courseId: window.currentCourseData.id, currency: 'USD', gateway: window._certificatePaymentGateway, account: phone });
+        if (result.status === 'success' || result.already_paid) { window.closeCertificatePaymentModal(); await window.generateCertificate(); return; }
+        if (result.status === 'pending' && result.order_id) {
+            const paid = await pollCertificatePayment(result.order_id, result.sid);
+            if (paid) { window.closeCertificatePaymentModal(); await window.generateCertificate(); return; }
+            showCertificatePaymentResult(false, 'Payment Still Pending', 'Please approve the request on your phone, then try the payment again.', () => certificateModalStep('method'));
+            return;
+        }
+        throw new Error(result.message || 'Your payment could not be completed.');
+    } catch (e) { showCertificatePaymentResult(false, 'Payment Failed', e.message, () => certificateModalStep('method')); }
+};
+
 window.generateCertificate = async function () {
     const btn = document.getElementById('li-certificate-btn');
     if (btn) { btn.disabled = true; btn.textContent = 'Generating…'; }

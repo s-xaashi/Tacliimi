@@ -733,6 +733,7 @@ function checkQuizCompletion(qidx) {
 document.addEventListener('DOMContentLoaded', async () => {
     const urlParams = new URLSearchParams(window.location.search);
     const courseId = urlParams.get('course') || urlParams.get('id');
+    const certificatePaidReturn = urlParams.get('certificate_paid') === '1';
     if (!courseId) { alert("No course selected."); return; }
 
     try {
@@ -803,6 +804,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Show certificate button with correct state for returning students
             if (currentCourseData?.certificate_enabled) {
                 maybeShowCertificateButton(alreadyCompleted);
+
+                // Hosted Sifalo checkout returns here after payment. The server-side
+                // entitlement is checked again before the existing certificate generator runs.
+                if (certificatePaidReturn && alreadyCompleted && typeof window.handleCertificateRequest === 'function') {
+                    const cleanUrl = new URL(window.location.href);
+                    cleanUrl.searchParams.delete('certificate_paid');
+                    window.history.replaceState({}, '', cleanUrl);
+                    setTimeout(() => window.handleCertificateRequest(), 350);
+                }
             }
         }
 
