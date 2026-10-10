@@ -175,7 +175,7 @@ EXCEPTION
         -- PostgreSQL functions inside a transaction will automatically rollback on EXCEPTION
         RAISE EXCEPTION 'Failed to sync curriculum: %', SQLERRM;
 END;
-$;
+$$;
 
 REVOKE ALL ON FUNCTION public.sync_course_curriculum(uuid, jsonb) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.sync_course_curriculum(uuid, jsonb) FROM anon;
