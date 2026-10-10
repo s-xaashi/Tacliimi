@@ -272,6 +272,46 @@
       "source": "/src/pages/instructor/instructor-courses/wizard.html",
       "destination": "/instructor/course-editor/",
       "permanent": false
+    },
+    {
+      "source": "/src/pages/student/help-center/",
+      "destination": "/help-center/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/student/help-center/index.html",
+      "destination": "/help-center/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/legal/terms-of-service/",
+      "destination": "/terms-of-service/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/legal/terms-of-service/index.html",
+      "destination": "/terms-of-service/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/legal/privacy-policy/",
+      "destination": "/privacy-policy/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/legal/privacy-policy/index.html",
+      "destination": "/privacy-policy/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/legal/contact-us/",
+      "destination": "/contact-us/",
+      "permanent": false
+    },
+    {
+      "source": "/src/pages/legal/contact-us/index.html",
+      "destination": "/contact-us/",
+      "permanent": false
     }
   ],
   "rewrites": [
@@ -362,6 +402,22 @@
     {
       "source": "/instructor/course-editor/",
       "destination": "/src/pages/instructor/instructor-courses/wizard.html"
+    },
+    {
+      "source": "/help-center/",
+      "destination": "/src/pages/student/help-center/index.html"
+    },
+    {
+      "source": "/terms-of-service/",
+      "destination": "/src/pages/legal/terms-of-service/index.html"
+    },
+    {
+      "source": "/privacy-policy/",
+      "destination": "/src/pages/legal/privacy-policy/index.html"
+    },
+    {
+      "source": "/contact-us/",
+      "destination": "/src/pages/legal/contact-us/index.html"
     },
     {
       "source": "/",
