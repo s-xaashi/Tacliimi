@@ -60,9 +60,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 tr.innerHTML = `
                     <td class="p-4">
                         <div class="flex items-center gap-3">
-                            <img src="${course.thumbnailUrl || '/images/course-placeholder.jpg'}" alt="${course.title}" class="w-12 h-12 rounded object-cover cursor-pointer" onclick="window.location.href='/src/pages/instructor/instructor-course-wizard/index.html?id=${course.id}'">
+                            <img src="${course.thumbnailUrl || '/images/course-placeholder.jpg'}" alt="${course.title}" class="w-12 h-12 rounded object-cover cursor-pointer" onclick="window.location.href='/instructor/course-editor/?id=${course.id}'">
                             <div>
-                                <p class="font-medium text-slate-900 dark:text-white cursor-pointer hover:text-primary" onclick="window.location.href='/src/pages/instructor/instructor-course-wizard/index.html?id=${course.id}'">${course.title}</p>
+                                <p class="font-medium text-slate-900 dark:text-white cursor-pointer hover:text-primary" onclick="window.location.href='/instructor/course-editor/?id=${course.id}'">${course.title}</p>
                                 <p class="text-xs text-slate-500">CRS-${course.crsId || 'UNKNOWN'}</p>
                             </div>
                         </div>

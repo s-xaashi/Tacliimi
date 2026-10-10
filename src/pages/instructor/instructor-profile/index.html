@@ -70,7 +70,7 @@
 
         if (!isOAuthRedirect) {
             AuthService.getSession().then(session => {
-                if (!session) window.location.href = '/src/pages/auth/login-select/index.html';
+                if (!session) window.location.href = '/login-options/';
             });
         }
     </script>
@@ -93,7 +93,7 @@
                 <!-- Desktop Nav -->
                 <nav class="hidden flex-1 justify-center items-center gap-6 lg:flex ml-8">
                     <a class="text-sm font-medium text-slate-600 hover:text-primary dark:text-slate-400 dark:hover:text-white transition-colors" href="/index.html">Home</a>
-                    <a class="flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-primary dark:text-slate-400 dark:hover:text-white transition-colors" href="/src/pages/instructor/instructor-dashboard/index.html">
+                    <a class="flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-primary dark:text-slate-400 dark:hover:text-white transition-colors" href="/instructor/dashboard/">
                         <span class="material-symbols-outlined text-base">arrow_back</span>Dashboard
                     </a>
                 </nav>
@@ -110,7 +110,7 @@
             <aside id="settings-sidebar"
                 class="fixed top-16 left-0 z-40 w-72 h-[calc(100vh-64px)] flex-col border-r border-slate-200 bg-white overflow-y-auto -translate-x-full transition-transform duration-300 lg:translate-x-0 lg:static lg:h-auto flex dark:border-slate-800 dark:bg-background-dark pb-20 lg:pb-6">
                 <!-- Mobile Only: Profile block at top -->
-                <a href="/src/pages/instructor/instructor-profile/index.html"
+                <a href="/instructor/profile/"
                     class="lg:hidden flex items-center gap-3 px-4 py-4 border-b border-slate-100 dark:border-slate-800 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50">
                     <div class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-primary/20 overflow-hidden flex-shrink-0" data-role="profile-image">
                         <span class="material-symbols-outlined text-slate-400 w-full h-full flex items-center justify-center">person</span>
@@ -123,7 +123,7 @@
                 </a>
                 <!-- Mobile Only: Back to Dashboard -->
                 <div class="lg:hidden px-4 pt-3 pb-2 border-b border-slate-100 dark:border-slate-800/50">
-                    <a href="/src/pages/instructor/instructor-dashboard/index.html" class="flex items-center gap-2 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-primary transition-colors">
+                    <a href="/instructor/dashboard/" class="flex items-center gap-2 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-primary transition-colors">
                         <span class="material-symbols-outlined text-base">arrow_back</span> Back to Dashboard
                     </a>
                 </div>
@@ -940,7 +940,7 @@
                 } catch(e) {
                     console.warn('Logout error:', e);
                 } finally {
-                    window.location.href = '/src/pages/auth/login-select/index.html';
+                    window.location.href = '/login-options/';
                 }
             }
 
@@ -2546,9 +2546,9 @@ window.viewPublicProfile = async function(event) {
     event.preventDefault();
     const session = await AuthService.getSession();
     if (session && session.user) {
-        window.location.href = '/src/pages/instructor/public-profile/index.html?id=' + session.user.id;
+        window.location.href = '/instructor/public-profile/?id=' + session.user.id;
     } else {
-        window.location.href = '/src/pages/auth/login-select/index.html';
+        window.location.href = '/login-options/';
     }
 };
 
@@ -2558,7 +2558,7 @@ document.addEventListener('DOMContentLoaded', () => {
         sidebarLogoutBtn.addEventListener('click', async (e) => {
             e.preventDefault();
             await AuthService.logout();
-            window.location.href = '/src/pages/auth/login-select/index.html';
+            window.location.href = '/login-options/';
         });
     }
 });

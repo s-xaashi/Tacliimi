@@ -177,7 +177,7 @@ async function loadProfile() {
     try {
         currentUserSession = await AuthService.getSession();
         if (!currentUserSession) {
-            window.location.href = '/src/pages/auth/user-login/index.html';
+            window.location.href = '/student-login/';
             return;
         }
 
@@ -332,7 +332,7 @@ window.removeProfileImage = async function() {
 async function handleLogout() {
     try {
         await AuthService.logout();
-        window.location.href = '/src/pages/auth/login-select/index.html';
+        window.location.href = '/login-options/';
     } catch (err) {
         console.error("Logout failed:", err);
         alert("Logout failed. Please try again.");

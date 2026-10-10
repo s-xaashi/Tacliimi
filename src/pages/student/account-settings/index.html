@@ -25,7 +25,7 @@
             </button>
 
             <!-- Logo (Center on mobile, Left on desktop) -->
-            <a href="/src/pages/student/student-dashboard/index.html" class="flex items-center gap-2 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 lg:static lg:top-auto lg:left-0 lg:transform-none z-10 hover:opacity-80 transition-opacity shrink-0">
+            <a href="/student/dashboard/" class="flex items-center gap-2 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 lg:static lg:top-auto lg:left-0 lg:transform-none z-10 hover:opacity-80 transition-opacity shrink-0">
                 <img src="/public/assets/images/IMG_7454.png" alt="Tacliimi Learn" class="h-12 md:h-14 w-auto object-contain dark:hidden">
                 <img src="/public/assets/images/logo-dark.png" alt="Tacliimi Learn" class="h-12 md:h-14 w-auto object-contain hidden dark:block">
             </a>
@@ -33,9 +33,9 @@
             <!-- Desktop Nav -->
             <nav class="hidden lg:flex items-center gap-6 mx-auto">
                 <a class="text-slate-500 dark:text-slate-400 hover:text-primary transition-colors text-sm font-medium" href="/">Home</a>
-                <a class="text-primary font-semibold text-sm border-b-2 border-primary pb-0.5" href="/src/pages/student/student-dashboard/">Dashboard</a>
-                <a class="text-slate-500 dark:text-slate-400 hover:text-primary transition-colors text-sm font-medium" href="/src/pages/marketplace/marketplace/">Browse</a>
-                <a class="text-slate-500 dark:text-slate-400 hover:text-primary transition-colors text-sm font-medium" href="/src/pages/mentorship/mentor-marketplace/index.html">Mentors</a>
+                <a class="text-primary font-semibold text-sm border-b-2 border-primary pb-0.5" href="/student/dashboard/">Dashboard</a>
+                <a class="text-slate-500 dark:text-slate-400 hover:text-primary transition-colors text-sm font-medium" href="/courses/">Browse</a>
+                <a class="text-slate-500 dark:text-slate-400 hover:text-primary transition-colors text-sm font-medium" href="/mentors/">Mentors</a>
             </nav>
 
             <!-- Right: GlobalProfile (desktop) -->
@@ -53,7 +53,7 @@
             class="fixed top-16 left-0 z-40 w-64 h-[calc(100vh-64px)] transition-transform -translate-x-full bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 lg:translate-x-0 lg:sticky lg:top-16 lg:self-start lg:shrink-0 overflow-y-auto custom-scrollbar">
             <div class="py-6 space-y-1">
                 <a class="flex items-center gap-3 px-6 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer"
-                    onclick="window.location.href='/src/pages/student/student-dashboard/index.html'">
+                    onclick="window.location.href='/student/dashboard/'">
                     <span class="material-symbols-outlined">dashboard</span>
                     <span class="font-medium">Dashboard</span>
                 </a>
@@ -561,6 +561,6 @@
         requireRole('student');
     </script>
 <script type="module" src="/src/services/globalProfile.js"></script>
-    <script type="module" src="./accountSettings.js"></script>
+    <script type="module" src="/src/pages/student/account-settings/accountSettings.js"></script>
 </body>
 </html>

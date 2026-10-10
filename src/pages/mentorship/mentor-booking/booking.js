@@ -16,7 +16,7 @@ async function initBooking() {
 
     if (!mentorId) {
         console.warn("No mentor ID found in URL, redirecting back to marketplace...");
-        window.location.href = '/src/pages/mentorship/mentor-marketplace/index.html';
+        window.location.href = '/mentors/';
         return;
     }
 
@@ -94,7 +94,7 @@ async function initBooking() {
                     <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-2">Failed to Load Booking</h2>
                     <p class="text-slate-500 mb-6">We couldn't load the mentor's details. Please try again.</p>
                     <p class="text-xs text-slate-400 font-mono mb-8">${err.message || 'Unknown error'}</p>
-                    <a href="/src/pages/mentorship/mentor-marketplace/index.html"
+                    <a href="/mentors/"
                        class="px-6 py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 transition-all">
                         Back to Marketplace
                     </a>
@@ -432,7 +432,7 @@ async function confirmBooking() {
         const session = await AuthService.getSession();
         if (!session) {
             alert("Please log in to book a session.");
-            window.location.href = '/src/pages/auth/login/index.html';
+            window.location.href = '/login/';
             return;
         }
 
@@ -670,7 +670,7 @@ window.bpmSubmitDirectPayment = async function() {
 
         if (result.status === 'success') {
             showBpmResult(true, 'Booking Confirmed! 🎉', 'Your session has been successfully booked. Redirecting to your dashboard...');
-            setTimeout(() => { window.location.href = '/src/pages/student/student-dashboard/index.html'; }, 2500);
+            setTimeout(() => { window.location.href = '/student/dashboard/'; }, 2500);
         } else {
             showBpmResult(false, 'Payment Failed', result.message || 'Your payment could not be processed. Please try again.');
         }
