@@ -682,8 +682,13 @@
                 }
 
                 try {
+                    const family = await CourseService.getInstructorCourseFamily(courseId);
+                    const hadExistingRevision = (family || []).some(version =>
+                        version.id !== courseId && ['draft', 'pending_review', 'rejected'].includes(version.version_status)
+                    );
                     const revisionId = await CourseService.getOrCreateCourseRevision(courseId);
-                    window.location.href = `/src/pages/instructor/instructor-courses/wizard.html?id=${revisionId}&revision=true`;
+                    const isNewRevisionForThisSession = !hadExistingRevision && revisionId !== courseId;
+                    window.location.href = `/src/pages/instructor/instructor-courses/wizard.html?id=${revisionId}&revision=true${isNewRevisionForThisSession ? '&new_revision=true' : ''}`;
                 } catch (error) {
                     console.error("Failed to edit course:", error);
                     window.showToast("Failed to start editing. Please try again.", "error");
@@ -898,8 +903,13 @@
                 btn.disabled = true;
                 btn.innerHTML = '<span class="material-symbols-outlined text-xl animate-spin">progress_activity</span>';
                 try {
+                    const family = await CourseService.getInstructorCourseFamily(courseId);
+                    const hadExistingRevision = (family || []).some(version =>
+                        version.id !== courseId && ['draft', 'pending_review', 'rejected'].includes(version.version_status)
+                    );
                     const revisionId = await CourseService.getOrCreateCourseRevision(courseId);
-                    window.location.href = `/src/pages/instructor/instructor-courses/wizard.html?id=${revisionId}&revision=true`;
+                    const isNewRevisionForThisSession = !hadExistingRevision && revisionId !== courseId;
+                    window.location.href = `/src/pages/instructor/instructor-courses/wizard.html?id=${revisionId}&revision=true${isNewRevisionForThisSession ? '&new_revision=true' : ''}`;
                 } catch (e) {
                     console.error('Failed to create revision:', e);
                     showToast('Failed to create revision. Please try again.', 'error');
