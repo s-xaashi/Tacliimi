@@ -1035,7 +1035,39 @@
                                 window._pendingOfferRedemption = null;
                             }
 
-                            // Use the shared payment-modal success screen (works for free courses too)
+                            // Populate the shared modal with the actual course before showing success.
+                            // Free enrollment skips openPaymentModal(), which normally fills these fields.
+                            const modalTitle = document.getElementById('pm-course-title');
+                            if (modalTitle) modalTitle.textContent = courseData.title || 'Course';
+
+                            const modalPrice = document.getElementById('pm-price');
+                            if (modalPrice) modalPrice.textContent = '$0.00';
+
+                            const modalThumbnail = document.getElementById('pm-thumbnail');
+                            if (modalThumbnail) {
+                                modalThumbnail.onerror = () => {
+                                    modalThumbnail.onerror = null;
+                                    modalThumbnail.src = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&q=80';
+                                };
+                                modalThumbnail.src = courseData.thumbnail_url || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&q=80';
+                            }
+
+                            const instructor = courseData.instructor || {};
+                            const modalInstructorName = document.getElementById('pm-instructor-name');
+                            if (modalInstructorName) modalInstructorName.textContent = instructor.full_name || 'Expert Instructor';
+
+                            const modalInstructorAvatar = document.getElementById('pm-instructor-avatar');
+                            if (modalInstructorAvatar) {
+                                modalInstructorAvatar.onerror = () => {
+                                    modalInstructorAvatar.onerror = null;
+                                    modalInstructorAvatar.src = 'https://ui-avatars.com/api/?name=Instructor&background=6366f1&color=fff';
+                                };
+                                modalInstructorAvatar.src = instructor.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(instructor.full_name || 'Instructor')}&background=6366f1&color=fff`;
+                            }
+
+                            const accessMessage = document.querySelector('#payment-modal .pt-4 p.italic');
+                            if (accessMessage) accessMessage.textContent = 'Instant access after enrollment';
+
                             window.showPaymentModal();
                             window.showPaymentResult(true, 'Enrolled Successfully! 🎉', 'You now have full access to this course. Happy learning!');
                         } catch (e) {
