@@ -940,6 +940,24 @@ export const CourseService = {
     },
 
     async enrollCourse(courseId, studentId, paymentData = null) {
+        // Free courses use the database's authenticated, server-validated enrollment path.
+        // Paid-course handling remains on its existing path so checkout behavior is unchanged.
+        if (!paymentData) {
+            const { data: enrollment, error } = await supabase.rpc('enroll_free_course', {
+                p_course_id: courseId
+            });
+            if (error) throw error;
+
+            // The RPC is idempotent and returns the existing enrollment if already enrolled.
+            const result = Array.isArray(enrollment) ? enrollment[0] : enrollment;
+            if (!result) throw new Error('Enrollment could not be completed. Please try again.');
+
+            // Preserve the existing wishlist cleanup after successful enrollment.
+            await supabase.from('wishlist').delete().eq('course_id', courseId).eq('student_id', studentId);
+            return { enrollment: result, paymentSerialId: null };
+        }
+
+        // Existing post-checkout enrollment path for paid courses (unchanged).
         // NEW: Check student account status
         const { data: profile, error: pErr } = await supabase
             .from('profiles')
