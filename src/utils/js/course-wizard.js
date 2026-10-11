@@ -472,7 +472,7 @@ async function performSave(silent = false) {
             order_index: sec.order_index ?? sIdx,
             items: (sec.items || []).map((les, lIdx) => ({
                 ...les,
-                video_url: les.video?.url || les.video_url, // 🔥 Map frontend shape to DB shape
+                video_url: les.video ? (les.video.url ?? null) : null, // Persist only this lesson's current video URL; never fall back to stale data.
                 order_index: les.order_index ?? lIdx,
                 quiz: (les.quiz || []).map(qz => ({
                     ...qz,
