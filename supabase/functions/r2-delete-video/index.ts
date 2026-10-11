@@ -50,11 +50,20 @@ Deno.serve(async (req) => {
       if (!lesson_id) throw new Error('Missing lesson_id');
       const { data: lesson, error } = await supabase
         .from('course_lessons')
-        .select('video_storage_key, media_asset_id')
+        .select('section_id, video_storage_key, media_asset_id')
         .eq('id', lesson_id)
         .single();
       if (error || !lesson) throw new Error('Lesson not found');
-      
+
+      // Ensure the lesson belongs to the course whose ownership was verified above.
+      const { data: section, error: sectionError } = await supabase
+        .from('course_sections')
+        .select('id')
+        .eq('id', lesson.section_id)
+        .eq('course_id', course_id)
+        .maybeSingle();
+      if (sectionError || !section) throw new Error('Lesson does not belong to this course');
+
       objectKey = lesson.video_storage_key;
       mediaAssetId = lesson.media_asset_id;
     }
@@ -86,14 +95,16 @@ Deno.serve(async (req) => {
         intro_video_storage_key: null
       }).eq('id', course_id);
     } else {
-      await supabase.from('course_lessons').update({
+      const { error: lessonUpdateError } = await supabase.from('course_lessons').update({
         video_provider: 'youtube',
         video_storage_key: null,
         media_asset_id: null
       }).eq('id', lesson_id);
+      if (lessonUpdateError) throw lessonUpdateError;
 
       if (mediaAssetId) {
-        await supabase.from('course_media_assets').delete().eq('id', mediaAssetId);
+        const { error: assetDeleteError } = await supabase.from('course_media_assets').delete().eq('id', mediaAssetId);
+        if (assetDeleteError) throw assetDeleteError;
       }
     }
 
