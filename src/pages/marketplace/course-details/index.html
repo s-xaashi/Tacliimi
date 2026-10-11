@@ -425,7 +425,9 @@
                     document.getElementById('cd-discount-badge').textContent = `${discount}% OFF`;
                     document.getElementById('cd-discount-badge').classList.remove('hidden');
 
-                    // Store for enrollment
+                    // Keep the validated coupon available to enrollment and checkout.
+                    window._appliedCouponCode = code;
+                    window._pmContext = window._pmContext || {};
                     window._pmContext.couponCode = code;
                     window._pmContext.amount = newPrice;
 
@@ -1018,7 +1020,10 @@
 
                     const isEnrolled = await CourseService.checkEnrollment(courseId, currentUser.id);
                     if (!isEnrolled) {
-                        const isFree = !courseData.price || courseData.price === 0 || courseData.price === 'Free' || parseFloat(courseData.price) === 0;
+                        const displayedPrice = parseFloat((document.getElementById('cd-price')?.textContent || '').replace(/[^\\d.]/g, ''));
+                        const appliedCouponCode = window._appliedCouponCode || window._pmContext?.couponCode || '';
+                        const couponMakesFree = !!appliedCouponCode && Number.isFinite(displayedPrice) && displayedPrice <= 0;
+                        const isFree = !courseData.price || courseData.price === 0 || courseData.price === 'Free' || parseFloat(courseData.price) === 0 || couponMakesFree;
                         if (!isFree) {
                             openPaymentModal(courseData);
                             return;
@@ -1027,7 +1032,9 @@
                         enrollBtn.disabled = true;
                         enrollBtn.innerHTML = '<span class="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></span> Enrolling...';
                         try {
-                            const result = await CourseService.enrollCourse(courseId, currentUser.id);
+                            const result = couponMakesFree
+                                ? await CourseService.enrollCourseWithFreeCoupon(courseId, currentUser.id, appliedCouponCode)
+                                : await CourseService.enrollCourse(courseId, currentUser.id);
 
                             // If user is enrolling via an update offer, mark it as redeemed
                             if (window._pendingOfferRedemption) {
