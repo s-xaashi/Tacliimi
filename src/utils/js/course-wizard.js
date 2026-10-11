@@ -163,9 +163,47 @@ window.applyVideoUploadGating = function(settings) {
                     if (e.target.value === 'r2') {
                         modalVideoUploader.classList.remove('hidden');
                         modalVideoUrlSection.classList.add('hidden');
+                        const lesson = activeModalSectionIdx >= 0 && activeModalItemIdx >= 0
+                            ? window.courseDraft.curriculum[activeModalSectionIdx]?.items?.[activeModalItemIdx]
+                            : null;
+                        const st = lesson ? getLessonVideoState(lesson.id) : null;
+                        const nameEl = document.getElementById('modal-video-name-display');
+                        if (nameEl && st && ['uploading', 'completing', 'pending_save', 'saving'].includes(st.phase)) {
+                            nameEl.innerText = st.fileName || 'Video upload in progress';
+                        } else if (nameEl) {
+                            nameEl.innerText = lesson?.video_storage_key
+                                ? 'Video attached (upload new to replace)'
+                                : 'Click or drag video to upload';
+                        }
                     } else {
                         modalVideoUploader.classList.add('hidden');
                         modalVideoUrlSection.classList.remove('hidden');
+                        // This is only a display reset. Keep the saved R2 video until a valid
+                        // replacement URL is saved; switching radio buttons must not delete data.
+                        const nameEl = document.getElementById('modal-video-name-display');
+                        const fileEl = document.getElementById('modal-video-upload');
+                        const progress = document.getElementById('modal-upload-progress-container');
+                        const lesson = activeModalSectionIdx >= 0 && activeModalItemIdx >= 0
+                            ? window.courseDraft.curriculum[activeModalSectionIdx]?.items?.[activeModalItemIdx]
+                            : null;
+                        const st = lesson ? getLessonVideoState(lesson.id) : null;
+                        if (st && ['uploading', 'completing', 'saving'].includes(st.phase)) {
+                            // Do not switch providers during an active upload.
+                            e.target.checked = false;
+                            const r2Radio = document.querySelector('input[name="modal-provider-radio"][value="r2"]');
+                            if (r2Radio) r2Radio.checked = true;
+                            modalVideoUploader.classList.remove('hidden');
+                            modalVideoUrlSection.classList.add('hidden');
+                            return;
+                        }
+                        if (st && st.phase === 'pending_save') {
+                            // The staged object is cleaned up only when a valid URL is saved or
+                            // the instructor explicitly cancels; do not discard it on a toggle.
+                        } else {
+                            if (fileEl) fileEl.value = '';
+                            if (nameEl) nameEl.innerText = 'YouTube/Vimeo selected — save a valid URL to replace the current video';
+                            if (progress) progress.classList.add('hidden');
+                        }
                     }
                 };
                 radio.addEventListener('change', window._modalRadioHandler);
@@ -1750,13 +1788,30 @@ async function wizardSaveModalVideo() {
                 const errEl = document.getElementById('modal-video-url-error');
                 if (errEl) errEl.classList.add('hidden');
                 
+                // Clean up any completed-but-unsaved R2 replacement first. This object
+                // is not the currently attached lesson video, so use staged-upload cleanup.
+                if (st.phase === 'pending_save' && st.objectKey) {
+                    await CourseService.discardStagedUpload(window.courseDraft.id, st.objectKey);
+                }
+
+                // If the lesson currently points at a saved R2 object, delete it through the
+                // authenticated server endpoint. Do this only after the replacement URL validates.
+                const oldR2Key = item.video_storage_key || st.prevSavedVideo?.video_storage_key;
+                if (oldR2Key) {
+                    await CourseService.deleteR2Video(window.courseDraft.id, item.id, 'lesson');
+                }
+
                 item.content_type = 'video';
                 item.video_provider = 'youtube';
                 item.video_storage_key = null;
                 item.video = { title: title, url: embedUrl };
                 item.description = title;
-                
+
                 st.phase = 'saved';
+                st.objectKey = null;
+                st.fileName = '';
+                st.progress = 0;
+                st.prevSavedVideo = null;
             } else {
                 const errEl = document.getElementById('modal-video-url-error');
                 if (errEl) {
