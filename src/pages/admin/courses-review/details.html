@@ -18,6 +18,73 @@
             window.location.replace('/src/pages/auth/login-select/index.html');
         }
     </script>
+    <style>
+        /* Mobile-only layout refinements; tablet and desktop retain existing styles. */
+        @media (max-width: 767px) {
+            html, body { max-width: 100%; overflow-x: hidden; }
+            body { font-size: 14px; }
+            header { padding-left: 12px !important; padding-right: 12px !important; gap: 10px !important; }
+            header #standard-actions, header #appeal-actions { min-width: 0; flex-wrap: wrap; }
+            header .action-btn { min-width: 0; padding: 9px 10px; gap: 5px; font-size: 11px; line-height: 1.25; }
+            header .action-btn .material-symbols-outlined { font-size: 16px; }
+            header #global-profile-header-container { max-width: 44px; }
+            main { padding: 16px 12px 88px !important; }
+            #course-content { gap: 22px !important; }
+            #course-content > .grid { gap: 20px !important; }
+            #course-content .xl\\:col-span-2,
+            #course-content > .grid > .space-y-8,
+            #course-content > .grid > .space-y-8 > .space-y-4,
+            #course-content > .grid > .space-y-8 > .space-y-4 > * { min-width: 0; }
+            #video-container { border-radius: 18px !important; }
+            #course-category, #course-level { max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+            #course-title { font-size: clamp(1.65rem, 7vw, 2.25rem) !important; line-height: 1.12 !important; overflow-wrap: anywhere; }
+            #course-subtitle { font-size: 1rem !important; line-height: 1.55 !important; overflow-wrap: anywhere; }
+            #appeal-info-box { padding: 16px !important; border-radius: 18px !important; }
+            #appeal-info-box > div:last-child { flex-wrap: wrap; gap: 12px !important; }
+            #course-content .prose { padding: 18px !important; border-radius: 18px !important; }
+            #course-content .prose h3 { font-size: 1.05rem !important; margin-bottom: 14px !important; padding-bottom: 12px !important; }
+            #course-desc { overflow-wrap: anywhere; }
+            #course-content .rounded-3xl { border-radius: 18px !important; }
+            #course-content .p-8 { padding: 18px !important; }
+            #course-price { font-size: 2rem !important; overflow-wrap: anywhere; }
+            #visibility-badge, #certificate-badge { max-width: 100%; white-space: normal; overflow-wrap: anywhere; padding: 8px !important; font-size: 10px !important; }
+            #instructor-link { align-items: flex-start; gap: 12px !important; min-width: 0; }
+            #instructor-link > div:last-child { min-width: 0; overflow-wrap: anywhere; }
+            #instructor-name, #instructor-email { overflow-wrap: anywhere; word-break: break-word; }
+            #course-content #curriculum-list { min-width: 0; }
+            #course-content > .bg-white.rounded-3xl { padding: 14px !important; }
+            #course-content > .bg-white.rounded-3xl > .flex.items-center.justify-between {
+                flex-direction: column; align-items: stretch; gap: 12px !important; margin-bottom: 18px !important;
+            }
+            #course-content > .bg-white.rounded-3xl > .flex.items-center.justify-between h2 {
+                font-size: 1.35rem !important; line-height: 1.2 !important;
+            }
+            #course-content > .bg-white.rounded-3xl > .flex.items-center.justify-between > div {
+                display: flex; flex-wrap: wrap; gap: 6px !important; align-items: center;
+            }
+            #expand-all-btn, #collapse-all-btn { font-size: 9px !important; padding: 8px 9px !important; }
+            #curriculum-list { gap: 14px !important; }
+            #curriculum-list > div { border-radius: 16px !important; }
+            #curriculum-list > div > div:first-child { padding: 14px !important; gap: 10px !important; }
+            #curriculum-list > div > div:first-child h4 { font-size: 13px !important; line-height: 1.35 !important; overflow-wrap: anywhere; }
+            #curriculum-list > div > div:first-child > span { flex-shrink: 0; padding: 6px 8px !important; font-size: 8px !important; }
+            #curriculum-list [id^="lesson-card-"] > div:first-child { gap: 9px !important; padding: 12px !important; align-items: flex-start !important; }
+            #curriculum-list [id^="lesson-card-"] > div:first-child > div:first-child { width: 32px !important; height: 32px !important; border-radius: 9px !important; }
+            #curriculum-list [id^="lesson-card-"] > div:first-child > div:nth-child(2) { min-width: 0; }
+            #curriculum-list [id^="lesson-card-"] > div:first-child > div:nth-child(2) p { overflow-wrap: anywhere; word-break: break-word; }
+            #curriculum-list [id^="lesson-card-"] > div:first-child > div:last-child { gap: 5px !important; }
+            #curriculum-list [id^="lesson-card-"] > div:first-child > div:last-child > span { font-size: 8px !important; letter-spacing: .04em !important; padding: 5px 6px !important; }
+            #curriculum-list [id^="lesson-panel-"] { padding: 12px !important; gap: 18px !important; }
+            #curriculum-list [id^="lesson-panel-"] .rounded-2xl { max-width: 100%; }
+            #curriculum-list [id^="lesson-panel-"] .flex.items-center { flex-wrap: wrap; }
+            #curriculum-list [id^="lesson-panel-"] p,
+            #curriculum-list [id^="lesson-panel-"] span,
+            #curriculum-list [id^="lesson-panel-"] a { overflow-wrap: anywhere; }
+            #reject-modal { padding: 12px !important; }
+            #reject-modal > div { max-height: calc(100dvh - 24px); overflow-y: auto; }
+            #reject-modal .p-6 { padding: 16px !important; }
+        }
+    </style>
 </head>
 
 <body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 transition-colors duration-200">
