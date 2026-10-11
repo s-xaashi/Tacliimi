@@ -512,30 +512,37 @@ export const CourseService = {
                 order_index: lessonData.order_index ?? 0
             };
 
-            // SAFE VIDEO PERSISTENCE: 
-            // 1. Check for lessonData.video.url (Wizard shape) 
-            // 2. Check for lessonData.video_url (DB/Service shape)
-            // 3. ONLY update if a valid URL exists to prevent accidental NULL overwrites
-            const videoUrl = lessonData.video?.url || lessonData.video_url;
-            if (videoUrl) {
+            // Persist the current video's fields explicitly for this lesson.
+            // An empty URL is meaningful: it clears a previously saved URL instead of
+            // silently retaining stale data from an earlier video/provider.
+            const hasVideoObject = Object.prototype.hasOwnProperty.call(lessonData, 'video');
+            const hasVideoUrlField = Object.prototype.hasOwnProperty.call(lessonData, 'video_url');
+            const videoUrl = hasVideoObject
+                ? (lessonData.video?.url ?? null)
+                : (lessonData.video_url ?? null);
+
+            if (hasVideoObject || hasVideoUrlField) {
                 dbPayload.video_url = videoUrl;
-                // Auto-resolve media_asset_id from the catalog if it's a platform upload
-                const { data: assetData } = await supabase
-                    .from('course_media_assets')
-                    .select('id')
-                    .eq('public_url', videoUrl)
-                    .maybeSingle();
-                if (assetData) {
-                    dbPayload.media_asset_id = assetData.id;
+                // Clear stale media references whenever the URL is absent or changed.
+                dbPayload.media_asset_id = null;
+                if (videoUrl) {
+                    const { data: assetData, error: assetLookupError } = await supabase
+                        .from('course_media_assets')
+                        .select('id')
+                        .eq('public_url', videoUrl)
+                        .maybeSingle();
+                    if (assetLookupError) throw assetLookupError;
+                    if (assetData) dbPayload.media_asset_id = assetData.id;
                 }
             }
 
-            // Persist R2 video key so it survives page refresh
-            if (lessonData.video_storage_key) {
-                dbPayload.video_storage_key = lessonData.video_storage_key;
+            // Explicit nulls are needed when switching providers; truthy-only writes
+            // leave the old provider/key attached to the lesson in the database.
+            if (Object.prototype.hasOwnProperty.call(lessonData, 'video_storage_key')) {
+                dbPayload.video_storage_key = lessonData.video_storage_key || null;
             }
-            if (lessonData.video_provider) {
-                dbPayload.video_provider = lessonData.video_provider;
+            if (Object.prototype.hasOwnProperty.call(lessonData, 'video_provider')) {
+                dbPayload.video_provider = lessonData.video_provider || null;
             }
 
 
