@@ -503,6 +503,14 @@ async function performSave(silent = false) {
             }));
         }));
 
+        // Upserts do not remove rows omitted from the draft. Prune deleted content
+        // only after every current section/lesson has saved successfully.
+        const keptSectionIds = window.courseDraft.curriculum.map(section => section.id);
+        const keptLessonIds = window.courseDraft.curriculum.flatMap(section =>
+            (section.items || []).map(lesson => lesson.id)
+        );
+        await CourseService.pruneRemovedCurriculum(savedCourse.id, keptSectionIds, keptLessonIds);
+
         // --- STEP 3: Save Coupons (optional array) ---
         if (window.courseDraft.id) {
             try {
