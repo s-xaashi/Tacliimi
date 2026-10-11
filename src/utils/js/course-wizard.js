@@ -2759,6 +2759,19 @@ async function exitWizard() {
 
     if (window.revisionCreatedInSession && window.courseDraft?.id) {
         try {
+            // Clean up any R2 lesson objects that were committed during this session
+            // before cascading away the new revision's lesson rows.
+            const unsavedRevision = await CourseService.getCourseFull(window.courseDraft.id);
+            for (const section of (unsavedRevision?.course_sections || [])) {
+                for (const lesson of (section.course_lessons || [])) {
+                    if (lesson.video_storage_key) {
+                        await CourseService.deleteR2Video(window.courseDraft.id, lesson.id, 'lesson');
+                    }
+                }
+            }
+            if (unsavedRevision?.intro_video_storage_key) {
+                await CourseService.deleteR2Video(window.courseDraft.id, null, 'intro');
+            }
             await CourseService.deleteCourse(window.courseDraft.id);
             window.revisionCreatedInSession = false;
         } catch (e) {
