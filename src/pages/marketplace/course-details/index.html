@@ -1022,16 +1022,10 @@
 
                     const isEnrolled = await CourseService.checkEnrollment(courseId, currentUser.id);
                     if (!isEnrolled) {
-                        const appliedCouponCode = window._appliedCouponCode || '';
-                        const appliedDiscount = Number(window._appliedCouponDiscount || 0);
-                        const discountedPrice = Number(window._appliedCouponFinalPrice);
-                        const couponMakesFree = !!appliedCouponCode &&
-                            appliedDiscount >= 100 &&
-                            Number.isFinite(discountedPrice) &&
-                            discountedPrice <= 0;
+                        // Only courses configured as Free use free enrollment.
+                        // A coupon on a paid course must continue through the regular checkout flow.
                         const isFree = !courseData.price || courseData.price === 0 ||
-                            courseData.price === 'Free' || parseFloat(courseData.price) === 0 ||
-                            couponMakesFree;
+                            courseData.price === 'Free' || parseFloat(courseData.price) === 0;
                         if (!isFree) {
                             openPaymentModal(courseData);
                             return;
@@ -1040,9 +1034,7 @@
                         enrollBtn.disabled = true;
                         enrollBtn.innerHTML = '<span class="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></span> Enrolling...';
                         try {
-                            const result = couponMakesFree
-                                ? await CourseService.enrollCourseWithFreeCoupon(courseId, currentUser.id, appliedCouponCode)
-                                : await CourseService.enrollCourse(courseId, currentUser.id);
+                            const result = await CourseService.enrollCourse(courseId, currentUser.id);
 
                             // If user is enrolling via an update offer, mark it as redeemed
                             if (window._pendingOfferRedemption) {
