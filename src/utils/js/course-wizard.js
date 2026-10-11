@@ -232,10 +232,18 @@ async function loadDraft(courseId) {
             intro_video_url: course.intro_video_url || null,
             curriculum: [],
             pricing: {
-                type: course.price_type || 'free',
+                type: String(course.price_type || 'free').toLowerCase(),
                 currency: course.currency || 'USD',
-                price: course.price != null ? parseFloat(course.price) : null,
-                coupons: course.course_coupons || []
+                // Supabase numeric columns can arrive as strings; preserve every valid saved paid price.
+                price: course.price != null && course.price !== '' && Number.isFinite(Number(course.price))
+                    ? Number(course.price)
+                    : null,
+                coupons: (course.course_coupons || []).map(cp => ({
+                    ...cp,
+                    code: cp.code || '',
+                    percent: cp.percent ?? cp.discount_percent ?? null,
+                    expiry: cp.expiry ?? cp.expires_at ?? cp.expiration_date ?? null
+                }))
             },
             privacy: course.is_public ? 'public' : 'private',
             certificate_enabled: course.certificate_enabled || false,
@@ -724,9 +732,12 @@ function populateFields() {
 
         // 2. Restore price after calling setPricingTier (so 'paid' re-enabling doesn't interfere)
         const priceEl = document.getElementById('course-price');
-        if (priceEl && savedPrice != null) {
-            priceEl.value = savedPrice;
-            window.courseDraft.pricing.price = savedPrice; // re-hydrate in case setPricingTier cleared it
+        if (priceEl) {
+            // Restore after tier setup, which recalculates the payout and may temporarily read an empty input.
+            priceEl.value = savedPrice != null && Number.isFinite(Number(savedPrice)) ? String(Number(savedPrice)) : '';
+            window.courseDraft.pricing.price = savedPrice != null && Number.isFinite(Number(savedPrice))
+                ? Number(savedPrice)
+                : null;
         }
 
         // 3. Render existing coupons
@@ -1921,6 +1932,7 @@ async function saveModalResource() {
 
 
 function setPricingTier(tier) {
+    tier = String(tier || 'free').toLowerCase();
     window.courseDraft.pricing.type = tier;
     const detailsContainer = document.getElementById('pricing-details-container');
     const btnFree = document.getElementById('btn-tier-free');
