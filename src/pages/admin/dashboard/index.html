@@ -11,6 +11,86 @@
     
 
     <script type="module" src="/src/services/adminSidebar.js"></script>
+
+    <style>
+        /* Mobile-only admin dashboard refinements; tablet and desktop remain unchanged. */
+        @media (max-width: 767px) {
+            html, body { max-width: 100%; overflow-x: hidden; }
+            main.lg\\:ml-72 { min-width: 0; }
+            main > header {
+                box-sizing: border-box;
+                height: auto;
+                min-height: 4.5rem;
+                padding: .75rem 1rem;
+                gap: .65rem;
+                align-items: center;
+            }
+            main > header > div:first-child { min-width: 0; gap: .6rem; }
+            main > header h2 { font-size: 1.05rem; line-height: 1.25; }
+            main > header p { font-size: .7rem; line-height: 1.35; overflow-wrap: anywhere; }
+            #toggle-sidebar { flex: 0 0 auto; padding: .55rem; }
+            main > header > div:last-child { gap: .45rem; flex: 0 0 auto; }
+            #theme-toggle, #admin-notif-bell { width: 2.35rem; height: 2.35rem; }
+            #header-profile-area { padding-left: .55rem; gap: 0; }
+            #header-avatar { width: 2.25rem; height: 2.25rem; border-radius: .8rem; }
+            #admin-notif-dropdown { position: fixed; top: 4.4rem; right: .75rem; left: .75rem; width: auto; max-width: 24rem; margin-top: 0; }
+            main > div.flex-1 {
+                padding: 1.15rem 1rem 2rem;
+                width: 100%;
+                max-width: 100%;
+                box-sizing: border-box;
+                gap: 2rem;
+            }
+            #stats-grid { grid-template-columns: minmax(0, 1fr); gap: .85rem; }
+            #stats-grid .stat-card {
+                min-width: 0;
+                padding: 1rem;
+                border-radius: 1.1rem;
+            }
+            #stats-grid .stat-card > div:first-child { gap: .5rem; margin-bottom: .75rem; }
+            #stats-grid .stat-card > div:first-child > span { text-align: right; overflow-wrap: anywhere; }
+            #stats-grid .stat-card .text-3xl { font-size: 1.8rem; line-height: 1.15; }
+            #stats-grid .stat-card > div:last-child { overflow-wrap: anywhere; }
+            main > div.flex-1 > .grid { grid-template-columns: minmax(0, 1fr); gap: 2rem; }
+            main > div.flex-1 > .grid > div { min-width: 0; }
+            #quick-actions-grid { grid-template-columns: minmax(0, 1fr); gap: .8rem; }
+            #quick-actions-grid > button {
+                box-sizing: border-box;
+                min-height: 6.5rem;
+                padding: 1rem;
+                gap: .85rem;
+                align-items: center;
+                border-radius: 1.15rem;
+            }
+            #quick-actions-grid > button > div:first-child {
+                width: 3.25rem;
+                height: 3.25rem;
+                border-radius: .9rem;
+            }
+            #quick-actions-grid > button > div:last-child { min-width: 0; }
+            #quick-actions-grid > button > div:last-child > * { overflow-wrap: anywhere; }
+            main > div.flex-1 h3 { line-height: 1.35; }
+            main > div.flex-1 > .grid > div:last-child > div.bg-white {
+                padding: 1.1rem;
+                gap: 1rem;
+            }
+            main > div.flex-1 > .grid > div:last-child > div.bg-white > div {
+                gap: .65rem;
+                align-items: flex-start;
+            }
+            main > div.flex-1 > .grid > div:last-child > div.bg-white > div > div:nth-child(2) { min-width: 0; }
+            main > div.flex-1 > .grid > div:last-child > div.bg-white span { overflow-wrap: anywhere; }
+        }
+        @media (max-width: 380px) {
+            main > header { padding-inline: .7rem; }
+            main > header h2 { font-size: .95rem; }
+            main > header > div:last-child { gap: .3rem; }
+            #theme-toggle, #admin-notif-bell { width: 2.1rem; height: 2.1rem; }
+            #header-avatar { width: 2rem; height: 2rem; }
+            main > div.flex-1 { padding-inline: .75rem; }
+        }
+    </style>
+
 </head>
 
 <body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 transition-colors duration-200">
