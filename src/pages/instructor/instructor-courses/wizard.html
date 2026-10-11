@@ -23,8 +23,8 @@
 
 <!-- Center: Logo -->
 <div class="absolute left-1/2 -translate-x-1/2 flex items-center gap-2">
-<img src="/public/assets/images/IMG_7448.png" alt="Tacliimi Logo" class="h-8 w-auto dark:hidden">
-<img src="/public/assets/images/logo-dark.png" alt="Tacliimi Logo" class="h-8 w-auto hidden dark:block">
+<img src="/public/assets/images/IMG_7448.png" alt="Tacliimi Logo" class="h-10 sm:h-11 w-auto max-w-[150px] object-contain dark:hidden">
+<img src="/public/assets/images/logo-dark.png" alt="Tacliimi Logo" class="h-10 sm:h-11 w-auto max-w-[150px] object-contain hidden dark:block">
 <span class="text-xl font-bold tracking-tight text-primary hidden sm:block">Tacliimi Learn</span>
 </div>
 
@@ -56,9 +56,12 @@
 
 <!-- Mobile Menu Dropdown -->
 <div id="wizard-mobile-menu" class="absolute top-16 left-4 w-48 bg-white dark:bg-slate-900 z-50 rounded-xl shadow-xl border border-slate-200 dark:border-slate-800 transform opacity-0 scale-95 transition-all duration-200 hidden lg:hidden">
-    <div id="mobile-menu" class="p-2 flex flex-col space-y-1">
+    <div id="wizard-mobile-menu-actions" class="p-2 flex flex-col space-y-1">
+        <a href="/src/pages/instructor/instructor-dashboard/index.html" class="flex items-center gap-3 w-full px-4 py-3 text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-lg transition-colors">
+            <span class="material-symbols-outlined text-slate-400">dashboard</span> Dashboard
+        </a>
         <button class="flex items-center gap-3 w-full px-4 py-3 text-sm font-bold text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors border border-slate-200 dark:border-slate-700" onclick="saveDraftManual()">
-            <span class="material-symbols-outlined text-indigo-500">save</span> Save Draft
+            <span class="material-symbols-outlined text-indigo-500">save</span> Save to Draft
         </button>
         <button class="flex items-center gap-3 w-full px-4 py-3 text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-lg transition-colors" onclick="exitWizard()">
             <span class="material-symbols-outlined text-red-500">exit_to_app</span> Exit
