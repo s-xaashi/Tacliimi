@@ -939,6 +939,23 @@ export const CourseService = {
         return !!data;
     },
 
+    async enrollCourseWithFreeCoupon(courseId, studentId, couponCode) {
+        if (!couponCode || !String(couponCode).trim()) {
+            throw new Error('Apply a valid 100% coupon before enrolling for free.');
+        }
+        const { data: enrollment, error } = await supabase.rpc('enroll_course_with_free_coupon', {
+            p_course_id: courseId,
+            p_coupon_code: String(couponCode).trim().toUpperCase()
+        });
+        if (error) throw error;
+
+        const result = Array.isArray(enrollment) ? enrollment[0] : enrollment;
+        if (!result) throw new Error('Enrollment could not be completed. Please try again.');
+
+        // The RPC removes the wishlist entry atomically after successful enrollment.
+        return { enrollment: result, paymentSerialId: null };
+    },
+
     async enrollCourse(courseId, studentId, paymentData = null) {
         // Free courses use the database's authenticated, server-validated enrollment path.
         // Paid-course handling remains on its existing path so checkout behavior is unchanged.
