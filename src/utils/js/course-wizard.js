@@ -2301,13 +2301,18 @@ function wizardCalculatePayout() {
     
     // Determine the source of the price
     let price;
-    if (priceInput) {
-        // If the input exists, use its live value and sync to draft
-        price = parseFloat(priceInput.value) || 0;
-        window.courseDraft.pricing.price = price; 
+    const inputValue = priceInput?.value?.trim() ?? '';
+    if (priceInput && inputValue !== '' && Number.isFinite(Number(inputValue))) {
+        // Only sync a real input value. During edit-mode initialization the field can
+        // still be blank; treating that as zero would overwrite the saved DB price
+        // before the Pricing step has restored it.
+        price = Number(inputValue);
+        window.courseDraft.pricing.price = price;
     } else {
-        // Otherwise use the draft state (reliable for Step 4)
-        price = parseFloat(window.courseDraft.pricing.price || 0);
+        // Keep the saved draft price when the input is temporarily blank.
+        price = Number.isFinite(Number(window.courseDraft.pricing.price))
+            ? Number(window.courseDraft.pricing.price)
+            : 0;
     }
     
     const isFree = window.courseDraft.pricing.type === 'free';
