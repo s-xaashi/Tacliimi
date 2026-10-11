@@ -496,6 +496,60 @@ export const CourseService = {
         }
     },
 
+    /**
+     * Remove persisted sections/lessons that the instructor removed from the
+     * current wizard draft. Saving/upserting current items alone cannot delete
+     * rows omitted from the payload, which is why deleted content reappeared
+     * in review/published course pages.
+     */
+    async pruneRemovedCurriculum(courseId, keptSectionIds, keptLessonIds) {
+        if (!courseId) throw new Error('Course ID is required to sync curriculum deletions');
+        const keepSections = new Set((keptSectionIds || []).filter(Boolean));
+        const keepLessons = new Set((keptLessonIds || []).filter(Boolean));
+
+        const { data: sections, error: fetchError } = await supabase
+            .from('course_sections')
+            .select('id, course_lessons(id, video_storage_key)')
+            .eq('course_id', courseId);
+        if (fetchError) throw fetchError;
+
+        const allSections = sections || [];
+        const removedLessons = allSections.flatMap(section =>
+            (section.course_lessons || []).filter(lesson => !keepLessons.has(lesson.id))
+        );
+
+        // Remove stored R2 objects before deleting their lesson rows. If cleanup
+        // fails, stop here so the object metadata isn't lost and can be retried.
+        for (const lesson of removedLessons) {
+            if (lesson.video_storage_key) {
+                await this.deleteR2Video(courseId, lesson.id, 'lesson');
+            }
+        }
+
+        const removedLessonIds = removedLessons.map(lesson => lesson.id);
+        if (removedLessonIds.length) {
+            const { error: lessonsDeleteError } = await supabase
+                .from('course_lessons')
+                .delete()
+                .in('id', removedLessonIds);
+            if (lessonsDeleteError) throw lessonsDeleteError;
+        }
+
+        const removedSectionIds = allSections
+            .filter(section => !keepSections.has(section.id))
+            .map(section => section.id);
+        if (removedSectionIds.length) {
+            const { error: sectionsDeleteError } = await supabase
+                .from('course_sections')
+                .delete()
+                .eq('course_id', courseId)
+                .in('id', removedSectionIds);
+            if (sectionsDeleteError) throw sectionsDeleteError;
+        }
+
+        return { removedSections: removedSectionIds.length, removedLessons: removedLessonIds.length };
+    },
+
     async saveLesson(sectionId, lessonData) {
         console.log('CourseService.saveLesson:', { sectionId, lessonData });
         try {
