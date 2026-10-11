@@ -460,7 +460,7 @@ async function performSave(silent = false) {
                 // Insert validated ones
                 if (window.courseDraft.pricing.coupons && window.courseDraft.pricing.coupons.length > 0) {
                     for (const cp of window.courseDraft.pricing.coupons) {
-                        if (cp.code && cp.percent) {
+                        if (cp.code && cp.percent && getCouponFinalPrice(window.courseDraft.pricing.price, cp.percent) > 0) {
                             await CourseService.saveCoupon(
                                 window.courseDraft.id,
                                 cp.code,
@@ -1084,7 +1084,15 @@ async function setupEventListeners() {
     }
     await window.loadUserProfile();
 
-    document.getElementById('course-price')?.addEventListener('input', calculatePayout);
+    document.getElementById('course-price')?.addEventListener('input', () => {
+        calculatePayout();
+        syncCourseCoupons();
+        validatePricingCoupons(true);
+    });
+    document.getElementById('course-coupons-container')?.addEventListener('input', () => {
+        syncCourseCoupons();
+        validatePricingCoupons(true);
+    });
 
     // Theme Toggle
     const themeToggle = document.getElementById('theme-toggle');
@@ -2070,10 +2078,24 @@ function validateStep(step) {
     } else if (step === 3) {
         const type = window.courseDraft.pricing.type;
         const price = document.getElementById('course-price');
-        
-        if (type === 'paid' && (!price?.value || parseFloat(price.value) <= 0)) {
+        const priceValue = Number(price?.value);
+        const hasValidPrice = price?.value.trim() !== '' && Number.isFinite(priceValue) && priceValue > 0;
+
+        if (type === 'paid' && !hasValidPrice) {
             markFieldError(price);
+            setPricingValidationMessage('Enter a course price greater than $0.00 before adding coupons.');
             isValid = false;
+        } else if (type === 'paid') {
+            syncCourseCoupons();
+            const invalidCoupon = (window.courseDraft.pricing.coupons || []).find(cp =>
+                cp.code && cp.percent && getCouponFinalPrice(priceValue, cp.percent) <= 0
+            );
+            if (invalidCoupon) {
+                setPricingValidationMessage(`Coupon "${invalidCoupon.code}" would make this course free ($0.00). Reduce its discount or increase the course price.`);
+                isValid = false;
+            } else {
+                setPricingValidationMessage('');
+            }
         }
     }
 
@@ -2649,6 +2671,58 @@ registerGlobals();
 
 // --- COUPON MANAGEMENT ---
 
+function getCouponFinalPrice(price, percent) {
+    const value = Number(price);
+    const discount = Number(percent);
+    if (!Number.isFinite(value) || value <= 0 || !Number.isFinite(discount)) return NaN;
+    // Checkout displays two decimal places, so validate the rounded payable amount.
+    return Math.round((value * (1 - discount / 100) + Number.EPSILON) * 100) / 100;
+}
+
+function setPricingValidationMessage(message) {
+    const el = document.getElementById('pricing-validation-error');
+    if (!el) return;
+    el.textContent = message || '';
+    el.classList.toggle('hidden', !message);
+}
+
+function validatePricingCoupons(showMessages = true) {
+    const type = window.courseDraft.pricing.type;
+    const priceInput = document.getElementById('course-price');
+    const price = Number(priceInput?.value);
+    const hasValidPrice = !!priceInput?.value.trim() && Number.isFinite(price) && price > 0;
+    const addButton = document.getElementById('add-course-coupon-btn');
+    if (addButton) addButton.disabled = type !== 'paid' || !hasValidPrice;
+    if (addButton) addButton.classList.toggle('opacity-50', addButton.disabled);
+    if (addButton) addButton.classList.toggle('cursor-not-allowed', addButton.disabled);
+
+    const container = document.getElementById('course-coupons-container');
+    const coupons = window.courseDraft.pricing.coupons || [];
+    let firstError = '';
+    coupons.forEach((cp, idx) => {
+        const percentInput = document.getElementById(`cp-pct-${idx}`);
+        const priceAfterDiscount = hasValidPrice ? getCouponFinalPrice(price, cp.percent) : NaN;
+        const error = cp.code && cp.percent && hasValidPrice && priceAfterDiscount <= 0
+            ? `This discount would make the course $0.00. Reduce the percentage or increase the course price.`
+            : '';
+        if (error && !firstError) firstError = `Coupon "${cp.code}" would make this course free ($0.00). Reduce its discount or increase the course price.`;
+        if (percentInput) {
+            percentInput.classList.toggle('border-red-500', !!error);
+            percentInput.setAttribute('aria-invalid', error ? 'true' : 'false');
+        }
+        const errorEl = document.getElementById(`cp-error-${idx}`);
+        if (errorEl) {
+            errorEl.textContent = error;
+            errorEl.classList.toggle('hidden', !error);
+        }
+    });
+    if (showMessages) {
+        if (type === 'paid' && !hasValidPrice) setPricingValidationMessage('Enter a course price greater than $0.00 before adding coupons.');
+        else setPricingValidationMessage(firstError);
+    }
+    return type !== 'paid' || (hasValidPrice && !firstError);
+}
+
 function renderCourseCoupons() {
     const container = document.getElementById('course-coupons-container');
     if (!container) return;
@@ -2669,7 +2743,8 @@ function renderCourseCoupons() {
                 </div>
                 <div class="col-span-1">
                     <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Discount (%)</label>
-                    <input id="cp-pct-${idx}" type="number" min="1" max="100" class="w-full text-sm rounded bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:ring-accent focus:border-accent" value="${cp.percent || cp.discount_percent || ''}" placeholder="20" />
+                    <input id="cp-pct-${idx}" type="number" min="1" max="99" class="w-full text-sm rounded bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:ring-accent focus:border-accent" value="${cp.percent || cp.discount_percent || ''}" placeholder="20" />
+                    <p id="cp-error-${idx}" class="hidden text-xs font-semibold text-red-600 mt-1" role="alert"></p>
                 </div>
                 <div class="col-span-2 sm:col-span-1">
                     <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Expiration</label>
@@ -2707,10 +2782,19 @@ function syncCourseCoupons() {
 }
 
 window.addCourseCoupon = function() {
+    if (!validatePricingCoupons(true)) {
+        const priceInput = document.getElementById('course-price');
+        if (!priceInput?.value.trim() || Number(priceInput.value) <= 0) {
+            priceInput?.classList.add('border-red-500', 'ring-2', 'ring-red-400');
+            priceInput?.focus();
+        }
+        return;
+    }
     syncCourseCoupons();
     window.courseDraft.pricing.coupons = window.courseDraft.pricing.coupons || [];
     window.courseDraft.pricing.coupons.push({ code: '', percent: null, expiry: null });
     renderCourseCoupons();
+    validatePricingCoupons(false);
 };
 
 window.removeCourseCoupon = function(idx) {
