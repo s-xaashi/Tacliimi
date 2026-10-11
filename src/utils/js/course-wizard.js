@@ -7,6 +7,8 @@ import { financeSettingsService } from '/src/services/financeSettingsService.js'
 import { getEmbedUrl } from '/src/utils/js/videoEmbed.js';
 
 // Global state
+const wizardParams = new URLSearchParams(window.location.search);
+window.revisionCreatedInSession = wizardParams.get('new_revision') === 'true';
 window.sessionUploadedFiles = window.sessionUploadedFiles || [];
 window.courseDraft = {
     title: '',
@@ -2711,6 +2713,8 @@ async function saveDraftManual() {
         await saveCurrentStepData(true);
         console.log("Draft saved perfectly:", window.courseDraft);
         showToast("Draft safely saved in Supabase.");
+        // A newly-created revision is now explicitly saved and must be kept on Exit.
+        window.revisionCreatedInSession = false;
         // Clear session tracking since these files are now permanently part of the saved draft
         window.sessionUploadedFiles = [];
     } catch (e) {
@@ -2731,7 +2735,9 @@ async function exitWizard() {
         btn.disabled = true;
     }
 
-    // Discard any staged or newly uploaded files for this session that weren't saved to draft
+    // Discard any staged or newly uploaded files for this session that weren't saved to draft.
+    // If this session created a brand-new published-course revision and the instructor exits
+    // without explicitly saving it, remove that revision as well (including its DB children).
     if (window.sessionUploadedFiles && window.sessionUploadedFiles.length > 0) {
         console.log("Cleaning up unsaved session files...", window.sessionUploadedFiles);
         for (const file of window.sessionUploadedFiles) {
@@ -2750,7 +2756,22 @@ async function exitWizard() {
             }
         }
     }
-    
+
+    if (window.revisionCreatedInSession && window.courseDraft?.id) {
+        try {
+            await CourseService.deleteCourse(window.courseDraft.id);
+            window.revisionCreatedInSession = false;
+        } catch (e) {
+            console.error("Could not discard unsaved course revision:", e);
+            showToast("Could not discard the unsaved revision. Please try again.", true);
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<span class="material-symbols-outlined text-sm">exit_to_app</span> Exit';
+            }
+            return;
+        }
+    }
+
     window.location.href = '/src/pages/instructor/instructor-courses/index.html';
 }
 
