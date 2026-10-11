@@ -392,6 +392,11 @@ async function performSave(silent = false) {
         return;
     }
 
+    if (freeTierHasR2LessonVideos(true)) {
+        if (!silent && typeof showToast === 'function') showToast('Replace direct-upload lesson videos with YouTube/Vimeo links before saving a free course.', true);
+        return;
+    }
+
     isSaving = true;
     showSavingIndicator();
 
@@ -728,7 +733,7 @@ function populateFields() {
         //    For 'paid' this does NOT clear the price. For 'free' it sets price to null.
         //    We call this BEFORE setting the input so the container is enabled.
         const savedPrice = window.courseDraft.pricing.price;
-        setPricingTier(window.courseDraft.pricing.type);
+        setPricingTier(window.courseDraft.pricing.type, true);
 
         // 2. Restore price after calling setPricingTier (so 'paid' re-enabling doesn't interfere)
         const priceEl = document.getElementById('course-price');
@@ -1931,8 +1936,67 @@ async function saveModalResource() {
 
 
 
-function setPricingTier(tier) {
+/** Detect R2-hosted lesson videos, including uploads still waiting to be saved. */
+function getR2LessonVideos() {
+    const videos = [];
+    (window.courseDraft.curriculum || []).forEach((section, sectionIndex) => {
+        (section.items || []).forEach((lesson, lessonIndex) => {
+            const state = window.lessonVideoState?.[lesson.id];
+            const hasR2Video = lesson.video_provider === 'r2' ||
+                !!lesson.video_storage_key ||
+                !!state?.objectKey ||
+                ['uploading', 'completing', 'pending_save', 'saving'].includes(state?.phase);
+            if (hasR2Video) videos.push({ lesson, sectionIndex, lessonIndex });
+        });
+    });
+    return videos;
+}
+
+function showFreeCourseVideoRestriction() {
+    let modal = document.getElementById('free-course-video-restriction-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'free-course-video-restriction-modal';
+        modal.className = 'fixed inset-0 z-[10000] flex items-center justify-center bg-slate-950/70 p-4';
+        modal.innerHTML = `
+            <div role="dialog" aria-modal="true" aria-labelledby="free-course-video-restriction-title" class="w-full max-w-lg rounded-2xl bg-white dark:bg-slate-900 p-6 shadow-2xl border border-slate-200 dark:border-slate-700">
+                <div class="flex items-start gap-3">
+                    <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
+                        <span class="material-symbols-outlined">info</span>
+                    </div>
+                    <div>
+                        <h2 id="free-course-video-restriction-title" class="text-lg font-bold text-slate-900 dark:text-white">Free courses require externally hosted lesson videos</h2>
+                        <p class="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">This curriculum contains a video uploaded directly to Tacliimi storage. To set this course as Free, every lesson video must use a YouTube or Vimeo link instead.</p>
+                        <p class="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-300">Upload your video to YouTube and set it to <strong>Unlisted</strong>, or upload it to Vimeo. Then replace each direct upload with its YouTube/Vimeo URL in the lesson video settings. Once all direct uploads have been replaced, you can select Free again.</p>
+                    </div>
+                </div>
+                <div class="mt-6 flex justify-end">
+                    <button type="button" id="free-course-video-restriction-close" class="rounded-lg bg-primary px-5 py-2.5 text-sm font-bold text-white hover:opacity-90">Understood</button>
+                </div>
+            </div>`;
+        document.body.appendChild(modal);
+        modal.addEventListener('click', (event) => {
+            if (event.target === modal) modal.classList.add('hidden');
+        });
+        modal.querySelector('#free-course-video-restriction-close').addEventListener('click', () => modal.classList.add('hidden'));
+    }
+    modal.classList.remove('hidden');
+}
+
+function freeTierHasR2LessonVideos(showMessage = true) {
+    if (window.courseDraft.pricing.type !== 'free') return false;
+    const videos = getR2LessonVideos();
+    if (!videos.length) return false;
+    if (showMessage) showFreeCourseVideoRestriction();
+    return true;
+}
+
+function setPricingTier(tier, restoring = false) {
     tier = String(tier || 'free').toLowerCase();
+    if (tier === 'free' && !restoring && getR2LessonVideos().length > 0) {
+        showFreeCourseVideoRestriction();
+        return false;
+    }
     window.courseDraft.pricing.type = tier;
     const detailsContainer = document.getElementById('pricing-details-container');
     const btnFree = document.getElementById('btn-tier-free');
@@ -2088,6 +2152,10 @@ function validateStep(step) {
             showToast(`The following lessons are missing content: ${emptyLessons.join(', ')}. Please add a video, quiz, or resource.`, true);
         }
     } else if (step === 3) {
+        if (window.courseDraft.pricing.type === 'free' && getR2LessonVideos().length > 0) {
+            showFreeCourseVideoRestriction();
+            return false;
+        }
         const type = window.courseDraft.pricing.type;
         const price = document.getElementById('course-price');
         const priceValue = Number(price?.value);
@@ -2343,6 +2411,10 @@ function wizardCalculatePayout() {
 // Consolidated version above
 
 async function publishCourse() {
+    if (freeTierHasR2LessonVideos(true)) {
+        if (typeof showToast === 'function') showToast('Replace direct-upload lesson videos with YouTube/Vimeo links before publishing a free course.', true);
+        return;
+    }
     const btnPublish = document.getElementById('btn-publish');
     if (btnPublish) { btnPublish.disabled = true; btnPublish.textContent = 'Submitting...'; }
 
