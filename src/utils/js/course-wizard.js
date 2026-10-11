@@ -2702,10 +2702,16 @@ function validatePricingCoupons(showMessages = true) {
     coupons.forEach((cp, idx) => {
         const percentInput = document.getElementById(`cp-pct-${idx}`);
         const priceAfterDiscount = hasValidPrice ? getCouponFinalPrice(price, cp.percent) : NaN;
-        const error = cp.code && cp.percent && hasValidPrice && priceAfterDiscount <= 0
-            ? `This discount would make the course $0.00. Reduce the percentage or increase the course price.`
-            : '';
-        if (error && !firstError) firstError = `Coupon "${cp.code}" would make this course free ($0.00). Reduce its discount or increase the course price.`;
+        const percent = Number(cp.percent);
+        const hasInvalidPercent = cp.code && cp.percent != null && (!Number.isFinite(percent) || percent < 1 || percent > 99);
+        const error = hasInvalidPercent
+            ? 'Coupon discounts must be between 1% and 99%.'
+            : (cp.code && cp.percent && hasValidPrice && priceAfterDiscount <= 0
+                ? `This discount would make the course $0.00. Reduce the percentage or increase the course price.`
+                : '');
+        if (error && !firstError) firstError = hasInvalidPercent
+            ? `Coupon "${cp.code}" has an invalid discount. Use a value from 1% to 99%.`
+            : `Coupon "${cp.code}" would make this course free ($0.00). Reduce its discount or increase the course price.`;
         if (percentInput) {
             percentInput.classList.toggle('border-red-500', !!error);
             percentInput.setAttribute('aria-invalid', error ? 'true' : 'false');
@@ -2757,6 +2763,7 @@ function renderCourseCoupons() {
         </div>`;
     });
     container.innerHTML = html;
+    validatePricingCoupons(false);
 }
 
 function syncCourseCoupons() {
