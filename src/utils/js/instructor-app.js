@@ -14,9 +14,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ── Active Nav ─────────────────────────────────────────────
     function updateActiveNav(urlPath) {
+        // Clean URLs (e.g. /instructor-courses/) and legacy file paths
+        // (e.g. /src/pages/instructor/instructor-courses/) refer to the same page.
+        // Compare the instructor route segment rather than the full pathname.
+        const getInstructorRoute = (path) => {
+            const normalized = path.replace(/\\/index\\.html$/, '').replace(/\\/+$/, '');
+            return normalized.split('/').findLast(part => part.startsWith('instructor-')) || '';
+        };
+        const currentRoute = getInstructorRoute(urlPath);
+
         navLinks.forEach(link => {
-            const linkPath = new URL(link.href).pathname;
-            const isActive = urlPath === linkPath || (linkPath !== '/' && urlPath.startsWith(linkPath));
+            const linkPath = new URL(link.href, window.location.origin).pathname;
+            const linkRoute = getInstructorRoute(linkPath);
+            const isActive = Boolean(currentRoute && linkRoute && currentRoute === linkRoute);
             link.classList.toggle('bg-indigo-50',          isActive);
             link.classList.toggle('dark:bg-indigo-900/20', isActive);
             link.classList.toggle('text-primary',          isActive);
@@ -25,6 +35,8 @@ document.addEventListener('DOMContentLoaded', () => {
             link.classList.toggle('dark:text-slate-400',   !isActive);
             link.classList.toggle('hover:bg-slate-50',     !isActive);
             link.classList.toggle('dark:hover:bg-slate-800', !isActive);
+            if (isActive) link.setAttribute('aria-current', 'page');
+            else link.removeAttribute('aria-current');
         });
     }
 
