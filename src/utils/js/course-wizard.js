@@ -824,9 +824,8 @@ async function setupEventListeners() {
 
     document.getElementById('btn-prev')?.addEventListener('click', () => goToStep(window.currentStep - 1));
     
-    document.getElementById('btn-publish')?.addEventListener('click', async () => {
-        // Full save to DB before publishing
-        await saveCurrentStepData(true);
+    document.getElementById('btn-publish')?.addEventListener('click', () => {
+        // publishCourse owns the full save-and-submit sequence and guards duplicate taps.
         publishCourse();
     });
 
@@ -2476,25 +2475,30 @@ function wizardCalculatePayout() {
 // Consolidated version above
 
 async function publishCourse() {
+    // Guard immediately, before any awaited work, so rapid taps or duplicate
+    // click handlers cannot submit the same course twice.
+    if (window.courseReviewSubmissionInProgress) return;
     if (freeTierHasR2LessonVideos(true)) {
         if (typeof showToast === 'function') showToast('Replace direct-upload lesson videos with YouTube/Vimeo links before publishing a free course.', true);
         return;
     }
+
+    window.courseReviewSubmissionInProgress = true;
     const btnPublish = document.getElementById('btn-publish');
     if (btnPublish) { btnPublish.disabled = true; btnPublish.textContent = 'Submitting...'; }
 
     try {
-        // 1. Flush all draft data to DB first
+        // Read the current form values, then persist the draft/curriculum once.
+        await saveCurrentStepData(false);
         await window.saveDraft(true);
         if (!window.courseDraft.id) throw new Error("Could not save the course draft. Please check your data.");
 
-        // 2. Set status to pending_review so admin sees it
+        // The RPC validates ownership and the allowed draft/rejected transition.
         await CourseService.submitForReview(window.courseDraft.id);
 
-        // 3. Update local draft status
         window.courseDraft.status = 'pending_review';
 
-        // 4. Show the Step 5 confirmation screen
+        // Show the Step 5 confirmation screen only after submission succeeds.
         document.querySelectorAll('.wizard-step').forEach(el => {
             el.classList.add('hidden'); el.classList.remove('block');
         });
@@ -2502,7 +2506,9 @@ async function publishCourse() {
         document.getElementById('step-5-container')?.classList.add('flex');
         document.getElementById('bottom-nav')?.classList.add('hidden');
     } catch (e) {
-        alert("Failed to submit for review: " + e.message);
+        console.error('Course review submission failed:', e);
+        alert("Failed to submit for review: " + (e?.message || 'Please check your connection and try again.'));
+        window.courseReviewSubmissionInProgress = false;
         if (btnPublish) { btnPublish.disabled = false; btnPublish.textContent = window.courseDraft.has_rejection_history ? 'Republish Course' : 'Publish Course'; }
     }
 }
