@@ -304,11 +304,15 @@ export const MentorService = {
             try {
                 const { data: responseTimes, error: responseTimesError } = await supabase
                     .from('mentor_response_metrics_view')
-                    .select('mentor_id, typical_response_time_seconds');
+                    .select('mentor_id, typical_response_time_seconds, response_sample_count');
                 if (responseTimesError) throw responseTimesError;
                 (responseTimes || []).forEach(row => {
                     const seconds = Number(row.typical_response_time_seconds);
-                    if (Number.isFinite(seconds) && seconds >= 0) responseTimeMap[row.mentor_id] = seconds;
+                    const sampleCount = Number(row.response_sample_count) || 0;
+                    // Only show a typical reply time when enough conversations exist.
+                    if (sampleCount >= 3 && Number.isFinite(seconds) && seconds >= 0) {
+                        responseTimeMap[row.mentor_id] = seconds;
+                    }
                 });
             } catch (rtErr) {
                 console.warn('[Marketplace] Could not load response times:', rtErr.message);
@@ -522,12 +526,13 @@ export const MentorService = {
             try {
                 const { data: rt, error: rtError } = await supabase
                     .from('mentor_response_metrics_view')
-                    .select('typical_response_time_seconds')
+                    .select('typical_response_time_seconds, response_sample_count')
                     .eq('mentor_id', mentorId)
                     .maybeSingle();
                 if (rtError) throw rtError;
                 const seconds = Number(rt?.typical_response_time_seconds);
-                if (rt?.typical_response_time_seconds != null && Number.isFinite(seconds) && seconds >= 0) {
+                const sampleCount = Number(rt?.response_sample_count) || 0;
+                if (rt?.typical_response_time_seconds != null && sampleCount >= 3 && Number.isFinite(seconds) && seconds >= 0) {
                     typicalResponseTimeSeconds = seconds;
                 }
             } catch (err) {
