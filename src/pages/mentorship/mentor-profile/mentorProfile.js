@@ -1,6 +1,19 @@
 import { MentorService } from '../../../services/mentorService.js';
 import { supabase } from '../../../services/supabaseClient.js';
 
+function formatProfileResponseTime(seconds) {
+    if (seconds == null || !Number.isFinite(Number(seconds)) || Number(seconds) < 0) return 'Not enough data';
+    const value = Math.round(Number(seconds));
+    if (value < 60) return `~${value}s`;
+    const minutes = Math.floor(value / 60);
+    const remainingSeconds = value % 60;
+    if (minutes < 60) return remainingSeconds ? `~${minutes}m ${remainingSeconds}s` : `~${minutes}m`;
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    return remainingMinutes ? `~${hours}h ${remainingMinutes}m` : `~${hours}h`;
+}
+
+
 async function initMentorProfile() {
     const urlParams = new URLSearchParams(window.location.search);
     const mentorId = urlParams.get('id');
@@ -216,8 +229,8 @@ function renderProfile(mentor) {
     const responseTimeEl = document.getElementById('stat-response-time');
     const experienceEl = document.getElementById('stat-experience');
 
-    if (totalSessionsEl) totalSessionsEl.textContent = `${mentor.total_sessions || 0}+`;
-    if (responseTimeEl) responseTimeEl.textContent = `${mentor.avg_response_time || 0} hours`;
+    if (totalSessionsEl) totalSessionsEl.textContent = String(mentor.total_sessions ?? mentor.completed_sessions ?? 0);
+    if (responseTimeEl) responseTimeEl.textContent = formatProfileResponseTime(mentor.avg_response_time_seconds);
     if (experienceEl) experienceEl.textContent = mentor.teaching_experience || mentor.experience || '0+ Years';
 
     // Availability Summary
