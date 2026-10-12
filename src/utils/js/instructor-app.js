@@ -18,9 +18,21 @@ document.addEventListener('DOMContentLoaded', () => {
         // (e.g. /src/pages/instructor/instructor-courses/) refer to the same page.
         // Compare the instructor route segment rather than the full pathname.
         const getInstructorRoute = (path) => {
-            const normalized = path.replace(/\/index\.html$/, '').replace(/\/+$/, '');
-            const parts = normalized.split('/');
-            // Avoid Array.prototype.findLast so this works on older mobile Safari too.
+            const normalized = path.replace(/\/index\.html$/, '').replace(/\/+$/, '') || '/';
+            const parts = normalized.split('/').filter(Boolean);
+
+            // Canonical clean URLs use /instructor/courses/, while the
+            // existing sidebar anchors still use /src/pages/instructor/instructor-courses/.
+            // Normalize both formats to the same route key.
+            const cleanRouteNames = new Set([
+                'dashboard', 'courses', 'mentorship',
+                'analytics', 'earnings', 'communications'
+            ]);
+            const instructorIndex = parts.lastIndexOf('instructor');
+            if (instructorIndex !== -1 && cleanRouteNames.has(parts[instructorIndex + 1])) {
+                return 'instructor-' + parts[instructorIndex + 1];
+            }
+
             for (let i = parts.length - 1; i >= 0; i--) {
                 if (parts[i].startsWith('instructor-')) return parts[i];
             }
