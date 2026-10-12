@@ -285,35 +285,31 @@ export const MentorService = {
                 }
             }
 
-            // ── Query 3: Completed sessions count (live, per mentor) ─────────
+            // ── Query 3: Aggregated confirmed-session counts (RLS-safe view) ──
             let sessionCountMap = {};
             try {
-                const { data: completedSessions } = await supabase
-                    .from('mentorship_sessions')
-                    .select('mentor_id')
-                    .or('booking_status.eq.confirmed,status.eq.confirmed');
-
-                if (completedSessions) {
-                    completedSessions.forEach(s => {
-                        sessionCountMap[s.mentor_id] = (sessionCountMap[s.mentor_id] || 0) + 1;
-                    });
-                }
+                const { data: sessionStats, error: sessionStatsError } = await supabase
+                    .from('mentor_session_stats_view')
+                    .select('mentor_id, confirmed_session_count');
+                if (sessionStatsError) throw sessionStatsError;
+                (sessionStats || []).forEach(row => {
+                    sessionCountMap[row.mentor_id] = Number(row.confirmed_session_count) || 0;
+                });
             } catch (sessErr) {
                 console.warn('[Marketplace] Could not load session counts:', sessErr.message);
             }
 
-            // ── Query 4: Live response times ─────────────────────────────────
+            // ── Query 4: Median first-reply time, in seconds ──────────────────
             let responseTimeMap = {};
             try {
-                const { data: responseTimes } = await supabase
-                    .from('mentor_response_times_view')
-                    .select('mentor_id, avg_response_time_hours');
-
-                if (responseTimes) {
-                    responseTimes.forEach(rt => {
-                        responseTimeMap[rt.mentor_id] = rt.avg_response_time_hours || 0;
-                    });
-                }
+                const { data: responseTimes, error: responseTimesError } = await supabase
+                    .from('mentor_response_metrics_view')
+                    .select('mentor_id, typical_response_time_seconds');
+                if (responseTimesError) throw responseTimesError;
+                (responseTimes || []).forEach(row => {
+                    const seconds = Number(row.typical_response_time_seconds);
+                    if (Number.isFinite(seconds) && seconds >= 0) responseTimeMap[row.mentor_id] = seconds;
+                });
             } catch (rtErr) {
                 console.warn('[Marketplace] Could not load response times:', rtErr.message);
             }
@@ -373,12 +369,14 @@ export const MentorService = {
                     hourly_rate: mentor.hourly_rate || 0,
                     monthly_rate: mentor.monthly_rate || (mentor.hourly_rate * 20),
                     currency: mentor.currency || 'USD',
-                    // Live completed-session count from mentorship_sessions table
+                    // Shared aggregate keeps marketplace and profile counts consistent.
                     completed_sessions: sessionCountMap[mentor.instructor_id] || 0,
-                    // Legacy field kept for compatibility
-                    total_sessions: mentor.total_sessions || 0,
-                    // Live response time calculated from mentorship_booking_messages
-                    avg_response_time: responseTimeMap[mentor.instructor_id] !== undefined ? responseTimeMap[mentor.instructor_id] : (mentor.avg_response_time_hours || 0),
+                    total_sessions: sessionCountMap[mentor.instructor_id] || 0,
+                    avg_response_time_seconds: responseTimeMap[mentor.instructor_id] ?? null,
+                    // Preserve the legacy hours field for existing consumers.
+                    avg_response_time: responseTimeMap[mentor.instructor_id] != null
+                        ? responseTimeMap[mentor.instructor_id] / 3600
+                        : (mentor.avg_response_time_hours || 0),
                     country: mentor.profile?.country || mentor.mentorship_country,
                     city: mentor.profile?.city || mentor.mentorship_city,
                     headline: mentor.headline,
@@ -506,31 +504,34 @@ export const MentorService = {
                 console.warn("Failed to fetch mentor availability:", aErr);
             }
 
-            // ── Live Sessions & Response Time ──────────────────────────────
+            // ── Live aggregate stats shared with the marketplace ─────────────
             let completedSessions = 0;
             try {
-                const { count } = await supabase
-                    .from('mentorship_sessions')
-                    .select('id', { count: 'exact', head: true })
-                    .eq('mentor_id', mentorId)
-                    .or('booking_status.eq.confirmed,status.eq.confirmed');
-                completedSessions = count || 0;
-            } catch (err) {
-                console.warn("Failed to fetch completed sessions count:", err);
-            }
-
-            let liveResponseTime = data.avg_response_time_hours || 0;
-            try {
-                const { data: rt } = await supabase
-                    .from('mentor_response_times_view')
-                    .select('avg_response_time_hours')
+                const { data: sessionStats, error: sessionStatsError } = await supabase
+                    .from('mentor_session_stats_view')
+                    .select('confirmed_session_count')
                     .eq('mentor_id', mentorId)
                     .maybeSingle();
-                if (rt) {
-                    liveResponseTime = rt.avg_response_time_hours || 0;
+                if (sessionStatsError) throw sessionStatsError;
+                completedSessions = Number(sessionStats?.confirmed_session_count) || 0;
+            } catch (err) {
+                console.warn("Failed to fetch session count:", err);
+            }
+
+            let typicalResponseTimeSeconds = null;
+            try {
+                const { data: rt, error: rtError } = await supabase
+                    .from('mentor_response_metrics_view')
+                    .select('typical_response_time_seconds')
+                    .eq('mentor_id', mentorId)
+                    .maybeSingle();
+                if (rtError) throw rtError;
+                const seconds = Number(rt?.typical_response_time_seconds);
+                if (rt?.typical_response_time_seconds != null && Number.isFinite(seconds) && seconds >= 0) {
+                    typicalResponseTimeSeconds = seconds;
                 }
             } catch (err) {
-                console.warn("Failed to fetch live response time:", err);
+                console.warn("Failed to fetch typical response time:", err);
             }
 
             const safeJsonMentor = (raw, fallback = []) => {
@@ -560,8 +561,11 @@ export const MentorService = {
                 monthly_rate: data.monthly_rate || (data.hourly_rate * 20),
                 currency: data.currency || 'USD',
                 completed_sessions: completedSessions,
-                total_sessions: data.total_sessions || 0,
-                avg_response_time: liveResponseTime,
+                total_sessions: completedSessions,
+                avg_response_time_seconds: typicalResponseTimeSeconds,
+                avg_response_time: typicalResponseTimeSeconds != null
+                    ? typicalResponseTimeSeconds / 3600
+                    : (data.avg_response_time_hours || 0),
                 country: data.mentorship_country,
                 city: data.mentorship_city,
                 headline: data.headline,
