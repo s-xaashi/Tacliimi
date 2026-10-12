@@ -18,8 +18,13 @@ document.addEventListener('DOMContentLoaded', () => {
         // (e.g. /src/pages/instructor/instructor-courses/) refer to the same page.
         // Compare the instructor route segment rather than the full pathname.
         const getInstructorRoute = (path) => {
-            const normalized = path.replace(/\\/index\\.html$/, '').replace(/\\/+$/, '');
-            return normalized.split('/').findLast(part => part.startsWith('instructor-')) || '';
+            const normalized = path.replace(/\/index\.html$/, '').replace(/\/+$/, '');
+            const parts = normalized.split('/');
+            // Avoid Array.prototype.findLast so this works on older mobile Safari too.
+            for (let i = parts.length - 1; i >= 0; i--) {
+                if (parts[i].startsWith('instructor-')) return parts[i];
+            }
+            return '';
         };
         const currentRoute = getInstructorRoute(urlPath);
 
@@ -35,6 +40,13 @@ document.addEventListener('DOMContentLoaded', () => {
             link.classList.toggle('dark:text-slate-400',   !isActive);
             link.classList.toggle('hover:bg-slate-50',     !isActive);
             link.classList.toggle('dark:hover:bg-slate-800', !isActive);
+
+            // Explicit styles ensure the selected item remains clearly visible
+            // even if dark-mode utility CSS or cached styles differ on mobile.
+            link.style.backgroundColor = isActive ? 'rgba(99, 102, 241, 0.20)' : '';
+            link.style.borderLeft = isActive ? '3px solid #818cf8' : '';
+            link.style.color = isActive ? '#a5b4fc' : '';
+            link.style.paddingLeft = isActive ? '13px' : '';
             if (isActive) link.setAttribute('aria-current', 'page');
             else link.removeAttribute('aria-current');
         });
