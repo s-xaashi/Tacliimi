@@ -4,6 +4,16 @@
   "outputDirectory": ".",
   "redirects": [
     {
+      "source": "/public/index.html",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/index.html",
+      "destination": "/",
+      "permanent": true
+    },
+    {
       "source": "/src/pages/marketplace/marketplace",
       "destination": "/courses/",
       "permanent": true
