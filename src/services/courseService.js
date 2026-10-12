@@ -1461,17 +1461,15 @@ export const CourseService = {
         return displayList;
     },
 
-    /** Withdraw a pending review back to a raw draft state */
+    /** Withdraw a pending review back to draft using the trusted workflow RPC. */
     async withdrawCourseReview(courseId) {
-        const { data, error } = await supabase
-            .from('courses')
-            .update({ status: 'draft' })
-            .eq('id', courseId)
-            .eq('status', 'pending_review')
-            .select()
-            .single();
-            
-        if (error) throw error;
+        if (!courseId) throw new Error('Course ID is required');
+
+        const { data, error } = await supabase.rpc('withdraw_course_review', {
+            p_course_id: courseId
+        });
+
+        if (error) throw new Error(error.message || 'Failed to withdraw course review');
         return data;
     },
 
