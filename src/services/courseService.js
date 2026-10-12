@@ -337,16 +337,16 @@ export const CourseService = {
      * SECURITY: Only the owning instructor can ack their rejection.
      */
     async confirmRejection(courseId) {
-        const session = await AuthService.getSession();
-        if (!session) throw new Error('Unauthorized: No active session');
+        if (!courseId) throw new Error('Course ID is required');
 
-        const { error } = await supabase
-            .from('courses')
-            .update({ status: 'draft', version_status: 'draft' })
-            .eq('id', courseId)
-            .eq('instructor_id', session.user.id) // SECURITY: ownership guard
-            .eq('status', 'rejected'); // Safety guard
-        if (error) throw error;
+        // Course workflow fields are protected by the database trigger. Use the
+        // authenticated RPC so ownership and rejected-state checks remain server-side.
+        const { data, error } = await supabase.rpc('confirm_course_rejection', {
+            p_course_id: courseId
+        });
+
+        if (error) throw new Error(error.message || 'Failed to acknowledge course rejection');
+        return data;
     },
 
     /** COUPON MANAGEMENT */
