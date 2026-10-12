@@ -4,6 +4,17 @@
   "outputDirectory": ".",
   "redirects": [
     {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "tacliimi.com"
+        }
+      ],
+      "destination": "https://www.tacliimi.com/:path*",
+      "permanent": true
+    },
+    {
       "source": "/public/index.html",
       "destination": "/",
       "permanent": true
