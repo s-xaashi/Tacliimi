@@ -433,16 +433,16 @@ function applyFilters() {
     }
 }
 
-function formatResponseTime(hours) {
-    if (!hours || hours === 0) return '0h 0m';
-    
-    const h = Math.floor(hours);
-    const m = Math.round((hours - h) * 60);
-    const s = Math.round(((hours - h) * 60 - m) * 60);
-
-    if (h > 0) return `${h}h ${m > 0 ? m + 'm' : ''}`;
-    if (m > 0) return `${m}m ${s > 0 ? s + 's' : ''}`;
-    return `${s}s`;
+function formatResponseTime(seconds) {
+    if (seconds == null || !Number.isFinite(Number(seconds)) || Number(seconds) < 0) return 'Not enough data';
+    const value = Math.round(Number(seconds));
+    if (value < 60) return `~${value}s`;
+    const minutes = Math.floor(value / 60);
+    const remainingSeconds = value % 60;
+    if (minutes < 60) return remainingSeconds ? `~${minutes}m ${remainingSeconds}s` : `~${minutes}m`;
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    return remainingMinutes ? `~${hours}h ${remainingMinutes}m` : `~${hours}h`;
 }
 
 function renderMentors(mentors) {
@@ -544,8 +544,8 @@ function renderMentors(mentors) {
                         <span class="material-symbols-outlined text-slate-400 text-[16px] md:text-[18px]">bolt</span>
                     </div>
                     <div>
-                        <p class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-tight">Response</p>
-                        <p class="text-[11px] md:text-xs font-bold text-slate-700 dark:text-slate-200">${formatResponseTime(mentor.avg_response_time)}</p>
+                        <p class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-tight">Reply time</p>
+                        <p class="text-[11px] md:text-xs font-bold text-slate-700 dark:text-slate-200">${formatResponseTime(mentor.avg_response_time_seconds)}</p>
                     </div>
                 </div>
             </div>
