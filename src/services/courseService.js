@@ -418,16 +418,49 @@ export const CourseService = {
     async deleteCourse(courseId) {
         const session = await AuthService.getSession();
         if (!session) throw new Error("Not authenticated");
+        if (!courseId) throw new Error("Course ID is required");
 
-        // Delete the course — DB cascade handles sections, lessons, quizzes, coupons, etc.
-        const { error } = await supabase
+        // Try a permanent delete first. Returning the deleted ID prevents RLS
+        // filtering or a mismatched ID from being mistaken for success.
+        const { data: deletedRows, error } = await supabase
             .from('courses')
             .delete()
             .eq('id', courseId)
-            .eq('instructor_id', session.user.id); // Safety: only own courses
+            .eq('instructor_id', session.user.id)
+            .select('id');
 
-        if (error) throw error;
-        return true;
+        if (!error) {
+            if (!deletedRows?.length) {
+                throw new Error("Course was not deleted. It may already be removed or you may not own it.");
+            }
+            return { deleted: true, softDeleted: false };
+        }
+
+        // Payments and instructor earnings intentionally restrict hard deletion
+        // so financial history remains auditable. In that case, hide the course
+        // from the instructor library and marketplace without deleting learner
+        // access or financial records.
+        if (error.code !== '23503') throw error;
+
+        console.warn('Permanent course deletion blocked by related records; hiding course instead.', error.message);
+        const { data: hiddenCourse, error: hideError } = await supabase
+            .from('courses')
+            .update({
+                deleted_at: new Date().toISOString(),
+                is_public: false
+            })
+            .eq('id', courseId)
+            .eq('instructor_id', session.user.id)
+            .is('deleted_at', null)
+            .select('id')
+            .maybeSingle();
+
+        if (hideError) throw hideError;
+        if (!hiddenCourse) {
+            throw new Error("Course could not be removed. Please refresh and try again.");
+        }
+
+        return { deleted: true, softDeleted: true };
     },
 
     /** CURRICULUM */
