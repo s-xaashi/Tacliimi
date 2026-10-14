@@ -90,7 +90,7 @@
                 // Google OAuth Flow
                 document.getElementById('google-login-btn').addEventListener('click', async () => {
                     const btn = document.getElementById('google-login-btn');
-                    btn.innerHTML = '<span class="material-symbols-outlined animate-spin mr-2">refresh</span> Connecting...';
+                    btn.innerHTML = '<span aria-hidden="true" class="inline-block h-5 w-5 animate-spin rounded-full border-2 border-slate-300 border-t-slate-700 mr-2"></span> Connecting...';
                     try {
                         await AuthService.signInWithGoogle('instructor');
                     } catch (err) {
