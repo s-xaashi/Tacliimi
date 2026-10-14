@@ -171,21 +171,18 @@
 <!-- Modal Body -->
 <div class="p-6 space-y-4">
 <p class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed" id="delete-modal-prompt">
-                    You are about to permanently delete <span class="font-bold text-slate-900 dark:text-white" id="delete-course-title"></span>.
+                    You are about to remove <span class="font-bold text-slate-900 dark:text-white" id="delete-course-title"></span> from your course library.
                 </p>
 <div class="p-4 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-900/30 rounded-xl space-y-2" id="delete-modal-warnings">
 <p class="text-xs font-bold text-red-600 uppercase tracking-widest flex items-center gap-1.5">
 <span class="material-symbols-outlined text-sm">block</span>
-                        Once deleted, the following will be permanently removed:
+                        What happens next:
                     </p>
 <ul class="text-xs text-slate-600 dark:text-slate-400 space-y-1 pl-4 list-disc">
-<li>All course content, sections &amp; lessons</li>
-<li>Uploaded videos and resources</li>
-<li>Coupons and pricing settings</li>
-<li>Enrollment records and student progress</li>
-<li>Reviews and ratings</li>
+<li>If permanent deletion is safe, the course and its linked database records are removed.</li>
+<li>If payment or earnings history blocks deletion, the course is hidden while financial records and learner access are preserved.</li>
 </ul>
-<p class="text-xs font-bold text-red-600 mt-2">⚠ There is no way to restore a deleted course.</p>
+<p class="text-xs font-bold text-red-600 mt-2">⚠ Courses permanently deleted cannot be restored.</p>
 </div>
 <!-- Confirmation type -->
 <div id="delete-modal-input-area">
@@ -820,22 +817,35 @@
                 render(currentFilter);
                 updateCounters(allCourses);
 
+                let deleteResult;
                 try {
-                    // 3. Perform actual deletion in background
-                    await CourseService.deleteCourse(deleteId);
-
-                    // 4. Minimal background fetch to keep in sync
-                    const freshData = await CourseService.getInstructorCoursesGrouped(null);
-                    allCourses = freshData;
-                    // No need to re-render if it matches our optimistic state, 
-                    // but we update counters just in case stats changed
-                    updateCounters(allCourses);
-
+                    // 3. Perform the actual deletion (or safe hide when financial
+                    // records require the course row to be retained).
+                    deleteResult = await CourseService.deleteCourse(deleteId);
                 } catch (error) {
-                    console.error('Background delete failed:', error);
+                    console.error('Course deletion failed:', error);
                     showToast('Failed to delete course. Restoring list...', 'error');
                     fetchAndRender();
+                    return;
                 }
+
+                // A refresh failure must not report a successful deletion as failed.
+                try {
+                    const freshData = await CourseService.getInstructorCoursesGrouped(null);
+                    allCourses = freshData;
+                    render(currentFilter);
+                    updateCounters(allCourses);
+                } catch (refreshError) {
+                    console.error('Course was removed, but the course list refresh failed:', refreshError);
+                    // Keep the optimistic list update; the next normal fetch can resync it.
+                }
+
+                showToast(
+                    deleteResult?.softDeleted
+                        ? 'Course removed from your library. Financial records and learner access were preserved.'
+                        : 'Course deleted successfully.',
+                    'success'
+                );
             };
 
             // Appeal Handlers
