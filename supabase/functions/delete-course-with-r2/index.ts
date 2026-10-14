@@ -117,6 +117,18 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Intro-video keys can also be referenced by another course; keep those objects too.
+    if (candidateKeys.length) {
+      const { data: introReferences, error: introReferencesError } = await supabase
+        .from("courses")
+        .select("id, intro_video_storage_key")
+        .in("intro_video_storage_key", candidateKeys);
+      if (introReferencesError) throw introReferencesError;
+      for (const row of introReferences ?? []) {
+        if (row.id !== courseId && row.intro_video_storage_key) sharedKeys.add(row.intro_video_storage_key);
+      }
+    }
+
     assetIdsToKeep = [...sharedAssetIds];
     const sharedAssetKeys = new Set(r2AssetRows
       .filter((asset: any) => sharedAssetIds.has(asset.id))
