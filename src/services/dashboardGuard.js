@@ -108,9 +108,18 @@ function removeOverlay() {
  *   errorType: 'unauthenticated' | 'profile_not_found' | 'network_error'
  */
 async function fetchAuthorizedUser() {
-    // Fast path: getSession() validates locally cached JWT instantly
+    // Fast path: getSession() reads the persisted session after Supabase initializes.
     let user = null;
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    let { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+    if (!session?.user && !sessionError) {
+        // OAuth callback and a fresh page navigation can briefly overlap session
+        // restoration. Re-check once before treating an empty result as a logout.
+        await new Promise(resolve => setTimeout(resolve, 300));
+        const retry = await supabase.auth.getSession();
+        session = retry.data?.session || null;
+        sessionError = retry.error || null;
+    }
 
     if (session?.user) {
         user = session.user;
