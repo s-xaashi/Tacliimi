@@ -1,5 +1,14 @@
 import { supabase } from './supabaseClient.js';
 
+// Keep production authentication on one origin so OAuth sessions are not split
+// between the apex and www domains. Preserve localhost and preview origins.
+const getAuthRedirectBaseUrl = () => {
+    const { hostname, origin } = window.location;
+    return hostname === 'tacliimi.com' || hostname === 'www.tacliimi.com'
+        ? 'https://www.tacliimi.com'
+        : origin;
+};
+
 export const AuthService = {
     /**
      * Check rate limit status for a given email address without recording attempt
@@ -36,7 +45,7 @@ export const AuthService = {
                     role: 'instructor'
                 },
                 // Redirect user back to the app after clicking verification link
-                emailRedirectTo: `${window.location.origin}/src/pages/instructor/instructor-dashboard/index.html`
+                emailRedirectTo: `${getAuthRedirectBaseUrl()}/src/pages/instructor/instructor-dashboard/index.html`
             }
         });
 
@@ -83,7 +92,7 @@ export const AuthService = {
                     role: 'student'
                 },
                 // Redirect user back to the app after clicking verification link
-                emailRedirectTo: `${window.location.origin}/src/pages/student/student-dashboard/index.html`
+                emailRedirectTo: `${getAuthRedirectBaseUrl()}/src/pages/student/student-dashboard/index.html`
             }
         });
 
@@ -101,7 +110,7 @@ export const AuthService = {
         const { data, error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
-                redirectTo: `${window.location.origin}/auth/callback/`
+                redirectTo: `${getAuthRedirectBaseUrl()}/auth/callback/`
             }
         });
 
@@ -514,7 +523,7 @@ export const AuthService = {
      */
     async sendPasswordResetEmail(email) {
         const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: `${window.location.origin}/src/pages/auth/reset-password/index.html`
+            redirectTo: `${getAuthRedirectBaseUrl()}/src/pages/auth/reset-password/index.html`
         });
 
         if (error) throw error;
