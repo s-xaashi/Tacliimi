@@ -115,18 +115,22 @@ async function fetchAuthorizedUser() {
     if (session?.user) {
         user = session.user;
     } else {
-        // Fallback: getUser() queries Supabase Auth server if session isn't in memory
+        // Fallback: getUser() queries Supabase Auth server if session isn't in memory.
+        // A failed network/server check must not be converted into a local logout.
         const { data: { user: authUser }, error: userError } = await supabase.auth.getUser();
-        if (userError || !authUser) {
-            if (sessionError || userError) {
-                // Clear stale/invalid refresh token from localStorage to prevent repeated 400 errors
-                try {
-                    await supabase.auth.signOut({ scope: 'local' });
-                } catch (e) {}
-            }
-            return { error: userError || sessionError, errorType: 'unauthenticated' };
+        if (authUser) {
+            user = authUser;
+        } else {
+            const authError = userError || sessionError || null;
+            const isConfirmedMissingSession = !authError ||
+                authError.name === 'AuthSessionMissingError' ||
+                authError.status === 401 ||
+                ['session_not_found', 'bad_jwt'].includes(authError.code);
+            return {
+                error: authError,
+                errorType: isConfirmedMissingSession ? 'unauthenticated' : 'network_error'
+            };
         }
-        user = authUser;
     }
 
     try {
