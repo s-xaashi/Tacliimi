@@ -325,8 +325,9 @@ export const AuthService = {
 
         if (sessionError || !sessionData) {
             if (sessionError) {
-                console.warn('[AuthService] Clearing invalid refresh token state:', sessionError.message || sessionError);
-                await this.clearStaleAuthStorage();
+                // A failed lookup can be transient. Do not erase persisted credentials here;
+                // Supabase owns refresh-token recovery and explicit sign-out handling.
+                console.warn('[AuthService] Session lookup failed; preserving auth storage:', sessionError.message || sessionError);
             }
             this._sessionCache = null;
             return null;

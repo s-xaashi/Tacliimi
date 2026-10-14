@@ -286,18 +286,18 @@ export const GlobalProfile = {
         let isInstructor = userRole === 'instructor' || userRole === 'mentor';
 
         // Additional safeguard: check instructors table if role is not set on profile
-        if (!isInstructor && session?.user?.id) {
+        if (!userRole && session?.user?.id) {
             try {
-                const { data: instData } = await supabase
+                const { data: instData, error: instructorLookupError } = await supabase
                     .from('instructors')
-                    .select('id')
+                    .select('user_id')
                     .eq('user_id', session.user.id)
                     .maybeSingle();
-                if (instData) {
+                if (!instructorLookupError && instData) {
                     isInstructor = true;
                 }
             } catch (e) {
-                // Ignore fallback check error
+                // Profile role remains authoritative when the optional fallback lookup fails.
             }
         }
         // The editable name in public.profiles is the authoritative display name.
@@ -348,7 +348,7 @@ export const GlobalProfile = {
             }
         });
         this.injectHeaderControls(session, profile, fullName, avatarUrl, isInstructor, isAdmin);
-        this.applyGlobalUIUpdates(session, isInstructor, isAdmin);
+        this.applyGlobalUIUpdates(session, isInstructor, isAdmin, fullName);
     },
 
     injectHeaderControls(session, profile, fullName, avatarUrl, isInstructor, isAdmin) {
@@ -400,7 +400,7 @@ export const GlobalProfile = {
                 !el.contains(explicitContainer)
             );
             this.renderToContainer(explicitContainer, session, profile, fullName, avatarUrl, isInstructor, isAdmin, safeToPrune);
-            this.applyGlobalUIUpdates(session, isInstructor, isAdmin);
+            this.applyGlobalUIUpdates(session, isInstructor, isAdmin, fullName);
             return;
         }
 
@@ -453,7 +453,7 @@ export const GlobalProfile = {
             this.renderToContainer(container, session, profile, fullName, avatarUrl, isInstructor, isAdmin, elementsToRemove);
         });
 
-        this.applyGlobalUIUpdates(session, isInstructor, isAdmin);
+        this.applyGlobalUIUpdates(session, isInstructor, isAdmin, fullName);
     },
 
     renderToContainer(container, session, profile, fullName, avatarUrl, isInstructor, isAdmin, elementsToRemove = []) {
@@ -615,7 +615,7 @@ export const GlobalProfile = {
         this.bindThemeToggles();
     },
 
-    applyGlobalUIUpdates(session, isInstructor, isAdmin) {
+    applyGlobalUIUpdates(session, isInstructor, isAdmin, fullName = '') {
         // 1. Handle Instructor CTA Links FIRST across desktop and mobile menu
         if (isInstructor) {
             // Hide for logged-in instructors across desktop nav, mobile drawer, and all page elements
