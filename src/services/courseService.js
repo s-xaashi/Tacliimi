@@ -461,7 +461,7 @@ export const CourseService = {
                 const { value, done } = await reader.read();
                 if (done) break;
                 buffer += decoder.decode(value, { stream: true });
-                const lines = buffer.split('\\n');
+                const lines = buffer.split('\n');
                 buffer = lines.pop() || '';
                 lines.forEach(handleLine);
             }
