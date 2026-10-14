@@ -415,52 +415,72 @@ export const CourseService = {
         return data;
     },
 
-    async deleteCourse(courseId) {
+    async deleteCourse(courseId, onProgress = () => {}) {
         const session = await AuthService.getSession();
-        if (!session) throw new Error("Not authenticated");
+        if (!session?.access_token) throw new Error("Not authenticated");
         if (!courseId) throw new Error("Course ID is required");
 
-        // Try a permanent delete first. Returning the deleted ID prevents RLS
-        // filtering or a mismatched ID from being mistaken for success.
-        const { data: deletedRows, error } = await supabase
-            .from('courses')
-            .delete()
-            .eq('id', courseId)
-            .eq('instructor_id', session.user.id)
-            .select('id');
+        // The server owns the R2 credentials and validates course ownership.
+        // Stream progress events so the instructor sees real storage-cleanup progress.
+        const response = await fetch(`${supabase.supabaseUrl}/functions/v1/delete-course-with-r2`, {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${session.access_token}`,
+                apikey: supabase.supabaseKey,
+                'Content-Type': 'application/json',
+                Accept: 'application/x-ndjson'
+            },
+            body: JSON.stringify({ course_id: courseId })
+        });
 
-        if (!error) {
-            if (!deletedRows?.length) {
-                throw new Error("Course was not deleted. It may already be removed or you may not own it.");
+        if (!response.ok) {
+            const body = await response.text();
+            let message = body;
+            try { message = JSON.parse(body).error || body; } catch (_) {}
+            throw new Error(message || 'Course deletion could not be started.');
+        }
+        if (!response.body) throw new Error('Deletion progress stream is unavailable. Please retry.');
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        let finalEvent = null;
+        let streamError = null;
+
+        const handleLine = (line) => {
+            if (!line.trim()) return;
+            let event;
+            try { event = JSON.parse(line); } catch (_) { return; }
+            if (event.type === 'progress') onProgress(event);
+            if (event.type === 'done') finalEvent = event;
+            if (event.type === 'error') streamError = new Error(event.message || 'Course deletion failed.');
+        };
+
+        try {
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) break;
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split('\\n');
+                buffer = lines.pop() || '';
+                lines.forEach(handleLine);
             }
-            return { deleted: true, softDeleted: false };
+            buffer += decoder.decode();
+            if (buffer.trim()) handleLine(buffer);
+        } finally {
+            reader.releaseLock();
         }
 
-        // Payments and instructor earnings intentionally restrict hard deletion
-        // so financial history remains auditable. In that case, hide the course
-        // from the instructor library and marketplace without deleting learner
-        // access or financial records.
-        if (error.code !== '23503') throw error;
-
-        console.warn('Permanent course deletion blocked by related records; hiding course instead.', error.message);
-        const { data: hiddenCourse, error: hideError } = await supabase
-            .from('courses')
-            .update({
-                deleted_at: new Date().toISOString(),
-                is_public: false
-            })
-            .eq('id', courseId)
-            .eq('instructor_id', session.user.id)
-            .is('deleted_at', null)
-            .select('id')
-            .maybeSingle();
-
-        if (hideError) throw hideError;
-        if (!hiddenCourse) {
-            throw new Error("Course could not be removed. Please refresh and try again.");
+        if (streamError) throw streamError;
+        if (!finalEvent?.result?.deleted) {
+            throw new Error('The server did not confirm course deletion. Please refresh and retry.');
         }
-
-        return { deleted: true, softDeleted: true };
+        onProgress({ type: 'progress', phase: 'complete', percent: 100, message: finalEvent.message });
+        return {
+            ...finalEvent.result,
+            deletedVideoCount: finalEvent.deletedVideoCount ?? 0,
+            preservedSharedVideoCount: finalEvent.preservedSharedVideoCount ?? 0
+        };
     },
 
     /** CURRICULUM */
