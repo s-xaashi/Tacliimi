@@ -179,19 +179,34 @@
                         What happens next:
                     </p>
 <ul class="text-xs text-slate-600 dark:text-slate-400 space-y-1 pl-4 list-disc">
-<li>If permanent deletion is safe, the course and its linked database records are removed.</li>
-<li>If payment or earnings history blocks deletion, the course is hidden while financial records and learner access are preserved.</li>
+<li>R2-hosted lesson videos and any stored course intro video will be permanently deleted.</li>
+<li>Instructor earnings and payment history are preserved. If financial records exist, the course history is hidden rather than hard-deleted.</li>
+<li>Videos shared with another course are retained to avoid breaking that course.</li>
 </ul>
-<p class="text-xs font-bold text-red-600 mt-2">⚠ Courses permanently deleted cannot be restored.</p>
+<p class="text-xs font-bold text-red-600 mt-2">⚠ Deleted video files cannot be restored.</p>
 </div>
 <!-- Confirmation type -->
 <div id="delete-modal-input-area">
 <label class="block text-xs font-bold text-slate-500 mb-1.5">Type <span class="text-red-500 font-mono">DELETE</span> to confirm</label>
 <input class="w-full px-4 py-2.5 text-sm border border-slate-300 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 focus:ring-2 focus:ring-red-400 outline-none transition-all font-mono tracking-widest" id="delete-confirm-input" placeholder="DELETE" type="text"/>
 </div>
+<div id="delete-progress-container" class="hidden rounded-xl border border-indigo-200 dark:border-indigo-900/50 bg-indigo-50/70 dark:bg-indigo-950/30 p-4 space-y-3" aria-live="polite">
+    <div class="flex items-center gap-2 text-sm font-bold text-slate-800 dark:text-slate-100">
+        <span class="material-symbols-outlined animate-spin text-primary">progress_activity</span>
+        <span>Deleting course videos</span>
+    </div>
+    <p id="delete-progress-message" class="text-xs text-slate-600 dark:text-slate-300">Preparing secure cleanup…</p>
+    <div class="h-2.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700" role="progressbar" aria-label="Course deletion progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="delete-progress-track">
+        <div id="delete-progress-bar" class="h-full w-0 rounded-full bg-primary transition-all duration-300"></div>
+    </div>
+    <div class="flex items-center justify-between text-xs font-bold text-slate-500 dark:text-slate-400">
+        <span id="delete-progress-detail">0% complete</span>
+        <span>Please keep this window open</span>
+    </div>
+</div>
 </div>
 <!-- Modal Footer -->
-<div class="px-6 pb-6 flex gap-3">
+<div class="px-6 pb-6 flex gap-3" id="delete-modal-footer">
 <button class="flex-1 py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors" onclick="closeDeleteModal()">
                     Cancel
                 </button>
@@ -251,6 +266,7 @@
         window.PaymentService = PaymentService;
 
         let courseToDelete = null;
+        let courseDeletionInProgress = false;
 
         async function initInstructorCourses() {
             const grid = document.getElementById('courses-grid');
@@ -762,6 +778,9 @@
                 const btn = document.getElementById('delete-confirm-btn');
                 const warningsArea = document.getElementById('delete-modal-warnings');
                 const inputArea = document.getElementById('delete-modal-input-area');
+                document.getElementById('delete-progress-container').classList.add('hidden');
+                document.getElementById('delete-modal-footer').classList.remove('hidden');
+                courseDeletionInProgress = false;
                 
                 if (isDraft) {
                     warningsArea.classList.add('hidden');
@@ -786,6 +805,7 @@
             };
 
             window.closeDeleteModal = function () {
+                if (courseDeletionInProgress) return;
                 const modal = document.getElementById('delete-modal');
                 modal.classList.add('hidden');
                 modal.classList.remove('flex');
@@ -805,47 +825,74 @@
             });
 
             window.confirmDeleteCourse = async function () {
-                if (!courseToDelete) return;
+                if (!courseToDelete || courseDeletionInProgress) return;
 
-                const deleteId = courseToDelete; // Capture ID
+                const deleteId = courseToDelete;
+                const confirmBtn = document.getElementById('delete-confirm-btn');
+                const warningsArea = document.getElementById('delete-modal-warnings');
+                const inputArea = document.getElementById('delete-modal-input-area');
+                const progressContainer = document.getElementById('delete-progress-container');
+                const progressMessage = document.getElementById('delete-progress-message');
+                const progressBar = document.getElementById('delete-progress-bar');
+                const progressDetail = document.getElementById('delete-progress-detail');
+                const progressTrack = document.getElementById('delete-progress-track');
+                const modalFooter = document.getElementById('delete-modal-footer');
 
-                // 1. Close modal and update UI instantly
-                window.closeDeleteModal();
+                courseDeletionInProgress = true;
+                progressContainer.classList.remove('hidden');
+                warningsArea.classList.add('hidden');
+                inputArea.classList.add('hidden');
+                modalFooter.classList.add('hidden');
+                confirmBtn.disabled = true;
+                progressBar.style.width = '0%';
+                progressTrack.setAttribute('aria-valuenow', '0');
+                progressDetail.textContent = '0% complete';
+                progressMessage.textContent = 'Preparing secure cleanup…';
 
-                // 2. Optimistic update: Remove from local array immediately
-                allCourses = allCourses.filter(c => c.id !== deleteId);
-                render(currentFilter);
-                updateCounters(allCourses);
-
-                let deleteResult;
                 try {
-                    // 3. Perform the actual deletion (or safe hide when financial
-                    // records require the course row to be retained).
-                    deleteResult = await CourseService.deleteCourse(deleteId);
-                } catch (error) {
-                    console.error('Course deletion failed:', error);
-                    showToast('Failed to delete course. Restoring list...', 'error');
-                    fetchAndRender();
-                    return;
-                }
+                    const deleteResult = await CourseService.deleteCourse(deleteId, (progress) => {
+                        const percent = Math.max(0, Math.min(100, Number(progress.percent) || 0));
+                        progressBar.style.width = percent + '%';
+                        progressTrack.setAttribute('aria-valuenow', String(percent));
+                        progressDetail.textContent = percent + '% complete';
+                        if (progress.message) progressMessage.textContent = progress.message;
+                    });
 
-                // A refresh failure must not report a successful deletion as failed.
-                try {
-                    const freshData = await CourseService.getInstructorCoursesGrouped(null);
-                    allCourses = freshData;
+                    courseDeletionInProgress = false;
+                    window.closeDeleteModal();
+                    allCourses = allCourses.filter(c => c.id !== deleteId);
                     render(currentFilter);
                     updateCounters(allCourses);
-                } catch (refreshError) {
-                    console.error('Course was removed, but the course list refresh failed:', refreshError);
-                    // Keep the optimistic list update; the next normal fetch can resync it.
-                }
 
-                showToast(
-                    deleteResult?.softDeleted
-                        ? 'Course removed from your library. Financial records and learner access were preserved.'
-                        : 'Course deleted successfully.',
-                    'success'
-                );
+                    // A list refresh failure must not misreport a completed deletion.
+                    try {
+                        const freshData = await CourseService.getInstructorCoursesGrouped(null);
+                        allCourses = freshData;
+                        render(currentFilter);
+                        updateCounters(allCourses);
+                    } catch (refreshError) {
+                        console.error('Course was removed, but the course list refresh failed:', refreshError);
+                    }
+
+                    showToast(
+                        deleteResult?.softDeleted
+                            ? 'Course removed. Instructor earnings and payment history were preserved.'
+                            : 'Course and its stored videos deleted successfully.',
+                        'success'
+                    );
+                } catch (error) {
+                    courseDeletionInProgress = false;
+                    console.error('Course deletion failed:', error);
+                    progressContainer.classList.add('hidden');
+                    warningsArea.classList.remove('hidden');
+                    inputArea.classList.remove('hidden');
+                    modalFooter.classList.remove('hidden');
+                    const typedDelete = document.getElementById('delete-confirm-input').value === 'DELETE';
+                    confirmBtn.disabled = !typedDelete;
+                    confirmBtn.classList.toggle('opacity-50', !typedDelete);
+                    confirmBtn.classList.toggle('cursor-not-allowed', !typedDelete);
+                    showToast(error.message || 'Course deletion failed. Your course records were kept where possible.', 'error');
+                }
             };
 
             // Appeal Handlers
