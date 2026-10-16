@@ -415,7 +415,69 @@ export const CourseService = {
         return data;
     },
 
+    /**
+     * Delete an entire course family, not just the visible version.
+     * Keep the root row until all revisions have been processed so a partial failure
+     * can be retried without losing the family relationship.
+     */
     async deleteCourse(courseId, onProgress = () => {}) {
+        if (!courseId) throw new Error("Course ID is required");
+        const session = await AuthService.getSession();
+        if (!session?.access_token || !session.user?.id) throw new Error("Not authenticated");
+
+        const { data: selectedCourse, error: selectedError } = await supabase
+            .from('courses')
+            .select('id, root_course_id, instructor_id')
+            .eq('id', courseId)
+            .maybeSingle();
+        if (selectedError) throw selectedError;
+        if (!selectedCourse) throw new Error("Course not found");
+        if (selectedCourse.instructor_id !== session.user.id) throw new Error("You are not authorized to delete this course");
+
+        const rootId = selectedCourse.root_course_id || selectedCourse.id;
+        const { data: family, error: familyError } = await supabase
+            .from('courses')
+            .select('id, root_course_id, version_number, instructor_id')
+            .eq('instructor_id', session.user.id)
+            .or(`id.eq.${rootId},root_course_id.eq.${rootId}`)
+            .order('version_number', { ascending: false });
+        if (familyError) throw familyError;
+        if (!family?.length || !family.some(version => version.id === selectedCourse.id)) {
+            throw new Error("The course versions could not be safely identified. No deletion was started.");
+        }
+
+        // Delete newer revisions first and the root last. If a revision fails,
+        // the root remains available to identify the family on retry.
+        const orderedFamily = [...family].sort((a, b) => {
+            if (a.id === rootId) return 1;
+            if (b.id === rootId) return -1;
+            return (b.version_number || 0) - (a.version_number || 0);
+        });
+        const results = [];
+        for (let index = 0; index < orderedFamily.length; index++) {
+            const version = orderedFamily[index];
+            const result = await this.deleteCourseRecord(version.id, progress => {
+                const localPercent = Math.max(0, Math.min(100, Number(progress.percent) || 0));
+                const percent = Math.round(((index + localPercent / 100) / orderedFamily.length) * 100);
+                onProgress({
+                    ...progress,
+                    percent,
+                    message: `Version ${index + 1} of ${orderedFamily.length}: ${progress.message || 'Removing course version…'}`
+                });
+            });
+            results.push(result);
+        }
+
+        return {
+            deleted: true,
+            softDeleted: results.some(result => result.softDeleted),
+            deletedCourseIds: orderedFamily.map(version => version.id),
+            deletedVideoCount: results.reduce((sum, result) => sum + (result.deletedVideoCount || 0), 0),
+            preservedSharedVideoCount: results.reduce((sum, result) => sum + (result.preservedSharedVideoCount || 0), 0)
+        };
+    },
+
+    async deleteCourseRecord(courseId, onProgress = () => {}) {
         const session = await AuthService.getSession();
         if (!session?.access_token) throw new Error("Not authenticated");
         if (!courseId) throw new Error("Course ID is required");
