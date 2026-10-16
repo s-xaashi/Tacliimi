@@ -105,11 +105,29 @@ async function getCanonicalPrice(supabase: any, type: string, referenceId: strin
     }
     return basePrice;
   } else if (type === 'booking') {
-    const { data: session, error } = await supabase.from('mentorship_sessions').select('price, booking_status').eq('id', referenceId).single();
-    if (error || !session) return null;
-    // ensure booking hasn't been paid already/is in valid state (pending or pending_payment)
+    const { data: session, error: sessionErr } = await supabase
+      .from('mentorship_sessions')
+      .select('student_id, mentor_id, booking_status, mentorship_type, notes')
+      .eq('id', referenceId)
+      .maybeSingle();
+    if (sessionErr || !session) return null;
+    if (session.student_id !== userId) return null;
     if (session.booking_status !== 'pending' && session.booking_status !== 'pending_payment') return null;
-    return Number(session.price);
+    if (!session.mentor_id) return null;
+    const { data: mentorProfile, error: profileErr } = await supabase
+      .from('mentorship_profiles')
+      .select('hourly_rate, monthly_rate')
+      .eq('instructor_id', session.mentor_id)
+      .maybeSingle();
+    if (profileErr || !mentorProfile) return null;
+    const hourlyRate = Number(mentorProfile.hourly_rate);
+    const monthlyRate = mentorProfile.monthly_rate == null ? NaN : Number(mentorProfile.monthly_rate);
+    const isMonthly = session.mentorship_type === 'program' || /Type:\s*monthly/i.test(session.notes ?? '');
+    const canonicalPrice = isMonthly
+      ? (Number.isFinite(monthlyRate) && monthlyRate > 0 ? monthlyRate : hourlyRate * 20)
+      : hourlyRate;
+    if (!Number.isFinite(canonicalPrice) || canonicalPrice <= 0) return null;
+    return canonicalPrice;
   } else if (type === 'boost' || type === 'banner' || type === 'boost_and_banner') {
     if (!payload.promotionOrderId) return null;
     const { data: order, error: orderErr } = await supabase.from('promotion_orders').select('canonical_amount, status, payer_id').eq('id', payload.promotionOrderId).single();
