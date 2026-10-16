@@ -521,7 +521,7 @@
                         const activeCourseBanner = allBanners.find(b => b.entity_id === rootOrCourseId && new Date(b.ends_at) > new Date() && !b.cancelled_at);
                         const isBoosted = !!activeCourseBoost || !!activeCourseBanner;
 
-                        const boostBtn = isPublished ? `
+                        const boostBtn = isPublished && !isPrivate ? `
                             <button onclick="openBoostModal('${rootOrCourseId}', \`${course.title.replace(/`/g, "'")}\`)"
                                 title="${isBoosted ? 'Manage Boost' : 'Boost Course Visibility'}"
                                 class="flex items-center gap-1 px-3 py-1.5 ${isBoosted ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 border-indigo-500/20' : 'bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 border-amber-500/20'} rounded-lg text-xs font-bold hover:opacity-80 transition-opacity border shadow-sm pointer-events-auto">
