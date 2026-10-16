@@ -190,7 +190,10 @@ async function loadInstructorCourses() {
             .select('*')
             .eq('instructor_id', instructorId)
             .eq('status', 'published')
-            .eq('is_latest_published', true);
+            .eq('is_latest_published', true)
+            // Private courses are unlisted: show them only through their direct share link.
+            // Keep NULL visibility values public for older courses that predate this flag.
+            .or('is_public.eq.true,is_public.is.null');
 
         if (error) throw error;
 
