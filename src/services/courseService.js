@@ -420,8 +420,12 @@ export const CourseService = {
      * Keep the root row until all revisions have been processed so a partial failure
      * can be retried without losing the family relationship.
      */
-    async deleteCourse(courseId, onProgress = () => {}) {
+    async deleteCourse(courseId, onProgress = () => {}, options = {}) {
         if (!courseId) throw new Error("Course ID is required");
+        if (options.deleteFamily === false) {
+            const result = await this.deleteCourseRecord(courseId, onProgress);
+            return { ...result, deletedCourseIds: [courseId] };
+        }
         const session = await AuthService.getSession();
         if (!session?.access_token || !session.user?.id) throw new Error("Not authenticated");
 
