@@ -266,6 +266,7 @@
         window.PaymentService = PaymentService;
 
         let courseToDelete = null;
+        let courseDeleteIsDraft = false;
         let courseDeletionInProgress = false;
 
         async function initInstructorCourses() {
@@ -763,6 +764,7 @@
             // Delete modal handlers
             window.openDeleteModal = function (courseId, courseTitle, isDraft = false) {
                 courseToDelete = courseId;
+                courseDeleteIsDraft = isDraft;
                 
                 const titleNode = document.getElementById('delete-modal-title');
                 const promptNode = document.getElementById('delete-modal-prompt');
@@ -772,7 +774,7 @@
                     promptNode.innerHTML = `Are you sure you want to delete this draft <span id="delete-course-title" class="font-bold text-slate-900 dark:text-white">"${courseTitle}"</span>?`;
                 } else {
                     titleNode.textContent = 'Delete Course?';
-                    promptNode.innerHTML = `You are about to permanently delete <span id="delete-course-title" class="font-bold text-slate-900 dark:text-white">"${courseTitle}"</span>.`;
+                    promptNode.innerHTML = `You are about to permanently delete <span id="delete-course-title" class="font-bold text-slate-900 dark:text-white">"${courseTitle}"</span> and all of its saved versions.`;
                 }
                 
                 const btn = document.getElementById('delete-confirm-btn');
@@ -856,11 +858,12 @@
                         progressTrack.setAttribute('aria-valuenow', String(percent));
                         progressDetail.textContent = percent + '% complete';
                         if (progress.message) progressMessage.textContent = progress.message;
-                    });
+                    }, { deleteFamily: !courseDeleteIsDraft });
 
                     courseDeletionInProgress = false;
                     window.closeDeleteModal();
-                    allCourses = allCourses.filter(c => c.id !== deleteId);
+                    const deletedIds = deleteResult?.deletedCourseIds || [deleteId];
+                    allCourses = allCourses.filter(c => !deletedIds.includes(c.id) && !deletedIds.includes(c.root_course_id));
                     render(currentFilter);
                     updateCounters(allCourses);
 
@@ -876,8 +879,8 @@
 
                     showToast(
                         deleteResult?.softDeleted
-                            ? 'Course removed. Instructor earnings and payment history were preserved.'
-                            : 'Course and its stored videos deleted successfully.',
+                            ? 'Course versions removed. Instructor earnings and payment history were preserved.'
+                            : 'Course and all saved versions and their unshared stored videos deleted successfully.',
                         'success'
                     );
                 } catch (error) {
