@@ -122,7 +122,7 @@ async function getCanonicalPrice(supabase: any, type: string, referenceId: strin
     if (profileErr || !mentorProfile) return null;
     const hourlyRate = Number(mentorProfile.hourly_rate);
     const monthlyRate = mentorProfile.monthly_rate == null ? NaN : Number(mentorProfile.monthly_rate);
-    const isMonthly = session.mentorship_type === 'program' || /Type:\\s*monthly/i.test(session.notes ?? '');
+    const isMonthly = session.mentorship_type === 'program' || /Type:\s*monthly/i.test(session.notes ?? '');
     const canonicalPrice = isMonthly
       ? (Number.isFinite(monthlyRate) && monthlyRate > 0 ? monthlyRate : hourlyRate * 20)
       : hourlyRate;
