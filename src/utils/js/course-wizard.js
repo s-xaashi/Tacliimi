@@ -2513,6 +2513,36 @@ async function publishCourse() {
     }
 }
 
+// Keep quiz editor fields in memory as the user types so rerenders cannot
+// restore stale values when options, questions, or quiz packages are added.
+function updateQuizField(field, quizIdx, qIdx, oIdx, value) {
+    const quiz = currentQuizzes[quizIdx];
+    if (!quiz) return;
+
+    if (field === 'title') {
+        quiz.title = value;
+    } else if (field === 'description') {
+        quiz.description = value;
+    } else if (field === 'question') {
+        const question = quiz.questions[qIdx];
+        if (question) question.text = value;
+    } else if (field === 'option') {
+        const option = quiz.questions[qIdx]?.options[oIdx];
+        if (option) option.text = value;
+    }
+}
+
+// Escape user-entered text before placing it into generated HTML attributes/content.
+function quizEscapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, character => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    })[character]);
+}
+
 // Multi-Quiz UI Builders
 function renderQuizPackages() {
     const container = document.getElementById('quiz-packages-container');
@@ -2536,7 +2566,7 @@ function renderQuizPackages() {
                         <input type="radio" name="correct-opt-${quizIdx}-${qIdx}" ${checked} class="text-green-500 focus:ring-green-500 cursor-pointer pointer-events-none" />
                         <span class="text-[10px] font-black uppercase tracking-widest ${opt.correct ? 'text-green-600' : 'text-slate-300'}">Correct</span>
                     </div>
-                    <input id="quiz-opt-${quizIdx}-${qIdx}-${oIdx}" class="w-full text-sm rounded border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900" value="${opt.text}" placeholder="Option text" />
+                    <input id="quiz-opt-${quizIdx}-${qIdx}-${oIdx}" class="w-full text-sm rounded border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900" value="${quizEscapeHtml(opt.text)}" placeholder="Option text" oninput="updateQuizField('option', ${quizIdx}, ${qIdx}, ${oIdx}, this.value)" />
                     <button onclick="removeQuizOption(${quizIdx}, ${qIdx}, ${oIdx})" class="text-slate-400 hover:text-red-500"><span class="material-symbols-outlined text-sm">close</span></button>
                 </div>`;
             });
@@ -2545,7 +2575,7 @@ function renderQuizPackages() {
             <div class="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-700 relative group">
                 <button onclick="removeQuizQuestion(${quizIdx}, ${qIdx})" class="absolute top-2 right-2 text-slate-400 hover:text-red-500 hidden group-hover:block"><span class="material-symbols-outlined text-sm">delete</span></button>
                 <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Question ${qIdx + 1}</label>
-                <input id="quiz-q-${quizIdx}-${qIdx}" class="w-full text-sm font-semibold rounded-lg border-slate-300 dark:border-slate-600 mb-4 bg-white dark:bg-slate-900" value="${q.text}" placeholder="Enter question..." />
+                <input id="quiz-q-${quizIdx}-${qIdx}" class="w-full text-sm font-semibold rounded-lg border-slate-300 dark:border-slate-600 mb-4 bg-white dark:bg-slate-900" value="${quizEscapeHtml(q.text)}" placeholder="Enter question..." oninput="updateQuizField('question', ${quizIdx}, ${qIdx}, null, this.value)" />
                 
                 <div class="pl-4 border-l-2 border-slate-200 dark:border-slate-700">
                     ${optionsHtml}
@@ -2580,11 +2610,11 @@ function renderQuizPackages() {
             <div class="grid grid-cols-1 gap-4">
                 <div>
                     <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Quiz Title</label>
-                    <input id="quiz-title-${quizIdx}" class="w-full text-sm font-bold rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900" value="${quiz.title}" placeholder="e.g. Assessment Phase 1" />
+                    <input id="quiz-title-${quizIdx}" class="w-full text-sm font-bold rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900" value="${quizEscapeHtml(quiz.title)}" placeholder="e.g. Assessment Phase 1" oninput="updateQuizField('title', ${quizIdx}, null, null, this.value)" />
                 </div>
                 <div>
                     <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Description</label>
-                    <textarea id="quiz-desc-${quizIdx}" class="w-full text-sm rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900" rows="2" placeholder="Purpose of this quiz...">${quiz.description}</textarea>
+                    <textarea id="quiz-desc-${quizIdx}" class="w-full text-sm rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900" rows="2" placeholder="Purpose of this quiz..." oninput="updateQuizField('description', ${quizIdx}, null, null, this.value)">${quizEscapeHtml(quiz.description)}</textarea>
                 </div>
             </div>
 
@@ -2817,6 +2847,7 @@ function setupInputStability() {
 function registerGlobals() {
     const globals = {
         addAnotherQuizPackage,
+        updateQuizField,
         removeQuizPackage,
         removeQuizQuestion,
         addQuizOption,
