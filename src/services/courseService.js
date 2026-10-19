@@ -783,9 +783,8 @@ export const CourseService = {
                         activeQuizIds.push(quizId);
                     }
 
+                    const activeQuestionIds = [];
                     if (qz.questions && qz.questions.length > 0) {
-                        const activeQuestionIds = [];
-
                         for (const [index, q] of qz.questions.entries()) {
                             // Normalize question text
                             const qText = q.text || q.question_text || 'Question?';
@@ -798,7 +797,8 @@ export const CourseService = {
                             }).select().maybeSingle();
 
                             if (qnErr) throw qnErr;
-                            if (qnData) {
+                            if (!qnData) throw new Error('Question upsert returned no record.');
+                            {
                                 q.id = qnData.id;
                                 activeQuestionIds.push(qnData.id);
 
@@ -819,13 +819,14 @@ export const CourseService = {
                             }
                         }
 
-                        // Cleanup removed questions for THIS quiz, including when all questions were removed.
-                        const questionCleanup = supabase.from('quiz_questions').delete().eq('quiz_id', quizId);
-                        const { error: questionDeleteError } = activeQuestionIds.length > 0
-                            ? await questionCleanup.not('id', 'in', `(${activeQuestionIds.join(',')})`)
-                            : await questionCleanup;
-                        if (questionDeleteError) throw questionDeleteError;
                     }
+
+                    // Cleanup removed questions for THIS quiz, including when all questions were removed.
+                    const questionCleanup = supabase.from('quiz_questions').delete().eq('quiz_id', quizId);
+                    const { error: questionDeleteError } = activeQuestionIds.length > 0
+                        ? await questionCleanup.not('id', 'in', `(${activeQuestionIds.join(',')})`)
+                        : await questionCleanup;
+                    if (questionDeleteError) throw questionDeleteError;
                 }
 
                 // Cleanup removed quizzes for THIS lesson and fail visibly if cleanup fails.
