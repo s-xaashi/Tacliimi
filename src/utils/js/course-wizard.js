@@ -86,8 +86,6 @@ function getLessonVideoState(lessonId) {
 let isSaving = false;
 let pendingSave = false;
 let saveTimeout = null;
-let queuedSaveSilent = true;
-let saveWaiters = [];
 const SAVE_DEBOUNCE_MS = 1500;
 
 // Helper to get localStorage key for last visited step
@@ -401,51 +399,26 @@ async function loadDraft(courseId) {
 /**
  * Debounced Save Draft - returns a Promise that resolves when save completes.
  */
-window.saveDraft = function(silent = false, throwOnError = false) {
+window.saveDraft = function(silent = false) {
     if (saveTimeout) clearTimeout(saveTimeout);
+    
+    // If already saving, mark for re-save and return the promise of the current save
+    if (isSaving) {
+        pendingSave = true;
+        return Promise.resolve();
+    }
 
-    pendingSave = true;
-    queuedSaveSilent = queuedSaveSilent && silent;
-
-    const promise = new Promise((resolve, reject) => {
-        saveWaiters.push({ resolve, reject, throwOnError });
+    return new Promise((resolve, reject) => {
+        saveTimeout = setTimeout(async () => {
+            try {
+                await performSave(silent);
+                resolve();
+            } catch (e) {
+                resolve(); // Don't reject - caller should not crash on save error
+            }
+        }, silent ? SAVE_DEBOUNCE_MS : 50);
     });
-
-    // If a save is in progress, its runner will process this request immediately
-    // after the current pass. Callers await the queued pass instead of a false success.
-    if (!isSaving) {
-        saveTimeout = setTimeout(runQueuedSave, silent ? SAVE_DEBOUNCE_MS : 50);
-    }
-
-    return promise;
 };
-
-async function runQueuedSave() {
-    if (isSaving || !pendingSave) return;
-    if (saveTimeout) clearTimeout(saveTimeout);
-    saveTimeout = null;
-
-    const batch = saveWaiters;
-    saveWaiters = [];
-    const silent = queuedSaveSilent;
-    pendingSave = false;
-    queuedSaveSilent = true;
-
-    try {
-        await performSave(silent);
-        batch.forEach(waiter => waiter.resolve());
-    } catch (error) {
-        batch.forEach(waiter => {
-            if (waiter.throwOnError) waiter.reject(error);
-            else waiter.resolve(); // Background autosaves keep existing non-blocking behavior.
-        });
-    }
-
-    if (pendingSave) {
-        // A request made during the previous save must be persisted before its caller continues.
-        runQueuedSave();
-    }
-}
 
 async function performSave(silent = false) {
     if (isSaving) {
@@ -453,15 +426,15 @@ async function performSave(silent = false) {
         return;
     }
 
-    // CRITICAL SAFETY CHECK: fail the awaited save rather than letting Publish continue.
+    // CRITICAL SAFETY CHECK
     if (window.courseDraft.id && !window.courseDraft.isLoaded) {
-        throw new Error("Cannot save this course because its existing data has not finished loading. Please wait and try again.");
+        console.warn("Safety Check: Blocking save of partially loaded course.");
+        return;
     }
 
     if (freeTierHasR2LessonVideos(true)) {
-        const message = 'Replace direct-upload lesson videos with YouTube/Vimeo links before saving a free course.';
-        if (!silent && typeof showToast === 'function') showToast(message, true);
-        throw new Error(message);
+        if (!silent && typeof showToast === 'function') showToast('Replace direct-upload lesson videos with YouTube/Vimeo links before saving a free course.', true);
+        return;
     }
 
     isSaving = true;
@@ -575,10 +548,13 @@ async function performSave(silent = false) {
         if (!silent && typeof showToast === 'function') {
             showToast('Failed to save draft. Check connection.', true);
         }
-        throw e;
     } finally {
         isSaving = false;
         hideSavingIndicator();
+        if (pendingSave) {
+            pendingSave = false;
+            performSave(true);
+        }
     }
 }
 
@@ -775,7 +751,7 @@ async function saveCurrentStepData(shouldSaveToDb = false) {
 
     // Only save to DB if explicitly requested (e.g., Save Draft, Next on Step 4, or Publish)
     if (shouldSaveToDb) {
-        await window.saveDraft(false, true); 
+        await window.saveDraft(false); 
     }
 }
 
@@ -2514,7 +2490,7 @@ async function publishCourse() {
     try {
         // Read the current form values, then persist the draft/curriculum once.
         await saveCurrentStepData(false);
-        await window.saveDraft(true, true);
+        await window.saveDraft(true);
         if (!window.courseDraft.id) throw new Error("Could not save the course draft. Please check your data.");
 
         // The RPC validates ownership and the allowed draft/rejected transition.
