@@ -766,36 +766,25 @@ export const CourseService = {
                 console.log(`Syncing ${lessonData.quiz.length} quizzes for lesson:`, savedLesson.id);
 
                 for (const [qzIdx, qz] of lessonData.quiz.entries()) {
-                    let quizId = qz.id;
                     const quizPayload = {
+                        ...(qz.id ? { id: qz.id } : {}),
                         lesson_id: savedLesson.id,
                         title: qz.title || `Quiz ${qzIdx + 1}`,
                         description: qz.description || '',
                         passing_score_percentage: qz.passing_score_percentage ?? 70
                     };
 
-                    if (quizId) {
-                        const { data: updatedQuiz, error: quizUpdateError } = await supabase
-                            .from('quizzes')
-                            .update(quizPayload)
-                            .eq('id', quizId)
-                            .select('id')
-                            .maybeSingle();
-                        if (quizUpdateError) throw quizUpdateError;
-                        if (!updatedQuiz?.id) throw new Error(`Could not update quiz ${quizId}; no matching quiz record was found.`);
-                        quizId = updatedQuiz.id;
-                        qz.id = quizId;
-                    } else {
-                        const { data: newQuiz, error: quizInsertError } = await supabase
-                            .from('quizzes')
-                            .insert([quizPayload])
-                            .select('id')
-                            .maybeSingle();
-                        if (quizInsertError) throw quizInsertError;
-                        if (!newQuiz?.id) throw new Error('Quiz insert returned no record.');
-                        quizId = newQuiz.id;
-                        qz.id = quizId;
-                    }
+                    // Upsert supports both stable client-generated IDs for new quizzes
+                    // and existing database IDs, avoiding a create/edit race in the modal.
+                    const { data: savedQuiz, error: quizUpsertError } = await supabase
+                        .from('quizzes')
+                        .upsert(quizPayload, { onConflict: 'id' })
+                        .select('id')
+                        .maybeSingle();
+                    if (quizUpsertError) throw quizUpsertError;
+                    if (!savedQuiz?.id) throw new Error(`Quiz ${qzIdx + 1} save returned no record.`);
+                    const quizId = savedQuiz.id;
+                    qz.id = quizId;
 
                     const questions = Array.isArray(qz.questions) ? qz.questions : [];
                     if (questions.length > 0) {
