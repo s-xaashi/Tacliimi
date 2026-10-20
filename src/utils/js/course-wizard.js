@@ -2819,7 +2819,7 @@ async function saveDraftManual() {
         window.sessionUploadedFiles = [];
     } catch (e) {
         console.error("Manual save failed:", e);
-        showToast("Failed to save draft.", true);
+        showToast("Failed to save draft: " + (e?.message || "Please check your connection and try again."), true);
     } finally {
         if (btn) {
             btn.disabled = false;
