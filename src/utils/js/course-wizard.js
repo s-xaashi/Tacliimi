@@ -86,6 +86,9 @@ function getLessonVideoState(lessonId) {
 let isSaving = false;
 let pendingSave = false;
 let saveTimeout = null;
+let queuedSaveSilent = true;
+let saveWaiters = [];
+let saveRunnerPromise = null;
 const SAVE_DEBOUNCE_MS = 1500;
 
 // Helper to get localStorage key for last visited step
@@ -397,44 +400,74 @@ async function loadDraft(courseId) {
 // --- STATE MANAGEMENT & PERSISTENCE ---
 
 /**
- * Debounced Save Draft - returns a Promise that resolves when save completes.
+ * Debounced, serialized draft saving.
+ * Every caller waits for the save pass that includes its request. Requests made
+ * while a save is running are collected into a follow-up pass before waiters settle.
  */
-window.saveDraft = function(silent = false) {
+window.saveDraft = function(silent = false, throwOnError = false) {
     if (saveTimeout) clearTimeout(saveTimeout);
-    
-    // If already saving, mark for re-save and return the promise of the current save
-    if (isSaving) {
-        pendingSave = true;
-        return Promise.resolve();
+
+    pendingSave = true;
+    queuedSaveSilent = queuedSaveSilent && silent;
+
+    const promise = new Promise((resolve, reject) => {
+        saveWaiters.push({ resolve, reject, throwOnError });
+    });
+
+    if (!saveRunnerPromise) {
+        saveTimeout = setTimeout(() => { void runQueuedSave(); }, silent ? SAVE_DEBOUNCE_MS : 50);
     }
 
-    return new Promise((resolve, reject) => {
-        saveTimeout = setTimeout(async () => {
-            try {
-                await performSave(silent);
-                resolve();
-            } catch (e) {
-                resolve(); // Don't reject - caller should not crash on save error
-            }
-        }, silent ? SAVE_DEBOUNCE_MS : 50);
-    });
+    return promise;
 };
 
-async function performSave(silent = false) {
-    if (isSaving) {
-        pendingSave = true;
-        return;
-    }
+async function runQueuedSave() {
+    if (saveRunnerPromise || !pendingSave) return saveRunnerPromise;
+    if (saveTimeout) clearTimeout(saveTimeout);
+    saveTimeout = null;
 
-    // CRITICAL SAFETY CHECK
+    saveRunnerPromise = (async () => {
+        const waiters = [];
+        let firstError = null;
+
+        while (pendingSave) {
+            const passWaiters = saveWaiters;
+            saveWaiters = [];
+            waiters.push(...passWaiters);
+
+            const silent = queuedSaveSilent;
+            queuedSaveSilent = true;
+            pendingSave = false;
+
+            try {
+                await performSave(silent);
+            } catch (error) {
+                if (!firstError) firstError = error;
+            }
+        }
+
+        waiters.forEach(waiter => {
+            if (firstError && waiter.throwOnError) waiter.reject(firstError);
+            else waiter.resolve();
+        });
+    })().finally(() => {
+        saveRunnerPromise = null;
+        if (pendingSave) void runQueuedSave();
+    });
+
+    return saveRunnerPromise;
+}
+
+async function performSave(silent = false) {
+    // The save queue guarantees that only one performSave pass runs at a time.
     if (window.courseDraft.id && !window.courseDraft.isLoaded) {
-        console.warn("Safety Check: Blocking save of partially loaded course.");
-        return;
+        throw new Error("Cannot save this course because its existing data has not finished loading. Please wait and try again.");
     }
 
     if (freeTierHasR2LessonVideos(true)) {
-        if (!silent && typeof showToast === 'function') showToast('Replace direct-upload lesson videos with YouTube/Vimeo links before saving a free course.', true);
-        return;
+        const message = 'Replace direct-upload lesson videos with YouTube/Vimeo links before saving a free course.';
+        if (!silent && typeof showToast === 'function') showToast(message, true);
+        throw new Error(message);
     }
 
     isSaving = true;
@@ -489,20 +522,37 @@ async function performSave(silent = false) {
 
         console.log('Starting granular curriculum sync...');
 
-        await Promise.all(window.courseDraft.curriculum.map(async (section, sIdx) => {
+        // Save sections first, then limit concurrent lesson syncs. Each lesson may
+        // issue several resource/quiz requests; an unbounded Promise.all created a
+        // burst of concurrent PostgREST statements during a full-course save.
+        for (const [sIdx, section] of window.courseDraft.curriculum.entries()) {
             const savedSection = await CourseService.saveSection(savedCourse.id, {
                 ...section,
                 order_index: sIdx
             });
+            if (!savedSection?.id) throw new Error(`Section ${sIdx + 1} save returned no record.`);
             section.id = savedSection.id;
+        }
 
-            await Promise.all(section.items.map(async (lesson, lIdx) => {
-                const savedLesson = await CourseService.saveLesson(savedSection.id, {
-                    ...lesson,
-                    order_index: lIdx
+        const lessonTasks = window.courseDraft.curriculum.flatMap(section =>
+            (section.items || []).map((lesson, lessonIndex) => ({
+                sectionId: section.id,
+                lesson,
+                lessonIndex
+            }))
+        );
+        let nextLessonTask = 0;
+        const lessonWorkerCount = Math.min(2, lessonTasks.length);
+        await Promise.all(Array.from({ length: lessonWorkerCount }, async () => {
+            while (nextLessonTask < lessonTasks.length) {
+                const task = lessonTasks[nextLessonTask++];
+                const savedLesson = await CourseService.saveLesson(task.sectionId, {
+                    ...task.lesson,
+                    order_index: task.lessonIndex
                 });
-                lesson.id = savedLesson.id;
-            }));
+                if (!savedLesson?.id) throw new Error(`Lesson "${task.lesson.title || 'Untitled Lesson'}" save returned no record.`);
+                task.lesson.id = savedLesson.id;
+            }
         }));
 
         // Upserts do not remove rows omitted from the draft. Prune deleted content
@@ -548,13 +598,10 @@ async function performSave(silent = false) {
         if (!silent && typeof showToast === 'function') {
             showToast('Failed to save draft. Check connection.', true);
         }
+        throw e;
     } finally {
         isSaving = false;
         hideSavingIndicator();
-        if (pendingSave) {
-            pendingSave = false;
-            performSave(true);
-        }
     }
 }
 
@@ -703,7 +750,7 @@ function updateUI() {
     populateFields();
 }
 
-async function saveCurrentStepData(shouldSaveToDb = false) {
+async function saveCurrentStepData(shouldSaveToDb = false, throwOnSaveError = false) {
     if (window.currentStep === 1) {
         window.courseDraft.title = document.getElementById('course-title')?.value || '';
         window.courseDraft.subtitle = document.getElementById('course-subtitle')?.value || '';
@@ -751,7 +798,7 @@ async function saveCurrentStepData(shouldSaveToDb = false) {
 
     // Only save to DB if explicitly requested (e.g., Save Draft, Next on Step 4, or Publish)
     if (shouldSaveToDb) {
-        await window.saveDraft(false); 
+        await window.saveDraft(false, throwOnSaveError);
     }
 }
 
@@ -870,7 +917,7 @@ async function setupEventListeners() {
 
                 try {
                     // Ensure we have a course ID before uploading
-                    if (!window.courseDraft.id) await performSave(true);
+                    if (!window.courseDraft.id) await window.saveDraft(true, true);
                     const url = await CourseService.uploadCourseThumbnail(window.courseDraft.id, file);
                     window.sessionUploadedFiles.push({ provider: 'supabase', bucket: 'course_thumbnails', url: url });
                     window.courseDraft.thumbnail_url = url;
@@ -907,7 +954,7 @@ async function setupEventListeners() {
 
                 try {
                     // Ensure we have a course ID before uploading
-                    if (!window.courseDraft.id) await performSave(true);
+                    if (!window.courseDraft.id) await window.saveDraft(true, true);
                     
                     if (btn) btn.innerText = 'Uploading...';
                     
@@ -970,7 +1017,7 @@ async function setupEventListeners() {
             const errEl = document.getElementById('intro-video-url-error');
             if (errEl) errEl.classList.add('hidden');
             
-            if (!window.courseDraft.id) await performSave(true);
+            if (!window.courseDraft.id) await window.saveDraft(true, true);
             window.courseDraft.intro_video_provider = 'youtube';
             window.courseDraft.intro_video_url = url;
             window.courseDraft.intro_video_storage_key = null; // Clear R2 key
@@ -2490,11 +2537,21 @@ async function publishCourse() {
     try {
         // Read the current form values, then persist the draft/curriculum once.
         await saveCurrentStepData(false);
-        await window.saveDraft(true);
-        if (!window.courseDraft.id) throw new Error("Could not save the course draft. Please check your data.");
+        try {
+            await window.saveDraft(true, true);
+            if (!window.courseDraft.id) throw new Error("Could not save the course draft. Please check your data.");
+        } catch (saveError) {
+            saveError.stage = 'draft-save';
+            throw saveError;
+        }
 
         // The RPC validates ownership and the allowed draft/rejected transition.
-        await CourseService.submitForReview(window.courseDraft.id);
+        try {
+            await CourseService.submitForReview(window.courseDraft.id);
+        } catch (reviewError) {
+            reviewError.stage = 'review-submit';
+            throw reviewError;
+        }
 
         window.courseDraft.status = 'pending_review';
 
@@ -2506,8 +2563,15 @@ async function publishCourse() {
         document.getElementById('step-5-container')?.classList.add('flex');
         document.getElementById('bottom-nav')?.classList.add('hidden');
     } catch (e) {
-        console.error('Course review submission failed:', e);
-        alert("Failed to submit for review: " + (e?.message || 'Please check your connection and try again.'));
+        console.error('Course review workflow failed:', { stage: e?.stage || 'pre-submit', error: e });
+        const message = e?.message || 'Please check your connection and try again.';
+        if (e?.stage === 'draft-save') {
+            alert("Failed to save draft: " + message);
+        } else if (e?.stage === 'review-submit') {
+            alert("Draft saved, but failed to submit for review: " + message);
+        } else {
+            alert("Failed to prepare course for review: " + message);
+        }
         window.courseReviewSubmissionInProgress = false;
         if (btnPublish) { btnPublish.disabled = false; btnPublish.textContent = window.courseDraft.has_rejection_history ? 'Republish Course' : 'Publish Course'; }
     }
@@ -2746,7 +2810,7 @@ async function saveDraftManual() {
     }
 
     try {
-        await saveCurrentStepData(true);
+        await saveCurrentStepData(true, true);
         console.log("Draft saved perfectly:", window.courseDraft);
         showToast("Draft safely saved in Supabase.");
         // A newly-created revision is now explicitly saved and must be kept on Exit.
