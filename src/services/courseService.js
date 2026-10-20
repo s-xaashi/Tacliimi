@@ -673,7 +673,6 @@ export const CourseService = {
         console.log('CourseService.saveLesson:', { sectionId, lessonData });
         try {
             const resources = lessonData.resources;
-            const quiz = lessonData.quiz;
 
             // Build a clean payload with ONLY known DB columns
             const dbPayload = {
@@ -693,12 +692,17 @@ export const CourseService = {
             const videoUrl = hasVideoObject
                 ? (lessonData.video?.url ?? null)
                 : (lessonData.video_url ?? null);
+            const videoProvider = lessonData.video_provider || lessonData.video?.provider || null;
+            const isYouTubeUrl = typeof videoUrl === 'string'
+                && /(^|\/\/)(www\.)?(youtube\.com|youtu\.be|youtube-nocookie\.com)(\/|$)/i.test(videoUrl);
 
             if (hasVideoObject || hasVideoUrlField) {
                 dbPayload.video_url = videoUrl;
                 // Clear stale media references whenever the URL is absent or changed.
                 dbPayload.media_asset_id = null;
-                if (videoUrl) {
+                // YouTube videos are not registered in course_media_assets. Looking them
+                // up for every lesson adds a needless RLS-protected query during saves.
+                if (videoUrl && videoProvider !== 'youtube' && !isYouTubeUrl) {
                     const { data: assetData, error: assetLookupError } = await supabase
                         .from('course_media_assets')
                         .select('id')
@@ -733,10 +737,15 @@ export const CourseService = {
                 .select()
                 .maybeSingle();
             if (error) throw error;
-            let savedLesson = data;
+            const savedLesson = data;
+            if (!savedLesson?.id) throw new Error('Lesson save returned no record.');
 
-            // Handle resources for this lesson (always clear and rebuild for simplicity in wizard)
-            await supabase.from('lesson_resources').delete().eq('lesson_id', savedLesson.id);
+            // Resources are replaced only after the lesson row has saved successfully.
+            const { error: resourceDeleteError } = await supabase
+                .from('lesson_resources')
+                .delete()
+                .eq('lesson_id', savedLesson.id);
+            if (resourceDeleteError) throw resourceDeleteError;
             if (resources && resources.length > 0) {
                 const resourcePayloads = resources.map(r => ({
                     lesson_id: savedLesson.id,
@@ -744,7 +753,10 @@ export const CourseService = {
                     file_url: r.file_url || '',
                     file_type: r.file_type || 'unknown'
                 }));
-                await supabase.from('lesson_resources').insert(resourcePayloads);
+                const { error: resourceInsertError } = await supabase
+                    .from('lesson_resources')
+                    .insert(resourcePayloads);
+                if (resourceInsertError) throw resourceInsertError;
             }
 
             // Handle quizzes (Standardized JSON-Sync System - Supports Multiple Quizzes)
@@ -765,20 +777,31 @@ export const CourseService = {
                     };
 
                     if (quizId) {
-                        const { error: qErr } = await supabase.from('quizzes').update(quizPayload).eq('id', quizId);
+                        const { data: updatedQuiz, error: qErr } = await supabase
+                            .from('quizzes')
+                            .update(quizPayload)
+                            .eq('id', quizId)
+                            .select('id')
+                            .maybeSingle();
                         if (qErr) throw qErr;
-                        activeQuizIds.push(quizId);
+                        if (!updatedQuiz) throw new Error(`Could not update quiz ${quizId}; no matching quiz record was found.`);
+                        activeQuizIds.push(updatedQuiz.id);
                     } else {
-                        const { data: newQuiz, error: qErr } = await supabase.from('quizzes').insert([quizPayload]).select().maybeSingle();
+                        const { data: newQuiz, error: qErr } = await supabase
+                            .from('quizzes')
+                            .insert([quizPayload])
+                            .select()
+                            .maybeSingle();
                         if (qErr) throw qErr;
+                        if (!newQuiz?.id) throw new Error('Quiz insert returned no record.');
                         quizId = newQuiz.id;
                         qz.id = quizId;
                         activeQuizIds.push(quizId);
                     }
 
+                    // Cleanup must also run when the instructor removes every question.
+                    const activeQuestionIds = [];
                     if (qz.questions && qz.questions.length > 0) {
-                        const activeQuestionIds = [];
-
                         for (const [index, q] of qz.questions.entries()) {
                             // Normalize question text
                             const qText = q.text || q.question_text || 'Question?';
@@ -791,45 +814,59 @@ export const CourseService = {
                             }).select().maybeSingle();
 
                             if (qnErr) throw qnErr;
-                            if (qnData) {
-                                q.id = qnData.id;
-                                activeQuestionIds.push(qnData.id);
+                            if (!qnData?.id) throw new Error(`Question ${index + 1} upsert returned no record.`);
 
-                                if (q.options && q.options.length > 0) {
-                                    // Full wipe and rebuild of options for this question (cleanest for wizard)
-                                    await supabase.from('quiz_options').delete().eq('question_id', qnData.id);
+                            q.id = qnData.id;
+                            activeQuestionIds.push(qnData.id);
 
-                                    const optPayloads = q.options.map((op, oIdx) => ({
-                                        question_id: qnData.id,
-                                        option_text: op.text || op.option_text || `Option ${oIdx + 1}`,
-                                        is_correct: op.correct !== undefined ? op.correct : (op.is_correct || false),
-                                        order_index: op.order_index ?? oIdx
-                                    }));
-                                    await supabase.from('quiz_options').insert(optPayloads);
-                                }
+                            // Delete old options even when the new list is empty, so removing
+                            // every option in the editor is persisted instead of resurrected.
+                            const { error: optionDeleteError } = await supabase
+                                .from('quiz_options')
+                                .delete()
+                                .eq('question_id', qnData.id);
+                            if (optionDeleteError) throw optionDeleteError;
+
+                            if (q.options && q.options.length > 0) {
+                                const optPayloads = q.options.map((op, oIdx) => ({
+                                    question_id: qnData.id,
+                                    option_text: op.text || op.option_text || `Option ${oIdx + 1}`,
+                                    is_correct: op.correct !== undefined ? op.correct : (op.is_correct || false),
+                                    order_index: op.order_index ?? oIdx
+                                }));
+                                const { error: optionInsertError } = await supabase
+                                    .from('quiz_options')
+                                    .insert(optPayloads);
+                                if (optionInsertError) throw optionInsertError;
                             }
                         }
+                    }
 
-                        // Cleanup removed questions for THIS quiz
-                        if (activeQuestionIds.length > 0) {
-                            await supabase.from('quiz_questions')
-                                .delete()
-                                .eq('quiz_id', quizId)
-                                .not('id', 'in', `(${activeQuestionIds.join(',')})`);
-                        }
+                    // Remove questions omitted from this quiz, including when zero remain.
+                    const questionCleanup = supabase
+                        .from('quiz_questions')
+                        .delete()
+                        .eq('quiz_id', quizId);
+                    const { error: questionDeleteError } = activeQuestionIds.length > 0
+                        ? await questionCleanup.not('id', 'in', `(${activeQuestionIds.join(',')})`)
+                        : await questionCleanup;
+                    if (questionDeleteError) throw questionDeleteError;
                     }
                 }
 
-                // Cleanup removed quizzes for THIS lesson
-                if (activeQuizIds.length > 0) {
-                    await supabase.from('quizzes')
-                        .delete()
-                        .eq('lesson_id', savedLesson.id)
-                        .not('id', 'in', `(${activeQuizIds.join(',')})`);
-                }
+                // Cleanup removed quizzes for THIS lesson.
+                const quizCleanup = supabase.from('quizzes').delete().eq('lesson_id', savedLesson.id);
+                const { error: quizDeleteError } = activeQuizIds.length > 0
+                    ? await quizCleanup.not('id', 'in', `(${activeQuizIds.join(',')})`)
+                    : await quizCleanup;
+                if (quizDeleteError) throw quizDeleteError;
             } else {
-                // If lesson has no quizzes, ensure they are all deleted
-                await supabase.from('quizzes').delete().eq('lesson_id', savedLesson.id);
+                // If lesson has no quizzes, ensure they are all deleted.
+                const { error: quizDeleteError } = await supabase
+                    .from('quizzes')
+                    .delete()
+                    .eq('lesson_id', savedLesson.id);
+                if (quizDeleteError) throw quizDeleteError;
             }
 
 
