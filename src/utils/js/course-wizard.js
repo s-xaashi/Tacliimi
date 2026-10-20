@@ -542,18 +542,29 @@ async function performSave(silent = false) {
             }))
         );
         let nextLessonTask = 0;
+        let lessonSaveError = null;
         const lessonWorkerCount = Math.min(2, lessonTasks.length);
         await Promise.all(Array.from({ length: lessonWorkerCount }, async () => {
-            while (nextLessonTask < lessonTasks.length) {
-                const task = lessonTasks[nextLessonTask++];
-                const savedLesson = await CourseService.saveLesson(task.sectionId, {
-                    ...task.lesson,
-                    order_index: task.lessonIndex
-                });
-                if (!savedLesson?.id) throw new Error(`Lesson "${task.lesson.title || 'Untitled Lesson'}" save returned no record.`);
-                task.lesson.id = savedLesson.id;
+            while (!lessonSaveError) {
+                const taskIndex = nextLessonTask++;
+                if (taskIndex >= lessonTasks.length) return;
+                const task = lessonTasks[taskIndex];
+                try {
+                    const savedLesson = await CourseService.saveLesson(task.sectionId, {
+                        ...task.lesson,
+                        order_index: task.lessonIndex
+                    });
+                    if (!savedLesson?.id) throw new Error(`Lesson "${task.lesson.title || 'Untitled Lesson'}" save returned no record.`);
+                    task.lesson.id = savedLesson.id;
+                } catch (error) {
+                    if (!lessonSaveError) lessonSaveError = error;
+                    return;
+                }
             }
         }));
+        // Wait for the other in-flight worker to finish before failing the save pass;
+        // otherwise a retry could overlap a still-running lesson write.
+        if (lessonSaveError) throw lessonSaveError;
 
         // Upserts do not remove rows omitted from the draft. Prune deleted content
         // only after every current section/lesson has saved successfully.
