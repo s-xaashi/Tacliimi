@@ -759,16 +759,14 @@ export const CourseService = {
                 if (resourceInsertError) throw resourceInsertError;
             }
 
-            // Handle quizzes (Standardized JSON-Sync System - Supports Multiple Quizzes)
+            // Persist quiz content with batched question/option upserts. Only issue
+            // deletion statements for IDs explicitly removed in the editor; the former
+            // full replacement issued delete+insert requests for every option on every save.
             if (lessonData.quiz && lessonData.quiz.length > 0) {
                 console.log(`Syncing ${lessonData.quiz.length} quizzes for lesson:`, savedLesson.id);
 
-                // Track IDs of quizzes that should stay
-                const activeQuizIds = [];
-
                 for (const [qzIdx, qz] of lessonData.quiz.entries()) {
                     let quizId = qz.id;
-
                     const quizPayload = {
                         lesson_id: savedLesson.id,
                         title: qz.title || `Quiz ${qzIdx + 1}`,
@@ -777,97 +775,125 @@ export const CourseService = {
                     };
 
                     if (quizId) {
-                        const { data: updatedQuiz, error: qErr } = await supabase
+                        const { data: updatedQuiz, error: quizUpdateError } = await supabase
                             .from('quizzes')
                             .update(quizPayload)
                             .eq('id', quizId)
                             .select('id')
                             .maybeSingle();
-                        if (qErr) throw qErr;
-                        if (!updatedQuiz) throw new Error(`Could not update quiz ${quizId}; no matching quiz record was found.`);
-                        activeQuizIds.push(updatedQuiz.id);
+                        if (quizUpdateError) throw quizUpdateError;
+                        if (!updatedQuiz?.id) throw new Error(`Could not update quiz ${quizId}; no matching quiz record was found.`);
+                        quizId = updatedQuiz.id;
+                        qz.id = quizId;
                     } else {
-                        const { data: newQuiz, error: qErr } = await supabase
+                        const { data: newQuiz, error: quizInsertError } = await supabase
                             .from('quizzes')
                             .insert([quizPayload])
-                            .select()
+                            .select('id')
                             .maybeSingle();
-                        if (qErr) throw qErr;
+                        if (quizInsertError) throw quizInsertError;
                         if (!newQuiz?.id) throw new Error('Quiz insert returned no record.');
                         quizId = newQuiz.id;
                         qz.id = quizId;
-                        activeQuizIds.push(quizId);
                     }
 
-                    // Cleanup must also run when the instructor removes every question.
-                    const activeQuestionIds = [];
-                    if (qz.questions && qz.questions.length > 0) {
-                        for (const [index, q] of qz.questions.entries()) {
-                            // Normalize question text
-                            const qText = q.text || q.question_text || 'Question?';
+                    const questions = Array.isArray(qz.questions) ? qz.questions : [];
+                    if (questions.length > 0) {
+                        const questionPayloads = questions.map((question, index) => ({
+                            ...(question.id ? { id: question.id } : {}),
+                            quiz_id: quizId,
+                            question_text: question.text || question.question_text || 'Question?',
+                            order_index: index
+                        }));
+                        const { data: savedQuestions, error: questionUpsertError } = await supabase
+                            .from('quiz_questions')
+                            .upsert(questionPayloads, { onConflict: 'id' })
+                            .select('id, order_index');
+                        if (questionUpsertError) throw questionUpsertError;
+                        if (!savedQuestions || savedQuestions.length !== questions.length) {
+                            throw new Error(`Quiz "${qz.title || qzIdx + 1}" did not save every question.`);
+                        }
 
-                            const { data: qnData, error: qnErr } = await supabase.from('quiz_questions').upsert({
-                                id: q.id || undefined,
-                                quiz_id: quizId,
-                                question_text: qText,
-                                order_index: q.order_index ?? index
-                            }).select().maybeSingle();
-
-                            if (qnErr) throw qnErr;
-                            if (!qnData?.id) throw new Error(`Question ${index + 1} upsert returned no record.`);
-
-                            q.id = qnData.id;
-                            activeQuestionIds.push(qnData.id);
-
-                            // Delete old options even when the new list is empty, so removing
-                            // every option in the editor is persisted instead of resurrected.
-                            const { error: optionDeleteError } = await supabase
-                                .from('quiz_options')
-                                .delete()
-                                .eq('question_id', qnData.id);
-                            if (optionDeleteError) throw optionDeleteError;
-
-                            if (q.options && q.options.length > 0) {
-                                const optPayloads = q.options.map((op, oIdx) => ({
-                                    question_id: qnData.id,
-                                    option_text: op.text || op.option_text || `Option ${oIdx + 1}`,
-                                    is_correct: op.correct !== undefined ? op.correct : (op.is_correct || false),
-                                    order_index: op.order_index ?? oIdx
-                                }));
-                                const { error: optionInsertError } = await supabase
-                                    .from('quiz_options')
-                                    .insert(optPayloads);
-                                if (optionInsertError) throw optionInsertError;
-                            }
+                        const questionByOrder = new Map(savedQuestions.map(question => [question.order_index, question]));
+                        for (const [index, question] of questions.entries()) {
+                            const savedQuestion = questionByOrder.get(index);
+                            if (!savedQuestion?.id) throw new Error(`Question ${index + 1} save returned no record.`);
+                            question.id = savedQuestion.id;
+                            question.order_index = index;
                         }
                     }
 
-                    // Remove questions omitted from this quiz, including when zero remain.
-                    const questionCleanup = supabase
-                        .from('quiz_questions')
-                        .delete()
-                        .eq('quiz_id', quizId);
-                    const { error: questionDeleteError } = activeQuestionIds.length > 0
-                        ? await questionCleanup.not('id', 'in', `(${activeQuestionIds.join(',')})`)
-                        : await questionCleanup;
-                    if (questionDeleteError) throw questionDeleteError;
+                    for (const question of questions) {
+                        const options = Array.isArray(question.options) ? question.options : [];
+                        if (options.length > 0) {
+                            const optionPayloads = options.map((option, index) => ({
+                                ...(option.id ? { id: option.id } : {}),
+                                question_id: question.id,
+                                option_text: option.text || option.option_text || `Option ${index + 1}`,
+                                is_correct: option.correct !== undefined ? option.correct : (option.is_correct || false),
+                                order_index: index
+                            }));
+                            const { data: savedOptions, error: optionUpsertError } = await supabase
+                                .from('quiz_options')
+                                .upsert(optionPayloads, { onConflict: 'id' })
+                                .select('id, order_index');
+                            if (optionUpsertError) throw optionUpsertError;
+                            if (!savedOptions || savedOptions.length !== options.length) {
+                                throw new Error(`Question "${question.text || question.question_text || 'Untitled'}" did not save every answer option.`);
+                            }
+
+                            savedOptions.forEach(option => {
+                                const target = options[option.order_index];
+                                if (target) {
+                                    target.id = option.id;
+                                    target.order_index = option.order_index;
+                                }
+                            });
+                        }
+
+                        const deletedOptionIds = [...new Set((question._deletedOptionIds || []).filter(Boolean))];
+                        if (deletedOptionIds.length > 0) {
+                            const { error: optionDeleteError } = await supabase
+                                .from('quiz_options')
+                                .delete()
+                                .eq('question_id', question.id)
+                                .in('id', deletedOptionIds);
+                            if (optionDeleteError) throw optionDeleteError;
+                            delete question._deletedOptionIds;
+                        }
+                    }
+
+                    const deletedQuestionIds = [...new Set((qz._deletedQuestionIds || []).filter(Boolean))];
+                    if (deletedQuestionIds.length > 0) {
+                        const { error: questionDeleteError } = await supabase
+                            .from('quiz_questions')
+                            .delete()
+                            .eq('quiz_id', quizId)
+                            .in('id', deletedQuestionIds);
+                        if (questionDeleteError) throw questionDeleteError;
+                        delete qz._deletedQuestionIds;
+                    }
                 }
 
-                // Cleanup removed quizzes for THIS lesson.
-                const quizCleanup = supabase.from('quizzes').delete().eq('lesson_id', savedLesson.id);
-                const { error: quizDeleteError } = activeQuizIds.length > 0
-                    ? await quizCleanup.not('id', 'in', `(${activeQuizIds.join(',')})`)
-                    : await quizCleanup;
-                if (quizDeleteError) throw quizDeleteError;
+                const deletedQuizIds = [...new Set((lessonData._deletedQuizIds || []).filter(Boolean))];
+                if (deletedQuizIds.length > 0) {
+                    const { error: quizDeleteError } = await supabase
+                        .from('quizzes')
+                        .delete()
+                        .eq('lesson_id', savedLesson.id)
+                        .in('id', deletedQuizIds);
+                    if (quizDeleteError) throw quizDeleteError;
+                    delete lessonData._deletedQuizIds;
+                }
             } else {
-                // If lesson has no quizzes, ensure they are all deleted.
+                // Switching a lesson away from quizzes intentionally removes all its quizzes.
                 const { error: quizDeleteError } = await supabase
                     .from('quizzes')
                     .delete()
                     .eq('lesson_id', savedLesson.id);
                 if (quizDeleteError) throw quizDeleteError;
+                delete lessonData._deletedQuizIds;
             }
-
 
             return savedLesson;
         } catch (error) {
