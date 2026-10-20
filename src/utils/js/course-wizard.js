@@ -1614,6 +1614,16 @@ let activeModalItemIdx = -1;
 let currentQuizzes = []; // Now managing an array of quizzes in the modal
 let deletedQuizIds = [];
 
+function newQuizContentId() {
+    if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+        return window.crypto.randomUUID();
+    }
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, character => {
+        const random = Math.random() * 16 | 0;
+        return (character === 'x' ? random : (random & 0x3 | 0x8)).toString(16);
+    });
+}
+
 function wizardOpenModal(modalId, sIdx, iIdx) {
     activeModalSectionIdx = sIdx;
     activeModalItemIdx = iIdx;
@@ -1688,6 +1698,7 @@ function wizardOpenModal(modalId, sIdx, iIdx) {
         } else {
             // Start with one empty quiz package
             currentQuizzes = [{
+                id: newQuizContentId(),
                 title: 'Quiz 1',
                 description: '',
                 questions: []
@@ -2720,6 +2731,7 @@ function syncQuizState() {
 function addAnotherQuizPackage() {
     syncQuizState();
     currentQuizzes.push({
+        id: newQuizContentId(),
         title: `Quiz ${currentQuizzes.length + 1}`,
         description: '',
         questions: []
@@ -2739,7 +2751,7 @@ function removeQuizPackage(quizIdx) {
         }
         currentQuizzes.splice(quizIdx, 1);
         if (currentQuizzes.length === 0) {
-            currentQuizzes = [{ title: 'Quiz 1', description: '', questions: [] }];
+            currentQuizzes = [{ id: newQuizContentId(), title: 'Quiz 1', description: '', questions: [] }];
         }
         renderQuizPackages();
     }
@@ -2747,12 +2759,13 @@ function removeQuizPackage(quizIdx) {
 
 function addQuizQuestion(quizIdx) {
     syncQuizState();
-    currentQuizzes[quizIdx].questions.push({ 
-        text: '', 
+    currentQuizzes[quizIdx].questions.push({
+        id: newQuizContentId(),
+        text: '',
         options: [
-            { text: '', correct: true }, 
-            { text: '', correct: false }
-        ] 
+            { id: newQuizContentId(), text: '', correct: true },
+            { id: newQuizContentId(), text: '', correct: false }
+        ]
     });
     renderQuizPackages();
 }
@@ -2771,7 +2784,7 @@ function removeQuizQuestion(quizIdx, qIdx) {
 
 function addQuizOption(quizIdx, qIdx) {
     syncQuizState();
-    currentQuizzes[quizIdx].questions[qIdx].options.push({ text: '', correct: false });
+    currentQuizzes[quizIdx].questions[qIdx].options.push({ id: newQuizContentId(), text: '', correct: false });
     renderQuizPackages();
 }
 
