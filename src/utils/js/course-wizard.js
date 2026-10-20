@@ -2731,6 +2731,12 @@ function addAnotherQuizPackage() {
 function removeQuizPackage(quizIdx) {
     if (confirm('Are you sure you want to delete this Entire Quiz Package including its questions?')) {
         syncQuizState();
+        const removedQuiz = currentQuizzes[quizIdx];
+        const lesson = window.courseDraft.curriculum[activeModalSectionIdx]?.items?.[activeModalItemIdx];
+        if (removedQuiz?.id && lesson) {
+            lesson._deletedQuizIds = Array.isArray(lesson._deletedQuizIds) ? lesson._deletedQuizIds : [];
+            if (!lesson._deletedQuizIds.includes(removedQuiz.id)) lesson._deletedQuizIds.push(removedQuiz.id);
+        }
         currentQuizzes.splice(quizIdx, 1);
         if (currentQuizzes.length === 0) {
             currentQuizzes = [{ title: 'Quiz 1', description: '', questions: [] }];
@@ -2753,7 +2759,13 @@ function addQuizQuestion(quizIdx) {
 
 function removeQuizQuestion(quizIdx, qIdx) {
     syncQuizState();
-    currentQuizzes[quizIdx].questions.splice(qIdx, 1);
+    const quiz = currentQuizzes[quizIdx];
+    const removedQuestion = quiz?.questions?.[qIdx];
+    if (removedQuestion?.id) {
+        quiz._deletedQuestionIds = Array.isArray(quiz._deletedQuestionIds) ? quiz._deletedQuestionIds : [];
+        if (!quiz._deletedQuestionIds.includes(removedQuestion.id)) quiz._deletedQuestionIds.push(removedQuestion.id);
+    }
+    quiz.questions.splice(qIdx, 1);
     renderQuizPackages();
 }
 
@@ -2765,11 +2777,17 @@ function addQuizOption(quizIdx, qIdx) {
 
 function removeQuizOption(quizIdx, qIdx, oIdx) {
     syncQuizState();
-    if (currentQuizzes[quizIdx].questions[qIdx].options.length <= 2) { alert('Minimum 2 options required'); return; }
-    currentQuizzes[quizIdx].questions[qIdx].options.splice(oIdx, 1);
+    const question = currentQuizzes[quizIdx].questions[qIdx];
+    if (question.options.length <= 2) { alert('Minimum 2 options required'); return; }
+    const removedOption = question.options[oIdx];
+    if (removedOption?.id) {
+        question._deletedOptionIds = Array.isArray(question._deletedOptionIds) ? question._deletedOptionIds : [];
+        if (!question._deletedOptionIds.includes(removedOption.id)) question._deletedOptionIds.push(removedOption.id);
+    }
+    question.options.splice(oIdx, 1);
     // Ensure at least one correct
-    if (!currentQuizzes[quizIdx].questions[qIdx].options.some(o => o.correct)) {
-        currentQuizzes[quizIdx].questions[qIdx].options[0].correct = true;
+    if (!question.options.some(o => o.correct)) {
+        question.options[0].correct = true;
     }
     renderQuizPackages();
 }
