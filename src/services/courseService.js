@@ -851,7 +851,6 @@ export const CourseService = {
                         ? await questionCleanup.not('id', 'in', `(${activeQuestionIds.join(',')})`)
                         : await questionCleanup;
                     if (questionDeleteError) throw questionDeleteError;
-                    }
                 }
 
                 // Cleanup removed quizzes for THIS lesson.
