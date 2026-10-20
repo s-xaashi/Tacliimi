@@ -2825,10 +2825,12 @@ function saveModalQuiz() {
     if (activeModalItemIdx !== -1) {
         const item = window.courseDraft.curriculum[activeModalSectionIdx].items[activeModalItemIdx];
         item.quiz = JSON.parse(JSON.stringify(currentQuizzes));
-        item._deletedQuizIds = [...new Set([
+        const pendingQuizDeletions = [...new Set([
             ...(Array.isArray(item._deletedQuizIds) ? item._deletedQuizIds : []),
             ...deletedQuizIds
         ])];
+        if (pendingQuizDeletions.length > 0) item._deletedQuizIds = pendingQuizDeletions;
+        else delete item._deletedQuizIds;
         deletedQuizIds = [];
         item.content_type = 'quiz';
     }
