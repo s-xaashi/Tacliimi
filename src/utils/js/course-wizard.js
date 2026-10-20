@@ -583,7 +583,8 @@ async function performSave(silent = false) {
                     }
                 }
             } catch (e) {
-                console.warn("Coupon save warning:", e.message);
+                console.error("Coupon save failure:", e);
+                throw new Error("Failed to save course coupons: " + (e?.message || "Please try again."));
             }
         }
 
