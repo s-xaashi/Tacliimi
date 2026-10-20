@@ -872,7 +872,9 @@ export const CourseService = {
                         .eq('lesson_id', savedLesson.id)
                         .in('id', deletedQuizIds);
                     if (quizDeleteError) throw quizDeleteError;
-                    delete lessonData._deletedQuizIds;
+                    // The wizard passes a shallow copy of the lesson, so clear the
+                    // shared deletion queue in place after confirmed success.
+                    if (Array.isArray(lessonData._deletedQuizIds)) lessonData._deletedQuizIds.length = 0;
                 }
             } else {
                 // Switching a lesson away from quizzes intentionally removes all its quizzes.
@@ -881,7 +883,7 @@ export const CourseService = {
                     .delete()
                     .eq('lesson_id', savedLesson.id);
                 if (quizDeleteError) throw quizDeleteError;
-                delete lessonData._deletedQuizIds;
+                if (Array.isArray(lessonData._deletedQuizIds)) lessonData._deletedQuizIds.length = 0;
             }
 
             return savedLesson;
