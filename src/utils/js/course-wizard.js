@@ -1612,6 +1612,7 @@ function dropItemEmpty(e, targetSIdx) {
 let activeModalSectionIdx = -1;
 let activeModalItemIdx = -1;
 let currentQuizzes = []; // Now managing an array of quizzes in the modal
+let deletedQuizIds = [];
 
 function wizardOpenModal(modalId, sIdx, iIdx) {
     activeModalSectionIdx = sIdx;
@@ -1681,6 +1682,7 @@ function wizardOpenModal(modalId, sIdx, iIdx) {
         toggleResourceForm(lesson.resources.length === 0);
     } else if (modalId === 'modal-add-quiz') {
         // Multi-quiz management
+        deletedQuizIds = Array.isArray(lesson._deletedQuizIds) ? [...lesson._deletedQuizIds] : [];
         if (lesson.quiz && lesson.quiz.length > 0) {
             currentQuizzes = JSON.parse(JSON.stringify(lesson.quiz));
         } else {
@@ -2732,10 +2734,8 @@ function removeQuizPackage(quizIdx) {
     if (confirm('Are you sure you want to delete this Entire Quiz Package including its questions?')) {
         syncQuizState();
         const removedQuiz = currentQuizzes[quizIdx];
-        const lesson = window.courseDraft.curriculum[activeModalSectionIdx]?.items?.[activeModalItemIdx];
-        if (removedQuiz?.id && lesson) {
-            lesson._deletedQuizIds = Array.isArray(lesson._deletedQuizIds) ? lesson._deletedQuizIds : [];
-            if (!lesson._deletedQuizIds.includes(removedQuiz.id)) lesson._deletedQuizIds.push(removedQuiz.id);
+        if (removedQuiz?.id && !deletedQuizIds.includes(removedQuiz.id)) {
+            deletedQuizIds.push(removedQuiz.id);
         }
         currentQuizzes.splice(quizIdx, 1);
         if (currentQuizzes.length === 0) {
@@ -2812,6 +2812,11 @@ function saveModalQuiz() {
     if (activeModalItemIdx !== -1) {
         const item = window.courseDraft.curriculum[activeModalSectionIdx].items[activeModalItemIdx];
         item.quiz = JSON.parse(JSON.stringify(currentQuizzes));
+        item._deletedQuizIds = [...new Set([
+            ...(Array.isArray(item._deletedQuizIds) ? item._deletedQuizIds : []),
+            ...deletedQuizIds
+        ])];
+        deletedQuizIds = [];
         item.content_type = 'quiz';
     }
 
