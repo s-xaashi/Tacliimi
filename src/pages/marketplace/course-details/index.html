@@ -1036,10 +1036,19 @@
                         try {
                             const result = await CourseService.enrollCourse(courseId, currentUser.id);
 
-                            // If user is enrolling via an update offer, mark it as redeemed
+                            // Enrollment is already confirmed. Offer bookkeeping must not
+                            // suppress the success modal or make the student retry enrollment.
                             if (window._pendingOfferRedemption) {
-                                await CourseService.markOfferRedeemed(window._pendingOfferRedemption);
+                                const offerId = window._pendingOfferRedemption;
                                 window._pendingOfferRedemption = null;
+                                try {
+                                    await CourseService.markOfferRedeemed(offerId);
+                                } catch (offerError) {
+                                    console.error('Enrollment succeeded, but update-offer redemption failed:', offerError);
+                                    if (window.showToast) {
+                                        window.showToast('You are enrolled successfully. Course update status may take a moment to refresh.', 'info');
+                                    }
+                                }
                             }
 
                             // Populate the shared modal with the actual course before showing success.
