@@ -1683,39 +1683,51 @@ export const CourseService = {
      * Mark a course update offer as redeemed (called after successful re-enrollment).
      */
     async markOfferRedeemed(offerId) {
-        // Fetch the offer to get root_course_id, to_version_id, and student_id
+        if (!offerId) throw new Error('Course update offer ID is required.');
+
+        // Load and validate the offer before changing enrollment history.
         const { data: offer, error: getErr } = await supabase
             .from('course_update_offers')
-            .select('student_id, root_course_id, to_version_id')
+            .select('id, student_id, root_course_id, to_version_id, redeemed_at')
             .eq('id', offerId)
             .single();
+        if (getErr) throw getErr;
+        if (!offer) throw new Error('Course update offer was not found.');
 
-        if (offer && offer.root_course_id) {
-            // Find all courses with the same root_course_id
-            const { data: coursesInFamily } = await supabase
+        // Redeeming an offer is idempotent. Mark it first so the enrollment
+        // success flow is not blocked by optional history cleanup.
+        const { error: redeemError } = await supabase
+            .from('course_update_offers')
+            .update({ redeemed_at: new Date().toISOString() })
+            .eq('id', offerId);
+        if (redeemError) throw redeemError;
+
+        if (offer.root_course_id) {
+            const { data: coursesInFamily, error: familyError } = await supabase
                 .from('courses')
                 .select('id')
-                .eq('root_course_id', offer.root_course_id);
+                .or(`id.eq.${offer.root_course_id},root_course_id.eq.${offer.root_course_id}`);
+            if (familyError) {
+                console.warn('Offer redeemed, but course-family lookup failed:', familyError);
+                return;
+            }
 
-            if (coursesInFamily) {
-                // Preserve the new version, supersede the rest
-                const oldCourseIds = coursesInFamily.map(c => c.id).filter(id => id !== offer.to_version_id);
-                if (oldCourseIds.length > 0) {
-                    const { error: updErr } = await supabase
-                        .from('enrollments')
-                        .update({ status: 'superseded' })
-                        .eq('student_id', offer.student_id)
-                        .in('course_id', oldCourseIds);
-                    
-                    if (updErr) console.warn("Could not archive old enrollments:", updErr);
+            const oldCourseIds = (coursesInFamily || [])
+                .map(course => course.id)
+                .filter(id => id !== offer.to_version_id);
+            if (oldCourseIds.length > 0) {
+                const { error: updErr } = await supabase
+                    .from('enrollments')
+                    .update({ status: 'superseded' })
+                    .eq('student_id', offer.student_id)
+                    .in('course_id', oldCourseIds);
+                if (updErr) {
+                    // Offer is already redeemed; keep enrollment success intact and
+                    // log cleanup failure for later diagnosis.
+                    console.warn('Offer redeemed, but old enrollment cleanup failed:', updErr);
                 }
             }
         }
-
-        const { error } = await supabase
-            .from('course_update_offers')
-            .eq('id', offerId);
-        if (error) throw error;
     },
 
     /** CLOUDFLARE R2 VIDEO INTEGRATION */
