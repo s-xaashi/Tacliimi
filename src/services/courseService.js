@@ -1383,28 +1383,18 @@ export const CourseService = {
 
     async getInstructorStats(instructorId) {
         try {
-            // 1. Get ALL Courses for this instructor
-            const { data: allCourses, error: cErr } = await supabase
-                .from('courses')
-                .select('id, status')
-                .eq('instructor_id', instructorId);
+            // Public profile stats are calculated by a narrow aggregate RPC so
+            // student-facing pages do not depend on direct access to enrollment rows.
+            // The RPC counts only latest, published, non-deleted public course families.
+            const { data: publicStats, error: statsError } = await supabase.rpc(
+                'get_public_instructor_course_stats',
+                { p_instructor_id: instructorId }
+            );
 
-            if (cErr) throw cErr;
+            if (statsError) throw statsError;
+            const stats = Array.isArray(publicStats) ? publicStats[0] : publicStats;
 
-            const allCourseIds = allCourses?.map(c => c.id) || [];
-            const publishedCoursesCount = allCourses?.filter(c => c.status === 'published').length || 0;
-
-            // 2. Get student count from enrollments for ALL these courses
-            let studentCount = 0;
-            if (allCourseIds.length > 0) {
-                const { count, error: sErr } = await supabase
-                    .from('enrollments')
-                    .select('*', { count: 'exact', head: true })
-                    .in('course_id', allCourseIds);
-                if (!sErr && count) studentCount = count;
-            }
-
-            // 3. Get Mentor feedback rating
+            // Get mentor feedback rating separately; preserve the existing rating behavior.
             let avgRating = '0.0';
             try {
                 const { data: reviews } = await supabase
@@ -1421,9 +1411,9 @@ export const CourseService = {
             }
 
             return {
-                totalCourses: publishedCoursesCount,
-                totalStudents: studentCount,
-                avgRating: avgRating
+                totalCourses: Number(stats?.total_courses || 0),
+                totalStudents: Number(stats?.total_students || 0),
+                avgRating
             };
         } catch (e) {
             console.error('Error fetching instructor stats:', e);
