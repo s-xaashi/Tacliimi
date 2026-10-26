@@ -538,6 +538,14 @@
                                 Notify Update
                             </button>` : '';
 
+                        const quizResultsBtn = isPublished && !isPrivate && Number(course.total_quizzes || 0) > 0 ? `
+                            <button onclick="openQuizResultsModal('${course.id}', this)"
+                                title="View student quiz results and performance"
+                                class="flex items-center gap-1.5 px-3 py-1.5 bg-violet-50 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 rounded-lg text-xs font-bold hover:bg-violet-100 dark:hover:bg-violet-900/50 transition-colors border border-violet-200/70 dark:border-violet-800/60">
+                                <span class="material-symbols-outlined text-base">leaderboard</span>
+                                Quiz Results
+                            </button>` : '';
+
                         return `
                             <div class="bg-white dark:bg-slate-900 rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 group border border-slate-200/60 dark:border-slate-800 flex flex-col h-full relative cursor-default">
                                 
@@ -671,6 +679,7 @@
 
                                             ${boostBtn}
                                             ${notifyBtn}
+                                            ${quizResultsBtn}
                                             ${editBtn}
                                             <!-- Delete button -->
                                             <button onclick="openDeleteModal('${course.id}', \`${course.title.replace(/`/g, "'")}\`, ${course.status === 'draft'})"
@@ -686,6 +695,170 @@
                     }).join('');
                 }
             }
+
+            // Instructor-only quiz analytics. The RPC independently verifies course ownership.
+            window.openQuizResultsModal = async (courseId, triggerButton) => {
+                const course = allCourses.find(item => item.id === courseId);
+                if (!course || course.status !== 'published' || course.is_public === false || Number(course.total_quizzes || 0) < 1) {
+                    window.showToast('Quiz results are available for published public courses with quizzes.', 'warning');
+                    return;
+                }
+
+                const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, char => ({
+                    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+                }[char]));
+                const safeAvatar = (value) => {
+                    const url = String(value || '').trim();
+                    return /^https?:\/\//i.test(url) ? url : '';
+                };
+                const modalId = 'instructor-quiz-results-modal';
+                document.getElementById(modalId)?.remove();
+
+                const modal = document.createElement('div');
+                modal.id = modalId;
+                modal.className = 'fixed inset-0 z-[250] flex items-center justify-center bg-slate-950/70 backdrop-blur-sm p-3 sm:p-5';
+                modal.setAttribute('role', 'dialog');
+                modal.setAttribute('aria-modal', 'true');
+                modal.setAttribute('aria-labelledby', 'quiz-results-title');
+                modal.innerHTML = `
+                    <section class="w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-2xl">
+                        <header class="flex items-start justify-between gap-4 px-5 sm:px-7 py-5 border-b border-slate-200 dark:border-slate-700 shrink-0">
+                            <div class="min-w-0">
+                                <p class="text-xs font-bold uppercase tracking-widest text-violet-600 dark:text-violet-400 mb-1">Instructor analytics</p>
+                                <h2 id="quiz-results-title" class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">Quiz Results</h2>
+                                <p class="mt-1 text-sm text-slate-500 dark:text-slate-400 truncate" id="quiz-results-course-title">${escapeHtml(course.title || 'Course')}</p>
+                            </div>
+                            <button type="button" id="quiz-results-close" aria-label="Close quiz results" class="shrink-0 rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800">
+                                <span class="material-symbols-outlined">close</span>
+                            </button>
+                        </header>
+                        <div id="quiz-results-content" class="overflow-y-auto overscroll-contain p-4 sm:p-7 space-y-6" style="min-height:180px">
+                            <div class="py-12 text-center text-slate-500" role="status">
+                                <span class="material-symbols-outlined animate-spin text-3xl">progress_activity</span>
+                                <p class="mt-3 text-sm font-semibold">Loading student quiz results…</p>
+                            </div>
+                        </div>
+                    </section>`;
+                document.body.appendChild(modal);
+
+                const closeModal = () => {
+                    modal.remove();
+                    document.removeEventListener('keydown', onKeyDown);
+                    if (triggerButton?.isConnected) triggerButton.focus();
+                };
+                const onKeyDown = (event) => {
+                    if (event.key === 'Escape' && document.getElementById(modalId) === modal) closeModal();
+                };
+                modal.querySelector('#quiz-results-close').addEventListener('click', closeModal);
+                modal.addEventListener('click', event => {
+                    if (event.target === modal) closeModal();
+                });
+                document.addEventListener('keydown', onKeyDown);
+                modal.querySelector('#quiz-results-close').focus();
+
+                try {
+                    const { data, error } = await supabase.rpc('get_instructor_course_quiz_analytics', {
+                        p_course_id: courseId
+                    });
+                    if (error) throw error;
+                    if (document.getElementById(modalId) !== modal) return;
+
+                    const analytics = data || {};
+                    const students = Array.isArray(analytics.top_students) ? analytics.top_students : [];
+                    const failedQuestions = Array.isArray(analytics.top_failed_questions) ? analytics.top_failed_questions : [];
+                    const number = value => Number.isFinite(Number(value)) ? Number(value) : 0;
+                    const percent = value => `${number(value).toFixed(1)}%`;
+                    const initials = name => String(name || 'Student').trim().split(/\s+/).slice(0, 2).map(part => part[0] || '').join('').toUpperCase() || 'S';
+
+                    const statCard = (label, value, detail, icon, color) => `
+                        <article class="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 p-4">
+                            <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                                <span class="material-symbols-outlined text-lg ${color}">${icon}</span>${label}
+                            </div>
+                            <p class="mt-3 text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">${value}</p>
+                            <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">${detail}</p>
+                        </article>`;
+
+                    const questionHtml = failedQuestions.length ? failedQuestions.map((question, index) => {
+                        const rate = Math.max(0, Math.min(100, number(question.failed_rate)));
+                        return `
+                            <div class="py-3 ${index ? 'border-t border-slate-100 dark:border-slate-800' : ''}">
+                                <div class="flex items-start justify-between gap-3">
+                                    <p class="text-sm font-semibold text-slate-800 dark:text-slate-200 min-w-0">${index + 1}. ${escapeHtml(question.question_text || 'Question')}</p>
+                                    <span class="shrink-0 text-sm font-black text-rose-600 dark:text-rose-400">${percent(rate)} failed</span>
+                                </div>
+                                <div class="mt-2 h-2.5 rounded-full bg-slate-100 dark:bg-slate-700 overflow-hidden" role="img" aria-label="${percent(rate)} of responses were incorrect">
+                                    <div class="h-full rounded-full bg-rose-500" style="width:${rate}%"></div>
+                                </div>
+                                <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">${number(question.failed_count)} incorrect of ${number(question.response_count)} responses</p>
+                            </div>`;
+                    }).join('') : '<p class="py-5 text-sm text-slate-500 dark:text-slate-400">No submitted answers yet. Failed-question analytics will appear after students submit quizzes.</p>';
+
+                    const studentHtml = students.length ? students.map((student, index) => {
+                        const name = escapeHtml(student.full_name || 'Student');
+                        const avatar = safeAvatar(student.avatar_url);
+                        const score = Math.max(0, Math.min(100, number(student.score)));
+                        const photo = avatar
+                            ? `<img src="${escapeHtml(avatar)}" alt="" loading="lazy" class="h-11 w-11 rounded-full object-cover border border-slate-200 dark:border-slate-700" referrerpolicy="no-referrer">`
+                            : `<span class="h-11 w-11 rounded-full flex items-center justify-center bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 font-bold">${escapeHtml(initials(student.full_name))}</span>`;
+                        return `
+                            <li class="flex items-center gap-3 sm:gap-4 px-4 py-3 ${index ? 'border-t border-slate-100 dark:border-slate-800' : ''}">
+                                <span class="w-6 shrink-0 text-sm font-black text-slate-400 text-center">${index + 1}</span>
+                                ${photo}
+                                <div class="min-w-0 flex-1">
+                                    <p class="font-bold text-sm text-slate-900 dark:text-white truncate">${name}</p>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400">${number(student.quizzes_attempted)} quiz(es) attempted</p>
+                                </div>
+                                <div class="w-24 sm:w-36 shrink-0 text-right">
+                                    <p class="font-black text-sm ${score >= 70 ? 'text-emerald-600 dark:text-emerald-400' : score >= 50 ? 'text-amber-600 dark:text-amber-400' : 'text-rose-600 dark:text-rose-400'}">${percent(score)}</p>
+                                    <div class="mt-1.5 h-1.5 rounded-full bg-slate-100 dark:bg-slate-700 overflow-hidden">
+                                        <div class="h-full rounded-full bg-violet-500" style="width:${score}%"></div>
+                                    </div>
+                                </div>
+                            </li>`;
+                    }).join('') : '<li class="p-8 text-center text-sm text-slate-500 dark:text-slate-400">No student quiz submissions yet.</li>';
+
+                    const content = modal.querySelector('#quiz-results-content');
+                    content.innerHTML = `
+                        <section class="grid grid-cols-1 sm:grid-cols-3 gap-3" aria-label="Quiz performance summary">
+                            ${statCard('Overall performance', percent(analytics.overall_performance), 'Across submitted answers', 'analytics', 'text-violet-500')}
+                            ${statCard('Students participated', number(analytics.unique_students), 'Unique students with answers', 'groups', 'text-sky-500')}
+                            ${statCard('Quiz attempts', number(analytics.total_attempts), `${number(analytics.questions_answered)} answers recorded`, 'assignment_turned_in', 'text-emerald-500')}
+                        </section>
+                        <section class="rounded-xl border border-slate-200 dark:border-slate-700 p-4 sm:p-5">
+                            <div class="flex items-center justify-between gap-3 mb-2">
+                                <h3 class="font-black text-slate-900 dark:text-white">Most failed questions</h3>
+                                <span class="text-xs text-slate-500 dark:text-slate-400">Top ${failedQuestions.length}</span>
+                            </div>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mb-2">Ranked by the percentage of submitted answers marked incorrect.</p>
+                            ${questionHtml}
+                        </section>
+                        <section class="rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+                            <div class="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-700">
+                                <h3 class="font-black text-slate-900 dark:text-white">Top 10 students</h3>
+                                <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Ranked by average of each student's best attempt per quiz.</p>
+                            </div>
+                            <ol class="divide-y-0">${studentHtml}</ol>
+                        </section>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Only students with recorded answers are included. Scores reflect saved answer correctness and may not represent unanswered questions.</p>`;
+                } catch (error) {
+                    console.error('Unable to load instructor quiz analytics:', error);
+                    const content = modal.querySelector('#quiz-results-content');
+                    if (content && document.getElementById(modalId) === modal) {
+                        content.innerHTML = `
+                            <div class="rounded-xl border border-rose-200 dark:border-rose-900/50 bg-rose-50 dark:bg-rose-900/10 p-5 text-center">
+                                <span class="material-symbols-outlined text-3xl text-rose-500">error</span>
+                                <h3 class="mt-2 font-bold text-slate-900 dark:text-white">Couldn't load quiz results</h3>
+                                <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">Please try again in a moment. If this continues, the quiz analytics database migration may not yet be deployed.</p>
+                                <button type="button" id="quiz-results-retry" class="mt-4 rounded-lg bg-violet-600 px-4 py-2 text-sm font-bold text-white hover:bg-violet-700">Try again</button>
+                            </div>`;
+                        content.querySelector('#quiz-results-retry')?.addEventListener('click', () => {
+                            closeModal();
+                            window.openQuizResultsModal(courseId, triggerButton);
+                        });
+                    }
+                }
+            };
 
             window.editPublishedCourse = async (courseId) => {
                 const btn = event ? event.currentTarget : null;
