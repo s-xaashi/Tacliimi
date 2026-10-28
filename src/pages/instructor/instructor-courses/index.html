@@ -807,7 +807,7 @@
                                 ${photo}
                                 <div class="min-w-0 flex-1">
                                     <p class="font-bold text-sm text-slate-900 dark:text-white truncate">${name}</p>
-                                    <p class="text-xs text-slate-500 dark:text-slate-400">${number(student.quizzes_attempted)} quiz(es) attempted</p>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400">${number(student.quizzes_attempted)} of ${number(student.total_quizzes ?? analytics.total_course_quizzes)} quizzes completed</p>
                                 </div>
                                 <div class="w-24 sm:w-36 shrink-0 text-right">
                                     <p class="font-black text-sm ${score >= 70 ? 'text-emerald-600 dark:text-emerald-400' : score >= 50 ? 'text-amber-600 dark:text-amber-400' : 'text-rose-600 dark:text-rose-400'}">${percent(score)}</p>
@@ -821,7 +821,7 @@
                     const content = modal.querySelector('#quiz-results-content');
                     content.innerHTML = `
                         <section class="grid grid-cols-1 sm:grid-cols-3 gap-3" aria-label="Quiz performance summary">
-                            ${statCard('Overall performance', percent(analytics.overall_performance), 'Across submitted answers', 'analytics', 'text-violet-500')}
+                            ${statCard('Overall performance', percent(analytics.overall_performance), 'Best attempt per quiz, weighted by questions', 'analytics', 'text-violet-500')}
                             ${statCard('Students participated', number(analytics.unique_students), 'Unique students with answers', 'groups', 'text-sky-500')}
                             ${statCard('Quiz attempts', number(analytics.total_attempts), `${number(analytics.questions_answered)} answers recorded`, 'assignment_turned_in', 'text-emerald-500')}
                         </section>
@@ -836,11 +836,11 @@
                         <section class="rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
                             <div class="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-700">
                                 <h3 class="font-black text-slate-900 dark:text-white">Top 10 students</h3>
-                                <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Ranked by average of each student's best attempt per quiz.</p>
+                                <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Ranked by question-weighted score across each student's best attempt per quiz. Quiz completion is shown separately.</p>
                             </div>
                             <ol class="divide-y-0">${studentHtml}</ol>
                         </section>
-                        <p class="text-xs text-slate-500 dark:text-slate-400">Only students with recorded answers are included. Scores reflect saved answer correctness and may not represent unanswered questions.</p>`;
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Scores use each student's best attempt per quiz and weight every recorded question equally. Quiz completion is shown separately; unanswered questions in an attempted quiz do not count as correct.</p>`;
                 } catch (error) {
                     console.error('Unable to load instructor quiz analytics:', error);
                     const content = modal.querySelector('#quiz-results-content');
