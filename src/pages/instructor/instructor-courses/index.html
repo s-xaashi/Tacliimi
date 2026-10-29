@@ -803,7 +803,7 @@
                             : `<span class="h-11 w-11 rounded-full flex items-center justify-center bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 font-bold">${escapeHtml(initials(student.full_name))}</span>`;
                         return `
                             <li class="flex items-center gap-3 sm:gap-4 px-4 py-3 ${index ? 'border-t border-slate-100 dark:border-slate-800' : ''}">
-                                <span class="w-6 shrink-0 text-sm font-black text-slate-400 text-center">${index + 1}</span>
+                                <span class="w-6 shrink-0 text-sm font-black text-slate-400 text-center">${number(student.rank) || index + 1}</span>
                                 ${photo}
                                 <div class="min-w-0 flex-1">
                                     <p class="font-bold text-sm text-slate-900 dark:text-white truncate">${name}</p>
