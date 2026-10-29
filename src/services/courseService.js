@@ -1366,19 +1366,19 @@ export const CourseService = {
 
     /** STATS */
     async getCourseStats(courseId) {
-        const { data, error } = await supabase
-            .from('enrollments')
-            .select('id', { count: 'exact', head: true })
-            .eq('course_id', courseId);
-        const enrolledCount = error ? 0 : (data?.length ?? 0);
+        if (!courseId) return { enrolledCount: 0 };
 
-        // Count directly
-        const { count: totalEnrolled } = await supabase
-            .from('enrollments')
-            .select('*', { count: 'exact', head: true })
-            .eq('course_id', courseId);
+        // Use a narrow public aggregate RPC so RLS on enrollment rows does not
+        // make the displayed count differ between anonymous and signed-in users.
+        // The RPC returns only a count and only for published public course versions.
+        const { data, error } = await supabase.rpc('get_public_course_enrollment_count', {
+            p_course_id: courseId
+        });
 
-        return { enrolledCount: totalEnrolled || 0 };
+        if (error) throw error;
+
+        const enrolledCount = Array.isArray(data) ? (data[0] ?? 0) : (data ?? 0);
+        return { enrolledCount: Number(enrolledCount) || 0 };
     },
 
     async getInstructorStats(instructorId) {
