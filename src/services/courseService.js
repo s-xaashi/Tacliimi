@@ -1324,20 +1324,35 @@ export const CourseService = {
 
     /** REVIEWS */
     async getCourseReviews(courseId) {
-        const { data, error } = await supabase
+        const { data: reviews, error } = await supabase
             .from('course_reviews')
-            .select(`
-                id,
-                student_id,
-                rating,
-                review_text,
-                created_at,
-                reviewer:profiles(full_name, avatar_url)
-            `)
+            .select('id, student_id, rating, review_text, created_at')
             .eq('course_id', courseId)
             .order('created_at', { ascending: false });
         if (error) throw error;
-        return data || [];
+
+        if (!reviews?.length) return [];
+
+        // This view exposes only the name/avatar needed to display reviews
+        // on public published courses, without making private profiles public.
+        const { data: reviewerDetails, error: reviewerError } = await supabase
+            .from('public_course_review_display')
+            .select('review_id, full_name, avatar_url')
+            .eq('course_id', courseId);
+
+        if (reviewerError) throw reviewerError;
+
+        const reviewerByReviewId = new Map(
+            (reviewerDetails || []).map(reviewer => [reviewer.review_id, {
+                full_name: reviewer.full_name,
+                avatar_url: reviewer.avatar_url
+            }])
+        );
+
+        return reviews.map(review => ({
+            ...review,
+            reviewer: reviewerByReviewId.get(review.id) || {}
+        }));
     },
 
     async submitReview(courseId, studentId, rating, reviewText) {
