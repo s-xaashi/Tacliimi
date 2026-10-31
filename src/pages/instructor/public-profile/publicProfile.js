@@ -225,6 +225,29 @@ async function loadInstructorCourses() {
             return;
         }
 
+        // Use the same source of truth as course details: actual student reviews.
+        // Fetch all ratings in one query so course cards do not show a nonexistent
+        // courses.rating field or issue one request per course.
+        const courseRatings = new Map();
+        try {
+            const { data: reviews, error: reviewsError } = await supabase
+                .from('course_reviews')
+                .select('course_id, rating')
+                .in('course_id', courses.map(course => course.id));
+
+            if (reviewsError) throw reviewsError;
+
+            (reviews || []).forEach(review => {
+                const stats = courseRatings.get(review.course_id) || { total: 0, sum: 0 };
+                stats.total += 1;
+                stats.sum += Number(review.rating) || 0;
+                courseRatings.set(review.course_id, stats);
+            });
+        } catch (reviewError) {
+            // A ratings lookup failure should not prevent public course cards loading.
+            console.warn("Failed to load course ratings for public profile:", reviewError);
+        }
+
         const urlParams = new URLSearchParams(window.location.search);
         const focusCourseId = urlParams.get('focusCourse');
 
@@ -232,6 +255,10 @@ async function loadInstructorCourses() {
             const familyId = course.root_course_id || course.id;
             const isBoosted = boostedIds.includes(familyId);
             const bannerText = bannerMap[familyId];
+            const ratingStats = courseRatings.get(course.id);
+            const courseRating = ratingStats?.total
+                ? (ratingStats.sum / ratingStats.total).toFixed(1)
+                : '0.0';
             
             const isFocused = focusCourseId === familyId;
             const borderClass = isBoosted ? 'border-amber-200 dark:border-amber-900/50' : 'border-slate-100 dark:border-slate-800';
@@ -268,7 +295,7 @@ async function loadInstructorCourses() {
                     <div class="flex justify-between items-center mt-6 pt-4 border-t border-slate-50 dark:border-slate-800">
                         <div class="flex items-center gap-1.5">
                             <span class="material-symbols-outlined text-orange-400 text-sm" style="font-variation-settings: 'FILL' 1">star</span>
-                            <span class="text-sm font-bold">${course.rating || '0.0'}</span>
+                            <span class="text-sm font-bold">${courseRating}</span>
                         </div>
                         <span class="font-black text-primary">${course.price > 0 ? '$' + course.price : 'FREE'}</span>
                     </div>
