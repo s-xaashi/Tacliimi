@@ -60,10 +60,10 @@
                     <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Forgot Password</h2>
                     <p class="text-gray-500 dark:text-gray-400">Enter your email to receive a reset link.</p>
                 </div>
-                <div id="forgot-error"
+                <div id="forgot-error" role="alert" aria-live="assertive"
                     class="hidden text-sm text-red-600 bg-red-50 dark:bg-red-900/30 dark:text-red-400 p-3 rounded-lg mb-4">
                 </div>
-                <div id="forgot-success"
+                <div id="forgot-success" role="status" aria-live="polite"
                     class="hidden text-sm text-green-600 bg-green-50 dark:bg-green-900/30 dark:text-green-400 p-3 rounded-lg mb-4">
                 </div>
                 <form id="forgot-form" class="space-y-6">
@@ -166,16 +166,14 @@
 
                     try {
                         await AuthService.sendPasswordResetEmail(cleanEmail);
-                    } catch (err) {
-                        console.warn("Reset link request processed:", err);
-                    } finally {
-                        // Security Best Practice: User Enumeration Protection
-                        // Display generic success message to prevent user email probing
-                        successDiv.textContent = "If an account associated with " + cleanEmail + " exists, a password reset link has been sent to your inbox.";
+
+                        // Keep the response identical for existing and unknown addresses.
+                        // Supabase intentionally does not disclose whether an account exists.
+                        successDiv.textContent = "If an account exists for this email address, a password reset email will be sent. Please check your inbox and spam folder.";
                         successDiv.classList.remove('hidden');
                         forgotForm.reset();
 
-                        // 60s client-side cooldown rate limit to prevent request spam
+                        // This is a usability cooldown only; server-side Auth limits remain authoritative.
                         let cooldown = 60;
                         btn.disabled = true;
                         btn.textContent = `Wait ${cooldown}s`;
@@ -185,12 +183,20 @@
                             cooldown -= 1;
                             if (cooldown <= 0) {
                                 clearInterval(cooldownTimer);
+                                cooldownTimer = null;
                                 btn.disabled = false;
                                 btn.textContent = ogText;
                             } else {
                                 btn.textContent = `Wait ${cooldown}s`;
                             }
                         }, 1000);
+                    } catch (err) {
+                        // Do not turn network, provider, or rate-limit failures into a success state.
+                        console.warn("Password reset request failed:", err);
+                        errorDiv.textContent = "We couldn't process your password reset request right now. Please try again shortly.";
+                        errorDiv.classList.remove('hidden');
+                        btn.disabled = false;
+                        btn.textContent = ogText;
                     }
                 });
             }
