@@ -188,7 +188,7 @@ async function initMentorship() {
                 } else if (tabName === 'privacy') {
                     bindPrivacyInteractions(container, user.id);
                 } else if (tabName === 'boost') {
-                    bindBoostInteractions(container, user.id);
+                    bindBoostInteractions(container, user.id, mentoProfile?.id);
                 } else if (tabName === 'upcoming') {
                     // Refresh stats in cards if on upcoming
                     refreshDashboardStats(user.id);
@@ -762,19 +762,19 @@ async function bindPrivacyInteractions(container, userId) {
     }
 }
 
-async function bindBoostInteractions(container, userId) {
+async function bindBoostInteractions(container, userId, mentorProfileId) {
     const contentArea = container.querySelector('#boost-content-area');
     if (!contentArea) return;
     
     // Check active boosts and banners
     try {
         const { BoostService } = await import('../../../services/boostService.js');
-        const activeBoosts = await BoostService.getMyBoosts(userId);
-        const activeBanners = typeof BoostService.getMyBanners === 'function' ? await BoostService.getMyBanners(userId) : [];
+        if (!mentorProfileId) throw new Error('Your mentorship profile could not be found. Please complete your mentor profile before purchasing promotion.');
+        const promotionData = await BoostService.getMyBoosts(mentorProfileId);
         const settings = await BoostService.getBoostSettings();
-        
-        const activeBoost = activeBoosts && activeBoosts.length > 0 ? activeBoosts[0] : null;
-        const activeBanner = activeBanners && activeBanners.length > 0 ? activeBanners[0] : null;
+        const now = new Date();
+        const activeBoost = (promotionData.boosts || []).find(item => !item.cancelled_at && new Date(item.ends_at) > now) || null;
+        const activeBanner = (promotionData.banners || []).find(item => !item.cancelled_at && new Date(item.ends_at) > now) || null;
         
         if (activeBoost || activeBanner) {
             let statusHTML = '';
@@ -850,7 +850,7 @@ async function bindBoostInteractions(container, userId) {
                     try {
                         await BoostService.cancelBoost(boostId);
                         window.showToast("Boost cancelled successfully.", "success");
-                        bindBoostInteractions(container, userId);
+                        bindBoostInteractions(container, userId, mentorProfileId);
                     } catch (err) {
                         console.error(err);
                         window.showToast("Failed to cancel boost. Please try again.", "error");
@@ -1117,11 +1117,11 @@ async function bindBoostInteractions(container, userId) {
                     const bannerCost = wantsBanner ? (settings.mentor_banner_price_per_day * days) : 0;
 
                     if (wantsBoost && wantsBanner) {
-                        paymentRes = await PaymentService.startBoostAndBannerPayment('mentor', userId, boostCost, bannerCost, days, bannerText);
+                        paymentRes = await PaymentService.startBoostAndBannerPayment('mentor', mentorProfileId, boostCost, bannerCost, days, bannerText);
                     } else if (wantsBanner) {
-                        paymentRes = await PaymentService.startBannerPayment('mentor', userId, amountPaid, days, bannerText);
+                        paymentRes = await PaymentService.startBannerPayment('mentor', mentorProfileId, amountPaid, days, bannerText);
                     } else {
-                        paymentRes = await PaymentService.startBoostPayment('mentor', userId, amountPaid, days);
+                        paymentRes = await PaymentService.startBoostPayment('mentor', mentorProfileId, amountPaid, days);
                     }
                     
                     if (paymentRes.method === 'ewallet') {
