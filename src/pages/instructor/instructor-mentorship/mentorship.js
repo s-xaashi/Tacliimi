@@ -874,7 +874,7 @@ async function bindBoostInteractions(container, userId, mentorProfileId) {
                     try {
                         await BoostService.cancelBanner(bannerId);
                         window.showToast("Banner cancelled successfully.", "success");
-                        bindBoostInteractions(container, userId);
+                        bindBoostInteractions(container, userId, mentorProfileId);
                     } catch (err) {
                         console.error(err);
                         window.showToast("Failed to cancel banner.", "error");
