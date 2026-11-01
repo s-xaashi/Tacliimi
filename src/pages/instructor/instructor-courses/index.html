@@ -522,7 +522,7 @@
                         const isBoosted = !!activeCourseBoost || !!activeCourseBanner;
 
                         const boostBtn = isPublished && !isPrivate ? `
-                            <button onclick="openBoostModal('${rootOrCourseId}', \`${course.title.replace(/`/g, "'")}\`)"
+                            <button onclick="window.openBoostModal('${rootOrCourseId}')"
                                 title="${isBoosted ? 'Manage Boost' : 'Boost Course Visibility'}"
                                 class="flex items-center gap-1 px-3 py-1.5 ${isBoosted ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 border-indigo-500/20' : 'bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 border-amber-500/20'} rounded-lg text-xs font-bold hover:opacity-80 transition-opacity border shadow-sm pointer-events-auto">
                                 <span class="material-symbols-outlined text-[14px]">rocket_launch</span>
@@ -1206,7 +1206,9 @@
             };
             
             // ================== BOOST MODAL INTEGRATION ==================
-            window.openBoostModal = function(courseId, courseTitle) {
+            window.openBoostModal = function(courseId) {
+                const selectedCourse = allCourses.find(course => (course.root_course_id || course.id) === courseId);
+                const courseTitle = selectedCourse?.title || 'Selected course';
                 // Determine active boost and banner for this course
                 const activeBoost = allBoosts.find(b => b.entity_id === courseId && new Date(b.ends_at) > new Date() && !b.cancelled_at);
                 const activeBanner = allBanners.find(b => b.entity_id === courseId && new Date(b.ends_at) > new Date() && !b.cancelled_at);
@@ -1221,7 +1223,7 @@
                                     </div>
                                     <div class="min-w-0">
                                         <h3 class="text-lg font-bold text-slate-900 dark:text-white">Boost Course</h3>
-                                        <p class="text-xs text-amber-500 font-semibold uppercase tracking-widest truncate">${courseTitle}</p>
+                                        <p id="boost-modal-course-title" class="text-xs text-amber-500 font-semibold uppercase tracking-widest truncate"></p>
                                     </div>
                                 </div>
                                 <button onclick="document.getElementById('boost-modal').remove()" class="text-slate-400 hover:text-slate-600 transition-colors shrink-0">
@@ -1362,6 +1364,8 @@
                 `;
 
                 document.body.insertAdjacentHTML('beforeend', modalHtml);
+                const modalTitle = document.getElementById('boost-modal-course-title');
+                if (modalTitle) modalTitle.textContent = courseTitle;
                 setTimeout(() => window.calculateBoostTotal(), 10);
             };
 
