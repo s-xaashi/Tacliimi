@@ -923,7 +923,8 @@ export const CourseService = {
             throw new Error(`File too large (${(file.size / 1024 / 1024).toFixed(1)} MB). Maximum allowed: ${maxMB} MB.`);
         }
 
-        const { data, error } = await supabase.storage.from(bucket).upload(path, file, { upsert: true });
+        // These upload paths are versioned/unique, so long-lived CDN caching is safe.
+        const { data, error } = await supabase.storage.from(bucket).upload(path, file, { upsert: true, cacheControl: '31536000' });
         if (error) throw error;
 
         const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(data.path);
