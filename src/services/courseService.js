@@ -1930,7 +1930,7 @@ export const CourseService = {
 
             if (hasError) throw globalError;
 
-            // Complete upload (assembles R2 object, NO DB WRITES)
+            // Complete the multipart object and attach it to its validated course target.
             const t0_complete = performance.now();
             const completeRes = await supabase.functions.invoke('r2-multipart-complete', {
                 body: {
