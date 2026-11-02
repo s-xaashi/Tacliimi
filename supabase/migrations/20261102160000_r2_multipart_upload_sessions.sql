@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS public.r2_multipart_upload_sessions (
   object_key TEXT NOT NULL UNIQUE,
   instructor_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   course_id UUID NOT NULL REFERENCES public.courses(id) ON DELETE CASCADE,
-  lesson_id UUID REFERENCES public.course_lessons(id) ON DELETE SET NULL,
+  lesson_id UUID REFERENCES public.course_lessons(id) ON DELETE CASCADE,
   upload_type TEXT NOT NULL CHECK (upload_type IN ('lesson', 'intro')),
   content_type TEXT NOT NULL CHECK (content_type IN ('video/mp4', 'video/quicktime')),
   file_size_bytes BIGINT NOT NULL CHECK (file_size_bytes > 0 AND file_size_bytes <= 5368709120),
