@@ -1935,9 +1935,12 @@ export const CourseService = {
             const completeRes = await supabase.functions.invoke('r2-multipart-complete', {
                 body: {
                     course_id: courseId,
+                    lesson_id: lessonId || null,
+                    type,
                     upload_id: uploadId,
                     object_key: objectKey,
-                    parts: parts
+                    parts,
+                    file_size: file.size
                 }
             });
             const t1_complete = performance.now();
