@@ -1,108 +1,99 @@
-
 import { createClient } from "jsr:@supabase/supabase-js@2";
-import { S3Client, CreateMultipartUploadCommand } from "npm:@aws-sdk/client-s3";
+import { S3Client } from "npm:@aws-sdk/client-s3";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
+const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), {
+  status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+});
+function getConfig() {
+  const url = Deno.env.get("SUPABASE_URL");
+  const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const endpoint = Deno.env.get("R2_ENDPOINT");
+  const accessKeyId = Deno.env.get("R2_ACCESS_KEY_ID");
+  const secretAccessKey = Deno.env.get("R2_SECRET_ACCESS_KEY");
+  const bucket = Deno.env.get("R2_BUCKET_NAME");
+  if (![url,key,endpoint,accessKeyId,secretAccessKey,bucket].every(Boolean)) throw new Error("R2 server configuration is incomplete");
+  return { url: url!, key: key!, endpoint: endpoint!, accessKeyId: accessKeyId!, secretAccessKey: secretAccessKey!, bucket: bucket! };
+}
+async function authenticate(req: Request) {
+  const header = req.headers.get("Authorization") || "";
+  const match = header.match(/^Bearer\s+(.+)$/i);
+  if (!match) throw new Error("Missing or invalid Authorization header");
+  const cfg = getConfig();
+  const supabase = createClient(cfg.url, cfg.key);
+  const { data: { user }, error } = await supabase.auth.getUser(match[1]);
+  if (error || !user) throw new Error("Invalid authentication token");
+  return { supabase, user, cfg };
+}
+function makeS3(cfg: ReturnType<typeof getConfig>) {
+  return new S3Client({ region: "auto", endpoint: cfg.endpoint, credentials: { accessKeyId: cfg.accessKeyId, secretAccessKey: cfg.secretAccessKey }, requestChecksumCalculation: "WHEN_REQUIRED" });
+}
+async function ownedSession(supabase: any, input: any, userId: string) {
+  const { data, error } = await supabase.from("r2_multipart_upload_sessions").select("*")
+    .eq("upload_id", input.upload_id).eq("object_key", input.object_key)
+    .eq("course_id", input.course_id).eq("instructor_id", userId)
+    .eq("status", "in_progress").gt("expires_at", new Date().toISOString()).maybeSingle();
+  if (error) throw error;
+  if (!data) throw new Error("Upload session not found, expired, or not authorized");
+  return data;
+}
+Deno.serve(async (req: Request) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
 
-Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
-  }
-
+  let multipart: { uploadId?: string; Key?: string } | null = null;
   try {
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) throw new Error('Missing Authorization header');
-
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
-
-    const { data: { user }, error: userError } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
-    if (userError || !user) throw new Error('Invalid token');
-
-    const { course_id, lesson_id, type = 'lesson', content_type, file_size, part_size = 16 * 1024 * 1024 } = await req.json();
-
-    if (!course_id || !content_type || !file_size) {
-      throw new Error('Missing required fields: course_id, content_type, file_size');
+    const { supabase, user, cfg } = await authenticate(req);
+    const body = await req.json();
+    const { course_id, lesson_id, type = "lesson", content_type, file_size } = body;
+    if (!course_id || !Number.isSafeInteger(file_size) || file_size <= 0 || file_size > 5 * 1024 * 1024 * 1024) throw new Error("Invalid course_id or file_size (maximum 5 GB)");
+    if (!["lesson", "intro"].includes(type)) throw new Error("Invalid upload type");
+    if (!["video/mp4", "video/quicktime"].includes(content_type)) throw new Error("Only MP4 and MOV videos are supported");
+    const partSize = 16 * 1024 * 1024;
+    const partCount = Math.ceil(file_size / partSize);
+    if (partCount < 1 || partCount > 10000) throw new Error("File requires an unsupported number of multipart chunks");
+    const { data: course, error: courseError } = await supabase.from("courses").select("id,instructor_id").eq("id", course_id).maybeSingle();
+    if (courseError) throw courseError;
+    if (!course || course.instructor_id !== user.id) throw new Error("Course not found or not authorized");
+    const { data: settings, error: settingsError } = await supabase.from("platform_settings").select("self_hosted_video_uploads_enabled").single();
+    if (settingsError) throw settingsError;
+    if (!settings?.self_hosted_video_uploads_enabled) throw new Error("Self-hosted video uploads are disabled");
+    if (type === "lesson") {
+      if (!lesson_id) throw new Error("Missing lesson_id");
+      const { data: lesson, error } = await supabase.from("course_lessons").select("id,course_sections!inner(course_id)").eq("id", lesson_id).eq("course_sections.course_id", course_id).maybeSingle();
+      if (error) throw error;
+      if (!lesson) throw new Error("Lesson does not belong to this course");
+    } else if (lesson_id) {
+      throw new Error("Introduction uploads must not include a lesson_id");
     }
-
-    if (content_type !== 'video/mp4' && content_type !== 'video/quicktime') {
-      throw new Error('Invalid content type. Only MP4 and MOV are supported.');
-    }
-
-    // Verify course ownership
-    const { data: course, error: courseError } = await supabase
-      .from('courses')
-      .select('id, instructor_id')
-      .eq('id', course_id)
-      .single();
-
-    if (courseError || !course) throw new Error('Course not found');
-    if (course.instructor_id !== user.id) throw new Error('Not authorized for this course');
-
-    // Verify direct uploads enabled
-    const { data: settings } = await supabase.from('platform_settings').select('self_hosted_video_uploads_enabled').single();
-    if (!settings?.self_hosted_video_uploads_enabled) {
-      throw new Error('Self-hosted video uploads are disabled');
-    }
-
-    const uuid = crypto.randomUUID();
-    let objectKey = '';
-    if (type === 'intro') {
-      objectKey = `courses/${course_id}/introduction/${uuid}.mp4`;
-    } else {
-      if (!lesson_id) throw new Error('Missing lesson_id');
-      // Verify lesson belongs to course
-      const { data: lesson, error: lessonError } = await supabase
-        .from('course_lessons')
-        .select('id')
-        .eq('id', lesson_id)
-        .eq('section_id', (await supabase.from('course_sections').select('id').eq('course_id', course_id).limit(1)).data?.[0]?.id ?? '') // This is a bit complex, let's just do a join logic
-        // We can just verify if the lesson exists under the course
-      
-      const { data: lessonCheck } = await supabase
-        .rpc('get_lesson_course_id', { p_lesson_id: lesson_id }); // Using generic RPC or just trusting the instructor owns the course
-      
-      objectKey = `courses/${course_id}/lessons/${lesson_id}/video/${uuid}.mp4`;
-    }
-
-    // Calculate part count server-side
-    const partCount = Math.ceil(file_size / part_size);
-
-    const s3Client = new S3Client({
-      region: 'auto',
-      endpoint: Deno.env.get('R2_ENDPOINT') ?? '',
-      credentials: {
-        accessKeyId: Deno.env.get('R2_ACCESS_KEY_ID') ?? '',
-        secretAccessKey: Deno.env.get('R2_SECRET_ACCESS_KEY') ?? '',
-      },
+    const objectKey = type === "intro"
+      ? `courses/${course_id}/introduction/${crypto.randomUUID()}.mp4`
+      : `courses/${course_id}/lessons/${lesson_id}/video/${crypto.randomUUID()}.mp4`;
+    const s3 = makeS3(cfg);
+    const { CreateMultipartUploadCommand } = await import("npm:@aws-sdk/client-s3");
+    const result = await s3.send(new CreateMultipartUploadCommand({ Bucket: cfg.bucket, Key: objectKey, ContentType: content_type }));
+    if (!result.UploadId) throw new Error("R2 did not return an upload ID");
+    multipart = { uploadId: result.UploadId, Key: objectKey };
+    const { error: insertError } = await supabase.from("r2_multipart_upload_sessions").insert({
+      upload_id: result.UploadId, object_key: objectKey, instructor_id: user.id, course_id,
+      lesson_id: lesson_id || null, upload_type: type, content_type, file_size_bytes: file_size,
+      part_size_bytes: partSize, part_count: partCount, status: "in_progress",
+      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
     });
-
-    const createCommand = new CreateMultipartUploadCommand({
-      Bucket: Deno.env.get('R2_BUCKET_NAME') ?? '',
-      Key: objectKey,
-      ContentType: content_type,
-    });
-
-    const createResponse = await s3Client.send(createCommand);
-
-    return new Response(
-      JSON.stringify({
-        uploadId: createResponse.UploadId,
-        objectKey: objectKey,
-        partCount: partCount,
-        partSize: part_size
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-  } catch (error: any) {
-    return new Response(JSON.stringify({ error: error.message }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 400,
-    });
+    if (insertError) throw insertError;
+    return json({ uploadId: result.UploadId, objectKey, partCount, partSize });
+  } catch (error) {
+    if (multipart?.uploadId && multipart.Key) {
+      try {
+        const { AbortMultipartUploadCommand } = await import("npm:@aws-sdk/client-s3");
+        const cfg = getConfig();
+        await makeS3(cfg).send(new AbortMultipartUploadCommand({ Bucket: cfg.bucket, Key: multipart.Key, UploadId: multipart.uploadId }));
+      } catch (cleanupError) { console.error("Failed to abort unregistered multipart upload", cleanupError); }
+    }
+    return json({ error: error instanceof Error ? error.message : "Upload creation failed" }, 400);
   }
 });
