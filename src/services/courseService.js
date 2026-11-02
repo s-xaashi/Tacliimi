@@ -1869,7 +1869,11 @@ export const CourseService = {
                             }
 
                             if (xhr.status >= 200 && xhr.status < 300) {
-                                const etag = xhr.getResponseHeader('ETag') || xhr.getResponseHeader('etag') || `"part-${partNumber}"`;
+                                const etag = xhr.getResponseHeader('ETag') || xhr.getResponseHeader('etag');
+                                if (!etag) {
+                                    reject(new Error('R2 did not expose the uploaded part ETag. Check the bucket CORS ExposeHeaders configuration.'));
+                                    return;
+                                }
                                 resolve({ PartNumber: partNumber, ETag: etag });
                             } else {
                                 reject(new Error(`Chunk upload failed: ${xhr.statusText}`));
