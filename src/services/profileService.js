@@ -292,7 +292,7 @@ export const ProfileService = {
 
         const { error: uploadError } = await supabase.storage
             .from('avatars')
-            .upload(filePath, fileObject, { upsert: true });
+            .upload(filePath, fileObject, { upsert: true, cacheControl: '31536000' });
 
         if (uploadError) throw uploadError;
 
