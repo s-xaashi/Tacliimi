@@ -1,3 +1,4 @@
+import { uploadPublicImage } from './r2ImageUpload.js';
 import { supabase } from './supabaseClient.js';
 import { AuthService } from './authService.js';
 import { PayoutService } from './payoutService.js';
@@ -287,20 +288,14 @@ export const ProfileService = {
             throw new Error('File too large. Maximum avatar size is 5MB.');
         }
 
-        const fileExt = fileObject.name.split('.').pop().toLowerCase();
-        const filePath = `${userId}/profile_${Date.now()}.${fileExt}`;
-
-        const { error: uploadError } = await supabase.storage
-            .from('avatars')
-            .upload(filePath, fileObject, { upsert: true, cacheControl: '31536000' });
-
-        if (uploadError) throw uploadError;
-
-        const { data: publicUrlData } = supabase.storage.from('avatars').getPublicUrl(filePath);
+        const publicAvatarUrl = await uploadPublicImage({
+            file: fileObject,
+            purpose: 'avatar'
+        });
 
         const { data, error } = await supabase
             .from('profiles')
-            .update({ avatar_url: publicUrlData.publicUrl, updated_at: new Date() })
+            .update({ avatar_url: publicAvatarUrl, updated_at: new Date() })
             .eq('id', userId)
             .select()
             .maybeSingle();
