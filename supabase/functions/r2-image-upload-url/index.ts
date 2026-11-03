@@ -67,11 +67,11 @@ Deno.serve(async (req) => {
       : `course-thumbnails/${user.id}/${courseId ?? "new"}/${crypto.randomUUID()}.${extension}`;
 
     const endpoint = Deno.env.get("R2_ENDPOINT") ?? "";
-    const bucket = Deno.env.get("R2_BUCKET_NAME") ?? "";
+    const bucket = Deno.env.get("R2_PUBLIC_BUCKET_NAME") ?? "";
     const accessKeyId = Deno.env.get("R2_ACCESS_KEY_ID") ?? "";
     const secretAccessKey = Deno.env.get("R2_SECRET_ACCESS_KEY") ?? "";
     if (!endpoint || !bucket || !accessKeyId || !secretAccessKey) {
-      throw new Error("R2 storage configuration is incomplete");
+      throw new Error("Public R2 storage configuration is incomplete (R2_PUBLIC_BUCKET_NAME)");
     }
 
     const s3 = new S3Client({
