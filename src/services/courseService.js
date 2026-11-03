@@ -1,5 +1,6 @@
 import { supabase } from './supabaseClient.js';
 import { AuthService } from './authService.js';
+import { uploadPublicImage } from './r2ImageUpload.js';
 
 // ── File Validation Constants ───────────────────────────────────────────────
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
@@ -934,9 +935,14 @@ export const CourseService = {
     async uploadCourseThumbnail(courseId, file) {
         const session = await AuthService.getSession();
         if (!session?.user?.id) throw new Error("Not authenticated");
-        
-        const fileName = `${session.user.id}/${courseId ? courseId : 'new'}/thumb_${Date.now()}`;
-        return await this.uploadFile('course_thumbnails', fileName, file, ALLOWED_IMAGE_TYPES, MAX_IMAGE_BYTES);
+        if (!ALLOWED_IMAGE_TYPES.includes(file?.type)) {
+            throw new Error(`Invalid image type "${file?.type}". Allowed: ${ALLOWED_IMAGE_TYPES.join(', ')}`);
+        }
+        if (file.size > MAX_IMAGE_BYTES) {
+            throw new Error(`Image too large. Maximum allowed: ${(MAX_IMAGE_BYTES / (1024 * 1024)).toFixed(0)} MB.`);
+        }
+
+        return await uploadPublicImage({ file, purpose: 'thumbnail', courseId: courseId || null });
     },
 
     async uploadCourseVideo(courseId, file) {
