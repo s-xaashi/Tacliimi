@@ -1,6 +1,6 @@
 import { supabase } from './supabaseClient.js';
 import { AuthService } from './authService.js';
-import { uploadPublicImage } from './r2ImageUpload.js';
+import { uploadPrivateImage } from './r2ImageUpload.js';
 
 // ── File Validation Constants ───────────────────────────────────────────────
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
@@ -942,7 +942,7 @@ export const CourseService = {
             throw new Error(`Image too large. Maximum allowed: ${(MAX_IMAGE_BYTES / (1024 * 1024)).toFixed(0)} MB.`);
         }
 
-        return await uploadPublicImage({ file, purpose: 'thumbnail', courseId: courseId || null });
+        return await uploadPrivateImage({ file, purpose: 'thumbnail', courseId: courseId || null });
     },
 
     async uploadCourseVideo(courseId, file) {
