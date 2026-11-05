@@ -327,7 +327,7 @@ export const GlobalProfile = {
         });
 
         // Process Avatars
-        const avatarUrl = profile && profile.avatar_url ? profile.avatar_url : null;
+        const avatarUrl = profile ? await resolveProfileAvatar(profile) : null;
         if (avatarUrl) {
             // (Avatar update code will be handled later if needed)
         }
