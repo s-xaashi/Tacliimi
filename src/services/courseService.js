@@ -287,7 +287,7 @@ export const CourseService = {
         // 🔴 SECURITY FIX: Strict Field Allowlist
         // Prevent mass assignment (e.g., injecting status, version_status, is_latest_published, etc.)
         const allowedFields = [
-            'title', 'subtitle', 'description', 'thumbnail_url', 'intro_video_url',
+            'title', 'subtitle', 'description', 'thumbnail_url', 'thumbnail_storage_key', 'intro_video_url',
             'intro_video_provider', 'intro_video_storage_key',
             'category_id', 'level', 'price', 'price_type', 'currency', 'is_public',
             'language', 'total_duration_minutes', 'what_you_learn', 'requirements',
