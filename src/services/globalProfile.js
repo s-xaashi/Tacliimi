@@ -1,6 +1,7 @@
 import { AuthService } from './authService.js';
 import { supabase } from './supabaseClient.js';
 import './uiUtils.js';
+import { resolveProfileAvatar } from './r2ImageUpload.js';
 
 export const GlobalProfile = {
     async init() {
@@ -8,7 +9,7 @@ export const GlobalProfile = {
         this.initTheme();
         this.preloadAuthState();
         this.monitorNetwork();
-        window.addEventListener('tacliimi:profile-ready', (event) => {
+        window.addEventListener('tacliimi:profile-ready', async (event) => {
             const profile = event.detail;
             if (!profile) return;
             const fullName = profile.full_name || 'Student';
@@ -20,9 +21,10 @@ export const GlobalProfile = {
                     el.innerText = `Welcome back, ${fullName}! 👋`;
                 }
             });
-            if (profile.avatar_url) {
+            const avatarUrl = await resolveProfileAvatar(profile);
+            if (avatarUrl) {
                 document.querySelectorAll('[data-role="profile-image"] img, img.profile-picture-img').forEach(img => {
-                    img.src = profile.avatar_url;
+                    img.src = avatarUrl;
                 });
             }
         });
