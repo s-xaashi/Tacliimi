@@ -295,7 +295,7 @@ export const ProfileService = {
 
         const { data, error } = await supabase
             .from('profiles')
-            .update({ avatar_url: avatarObjectKey, updated_at: new Date() })
+            .update({ avatar_storage_key: avatarObjectKey, updated_at: new Date() })
             .eq('id', userId)
             .select()
             .maybeSingle();
