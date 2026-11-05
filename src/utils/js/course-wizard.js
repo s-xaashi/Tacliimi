@@ -17,6 +17,7 @@ window.courseDraft = {
     category_id: '',
     level: 'Beginner',
     thumbnail_url: null,
+    thumbnail_storage_key: null,
     intro_video_url: null,
     curriculum: [],
     pricing: {
@@ -272,6 +273,7 @@ async function loadDraft(courseId) {
             category_id: course.category_id || '',
             level: course.level || 'Beginner',
             thumbnail_url: course.thumbnail_url || null,
+            thumbnail_storage_key: course.thumbnail_storage_key || null,
             intro_video_url: course.intro_video_url || null,
             curriculum: [],
             pricing: {
@@ -485,6 +487,7 @@ async function performSave(silent = false) {
             category_id: window.courseDraft.category_id || null,
             level: window.courseDraft.level || 'Beginner',
             thumbnail_url: window.courseDraft.thumbnail_url || null,
+            thumbnail_storage_key: window.courseDraft.thumbnail_storage_key || null,
             intro_video_url: window.courseDraft.intro_video_url || null,
             price_type: window.courseDraft.pricing.type || 'free',
             price: (window.courseDraft.pricing.price != null && !isNaN(parseFloat(window.courseDraft.pricing.price)))
@@ -930,10 +933,12 @@ async function setupEventListeners() {
                 try {
                     // Ensure we have a course ID before uploading
                     if (!window.courseDraft.id) await window.saveDraft(true, true);
-                    const url = await CourseService.uploadCourseThumbnail(window.courseDraft.id, file);
-                    window.sessionUploadedFiles.push({ provider: 'supabase', bucket: 'course_thumbnails', url: url });
-                    window.courseDraft.thumbnail_url = url;
-                    showThumbnailPreview(url);
+                    const objectKey = await CourseService.uploadCourseThumbnail(window.courseDraft.id, file);
+                    window.courseDraft.thumbnail_storage_key = objectKey;
+                    await window.saveDraft(true);
+                    const { resolvePrivateImage } = await import('/src/services/r2ImageUpload.js');
+                    const previewUrl = await resolvePrivateImage({ resourceType: 'thumbnail', resourceId: window.courseDraft.id });
+                    if (previewUrl) showThumbnailPreview(previewUrl);
                     window.saveDraft(true);
                 } catch (err) {
                     console.error('Thumbnail upload error:', err);
