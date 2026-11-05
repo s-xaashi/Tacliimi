@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
     let permitted = false;
     if (type === "avatar") {
       const { data: profile, error } = await admin.from("profiles")
-        .select("id, avatar_url, is_public, account_status")
+        .select("id, avatar_url, avatar_storage_key, is_public, account_status")
         .eq("id", id).maybeSingle();
       if (error) throw error;
       if (!profile || profile.account_status !== "active") return json({ error: "Image not found" }, 404);
@@ -42,16 +42,16 @@ Deno.serve(async (req) => {
         .select("id, is_public, deleted_at").eq("instructor_id", id).is("deleted_at", null).maybeSingle();
       const isPublic = profile.is_public === true || mentor?.is_public === true;
       permitted = isPublic || userId === id;
-      objectKey = profile.avatar_url;
+      objectKey = profile.avatar_storage_key;
     } else {
       const { data: course, error } = await admin.from("courses")
-        .select("id, instructor_id, thumbnail_url, status, is_public, deleted_at, is_latest_published")
+        .select("id, instructor_id, thumbnail_url, thumbnail_storage_key, status, is_public, deleted_at, is_latest_published")
         .eq("id", id).maybeSingle();
       if (error) throw error;
       if (!course || course.deleted_at) return json({ error: "Image not found" }, 404);
-      const isPublic = course.status === "published" && course.is_public === true && course.is_latest_published === true;
+      const isPublic = course.status === "published" && course.deleted_at === null;
       permitted = isPublic || userId === course.instructor_id;
-      objectKey = course.thumbnail_url;
+      objectKey = course.thumbnail_storage_key;
     }
     if (!permitted) return json({ error: "Image not available" }, 403);
     // Only keys in the dedicated image namespaces are eligible. Legacy URLs
