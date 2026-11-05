@@ -1,5 +1,6 @@
 import { MentorService } from '../../../services/mentorService.js';
 import { AuthService } from '../../../services/authService.js';
+import { resolveProfileAvatar } from '../../../services/r2ImageUpload.js';
 
 let allMentors = [];
 let expandedDomains = new Set(); // Track which domain groups are open
@@ -445,7 +446,7 @@ function formatResponseTime(seconds) {
     return remainingMinutes ? `~${hours}h ${remainingMinutes}m` : `~${hours}h`;
 }
 
-function renderMentors(mentors) {
+async function renderMentors(mentors) {
     const grid = document.querySelector('.grid.grid-cols-1.md\\:grid-cols-2.xl\\:grid-cols-3');
     if (!grid) return;
     grid.removeAttribute('aria-busy');
@@ -456,7 +457,8 @@ function renderMentors(mentors) {
     }
 
     grid.innerHTML = '';
-    mentors.forEach(mentor => {
+    for (const mentor of mentors) {
+        const resolvedAvatar = await resolveProfileAvatar(mentor);
         const card = document.createElement('div');
         const isBoosted = mentor._boost_order !== undefined && mentor._boost_order !== 999999;
         const boostRing = isBoosted ? 'boosted-card' : '';
@@ -488,7 +490,7 @@ function renderMentors(mentors) {
             <div class="flex items-start justify-between mb-3 md:mb-4">
                 <div class="relative cursor-pointer">
                     <div class="absolute -top-3 -left-3">${roleBadge}</div>
-                    <img src="${mentor.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(mentor.full_name) + '&background=random&color=fff'}" 
+                    <img src="${resolvedAvatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(mentor.full_name) + '&background=random&color=fff'}" 
                          alt="${mentor.full_name}" 
                          class="w-14 h-14 md:w-16 md:h-16 rounded-2xl object-cover ring-4 ring-slate-50 dark:ring-slate-800 text-[10px] italic mt-2 md:mt-3">
                     <div class="absolute -bottom-1 -right-1 w-4 h-4 md:w-5 md:h-5 bg-green-500 border-2 md:border-4 border-white dark:border-slate-900 rounded-full"></div>
@@ -558,7 +560,7 @@ function renderMentors(mentors) {
             </a>
         `;
         grid.appendChild(card);
-    });
+    }
 }
 
 function clearAllMentorFilters() {
