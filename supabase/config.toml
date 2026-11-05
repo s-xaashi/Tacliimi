@@ -1,0 +1,4 @@
+# Public image URL signing is safe for anonymous invocation because the function
+# performs its own optional-user authentication and checks public visibility.
+[functions.r2-image-url]
+verify_jwt = false
