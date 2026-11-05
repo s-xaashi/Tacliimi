@@ -49,8 +49,9 @@ export async function resolvePrivateImage({ resourceType, resourceId }) {
 
 /** Prefer a private R2 avatar when present; preserve legacy URL fallback. */
 export async function resolveProfileAvatar(profile) {
-    if (profile?.avatar_storage_key && profile?.id) {
-        try { return await resolvePrivateImage({ resourceType: "avatar", resourceId: profile.id }); }
+    const profileId = profile?.id || profile?.instructor_id;
+    if (profile?.avatar_storage_key && profileId) {
+        try { return await resolvePrivateImage({ resourceType: "avatar", resourceId: profileId }); }
         catch (error) { console.warn("Private avatar resolution failed; using legacy image if available.", error); }
     }
     return profile?.avatar_url || null;
