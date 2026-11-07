@@ -108,3 +108,11 @@ export async function deletePrivateImage({ resourceType, resourceId, objectKey }
     if (error) throw new Error(error.message || "Could not clean up the old image.");
     return data?.deleted === true;
 }
+
+
+/** Opportunistically remove abandoned, unreferenced image objects older than 24 hours. */
+export async function cleanupPrivateImages() {
+    const { data, error } = await supabase.functions.invoke("r2-image-cleanup", { body: {} });
+    if (error) throw new Error(error.message || "Could not clean up abandoned images.");
+    return Number(data?.cleaned || 0);
+}
