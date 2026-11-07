@@ -1,6 +1,8 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { S3Client, HeadObjectCommand, GetObjectCommand, DeleteObjectCommand } from "npm:@aws-sdk/client-s3";
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -38,6 +40,7 @@ Deno.serve(async (req) => {
     const courseId = typeof body?.course_id === "string" ? body.course_id : "";
     const objectKey = typeof body?.object_key === "string" ? body.object_key : "";
     if (purpose !== "avatar" && purpose !== "thumbnail") return json({ error: "Invalid image purpose" }, 400);
+    if (purpose === "thumbnail" && !UUID_RE.test(courseId)) return json({ error: "Invalid course reference" }, 400);
 
     const isAvatarKey = new RegExp("^avatars/" + user.id + "/[a-f0-9-]+\\.(jpg|png|webp|gif)$", "i").test(objectKey);
     const isThumbnailKey = courseId &&
