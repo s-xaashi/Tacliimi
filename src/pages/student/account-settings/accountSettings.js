@@ -195,13 +195,13 @@ async function loadProfile() {
         }
 
         currentProfile = data;
-        applyProfileToDOM();
+        await applyProfileToDOM();
     } finally {
         toggleSkeletons(false);
     }
 }
 
-function applyProfileToDOM() {
+async function applyProfileToDOM() {
     if (!currentProfile) return;
 
     // Updates displays
@@ -232,8 +232,13 @@ function applyProfileToDOM() {
     }
 
     const avatar = document.getElementById('avatar-container');
-    if (avatar && currentProfile.avatar_url) {
-        avatar.innerHTML = `<img alt="Profile" src="${currentProfile.avatar_url}" class="w-full h-full object-cover" />`;
+    if (avatar) {
+        try {
+            const avatarUrl = await resolveProfileAvatar(currentProfile);
+            if (avatarUrl) avatar.innerHTML = `<img alt="Profile" src="${avatarUrl}" class="w-full h-full object-cover" />`;
+        } catch (avatarError) {
+            console.warn('Could not resolve the private profile image.', avatarError);
+        }
     }
 
     // Social Links
