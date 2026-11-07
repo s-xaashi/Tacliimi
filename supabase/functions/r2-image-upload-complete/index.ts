@@ -60,13 +60,14 @@ Deno.serve(async (req) => {
     if (!endpoint || !bucket || !accessKeyId || !secretAccessKey) throw new Error("Private R2 configuration is incomplete");
     const s3 = new S3Client({ region: "auto", endpoint, credentials: { accessKeyId, secretAccessKey } });
 
-    const head = await s3.send(new HeadObjectCommand({ Bucket: bucket, Key: objectKey, ChecksumMode: "ENABLED" }));
+    const head = await s3.send(new HeadObjectCommand({ Bucket: bucket, Key: objectKey }));
     const maxBytes = purpose === "avatar" ? 5 * 1024 * 1024 : 10 * 1024 * 1024;
     const contentType = head.ContentType ?? "";
     const expectedExtension = ({ "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/gif": "gif" } as Record<string, string>)[contentType];
     const extension = objectKey.split(".").pop()?.toLowerCase();
-    const validMetadata = typeof head.Metadata?.sha256 === "string" &&
-      head.Metadata.sha256 === head.ChecksumSHA256;
+    const validMetadata = head.Metadata?.["upload-user"] === user.id &&
+      head.Metadata?.["upload-purpose"] === purpose &&
+      (purpose !== "thumbnail" || head.Metadata?.["upload-course-id"] === courseId);
     const validHead = Number.isSafeInteger(head.ContentLength) &&
       (head.ContentLength ?? 0) > 0 && (head.ContentLength ?? 0) <= maxBytes &&
       !!expectedExtension && extension === expectedExtension && validMetadata;
