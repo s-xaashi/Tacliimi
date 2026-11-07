@@ -64,6 +64,14 @@ export async function resolvePrivateImage({ resourceType, resourceId }) {
     return data.signed_url;
 }
 
+/** Invalidate signed URLs after a resource's storage key changes. */
+export function invalidatePrivateImageCache({ resourceType, resourceId }) {
+    const suffix = `:${resourceType}:${resourceId}`;
+    for (const key of signedImageCache.keys()) {
+        if (key.endsWith(suffix)) signedImageCache.delete(key);
+    }
+}
+
 /**
  * A stored private key is authoritative. Never fall back to a legacy public URL
  * after private resolution fails, because that could bypass visibility checks.
