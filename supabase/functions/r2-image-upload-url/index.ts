@@ -30,10 +30,12 @@ Deno.serve(async (req) => {
     const contentType = body?.content_type;
     const fileSize = Number(body?.file_size);
     const courseId = body?.course_id ? String(body.course_id) : null;
+    const checksumSha256 = typeof body?.checksum_sha256 === "string" ? body.checksum_sha256 : "";
     if (purpose !== "avatar" && purpose !== "thumbnail") return json({ error: "Invalid image purpose" }, 400);
     if (!Object.hasOwn(IMAGE_TYPES, contentType)) return json({ error: "Unsupported image type" }, 400);
     const maxBytes = purpose === "avatar" ? 5 * 1024 * 1024 : 10 * 1024 * 1024;
     if (!Number.isSafeInteger(fileSize) || fileSize <= 0 || fileSize > maxBytes) return json({ error: "Image size is invalid or exceeds the limit" }, 400);
+    if (!/^[A-Za-z0-9+/]{43}=$/.test(checksumSha256)) return json({ error: "A valid SHA-256 file checksum is required" }, 400);
 
     if (purpose === "thumbnail") {
       // Thumbnails must be attached to an existing course owned by the caller.
@@ -62,13 +64,20 @@ Deno.serve(async (req) => {
     const s3 = new S3Client({ region: "auto", endpoint, credentials: { accessKeyId, secretAccessKey } });
     const command = new PutObjectCommand({
       Bucket: bucket, Key: objectKey, ContentType: contentType,
+      ChecksumSHA256: checksumSha256,
+      Metadata: { "sha256": checksumSha256 },
       CacheControl: "private, max-age=0, no-store",
     });
     const uploadUrl = await getSignedUrl(s3, command, { expiresIn: 300 });
     return json({
       upload_url: uploadUrl,
       object_key: objectKey,
-      required_headers: { "Content-Type": contentType, "Cache-Control": "private, max-age=0, no-store" },
+      required_headers: {
+        "Content-Type": contentType,
+        "Cache-Control": "private, max-age=0, no-store",
+        "x-amz-checksum-sha256": checksumSha256,
+        "x-amz-meta-sha256": checksumSha256,
+      },
     });
   } catch (error) {
     console.error("r2-image-upload-url:", error);
