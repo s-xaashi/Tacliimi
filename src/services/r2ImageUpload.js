@@ -20,7 +20,9 @@ export async function uploadPrivateImage({ file, purpose, courseId = null }) {
         headers: data.required_headers,
         body: file
     });
-    if (!response.ok) {
+    // A 412 means a prior attempt already created this one-time object key.
+    // Continue to server verification so a lost PUT response can be retried safely.
+    if (!response.ok && response.status !== 412) {
         const detail = await response.text().catch(() => "");
         throw new Error(detail || `Image upload failed (HTTP ${response.status}).`);
     }
