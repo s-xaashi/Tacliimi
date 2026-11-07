@@ -930,17 +930,37 @@ async function setupEventListeners() {
                 const btn = document.getElementById('btn-upload-thumbnail');
                 if (btn) { btn.setAttribute('data-orig', btn.innerText); btn.innerText = 'Uploading...'; btn.disabled = true; }
 
+                let uploadedObjectKey = null;
+                let previousObjectKey = window.courseDraft.thumbnail_storage_key || null;
                 try {
                     // Ensure we have a course ID before uploading
                     if (!window.courseDraft.id) await window.saveDraft(true, true);
-                    const objectKey = await CourseService.uploadCourseThumbnail(window.courseDraft.id, file);
-                    window.courseDraft.thumbnail_storage_key = objectKey;
+                    uploadedObjectKey = await CourseService.uploadCourseThumbnail(window.courseDraft.id, file);
+                    window.courseDraft.thumbnail_storage_key = uploadedObjectKey;
                     await window.saveDraft(true);
-                    const { resolvePrivateImage } = await import('/src/services/r2ImageUpload.js');
+
+                    const { resolvePrivateImage, deletePrivateImage } = await import('/src/services/r2ImageUpload.js');
                     const previewUrl = await resolvePrivateImage({ resourceType: 'thumbnail', resourceId: window.courseDraft.id });
                     if (previewUrl) showThumbnailPreview(previewUrl);
+                    if (previousObjectKey && previousObjectKey !== uploadedObjectKey) {
+                        try {
+                            await deletePrivateImage({ resourceType: 'thumbnail', resourceId: window.courseDraft.id, objectKey: previousObjectKey });
+                        } catch (cleanupError) {
+                            console.warn('Could not clean up replaced course thumbnail.', cleanupError);
+                        }
+                    }
                     window.saveDraft(true);
                 } catch (err) {
+                    // The deletion endpoint checks database references, so this is
+                    // safe even if the draft save succeeded before a later error.
+                    if (uploadedObjectKey) {
+                        try {
+                            const { deletePrivateImage } = await import('/src/services/r2ImageUpload.js');
+                            await deletePrivateImage({ resourceType: 'thumbnail', resourceId: window.courseDraft.id, objectKey: uploadedObjectKey });
+                        } catch (cleanupError) {
+                            console.warn('Could not clean up failed thumbnail upload.', cleanupError);
+                        }
+                    }
                     console.error('Thumbnail upload error:', err);
                     alert('Upload failed. Please check your storage bucket configuration.');
                     if (btn) btn.innerText = btn.getAttribute('data-orig') || 'Upload File';
