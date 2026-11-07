@@ -7,8 +7,13 @@ import { supabase } from "./supabaseClient.js";
 export async function uploadPrivateImage({ file, purpose, courseId = null }) {
     if (!file) throw new Error("An image file is required.");
 
+    // Bind the presigned PUT to the exact file bytes. The URL is a bearer token
+    // and can be replayed until expiry, but a signed SHA-256 checksum prevents
+    // it from being reused to replace the object with different content.
+    const digest = await crypto.subtle.digest("SHA-256", await file.arrayBuffer());
+    const checksumSha256 = btoa(String.fromCharCode(...new Uint8Array(digest)));
     const { data, error } = await supabase.functions.invoke("r2-image-upload-url", {
-        body: { purpose, course_id: courseId, content_type: file.type, file_size: file.size }
+        body: { purpose, course_id: courseId, content_type: file.type, file_size: file.size, checksum_sha256: checksumSha256 }
     });
     if (error) throw new Error(error.message || "Could not prepare image upload.");
     if (!data?.upload_url || !data?.object_key || !data?.required_headers) {
@@ -23,6 +28,15 @@ export async function uploadPrivateImage({ file, purpose, courseId = null }) {
     if (!response.ok) {
         const detail = await response.text().catch(() => "");
         throw new Error(detail || `Image upload failed (HTTP ${response.status}).`);
+    }
+
+    // Verify the actual stored object server-side before allowing its key to be
+    // persisted in a profile/course row.
+    const { data: verified, error: verifyError } = await supabase.functions.invoke("r2-image-upload-complete", {
+        body: { purpose, course_id: courseId, object_key: data.object_key }
+    });
+    if (verifyError || verified?.verified !== true) {
+        throw new Error(verifyError?.message || verified?.error || "The uploaded image failed server-side verification.");
     }
     return data.object_key;
 }
@@ -39,6 +53,11 @@ export async function resolvePrivateImage({ resourceType, resourceId }) {
     // The URL remains a bearer token until expiry, so cache isolation matters.
     const { data: { session } } = await supabase.auth.getSession();
     const cacheKey = `${session?.user?.id || "anonymous"}:${resourceType}:${resourceId}`;
+    // Bound memory use and discard expired URLs while resolving.
+    for (const [key, value] of signedImageCache) {
+        if (value.expiresAt <= Date.now()) signedImageCache.delete(key);
+    }
+    if (signedImageCache.size > 200) signedImageCache.clear();
     const cached = signedImageCache.get(cacheKey);
     if (cached && cached.expiresAt > Date.now() + 30000) return cached.url;
     const { data, error } = await supabase.functions.invoke("r2-image-url", {
