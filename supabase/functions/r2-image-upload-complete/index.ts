@@ -65,10 +65,9 @@ Deno.serve(async (req) => {
     const contentType = head.ContentType ?? "";
     const expectedExtension = ({ "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/gif": "gif" } as Record<string, string>)[contentType];
     const extension = objectKey.split(".").pop()?.toLowerCase();
-    const validMetadata = true; // Ownership is enforced against the key prefix and course row above.
     const validHead = Number.isSafeInteger(head.ContentLength) &&
       (head.ContentLength ?? 0) > 0 && (head.ContentLength ?? 0) <= maxBytes &&
-      !!expectedExtension && extension === expectedExtension && validMetadata;
+      !!expectedExtension && extension === expectedExtension;
 
     if (!validHead) {
       await s3.send(new DeleteObjectCommand({ Bucket: bucket, Key: objectKey }));
