@@ -56,13 +56,13 @@ export async function resolvePrivateImage({ resourceType, resourceId }) {
     }
     if (signedImageCache.size > 200) signedImageCache.clear();
     const cached = signedImageCache.get(cacheKey);
-    if (cached && cached.expiresAt > Date.now() + 30000) return cached.url;
+    if (cached && cached.expiresAt > Date.now() + 5000) return cached.url;
     const { data, error } = await supabase.functions.invoke("r2-image-url", {
         body: { resource_type: resourceType, resource_id: resourceId }
     });
     if (error) throw new Error(error.message || "Could not resolve image.");
     if (!data?.signed_url) return null;
-    signedImageCache.set(cacheKey, { url: data.signed_url, expiresAt: Date.now() + (Number(data.expires_in || 300) * 1000) });
+    signedImageCache.set(cacheKey, { url: data.signed_url, expiresAt: Date.now() + (Number(data.expires_in || 60) * 1000) });
     return data.signed_url;
 }
 
