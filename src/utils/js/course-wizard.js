@@ -939,7 +939,7 @@ async function setupEventListeners() {
                     window.courseDraft.thumbnail_storage_key = uploadedObjectKey;
                     await window.saveDraft(true);
 
-                    const { resolvePrivateImage, deletePrivateImage, invalidatePrivateImageCache } = await import('/src/services/r2ImageUpload.js');
+                    const { resolvePrivateImage, deletePrivateImage, invalidatePrivateImageCache, cleanupPrivateImages } = await import('/src/services/r2ImageUpload.js');
                     invalidatePrivateImageCache({ resourceType: 'thumbnail', resourceId: window.courseDraft.id });
                     const previewUrl = await resolvePrivateImage({ resourceType: 'thumbnail', resourceId: window.courseDraft.id });
                     if (previewUrl) showThumbnailPreview(previewUrl);
@@ -950,6 +950,8 @@ async function setupEventListeners() {
                             console.warn('Could not clean up replaced course thumbnail.', cleanupError);
                         }
                     }
+                    try { await cleanupPrivateImages(); }
+                    catch (cleanupError) { console.warn('Could not sweep abandoned private images.', cleanupError); }
                     window.saveDraft(true);
                 } catch (err) {
                     // The deletion endpoint checks database references, so this is
