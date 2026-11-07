@@ -939,7 +939,8 @@ async function setupEventListeners() {
                     window.courseDraft.thumbnail_storage_key = uploadedObjectKey;
                     await window.saveDraft(true);
 
-                    const { resolvePrivateImage, deletePrivateImage } = await import('/src/services/r2ImageUpload.js');
+                    const { resolvePrivateImage, deletePrivateImage, invalidatePrivateImageCache } = await import('/src/services/r2ImageUpload.js');
+                    invalidatePrivateImageCache({ resourceType: 'thumbnail', resourceId: window.courseDraft.id });
                     const previewUrl = await resolvePrivateImage({ resourceType: 'thumbnail', resourceId: window.courseDraft.id });
                     if (previewUrl) showThumbnailPreview(previewUrl);
                     if (previousObjectKey && previousObjectKey !== uploadedObjectKey) {
