@@ -65,11 +65,6 @@ Deno.serve(async (req) => {
     const command = new PutObjectCommand({
       Bucket: bucket, Key: objectKey, ContentType: contentType,
       IfNoneMatch: "*",
-      Metadata: {
-        "upload-user": user.id,
-        "upload-purpose": purpose,
-        "upload-course-id": courseId ?? "",
-      },
       CacheControl: "private, max-age=0, no-store",
     });
     const uploadUrl = await getSignedUrl(s3, command, { expiresIn: 300 });
@@ -80,10 +75,7 @@ Deno.serve(async (req) => {
         "Content-Type": contentType,
         "Cache-Control": "private, max-age=0, no-store",
         "If-None-Match": "*",
-        "x-amz-meta-upload-user": user.id,
-        "x-amz-meta-upload-purpose": purpose,
-        "x-amz-meta-upload-course-id": courseId ?? "",
-      },
+       },
     });
   } catch (error) {
     console.error("r2-image-upload-url:", error);
