@@ -34,10 +34,13 @@ export async function uploadPrivateImage({ file, purpose, courseId = null }) {
 const signedImageCache = new Map();
 
 export async function resolvePrivateImage({ resourceType, resourceId }) {
-    const cacheKey = `${resourceType}:${resourceId}`;
+    if (!resourceType || !resourceId) return null;
+    // Do not reuse a signed URL cached under a different authenticated account.
+    // The URL remains a bearer token until expiry, so cache isolation matters.
+    const { data: { session } } = await supabase.auth.getSession();
+    const cacheKey = `${session?.user?.id || "anonymous"}:${resourceType}:${resourceId}`;
     const cached = signedImageCache.get(cacheKey);
     if (cached && cached.expiresAt > Date.now() + 30000) return cached.url;
-    if (!resourceType || !resourceId) return null;
     const { data, error } = await supabase.functions.invoke("r2-image-url", {
         body: { resource_type: resourceType, resource_id: resourceId }
     });
