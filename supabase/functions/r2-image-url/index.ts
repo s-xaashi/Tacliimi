@@ -93,8 +93,8 @@ Deno.serve(async (req) => {
     const secretAccessKey = Deno.env.get("R2_SECRET_ACCESS_KEY") ?? "";
     if (!endpoint || !bucket || !accessKeyId || !secretAccessKey) throw new Error("Private R2 configuration is incomplete");
     const s3 = new S3Client({ region: "auto", endpoint, credentials: { accessKeyId, secretAccessKey } });
-    const signedUrl = await getSignedUrl(s3, new GetObjectCommand({ Bucket: bucket, Key: objectKey }), { expiresIn: 300 });
-    return json({ signed_url: signedUrl, expires_in: 300 });
+    const signedUrl = await getSignedUrl(s3, new GetObjectCommand({ Bucket: bucket, Key: objectKey }), { expiresIn: 60 });
+    return json({ signed_url: signedUrl, expires_in: 60 });
   } catch (error) {
     console.error("r2-image-url:", error);
     return json({ error: error instanceof Error ? error.message : "Image resolution failed" }, 400);
