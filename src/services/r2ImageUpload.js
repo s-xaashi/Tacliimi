@@ -7,13 +7,8 @@ import { supabase } from "./supabaseClient.js";
 export async function uploadPrivateImage({ file, purpose, courseId = null }) {
     if (!file) throw new Error("An image file is required.");
 
-    // Bind the presigned PUT to the exact file bytes. The URL is a bearer token
-    // and can be replayed until expiry, but a signed SHA-256 checksum prevents
-    // it from being reused to replace the object with different content.
-    const digest = await crypto.subtle.digest("SHA-256", await file.arrayBuffer());
-    const checksumSha256 = btoa(String.fromCharCode(...new Uint8Array(digest)));
     const { data, error } = await supabase.functions.invoke("r2-image-upload-url", {
-        body: { purpose, course_id: courseId, content_type: file.type, file_size: file.size, checksum_sha256: checksumSha256 }
+        body: { purpose, course_id: courseId, content_type: file.type, file_size: file.size }
     });
     if (error) throw new Error(error.message || "Could not prepare image upload.");
     if (!data?.upload_url || !data?.object_key || !data?.required_headers) {
