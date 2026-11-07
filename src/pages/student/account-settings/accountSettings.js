@@ -1,5 +1,7 @@
 import { supabase } from '/src/services/supabaseClient.js';
 import { AuthService } from '/src/services/authService.js';
+import { ProfileService } from '/src/services/profileService.js';
+import { resolveProfileAvatar } from '/src/services/r2ImageUpload.js';
 
 let currentUserSession = null;
 let currentProfile = null;
@@ -303,16 +305,13 @@ window.handleProfileUpload = async function(event) {
     }
 
     try {
-        const fileExt = file.name.split('.').pop();
-        const filePath = `${currentUserSession.user.id}/profile_${Date.now()}.${fileExt}`;
-        
-        await supabase.storage.from('avatars').upload(filePath, file, { upsert: true });
-        const { data: publicUrlData } = supabase.storage.from('avatars').getPublicUrl(filePath);
-        
-        await supabase.from('profiles').update({ avatar_url: publicUrlData.publicUrl }).eq('id', currentUserSession.user.id);
-        
+        const updatedProfile = await ProfileService.uploadAvatar(file);
+        currentProfile = updatedProfile;
+        const privateAvatarUrl = await resolveProfileAvatar(updatedProfile);
         const avatar = document.getElementById('avatar-container');
-        if (avatar) avatar.innerHTML = `<img src="${publicUrlData.publicUrl}" class="w-full h-full object-cover" />`;
+        if (avatar && privateAvatarUrl) {
+            avatar.innerHTML = `<img src="${privateAvatarUrl}" class="w-full h-full object-cover" />`;
+        }
     } catch (err) {
         alert("Upload failed: " + err.message);
     }
@@ -320,7 +319,11 @@ window.handleProfileUpload = async function(event) {
 
 window.removeProfileImage = async function() {
     try {
-        await supabase.from('profiles').update({ avatar_url: null }).eq('id', currentUserSession.user.id);
+        await ProfileService.removeAvatar();
+        if (currentProfile) {
+            currentProfile.avatar_url = null;
+            currentProfile.avatar_storage_key = null;
+        }
         const placeholderHtml = `<span class="material-symbols-outlined text-slate-300 dark:text-slate-600 text-6xl">account_circle</span>`;
         const avatar = document.getElementById('avatar-container');
         if (avatar) avatar.innerHTML = placeholderHtml;
