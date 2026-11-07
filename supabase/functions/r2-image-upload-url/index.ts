@@ -35,8 +35,16 @@ Deno.serve(async (req) => {
     const maxBytes = purpose === "avatar" ? 5 * 1024 * 1024 : 10 * 1024 * 1024;
     if (!Number.isSafeInteger(fileSize) || fileSize <= 0 || fileSize > maxBytes) return json({ error: "Image size is invalid or exceeds the limit" }, 400);
 
-    if (purpose === "thumbnail" && courseId) {
-      const { data: course, error } = await admin.from("courses").select("id").eq("id", courseId).eq("instructor_id", user.id).maybeSingle();
+    if (purpose === "thumbnail") {
+      // Thumbnails must be attached to an existing course owned by the caller.
+      // The wizard creates its draft first; accepting a missing course ID would
+      // otherwise permit authenticated users to create arbitrary orphan objects.
+      if (!courseId) return json({ error: "A course ID is required for thumbnail uploads" }, 400);
+      const { data: course, error } = await admin.from("courses")
+        .select("id")
+        .eq("id", courseId)
+        .eq("instructor_id", user.id)
+        .maybeSingle();
       if (error) throw error;
       if (!course) return json({ error: "Course not found or not owned by this instructor" }, 403);
     }
