@@ -55,13 +55,25 @@ Deno.serve(async (req) => {
       if (error) throw error;
       if (!course || course.deleted_at) return json({ error: "Image not found" }, 404);
       // Public course images follow the marketplace visibility/version rules.
-      // For private courses, keep access restricted to the owner/admin until the
-      // product explicitly defines whether enrolled students may view them.
+      // Private course thumbnails are available only to the course owner,
+      // admins, and students with an active enrollment.
       const isPublic = course.status === "published" &&
         course.is_public === true &&
         course.is_latest_published === true &&
         course.deleted_at === null;
-      permitted = isPublic || userId === course.instructor_id || isAdmin;
+      let isEnrolledStudent = false;
+      if (userId && !isPublic && userId !== course.instructor_id && !isAdmin) {
+        const { data: enrollment, error: enrollmentError } = await admin
+          .from("enrollments")
+          .select("id")
+          .eq("course_id", course.id)
+          .eq("student_id", userId)
+          .eq("status", "active")
+          .maybeSingle();
+        if (enrollmentError) throw enrollmentError;
+        isEnrolledStudent = Boolean(enrollment);
+      }
+      permitted = isPublic || userId === course.instructor_id || isAdmin || isEnrolledStudent;
       objectKey = course.thumbnail_storage_key;
     }
     if (!permitted) return json({ error: "Image not available" }, 403);
