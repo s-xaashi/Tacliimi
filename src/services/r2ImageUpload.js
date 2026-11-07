@@ -47,21 +47,25 @@ export async function resolvePrivateImage({ resourceType, resourceId }) {
     return data.signed_url;
 }
 
-/** Prefer a private R2 avatar when present; preserve legacy URL fallback. */
+/**
+ * A stored private key is authoritative. Never fall back to a legacy public URL
+ * after private resolution fails, because that could bypass visibility checks.
+ * Legacy URLs are used only for records that have no private storage key.
+ */
 export async function resolveProfileAvatar(profile) {
     const profileId = profile?.id || profile?.instructor_id;
-    if (profile?.avatar_storage_key && profileId) {
-        try { return await resolvePrivateImage({ resourceType: "avatar", resourceId: profileId }); }
-        catch (error) { console.warn("Private avatar resolution failed; using legacy image if available.", error); }
+    if (profile?.avatar_storage_key) {
+        if (!profileId) return null;
+        return await resolvePrivateImage({ resourceType: "avatar", resourceId: profileId });
     }
     return profile?.avatar_url || null;
 }
 
-/** Prefer a private R2 thumbnail when present; preserve legacy URL fallback. */
+/** A private thumbnail must never fall back to a legacy public URL on denial. */
 export async function resolveCourseThumbnail(course) {
-    if (course?.thumbnail_storage_key && course?.id) {
-        try { return await resolvePrivateImage({ resourceType: "thumbnail", resourceId: course.id }); }
-        catch (error) { console.warn("Private thumbnail resolution failed; using legacy image if available.", error); }
+    if (course?.thumbnail_storage_key) {
+        if (!course?.id) return null;
+        return await resolvePrivateImage({ resourceType: "thumbnail", resourceId: course.id });
     }
     return course?.thumbnail_url || null;
 }
