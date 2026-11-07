@@ -1,4 +1,4 @@
-import { uploadPrivateImage, deletePrivateImage } from './r2ImageUpload.js';
+import { uploadPrivateImage, deletePrivateImage, invalidatePrivateImageCache } from './r2ImageUpload.js';
 import { supabase } from './supabaseClient.js';
 import { AuthService } from './authService.js';
 import { PayoutService } from './payoutService.js';
@@ -307,6 +307,7 @@ export const ProfileService = {
             throw new Error('Profile was not updated.');
         }
 
+        invalidatePrivateImageCache({ resourceType: 'avatar', resourceId: userId });
         const previousKey = previousProfile?.avatar_storage_key;
         if (previousKey && previousKey !== avatarObjectKey) {
             try { await deletePrivateImage({ resourceType: 'avatar', resourceId: userId, objectKey: previousKey }); }
@@ -329,6 +330,7 @@ export const ProfileService = {
             .eq('id', userId);
         if (error) throw error;
 
+        invalidatePrivateImageCache({ resourceType: 'avatar', resourceId: userId });
         if (profile?.avatar_storage_key) {
             try { await deletePrivateImage({ resourceType: 'avatar', resourceId: userId, objectKey: profile.avatar_storage_key }); }
             catch (cleanupError) { console.warn('Could not clean up removed avatar.', cleanupError); }
