@@ -74,7 +74,7 @@ Deno.serve(async (req) => {
 
     if (!validHead) {
       await s3.send(new DeleteObjectCommand({ Bucket: bucket, Key: objectKey }));
-      return json({ error: "Uploaded image failed size, type, or ownership-metadata validation" }, 422);
+      return json({ error: "Uploaded image failed size or file-type validation" }, 422);
     }
 
     const object = await s3.send(new GetObjectCommand({ Bucket: bucket, Key: objectKey, Range: "bytes=0-15" }));
