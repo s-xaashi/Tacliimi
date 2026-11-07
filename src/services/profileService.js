@@ -1,4 +1,4 @@
-import { uploadPrivateImage, deletePrivateImage, invalidatePrivateImageCache } from './r2ImageUpload.js';
+import { uploadPrivateImage, deletePrivateImage, invalidatePrivateImageCache, cleanupPrivateImages } from './r2ImageUpload.js';
 import { supabase } from './supabaseClient.js';
 import { AuthService } from './authService.js';
 import { PayoutService } from './payoutService.js';
@@ -313,6 +313,8 @@ export const ProfileService = {
             try { await deletePrivateImage({ resourceType: 'avatar', resourceId: userId, objectKey: previousKey }); }
             catch (cleanupError) { console.warn('Could not clean up replaced avatar.', cleanupError); }
         }
+        try { await cleanupPrivateImages(); }
+        catch (cleanupError) { console.warn('Could not sweep abandoned private images.', cleanupError); }
         return data;
 
     },
