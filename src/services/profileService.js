@@ -1,4 +1,4 @@
-import { uploadPrivateImage } from './r2ImageUpload.js';
+import { uploadPrivateImage, deletePrivateImage } from './r2ImageUpload.js';
 import { supabase } from './supabaseClient.js';
 import { AuthService } from './authService.js';
 import { PayoutService } from './payoutService.js';
@@ -288,11 +288,11 @@ export const ProfileService = {
             throw new Error('File too large. Maximum avatar size is 5MB.');
         }
 
-        const avatarObjectKey = await uploadPrivateImage({
-            file: fileObject,
-            purpose: 'avatar'
-        });
+        const { data: previousProfile, error: previousError } = await supabase
+            .from('profiles').select('avatar_storage_key').eq('id', userId).maybeSingle();
+        if (previousError) throw previousError;
 
+        const avatarObjectKey = await uploadPrivateImage({ file: fileObject, purpose: 'avatar' });
         const { data, error } = await supabase
             .from('profiles')
             .update({ avatar_storage_key: avatarObjectKey, updated_at: new Date() })
@@ -300,8 +300,40 @@ export const ProfileService = {
             .select()
             .maybeSingle();
 
-        if (error) throw error;
+        if (error || !data) {
+            try { await deletePrivateImage({ resourceType: 'avatar', resourceId: userId, objectKey: avatarObjectKey }); }
+            catch (cleanupError) { console.warn('Could not clean up uncommitted avatar upload.', cleanupError); }
+            if (error) throw error;
+            throw new Error('Profile was not updated.');
+        }
+
+        const previousKey = previousProfile?.avatar_storage_key;
+        if (previousKey && previousKey !== avatarObjectKey) {
+            try { await deletePrivateImage({ resourceType: 'avatar', resourceId: userId, objectKey: previousKey }); }
+            catch (cleanupError) { console.warn('Could not clean up replaced avatar.', cleanupError); }
+        }
         return data;
+
+    },
+
+    async removeAvatar() {
+        const session = await AuthService.getSession();
+        if (!session?.user?.id) throw new Error('Unauthorized: No active session');
+        const userId = session.user.id;
+        const { data: profile, error: readError } = await supabase
+            .from('profiles').select('avatar_storage_key').eq('id', userId).maybeSingle();
+        if (readError) throw readError;
+
+        const { error } = await supabase.from('profiles')
+            .update({ avatar_url: null, avatar_storage_key: null, updated_at: new Date() })
+            .eq('id', userId);
+        if (error) throw error;
+
+        if (profile?.avatar_storage_key) {
+            try { await deletePrivateImage({ resourceType: 'avatar', resourceId: userId, objectKey: profile.avatar_storage_key }); }
+            catch (cleanupError) { console.warn('Could not clean up removed avatar.', cleanupError); }
+        }
+        return true;
     },
 
     /**
