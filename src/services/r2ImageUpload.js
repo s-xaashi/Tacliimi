@@ -86,3 +86,17 @@ export async function resolveCourseThumbnail(course) {
     }
     return course?.thumbnail_url || null;
 }
+
+
+/**
+ * Delete a replaced/orphaned private image only after the database no longer
+ * references its object key. The Edge Function rechecks ownership and refs.
+ */
+export async function deletePrivateImage({ resourceType, resourceId, objectKey }) {
+    if (!resourceType || !resourceId || !objectKey) return false;
+    const { data, error } = await supabase.functions.invoke("r2-image-delete", {
+        body: { resource_type: resourceType, resource_id: resourceId, object_key: objectKey }
+    });
+    if (error) throw new Error(error.message || "Could not clean up the old image.");
+    return data?.deleted === true;
+}
