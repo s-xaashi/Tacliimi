@@ -971,6 +971,8 @@ async function setupEventListeners() {
                         if (window.courseDraft.thumbnail_preview_url) {
                             showThumbnailPreview(window.courseDraft.thumbnail_preview_url);
                             if (window.currentStep === 4) renderFinalPreview();
+                        } else {
+                            clearThumbnailPreview();
                         }
                     } catch (previewError) {
                         // The database update succeeded; keep the saved key even if
@@ -2250,6 +2252,16 @@ function getCourseThumbnailPreviewUrl() {
     // when signing fails or the viewer is not authorized.
     return window.courseDraft.thumbnail_preview_url ||
         (!window.courseDraft.thumbnail_storage_key ? window.courseDraft.thumbnail_url : null);
+}
+
+function clearThumbnailPreview() {
+    const container = document.getElementById('thumbnail-preview-container');
+    const finalContainer = document.getElementById('final-thumbnail-preview');
+    container?.querySelector('img.thumb-preview-img')?.remove();
+    finalContainer?.querySelector('img.final-thumb-img')?.remove();
+    document.getElementById('thumbnail-placeholder-icon')?.classList.remove('hidden');
+    document.getElementById('final-thumbnail-icon')?.classList.remove('hidden');
+    document.getElementById('thumbnail-tick')?.classList.add('hidden');
 }
 
 function showThumbnailPreview(url) {
