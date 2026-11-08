@@ -295,7 +295,7 @@ export const ProfileService = {
         const avatarObjectKey = await uploadPrivateImage({ file: fileObject, purpose: 'avatar' });
         const { data, error } = await supabase
             .from('profiles')
-            .update({ avatar_storage_key: avatarObjectKey, updated_at: new Date() })
+            .update({ avatar_url: null, avatar_storage_key: avatarObjectKey, updated_at: new Date() })
             .eq('id', userId)
             .select()
             .maybeSingle();
