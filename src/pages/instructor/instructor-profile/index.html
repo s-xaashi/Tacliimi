@@ -1310,7 +1310,14 @@
 
                     const updatedProfile = await ProfileService.uploadAvatar(file);
                     window.currentProfile = { ...(window.currentProfile || {}), ...updatedProfile };
-                    const avatarUrl = await resolveProfileAvatar(updatedProfile);
+                    let avatarUrl = null;
+                    try {
+                        avatarUrl = await resolveProfileAvatar(updatedProfile);
+                    } catch (imageError) {
+                        // The profile update is already committed; a temporary
+                        // signing failure must not report the upload as failed.
+                        console.warn('Avatar saved, but its preview could not be resolved:', imageError);
+                    }
 
                     const mainProfileNode = document.querySelector('.size-24');
                     if (mainProfileNode) {
@@ -1322,6 +1329,7 @@
                             mainProfileNode.appendChild(img);
                             mainProfileNode.classList.add('overflow-hidden');
                         } else {
+                            mainProfileNode.innerHTML = '<span class="material-symbols-outlined text-slate-300 dark:text-slate-600 text-5xl">person</span>';
                             mainProfileNode.classList.remove('overflow-hidden');
                         }
                     }
@@ -1628,7 +1636,12 @@
                 }
 
                 // Resolve private R2 avatars through the owner-authorized image endpoint.
-                const avatarUrl = await resolveProfileAvatar(profile);
+                let avatarUrl = null;
+                try {
+                    avatarUrl = await resolveProfileAvatar(profile);
+                } catch (imageError) {
+                    console.warn('Could not resolve instructor avatar:', imageError);
+                }
                 const mainProfileNode = document.querySelector('.size-24');
                 if (mainProfileNode) {
                     mainProfileNode.innerHTML = '';
