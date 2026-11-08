@@ -216,6 +216,7 @@ export const MentorService = {
                     profile:profiles!inner (
                         full_name,
                         avatar_url,
+                        avatar_storage_key,
                         short_bio,
                         professional_title,
                         country,
@@ -408,6 +409,7 @@ export const MentorService = {
                         profile:profiles (
                             full_name,
                             avatar_url,
+                            avatar_storage_key,
                             short_bio,
                             serial_id,
                             gender,
@@ -814,6 +816,7 @@ export const MentorService = {
                 mentor:profiles!mentorship_sessions_mentor_id_fkey (
                     full_name,
                     avatar_url,
+                    avatar_storage_key,
                     professional_title
                 )
             `)
@@ -850,7 +853,7 @@ export const MentorService = {
         if (studentIds.length > 0) {
             const { data: profiles, error: pErr } = await supabase
                 .from('profiles')
-                .select('id, full_name, avatar_url, email, phone_number, country, city, professional_title, short_bio, gender, learning_interests, social_links')
+                .select('id, full_name, avatar_url, avatar_storage_key, email, phone_number, country, city, professional_title, short_bio, gender, learning_interests, social_links')
                 .in('id', studentIds);
 
             if (pErr) throw pErr;
@@ -1073,7 +1076,7 @@ export const MentorService = {
             .from('mentorship_booking_messages')
             .select(`
                 *,
-                sender:profiles(full_name, avatar_url)
+                sender:profiles(full_name, avatar_url, avatar_storage_key)
             `)
             .eq('booking_id', bookingId)
             .order('created_at', { ascending: true });
