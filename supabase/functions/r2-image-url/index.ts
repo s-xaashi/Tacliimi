@@ -36,6 +36,7 @@ Deno.serve(async (req) => {
     }
 
     let objectKey: string | null = null;
+    let resourceOwnerId: string | null = null;
     let permitted = false;
     if (type === "avatar") {
       const { data: profile, error } = await admin.from("profiles")
@@ -75,6 +76,7 @@ Deno.serve(async (req) => {
       }
       permitted = isPublic || userId === course.instructor_id || isAdmin || isEnrolledStudent;
       objectKey = course.thumbnail_storage_key;
+      resourceOwnerId = course.instructor_id;
     }
     if (!permitted) return json({ error: "Image not available" }, 403);
     // Only keys in the dedicated image namespaces are eligible. Legacy URLs
@@ -83,8 +85,8 @@ Deno.serve(async (req) => {
       return json({ error: "No private R2 image is attached to this resource" }, 404);
     }
 
-    const expectedPrefix = type === "avatar" ? `avatars/${id}/` : `course-thumbnails/${(await admin.from("courses").select("instructor_id").eq("id", id).single()).data?.instructor_id}/${id}/`;
-    if (!objectKey.startsWith(expectedPrefix) && !(type === "thumbnail" && objectKey.startsWith(expectedPrefix.replace(`/${id}/`, "/new/")))) {
+    const expectedPrefix = type === "avatar" ? `avatars/${id}/` : `course-thumbnails/${resourceOwnerId}/${id}/`;
+    if (!objectKey.startsWith(expectedPrefix)) {
       return json({ error: "Image reference does not match its owner or resource" }, 403);
     }
 
