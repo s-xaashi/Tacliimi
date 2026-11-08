@@ -975,9 +975,11 @@ async function setupEventListeners() {
                             clearThumbnailPreview();
                         }
                     } catch (previewError) {
-                        // The database update succeeded; keep the saved key even if
-                        // a temporary signing/preview request fails.
+                        // The database update succeeded; keep the saved key, but do
+                        // not leave the old image visible after its object is replaced.
                         console.warn('Thumbnail saved, but its preview could not be resolved:', previewError);
+                        window.courseDraft.thumbnail_preview_url = null;
+                        clearThumbnailPreview();
                     }
 
                     if (previousObjectKey && previousObjectKey !== uploadedObjectKey) {
@@ -2587,13 +2589,14 @@ async function renderFinalPreview() {
     const nameEl = document.getElementById('final-instructor-name');
     if (nameEl) nameEl.innerText = finalInstructorName;
     
-    if (window.courseDraft.instructor_avatar || (window.userProfile && window.userProfile.avatar_url)) {
-        const avatarEl = document.getElementById('final-instructor-avatar');
-        const avatarUrl = window.courseDraft.instructor_avatar || window.userProfile.avatar_url;
-        if (avatarEl) {
-            avatarEl.innerHTML = '';
+    const avatarEl = document.getElementById('final-instructor-avatar');
+    if (avatarEl) {
+        avatarEl.innerHTML = '';
+        // Only render the URL resolved by the private-image authorization flow.
+        // Do not fall back to a legacy avatar_url when a private key exists.
+        if (window.courseDraft.instructor_avatar) {
             const avatarImg = document.createElement('img');
-            avatarImg.src = avatarUrl;
+            avatarImg.src = window.courseDraft.instructor_avatar;
             avatarImg.alt = 'Instructor';
             avatarImg.className = 'w-full h-full object-cover rounded-full';
             avatarEl.appendChild(avatarImg);
