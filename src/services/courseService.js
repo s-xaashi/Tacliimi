@@ -93,7 +93,7 @@ export const CourseService = {
             .select(`
                 *,
                 serial_id,
-                instructor:profiles(full_name, avatar_url, professional_title, short_bio, expertise_list),
+                instructor:profiles(full_name, avatar_url, avatar_storage_key, professional_title, short_bio, expertise_list),
                 course_categories(name),
                 course_sections(
                     id, title, order_index,
@@ -1049,8 +1049,8 @@ export const CourseService = {
             const { data, error } = await supabase
                 .from('courses')
                 .select(`
-                    id, serial_id, title, subtitle, thumbnail_url, category_id, level, created_at,
-                    instructor:profiles(id, full_name, email, avatar_url),
+                    id, serial_id, title, subtitle, thumbnail_url, thumbnail_storage_key, category_id, level, created_at,
+                    instructor:profiles(id, full_name, email, avatar_url, avatar_storage_key),
                     category:course_categories(name)
                 `)
                 .eq('status', 'pending_review')
@@ -1085,7 +1085,7 @@ export const CourseService = {
                 .from('courses')
                 .select(`
                     *,
-                    instructor:profiles(id, full_name, email, avatar_url),
+                    instructor:profiles(id, full_name, email, avatar_url, avatar_storage_key),
                     category:course_categories(name),
                     sections:course_sections(
                         *,
