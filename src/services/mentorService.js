@@ -435,7 +435,7 @@ export const MentorService = {
                     .maybeSingle(),
                 supabase
                     .from('mentor_profile_reviews_view')
-                    .select('rating, comment, created_at, full_name, avatar_url')
+                    .select('rating, comment, created_at, full_name, avatar_url, avatar_storage_key')
                     .eq('mentor_id', mentorId),
                 supabase
                     .from('mentor_availability')
