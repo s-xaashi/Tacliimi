@@ -1344,7 +1344,7 @@ export const CourseService = {
         // on public published courses, without making private profiles public.
         const { data: reviewerDetails, error: reviewerError } = await supabase
             .from('public_course_review_display')
-            .select('review_id, full_name, avatar_url')
+            .select('review_id, full_name, avatar_url, avatar_storage_key')
             .eq('course_id', courseId);
 
         if (reviewerError) throw reviewerError;
