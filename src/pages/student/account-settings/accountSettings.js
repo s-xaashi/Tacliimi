@@ -312,13 +312,24 @@ window.handleProfileUpload = async function(event) {
     try {
         const updatedProfile = await ProfileService.uploadAvatar(file);
         currentProfile = updatedProfile;
-        const privateAvatarUrl = await resolveProfileAvatar(updatedProfile);
+        let privateAvatarUrl = null;
+        try {
+            privateAvatarUrl = await resolveProfileAvatar(updatedProfile);
+        } catch (previewError) {
+            // The profile update has already succeeded; a temporary signing
+            // failure must not misreport the saved upload as a failed upload.
+            console.warn('Avatar saved, but its preview could not be resolved:', previewError);
+        }
         const avatar = document.getElementById('avatar-container');
-        if (avatar && privateAvatarUrl) {
-            avatar.innerHTML = `<img src="${privateAvatarUrl}" class="w-full h-full object-cover" />`;
+        if (avatar) {
+            avatar.innerHTML = privateAvatarUrl
+                ? `<img src="${privateAvatarUrl}" class="w-full h-full object-cover" alt="Profile picture" />`
+                : '<span class="material-symbols-outlined text-slate-300 dark:text-slate-600 text-6xl">account_circle</span>';
         }
     } catch (err) {
         alert("Upload failed: " + err.message);
+    } finally {
+        event.target.value = '';
     }
 }
 
