@@ -1293,6 +1293,7 @@
     <script type="module">
         import { AuthService } from '/src/services/authService.js';
         import { ProfileService } from '/src/services/profileService.js';
+        import { resolveProfileAvatar } from '/src/services/r2ImageUpload.js';
 
         window.handleProfileUpload = async function (event) {
             const file = event.target.files[0];
@@ -1308,20 +1309,21 @@
                     if (!session) throw new Error("No active session");
 
                     const updatedProfile = await ProfileService.uploadAvatar(file);
-
-                    if (window.currentProfile) {
-                        window.currentProfile.avatar_url = updatedProfile.avatar_url;
-                    }
+                    window.currentProfile = { ...(window.currentProfile || {}), ...updatedProfile };
+                    const avatarUrl = await resolveProfileAvatar(updatedProfile);
 
                     const mainProfileNode = document.querySelector('.size-24');
                     if (mainProfileNode) {
-                        // SECURITY: set src via setAttribute, not innerHTML
-                        const img = document.createElement('img');
-                        img.className = 'w-full h-full object-cover rounded-full';
-                        img.setAttribute('src', updatedProfile.avatar_url);
                         mainProfileNode.innerHTML = '';
-                        mainProfileNode.appendChild(img);
-                        mainProfileNode.classList.add('overflow-hidden');
+                        if (avatarUrl) {
+                            const img = document.createElement('img');
+                            img.className = 'w-full h-full object-cover rounded-full';
+                            img.setAttribute('src', avatarUrl);
+                            mainProfileNode.appendChild(img);
+                            mainProfileNode.classList.add('overflow-hidden');
+                        } else {
+                            mainProfileNode.classList.remove('overflow-hidden');
+                        }
                     }
 
                     document.body.removeChild(loadingToast);
@@ -1352,9 +1354,10 @@
                 loadingToast.innerHTML = '<span class="material-symbols-outlined animate-spin">refresh</span> Removing image...';
                 document.body.appendChild(loadingToast);
 
-                await AuthService.updateProfile({ avatar_url: null });
+                await ProfileService.removeAvatar();
                 if (window.currentProfile) {
                     window.currentProfile.avatar_url = null;
+                    window.currentProfile.avatar_storage_key = null;
                 }
 
                 const placeholderHtml = `<span class="material-symbols-outlined text-slate-300 dark:text-slate-600 text-5xl">person</span>`;
@@ -1425,6 +1428,7 @@
     <script type="module">
         import { AuthService } from '/src/services/authService.js';
         import { ProfileService } from '/src/services/profileService.js';
+        import { resolveProfileAvatar } from '/src/services/r2ImageUpload.js';
         import { PayoutService } from '/src/services/payoutService.js';
         import { instructorEarningsService } from '/src/services/instructorEarningsService.js';
         import { GlobalProfile } from '/src/services/globalProfile.js';
@@ -1457,7 +1461,7 @@
             };
 
             // Function to populate form
-            const populateForm = (profile) => {
+            const populateForm = async (profile) => {
                 const tos = document.getElementById('tos-checkbox');
                 if (tos && profile.agreed_to_instructor_tos !== undefined) { tos.checked = profile.agreed_to_instructor_tos; }
                 if (!profile) { revealSkeletons(); return; }
@@ -1623,17 +1627,19 @@
                     }
                 }
 
-                // Avatar
-                if (profile.avatar_url) {
-                    const mainProfileNode = document.querySelector('.size-24');
-                    if (mainProfileNode) {
-                        // SECURITY: set src via setAttribute, not innerHTML
+                // Resolve private R2 avatars through the owner-authorized image endpoint.
+                const avatarUrl = await resolveProfileAvatar(profile);
+                const mainProfileNode = document.querySelector('.size-24');
+                if (mainProfileNode) {
+                    mainProfileNode.innerHTML = '';
+                    if (avatarUrl) {
                         const img = document.createElement('img');
                         img.className = 'w-full h-full object-cover rounded-full';
-                        img.setAttribute('src', profile.avatar_url);
-                        mainProfileNode.innerHTML = '';
+                        img.setAttribute('src', avatarUrl);
                         mainProfileNode.appendChild(img);
                         mainProfileNode.classList.add('overflow-hidden');
+                    } else {
+                        mainProfileNode.classList.remove('overflow-hidden');
                     }
                 }
                 // Reveal skeletons once data is populated
@@ -1647,7 +1653,7 @@
                     window.currentSession = session;
                     const profile = await ProfileService.getFullProfile(session.user.id);
                     window.currentProfile = profile;
-                    populateForm(profile);
+                    await populateForm(profile);
                     
                     // Also fire off payout history loader
                     instructorEarningsService.getWithdrawalHistory(session.user.id).then(withdrawals => {
