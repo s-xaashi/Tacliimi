@@ -359,6 +359,7 @@ export const MentorService = {
                     instructor_id: mentor.instructor_id,
                     full_name: mentor.profile?.full_name || 'Anonymous Mentor',
                     avatar_url: mentor.profile?.avatar_url,
+                    avatar_storage_key: mentor.profile?.avatar_storage_key,
                     short_bio: mentor.profile?.short_bio || mentor.bio || 'No bio available.',
                     expertise: mentor.profile?.expertise?.map(e => e.expertise_name) || [],
                     introduction_video: introVideoUrl,
@@ -485,7 +486,8 @@ export const MentorService = {
                 created_at: r.created_at,
                 student: {
                     full_name: r.full_name,
-                    avatar_url: r.avatar_url
+                    avatar_url: r.avatar_url,
+                    avatar_storage_key: r.avatar_storage_key
                 }
             }));
 
@@ -552,6 +554,7 @@ export const MentorService = {
                 instructor_id: data.instructor_id,
                 full_name: data.profile?.full_name,
                 avatar_url: data.profile?.avatar_url,
+                avatar_storage_key: data.profile?.avatar_storage_key,
                 short_bio: data.profile?.short_bio || data.bio,
                 gender: data.profile?.gender,
                 expertise: data.profile?.expertise?.map(e => e.expertise_name) || [],
