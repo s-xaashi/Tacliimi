@@ -280,7 +280,10 @@ export const ProfileService = {
         if (!session) throw new Error('Unauthorized: No active session');
         const userId = session.user.id;
 
-        // SECURITY: Validate file type and size
+        // SECURITY: Validate that a real, non-empty image file was supplied.
+        if (!fileObject || typeof fileObject.size !== 'number' || fileObject.size <= 0) {
+            throw new Error('Please select a non-empty image file.');
+        }
         if (!ALLOWED_AVATAR_TYPES.includes(fileObject.type)) {
             throw new Error('Invalid file type. Only JPEG, PNG, WebP, and GIF are allowed.');
         }
