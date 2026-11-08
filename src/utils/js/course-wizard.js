@@ -398,9 +398,8 @@ async function loadDraft(courseId) {
         const catEl = document.getElementById('course-category');
         if (catEl) catEl.value = window.courseDraft.category_id;
         
-        if (window.courseDraft.thumbnail_preview_url || window.courseDraft.thumbnail_url) {
-            showThumbnailPreview(window.courseDraft.thumbnail_preview_url || window.courseDraft.thumbnail_url);
-        }
+        const thumbnailPreviewUrl = getCourseThumbnailPreviewUrl();
+        if (thumbnailPreviewUrl) showThumbnailPreview(thumbnailPreviewUrl);
         if (window.courseDraft.intro_video_url) showVideoPreview(window.courseDraft.intro_video_url, "Introduction Video");
         
         const certToggle = document.getElementById('certificate-enabled-toggle');
@@ -851,9 +850,8 @@ function populateFields() {
         if (catEl) catEl.value = window.courseDraft.category_id || '';
 
         // Restore Asset Previews
-        if (window.courseDraft.thumbnail_preview_url || window.courseDraft.thumbnail_url) {
-            showThumbnailPreview(window.courseDraft.thumbnail_preview_url || window.courseDraft.thumbnail_url);
-        }
+        const thumbnailPreviewUrl = getCourseThumbnailPreviewUrl();
+        if (thumbnailPreviewUrl) showThumbnailPreview(thumbnailPreviewUrl);
         if (window.courseDraft.intro_video_url) showVideoPreview(window.courseDraft.intro_video_url, "Introduction Video");
 
     } else if (window.currentStep === 2) {
@@ -996,7 +994,8 @@ async function setupEventListeners() {
                         window.courseDraft.thumbnail_storage_key = previousObjectKey;
                         window.courseDraft.thumbnail_url = previousThumbnailUrl;
                         window.courseDraft.thumbnail_preview_url = previousPreviewUrl;
-                        if (previousPreviewUrl || previousThumbnailUrl) showThumbnailPreview(previousPreviewUrl || previousThumbnailUrl);
+                        const restoredPreviewUrl = getCourseThumbnailPreviewUrl();
+                        if (restoredPreviewUrl) showThumbnailPreview(restoredPreviewUrl);
                         if (uploadedObjectKey) {
                             try {
                                 await deletePrivateImage({ resourceType: 'thumbnail', resourceId: window.courseDraft.id, objectKey: uploadedObjectKey });
@@ -2246,6 +2245,13 @@ function showToast(msg, isError = false) {
     }
 }
 
+function getCourseThumbnailPreviewUrl() {
+    // A private key is authoritative: never fall back to a legacy public URL
+    // when signing fails or the viewer is not authorized.
+    return window.courseDraft.thumbnail_preview_url ||
+        (!window.courseDraft.thumbnail_storage_key ? window.courseDraft.thumbnail_url : null);
+}
+
 function showThumbnailPreview(url) {
     const container = document.getElementById('thumbnail-preview-container');
     const icon = document.getElementById('thumbnail-placeholder-icon');
@@ -2448,7 +2454,8 @@ async function renderFinalPreview() {
         }
     }
     
-    if (window.courseDraft.thumbnail_preview_url || window.courseDraft.thumbnail_url) {
+    const thumbnailPreviewUrl = getCourseThumbnailPreviewUrl();
+    if (thumbnailPreviewUrl) {
         const thumbPreview = document.getElementById('final-thumbnail-preview');
         if (thumbPreview) {
             let img = thumbPreview.querySelector('img.final-thumb-img');
@@ -2457,7 +2464,7 @@ async function renderFinalPreview() {
                 img.className = 'final-thumb-img absolute inset-0 w-full h-full object-cover z-10';
                 thumbPreview.appendChild(img);
             }
-            img.src = window.courseDraft.thumbnail_preview_url || window.courseDraft.thumbnail_url;
+            img.src = thumbnailPreviewUrl;
             document.getElementById('final-thumbnail-icon')?.classList.add('hidden');
         }
     }
