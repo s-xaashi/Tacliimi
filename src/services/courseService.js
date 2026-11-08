@@ -1352,7 +1352,8 @@ export const CourseService = {
         const reviewerByReviewId = new Map(
             (reviewerDetails || []).map(reviewer => [reviewer.review_id, {
                 full_name: reviewer.full_name,
-                avatar_url: reviewer.avatar_url
+                avatar_url: reviewer.avatar_url,
+                avatar_storage_key: reviewer.avatar_storage_key
             }])
         );
 
