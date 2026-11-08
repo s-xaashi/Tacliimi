@@ -65,6 +65,7 @@ export async function getConversationList(mentorId) {
                 student_id: sid,
                 student_name: session.student?.full_name || 'Unknown Student',
                 avatar_url: session.student?.avatar_url || null,
+                avatar_storage_key: session.student?.avatar_storage_key || null,
                 sessions: [],
                 all_messages: [],
             });
@@ -92,6 +93,7 @@ export async function getConversationList(mentorId) {
             student_id: entry.student_id,
             student_name: entry.student_name,
             avatar_url: entry.avatar_url,
+            avatar_storage_key: entry.avatar_storage_key,
             session_count: entry.sessions.length,
             last_message: lastMsg ? lastMsg.message_text : null,
             last_message_at: lastMsg ? lastMsg.created_at : null,
@@ -298,6 +300,7 @@ export async function getMentorConversationList(studentId) {
                 mentor_id: mid,
                 mentor_name: session.mentor?.full_name || 'Unknown Mentor',
                 avatar_url: session.mentor?.avatar_url || null,
+                avatar_storage_key: session.mentor?.avatar_storage_key || null,
                 sessions: [],
                 all_messages: [],
             });
