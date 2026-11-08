@@ -28,7 +28,8 @@ export async function getConversationList(mentorId) {
             student:profiles!mentorship_sessions_student_id_fkey (
                 id,
                 full_name,
-                avatar_url
+                avatar_url,
+                avatar_storage_key
             )
         `)
         .eq('mentor_id', mentorId)
@@ -158,7 +159,8 @@ export async function getStudentThread(mentorId, studentId) {
             created_at,
             sender:profiles!mentorship_booking_messages_sender_id_fkey (
                 full_name,
-                avatar_url
+                avatar_url,
+                avatar_storage_key
             )
         `)
         .in('booking_id', sessionIds)
@@ -261,7 +263,7 @@ export async function getMentorConversationList(studentId) {
         .from('mentorship_sessions')
         .select(`
             id, mentor_id, topic, scheduled_at, status, created_at, serial_id,
-            mentor:profiles!mentorship_sessions_mentor_id_fkey (id, full_name, avatar_url)
+            mentor:profiles!mentorship_sessions_mentor_id_fkey (id, full_name, avatar_url, avatar_storage_key)
         `)
         .eq('student_id', studentId)
         .neq('mentor_id', studentId)
@@ -362,7 +364,7 @@ export async function getMentorThread(studentId, mentorId) {
         .from('mentorship_booking_messages')
         .select(`
             id, booking_id, sender_id, sender_role, message_text, created_at,
-            sender:profiles!mentorship_booking_messages_sender_id_fkey (full_name, avatar_url)
+            sender:profiles!mentorship_booking_messages_sender_id_fkey (full_name, avatar_url, avatar_storage_key)
         `)
         .in('booking_id', sessionIds)
         .order('created_at', { ascending: true });
