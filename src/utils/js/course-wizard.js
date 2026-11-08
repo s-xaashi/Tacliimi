@@ -5,6 +5,7 @@ import { CourseService } from '/src/services/courseService.js';
 import { AuthService } from '/src/services/authService.js';
 import { financeSettingsService } from '/src/services/financeSettingsService.js';
 import { getEmbedUrl } from '/src/utils/js/videoEmbed.js';
+import { resolveProfileAvatar, resolveCourseThumbnail, resolvePrivateImage, deletePrivateImage, invalidatePrivateImageCache, cleanupPrivateImages } from '/src/services/r2ImageUpload.js';
 
 // Global state
 const wizardParams = new URLSearchParams(window.location.search);
@@ -18,6 +19,7 @@ window.courseDraft = {
     level: 'Beginner',
     thumbnail_url: null,
     thumbnail_storage_key: null,
+    thumbnail_preview_url: null,
     intro_video_url: null,
     curriculum: [],
     pricing: {
@@ -363,7 +365,21 @@ async function loadDraft(courseId) {
         // Store instructor details for preview if available
         if (course.instructor) {
             window.courseDraft.instructor_name = course.instructor.full_name;
-            window.courseDraft.instructor_avatar = course.instructor.avatar_url;
+            try {
+                window.courseDraft.instructor_avatar = await resolveProfileAvatar(course.instructor);
+            } catch (imageError) {
+                console.warn('Could not resolve instructor avatar for course preview:', imageError);
+                window.courseDraft.instructor_avatar = null;
+            }
+        }
+
+        // Resolve the private thumbnail for the instructor's preview. Legacy URLs
+        // remain supported only when no private storage key is present.
+        try {
+            window.courseDraft.thumbnail_preview_url = await resolveCourseThumbnail(course);
+        } catch (imageError) {
+            console.warn('Could not resolve the saved course thumbnail preview:', imageError);
+            window.courseDraft.thumbnail_preview_url = null;
         }
 
         // Update UI components
@@ -382,7 +398,9 @@ async function loadDraft(courseId) {
         const catEl = document.getElementById('course-category');
         if (catEl) catEl.value = window.courseDraft.category_id;
         
-        if (window.courseDraft.thumbnail_url) showThumbnailPreview(window.courseDraft.thumbnail_url);
+        if (window.courseDraft.thumbnail_preview_url || window.courseDraft.thumbnail_url) {
+            showThumbnailPreview(window.courseDraft.thumbnail_preview_url || window.courseDraft.thumbnail_url);
+        }
         if (window.courseDraft.intro_video_url) showVideoPreview(window.courseDraft.intro_video_url, "Introduction Video");
         
         const certToggle = document.getElementById('certificate-enabled-toggle');
@@ -486,7 +504,7 @@ async function performSave(silent = false) {
             description: window.courseDraft.description || '',
             category_id: window.courseDraft.category_id || null,
             level: window.courseDraft.level || 'Beginner',
-            thumbnail_url: window.courseDraft.thumbnail_url || null,
+            thumbnail_url: window.courseDraft.thumbnail_storage_key ? null : (window.courseDraft.thumbnail_url || null),
             thumbnail_storage_key: window.courseDraft.thumbnail_storage_key || null,
             intro_video_url: window.courseDraft.intro_video_url || null,
             price_type: window.courseDraft.pricing.type || 'free',
@@ -833,7 +851,9 @@ function populateFields() {
         if (catEl) catEl.value = window.courseDraft.category_id || '';
 
         // Restore Asset Previews
-        if (window.courseDraft.thumbnail_url) showThumbnailPreview(window.courseDraft.thumbnail_url);
+        if (window.courseDraft.thumbnail_preview_url || window.courseDraft.thumbnail_url) {
+            showThumbnailPreview(window.courseDraft.thumbnail_preview_url || window.courseDraft.thumbnail_url);
+        }
         if (window.courseDraft.intro_video_url) showVideoPreview(window.courseDraft.intro_video_url, "Introduction Video");
 
     } else if (window.currentStep === 2) {
@@ -931,18 +951,35 @@ async function setupEventListeners() {
                 if (btn) { btn.setAttribute('data-orig', btn.innerText); btn.innerText = 'Uploading...'; btn.disabled = true; }
 
                 let uploadedObjectKey = null;
-                let previousObjectKey = window.courseDraft.thumbnail_storage_key || null;
+                const previousObjectKey = window.courseDraft.thumbnail_storage_key || null;
+                const previousThumbnailUrl = window.courseDraft.thumbnail_url || null;
+                const previousPreviewUrl = window.courseDraft.thumbnail_preview_url || null;
+                let persisted = false;
                 try {
-                    // Ensure we have a course ID before uploading
+                    // The R2 signer requires an existing course owned by this instructor.
                     if (!window.courseDraft.id) await window.saveDraft(true, true);
                     uploadedObjectKey = await CourseService.uploadCourseThumbnail(window.courseDraft.id, file);
-                    window.courseDraft.thumbnail_storage_key = uploadedObjectKey;
-                    await window.saveDraft(true);
 
-                    const { resolvePrivateImage, deletePrivateImage, invalidatePrivateImageCache, cleanupPrivateImages } = await import('/src/services/r2ImageUpload.js');
+                    // Persist the new key before deleting the previous object. Clear
+                    // any legacy public URL so private access cannot be bypassed.
+                    window.courseDraft.thumbnail_storage_key = uploadedObjectKey;
+                    window.courseDraft.thumbnail_url = null;
+                    await window.saveDraft(true, true);
+                    persisted = true;
+
                     invalidatePrivateImageCache({ resourceType: 'thumbnail', resourceId: window.courseDraft.id });
-                    const previewUrl = await resolvePrivateImage({ resourceType: 'thumbnail', resourceId: window.courseDraft.id });
-                    if (previewUrl) showThumbnailPreview(previewUrl);
+                    try {
+                        window.courseDraft.thumbnail_preview_url = await resolvePrivateImage({ resourceType: 'thumbnail', resourceId: window.courseDraft.id });
+                        if (window.courseDraft.thumbnail_preview_url) {
+                            showThumbnailPreview(window.courseDraft.thumbnail_preview_url);
+                            if (window.currentStep === 4) renderFinalPreview();
+                        }
+                    } catch (previewError) {
+                        // The database update succeeded; keep the saved key even if
+                        // a temporary signing/preview request fails.
+                        console.warn('Thumbnail saved, but its preview could not be resolved:', previewError);
+                    }
+
                     if (previousObjectKey && previousObjectKey !== uploadedObjectKey) {
                         try {
                             await deletePrivateImage({ resourceType: 'thumbnail', resourceId: window.courseDraft.id, objectKey: previousObjectKey });
@@ -952,22 +989,27 @@ async function setupEventListeners() {
                     }
                     try { await cleanupPrivateImages(); }
                     catch (cleanupError) { console.warn('Could not sweep abandoned private images.', cleanupError); }
-                    window.saveDraft(true);
                 } catch (err) {
-                    // The deletion endpoint checks database references, so this is
-                    // safe even if the draft save succeeded before a later error.
-                    if (uploadedObjectKey) {
-                        try {
-                            const { deletePrivateImage } = await import('/src/services/r2ImageUpload.js');
-                            await deletePrivateImage({ resourceType: 'thumbnail', resourceId: window.courseDraft.id, objectKey: uploadedObjectKey });
-                        } catch (cleanupError) {
-                            console.warn('Could not clean up failed thumbnail upload.', cleanupError);
+                    if (!persisted) {
+                        // A failed DB save must not leave the UI pointing at an
+                        // uncommitted object. The delete endpoint rechecks DB refs.
+                        window.courseDraft.thumbnail_storage_key = previousObjectKey;
+                        window.courseDraft.thumbnail_url = previousThumbnailUrl;
+                        window.courseDraft.thumbnail_preview_url = previousPreviewUrl;
+                        if (previousPreviewUrl || previousThumbnailUrl) showThumbnailPreview(previousPreviewUrl || previousThumbnailUrl);
+                        if (uploadedObjectKey) {
+                            try {
+                                await deletePrivateImage({ resourceType: 'thumbnail', resourceId: window.courseDraft.id, objectKey: uploadedObjectKey });
+                            } catch (cleanupError) {
+                                console.warn('Could not clean up failed thumbnail upload.', cleanupError);
+                            }
                         }
                     }
                     console.error('Thumbnail upload error:', err);
-                    alert('Upload failed. Please check your storage bucket configuration.');
+                    alert('Upload failed: ' + (err?.message || 'Please check your storage bucket configuration.'));
                     if (btn) btn.innerText = btn.getAttribute('data-orig') || 'Upload File';
                 } finally {
+                    e.target.value = '';
                     if (btn) btn.disabled = false;
                 }
             }
@@ -1213,15 +1255,22 @@ async function setupEventListeners() {
                 const profile = await AuthService.getCurrentProfile();
                 if (profile) {
                     window.courseDraft.instructor_name = profile.full_name;
-                    window.courseDraft.instructor_avatar = profile.avatar_url;
+                    window.courseDraft.instructor_avatar = await resolveProfileAvatar(profile);
                     
                     // Update header if applicable
                     const headName = document.getElementById('user-name');
                     if (headName) headName.innerText = profile.full_name;
                     
                     const avatarContainer = document.getElementById('user-avatar-container');
-                    if (avatarContainer && profile.avatar_url) {
-                        avatarContainer.innerHTML = `<img src="${profile.avatar_url}" class="w-full h-full object-cover rounded-full" alt="User Avatar">`;
+                    if (avatarContainer) {
+                        avatarContainer.innerHTML = '';
+                        if (window.courseDraft.instructor_avatar) {
+                            const avatarImg = document.createElement('img');
+                            avatarImg.src = window.courseDraft.instructor_avatar;
+                            avatarImg.alt = 'User Avatar';
+                            avatarImg.className = 'w-full h-full object-cover rounded-full';
+                            avatarContainer.appendChild(avatarImg);
+                        }
                     }
                     
                     // Trigger preview update if we are on step 4
@@ -2388,7 +2437,7 @@ async function renderFinalPreview() {
     // Update Thumbnail Status
     const thumbStatus = document.getElementById('summary-thumbnail-status');
     if (thumbStatus) {
-        if (window.courseDraft.thumbnail_url) {
+        if (window.courseDraft.thumbnail_storage_key || window.courseDraft.thumbnail_url) {
             thumbStatus.innerText = 'Uploaded';
             thumbStatus.classList.remove('text-slate-700', 'dark:text-slate-300');
             thumbStatus.classList.add('text-emerald-600', 'font-bold');
@@ -2399,7 +2448,7 @@ async function renderFinalPreview() {
         }
     }
     
-    if (window.courseDraft.thumbnail_url) {
+    if (window.courseDraft.thumbnail_preview_url || window.courseDraft.thumbnail_url) {
         const thumbPreview = document.getElementById('final-thumbnail-preview');
         if (thumbPreview) {
             let img = thumbPreview.querySelector('img.final-thumb-img');
@@ -2408,7 +2457,7 @@ async function renderFinalPreview() {
                 img.className = 'final-thumb-img absolute inset-0 w-full h-full object-cover z-10';
                 thumbPreview.appendChild(img);
             }
-            img.src = window.courseDraft.thumbnail_url;
+            img.src = window.courseDraft.thumbnail_preview_url || window.courseDraft.thumbnail_url;
             document.getElementById('final-thumbnail-icon')?.classList.add('hidden');
         }
     }
@@ -2522,7 +2571,14 @@ async function renderFinalPreview() {
     if (window.courseDraft.instructor_avatar || (window.userProfile && window.userProfile.avatar_url)) {
         const avatarEl = document.getElementById('final-instructor-avatar');
         const avatarUrl = window.courseDraft.instructor_avatar || window.userProfile.avatar_url;
-        if (avatarEl) avatarEl.innerHTML = `<img src="${avatarUrl}" class="w-full h-full object-cover rounded-full" />`;
+        if (avatarEl) {
+            avatarEl.innerHTML = '';
+            const avatarImg = document.createElement('img');
+            avatarImg.src = avatarUrl;
+            avatarImg.alt = 'Instructor';
+            avatarImg.className = 'w-full h-full object-cover rounded-full';
+            avatarEl.appendChild(avatarImg);
+        }
     }
 }
 
