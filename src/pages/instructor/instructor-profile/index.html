@@ -1781,7 +1781,7 @@
                                 if (expCont) { expCont.innerHTML = ''; expCont.appendChild(addExpBtn); }
                             }
                             try {
-                                populateForm(updatedProfile);
+                                await populateForm(updatedProfile);
                                 GlobalProfile.applyProfile();
                             } catch (e) { console.error('Error refreshing UI:', e); }
                         } catch (err) {
@@ -2279,7 +2279,7 @@ const showTFieldError = (inputEl, msg) => {
                     window.currentProfile = updatedProfile;
 
                     try {
-                        populateForm(updatedProfile); // Refresh inputs dynamically
+                        await populateForm(updatedProfile); // Refresh inputs dynamically
                         GlobalProfile.applyProfile(); // Trigger header refresh
                     } catch (e) {
                         console.error('Error refreshing UI:', e);
