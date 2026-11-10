@@ -485,7 +485,7 @@
 
                 currentCourse = courseData;
                 const resolvedCourseThumbnailUrl = await resolveCourseThumbnail(courseData).catch(() => null);
-                const resolvedInstructorAvatarUrl = await resolveProfileAvatar(courseData.instructor).catch(() => null);
+                const resolvedInstructorAvatarUrl = await resolveProfileAvatar(courseData.instructor, courseData.is_public === true ? 'marketplace-instructor' : null).catch(() => null);
                 window.currentCourseSerial = courseData.serial_id;
                 currentUser = session ? session.user : null;
 
@@ -1547,7 +1547,7 @@
                         const instr = course.instructor || {};
                         document.getElementById('pm-instructor-name').textContent = instr.full_name || 'Expert Instructor';
                         const avatarEl = document.getElementById('pm-instructor-avatar');
-                        avatarEl.src = await resolveProfileAvatar(instr).catch(() => null) || `https://ui-avatars.com/api/?name=${encodeURIComponent(instr.full_name || 'Instructor')}&background=6366f1&color=fff`;
+                        avatarEl.src = await resolveProfileAvatar(instr, course.is_public === true ? 'marketplace-instructor' : null).catch(() => null) || `https://ui-avatars.com/api/?name=${encodeURIComponent(instr.full_name || 'Instructor')}&background=6366f1&color=fff`;
 
                         showModal();
                         showStep('method');
