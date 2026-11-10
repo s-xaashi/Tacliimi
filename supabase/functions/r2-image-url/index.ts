@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
       // legacy avatar_url field. They do not make a profile generally public.
       if (!isPublic && visibilityContext === "marketplace-instructor") {
         const { data, error: viewError } = await admin.from("course_marketplace_view")
-          .select("id").eq("instructor_id", id).limit(1);
+          .select("id").eq("instructor_id", id).eq("is_public", true).eq("status", "published").limit(1);
         if (viewError) throw viewError;
         visibleInPublicContext = Boolean(data?.length);
       } else if (!isPublic && visibilityContext === "course-reviewer") {
