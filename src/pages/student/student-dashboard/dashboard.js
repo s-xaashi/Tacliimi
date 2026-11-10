@@ -1556,15 +1556,19 @@ async function loadBeginnerCourses() {
         coursesContainer = div;
     }
 
+    const displaySuggestedCourses = await Promise.all(suggestedCourses.map(async course => ({
+        ...course,
+        _resolvedThumbnail: await resolveCourseThumbnail(course).catch(() => null)
+    })));
     const levelLabel = `Popular ${chosenLevel} Courses`;
     let html = `<div class="col-span-full border-b border-primary/20 pb-4 mb-4"><h3 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-400">${levelLabel}</h3></div>`;
     
-    suggestedCourses.forEach(course => {
+    displaySuggestedCourses.forEach(course => {
         html += `
         <div onclick="window.location.href='/src/pages/marketplace/course-details/index.html?id=${encodeURIComponent(course.id)}'"
             class="flex flex-col group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer h-full relative">
             <div class="aspect-video relative overflow-hidden bg-slate-100 dark:bg-slate-800 shrink-0">
-                <img src="${course.thumbnail_url || 'https://placehold.co/600x400'}" alt="${course.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                <img src="${course._resolvedThumbnail || 'https://placehold.co/600x400'}" alt="${course.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                 <div class="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors"></div>
             </div>
             <div class="p-5 flex flex-col flex-1">
