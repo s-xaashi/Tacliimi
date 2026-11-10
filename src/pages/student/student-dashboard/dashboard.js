@@ -1031,7 +1031,7 @@ async function loadMentors(forceRefresh = false) {
 
         const renderSessionCard = async (session, isHistory = false) => {
             const mentor = session.mentor || {};
-            const resolvedMentorAvatar = await resolveProfileAvatar(mentor).catch(() => null);
+            const resolvedMentorAvatar = await resolveProfileAvatar(mentor, 'mentorship-session', session.id).catch(() => null);
             const date = new Date(session.scheduled_at);
             const duration = session.duration_minutes || 60;
             // Meeting slot end — always duration-based, never program end_date
@@ -1311,7 +1311,7 @@ let _lastRenderedMessageId = null;
 let _isTyping = false;
 let _typingTimeout = null;
 
-async function renderChatMessages(messages, myRole) {
+async function renderChatMessages(messages, myRole, sessionId) {
     if (messages.length === 0) {
         return `<div class="flex flex-col items-center justify-center h-full text-center py-20 px-8">
             <span class="material-symbols-outlined text-slate-200 dark:text-slate-700 text-7xl mb-4">chat_bubble</span>
@@ -1321,7 +1321,7 @@ async function renderChatMessages(messages, myRole) {
     }
     return (await Promise.all(messages.map(async msg => {
         const isMe = msg.sender_role === myRole;
-        const senderAvatar = await resolveProfileAvatar(msg.sender || {}).catch(() => null)
+        const senderAvatar = await resolveProfileAvatar(msg.sender || {}, 'mentorship-session', sessionId).catch(() => null)
             || `https://ui-avatars.com/api/?name=${encodeURIComponent(msg.sender?.full_name || (isMe ? 'Me' : 'Them'))}&background=random&color=fff`;
         const timeStr = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         const avatarHtml = `<img src="${senderAvatar}" class="w-8 h-8 rounded-full object-cover shrink-0 shadow-sm" title="${msg.sender?.full_name || ''}" />`;
@@ -1400,7 +1400,7 @@ window.openMessagingModal = async function(bookingId, mentorName) {
             if (latestId === _lastRenderedMessageId && !isFirstLoad) return;
             _lastRenderedMessageId = latestId;
             const atBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 60;
-            container.innerHTML = await renderChatMessages(messages, 'student');
+            container.innerHTML = await renderChatMessages(messages, 'student', bookingId);
             appendTypingIndicatorStudent(container);
             if (atBottom || isFirstLoad) container.scrollTop = container.scrollHeight;
         } catch { /* silent poll failure */ }
