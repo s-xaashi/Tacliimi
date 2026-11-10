@@ -13,7 +13,7 @@ const MENTORSHIP_CACHE_TTL = 60000; // 1 minute
 window.userActiveEnrollments = [];
 window.currentActiveCourseIndex = 0;
 
-window.renderActiveCourseBanner = function(step = 0) {
+window.renderActiveCourseBanner = async function(step = 0) {
     if (!window.userActiveEnrollments || window.userActiveEnrollments.length === 0) return;
     
     window.currentActiveCourseIndex += step;
@@ -27,6 +27,7 @@ window.renderActiveCourseBanner = function(step = 0) {
     const enr = window.userActiveEnrollments[window.currentActiveCourseIndex];
     const course = enr.courses;
     if (!course) return;
+    const resolvedThumbnail = await resolveCourseThumbnail(course).catch(() => null);
 
     const continueSection = document.getElementById('continue-learning-section');
     if (!continueSection) return;
@@ -305,7 +306,7 @@ async function loadMyCourses() {
                 // Populate Continue Learning Section with active courses
                 window.userActiveEnrollments = activeEnrollments;
                 window.currentActiveCourseIndex = 0;
-                window.renderActiveCourseBanner(0);
+                await window.renderActiveCourseBanner(0);
             } else {
                 welcomeMsg.textContent = `Congratulations! You've completed all your enrolled courses. Ready for something new?`;
                 continueSection.classList.add('hidden');
