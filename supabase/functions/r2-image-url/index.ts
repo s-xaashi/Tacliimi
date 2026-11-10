@@ -80,6 +80,16 @@ Deno.serve(async (req) => {
           if (reviewError) throw reviewError;
           visibleInPublicContext = Boolean(reviews?.length);
         }
+      } else if (!isPublic && visibilityContext === "mentorship-participant" && userId) {
+        const [studentSide, mentorSide] = await Promise.all([
+          admin.from("mentorship_sessions").select("id")
+            .eq("student_id", userId).eq("mentor_id", id).limit(1),
+          admin.from("mentorship_sessions").select("id")
+            .eq("student_id", id).eq("mentor_id", userId).limit(1)
+        ]);
+        if (studentSide.error) throw studentSide.error;
+        if (mentorSide.error) throw mentorSide.error;
+        visibleInPublicContext = Boolean(studentSide.data?.length || mentorSide.data?.length);
       }
 
       permitted = isPublic || visibleInPublicContext || userId === id || isAdmin;
