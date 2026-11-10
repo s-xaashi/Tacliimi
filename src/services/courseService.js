@@ -93,7 +93,7 @@ export const CourseService = {
             .select(`
                 *,
                 serial_id,
-                instructor:profiles(full_name, avatar_url, avatar_storage_key, professional_title, short_bio, expertise_list),
+                instructor:profiles(id, full_name, avatar_url, avatar_storage_key, professional_title, short_bio, expertise_list),
                 course_categories(name),
                 course_sections(
                     id, title, order_index,
