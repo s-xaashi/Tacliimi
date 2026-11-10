@@ -1,6 +1,7 @@
 import { supabase } from '/src/services/supabaseClient.js';
 import { AuthService } from '/src/services/authService.js';
 import { MentorService } from '/src/services/mentorService.js';
+import { resolveCourseThumbnail, resolveProfileAvatar } from '/src/services/r2ImageUpload.js';
 import { buildProgramProgressHtml, getProgramMeetingStatus } from '/src/utils/js/mentorshipUI.js';
 
 let currentUserSession = null;
@@ -58,7 +59,7 @@ window.renderActiveCourseBanner = function(step = 0) {
             ${dotsHtml}
             <div class="relative z-10 flex flex-col md:flex-row items-center gap-6 md:gap-8 h-full ${hasMultiple ? 'px-6 md:px-12' : ''}">
                 <div class="w-full md:w-1/3 aspect-video rounded-2xl overflow-hidden shadow-2xl shrink-0 bg-black/10">
-                    <img src="${course.thumbnail_url || 'https://placehold.co/600x400'}" alt="${course.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                    <img src="${resolvedThumbnail || 'https://placehold.co/600x400'}" alt="${course.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                 </div>
                 <div class="flex-1 flex flex-col justify-center text-center md:text-left min-w-0 h-full w-full">
                     <div>
@@ -328,15 +329,15 @@ async function loadMyCourses() {
 
         // Render active courses grid
         let activeHtml = '';
-        activeEnrollments.forEach(enr => {
+        for (const enr of activeEnrollments) {
             // Match offer by: enrolled course_id → from_version_id, or root_course_id
             const offer = offerMap[enr.course_id]
                 || offerMap[enr.courses?.root_course_id]
                 || null;
             const payId = paymentMap[enr.course_id] || paymentMap[enr.courses?.root_course_id] || null;
             const payDate = paymentDateMap[enr.course_id] || paymentDateMap[enr.courses?.root_course_id] || enr.enrolled_at || null;
-            activeHtml += renderCourseCard(enr, offer, payId, payDate);
-        });
+            activeHtml += await renderCourseCard(enr, offer, payId, payDate);
+        }
         enrolledCoursesGrid.innerHTML = activeHtml || `
             <div class="col-span-full py-12 text-center">
                 <p class="text-slate-500 italic">No in-progress courses.</p>
@@ -347,14 +348,14 @@ async function loadMyCourses() {
         const completedGrid = document.getElementById('completed-courses-grid');
         const completedEmptyState = document.getElementById('completed-courses-empty-state');
         let completedHtml = '';
-        completedEnrollments.forEach(enr => {
+        for (const enr of completedEnrollments) {
             const offer = offerMap[enr.course_id]
                 || offerMap[enr.courses?.root_course_id]
                 || null;
             const payId = paymentMap[enr.course_id] || paymentMap[enr.courses?.root_course_id] || null;
             const payDate = paymentDateMap[enr.course_id] || paymentDateMap[enr.courses?.root_course_id] || enr.enrolled_at || null;
-            completedHtml += renderCourseCard(enr, offer, payId, payDate);
-        });
+            completedHtml += await renderCourseCard(enr, offer, payId, payDate);
+        }
         
         if (completedGrid) {
             completedGrid.innerHTML = completedHtml;
@@ -463,9 +464,10 @@ window.reEnrollWithCoupon = async function() {
     window.location.href = `/src/pages/marketplace/course-details/index.html?id=${offer.to_version_id}${couponParam}&offer=${offer.id}`;
 };
 
-function renderCourseCard(enr, updateOffer, payId = null, payDate = null) {
+async function renderCourseCard(enr, updateOffer, payId = null, payDate = null) {
     const course = enr.courses;
     if(!course) return '';
+    const resolvedThumbnail = await resolveCourseThumbnail(course).catch(() => null);
     const category = course.course_categories ? course.course_categories.name : 'Course';
     const progress = enr.progress_percentage || 0;
     
