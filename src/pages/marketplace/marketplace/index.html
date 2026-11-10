@@ -424,6 +424,7 @@
     <script type="module">
         import { CourseService } from '/src/services/courseService.js';
         import { AuthService } from '/src/services/authService.js';
+        import { resolveCourseThumbnail, resolveProfileAvatar } from '/src/services/r2ImageUpload.js';
 
         let currentUser = null;
         let wishlistedCourseIds = new Set();
@@ -653,6 +654,15 @@
 
             try {
                 const courses = await fetchWithRetry(() => CourseService.getPublishedCourses(filters));
+                const displayCourses = await Promise.all(courses.map(async course => ({
+                    ...course,
+                    _resolvedThumbnail: await resolveCourseThumbnail(course).catch(() => null),
+                    _resolvedInstructorAvatar: await resolveProfileAvatar({
+                        id: course.instructor_id,
+                        avatar_storage_key: course.instructor_avatar_storage_key,
+                        avatar_url: course.instructor_avatar
+                    }, 'marketplace-instructor').catch(() => null)
+                })));
                 grid.removeAttribute('aria-busy');
                 
                 resultsCount.textContent = `Showing ${courses.length} result${courses.length !== 1 ? 's' : ''}`;
@@ -670,7 +680,7 @@
                 
 
                 let html = '';
-                courses.forEach(course => {
+                displayCourses.forEach(course => {
                     const categoryName = course.category_name || 'Uncategorized';
                     const instructorName = course.instructor_name || 'Expert Instructor';
                     const rating = course.average_rating || 0;
@@ -725,7 +735,7 @@
                                             w-full aspect-video md:w-full md:aspect-[16/10]">
                                     <img alt="${course.title}"
                                         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                                        src="${course.thumbnail_url || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80'}" />
+                                        src="${course._resolvedThumbnail || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80'}" />
 
                                     <!-- Hover play overlay – hidden on mobile -->
                                     <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity hidden md:flex items-center justify-center">
@@ -776,7 +786,7 @@
 
                                 <!-- Instructor name (desktop only) -->
                                 <div class="hidden md:flex items-center gap-2 mb-6">
-                                    <img src="${course.instructor_avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(instructorName) + '&background=random'}"
+                                    <img src="${course._resolvedInstructorAvatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(instructorName) + '&background=random'}"
                                          class="w-6 h-6 rounded-full object-cover ring-2 ring-white dark:ring-gray-800"
                                          alt="${instructorName}">
                                     <span class="text-xs font-medium text-gray-500 dark:text-gray-400 line-clamp-1">${instructorName}</span>
