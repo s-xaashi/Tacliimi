@@ -818,6 +818,7 @@ export const MentorService = {
                 program_start_date,
                 end_date,
                 mentor:profiles!mentorship_sessions_mentor_id_fkey (
+                    id,
                     full_name,
                     avatar_url,
                     avatar_storage_key,
@@ -1080,7 +1081,7 @@ export const MentorService = {
             .from('mentorship_booking_messages')
             .select(`
                 *,
-                sender:profiles(full_name, avatar_url, avatar_storage_key)
+                sender:profiles(id, full_name, avatar_url, avatar_storage_key)
             `)
             .eq('booking_id', bookingId)
             .order('created_at', { ascending: true });
