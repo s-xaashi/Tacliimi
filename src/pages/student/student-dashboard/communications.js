@@ -1,4 +1,5 @@
 import { AuthService } from '/src/services/authService.js';
+import { resolveProfileAvatar } from '/src/services/r2ImageUpload.js';
 import { getMentorConversationList, getMentorThread, sendMessage, subscribeToThread } from '/src/services/communicationsService.js';
 
 window.initStudentCommunications = initStudentCommunications;
@@ -179,7 +180,7 @@ export async function initStudentCommunications() {
     try {
         const profile = await AuthService.getCurrentProfile();
         if (profile) {
-            window._studentAvatarSrc = profile.avatar_url || '';
+            window._studentAvatarSrc = await resolveProfileAvatar(profile).catch(() => null) || '';
             window._studentName = profile.full_name || '';
         }
     } catch (_) {}
@@ -233,11 +234,19 @@ export async function initStudentCommunications() {
             return;
         }
         emptyEl.classList.add('hidden');
-        listContainer.innerHTML = list.map(c => {
+        const resolvedList = await Promise.all(list.map(async conversation => ({
+            ...conversation,
+            _resolvedAvatar: await resolveProfileAvatar({
+                id: conversation.mentor_id,
+                avatar_url: conversation.avatar_url,
+                avatar_storage_key: conversation.avatar_storage_key
+            }, 'mentorship-participant').catch(() => null)
+        })));
+        listContainer.innerHTML = resolvedList.map(c => {
             const preview = c.last_message ? (c.last_message.length > 35 ? c.last_message.substring(0,35)+'…' : c.last_message) : '<i class="text-slate-400">No messages</i>';
             return `
-            <div class="student-convo-item" data-id="${c.mentor_id}" data-name="${escapeHtml(c.mentor_name)}" data-avatar="${c.avatar_url || ''}">
-                ${buildAvatarHTML(c.avatar_url, c.mentor_name, 'w-10 h-10')}
+            <div class="student-convo-item" data-id="${c.mentor_id}" data-name="${escapeHtml(c.mentor_name)}" data-avatar="${c._resolvedAvatar || ''}">
+                ${buildAvatarHTML(c._resolvedAvatar, c.mentor_name, 'w-10 h-10')}
                 <div class="flex-1 min-w-0">
                     <div class="flex justify-between items-center text-xs">
                         <span class="font-bold text-slate-800 dark:text-slate-200 truncate pr-2">${escapeHtml(c.mentor_name)}</span>
