@@ -2068,7 +2068,8 @@ async function renderChatMessages(messages, myRole, myAvatarUrl) {
     }
     return (await Promise.all(messages.map(async msg => {
         const isMe = msg.sender_role === myRole;
-        const senderAvatar = await resolveProfileAvatar(msg.sender || {}, 'mentorship-participant').catch(() => null)
+        const resolvedSenderAvatar = await resolveProfileAvatar(msg.sender || {}, 'mentorship-participant').catch(() => null);
+        const senderAvatar = (isMe ? myAvatarUrl : resolvedSenderAvatar) || msg.sender?.avatar_url
             || `https://ui-avatars.com/api/?name=${encodeURIComponent(msg.sender?.full_name || (isMe ? 'Me' : 'Them'))}&background=random&color=fff`;
         const timeStr = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         const avatarHtml = `<img src="${senderAvatar}" class="w-8 h-8 rounded-full object-cover shrink-0 shadow-sm" title="${msg.sender?.full_name || ''}" />`;
