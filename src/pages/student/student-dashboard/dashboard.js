@@ -491,7 +491,7 @@ async function renderCourseCard(enr, updateOffer, payId = null, payDate = null) 
     <div class="flex flex-col group bg-white dark:bg-slate-900 border ${updateOffer ? 'border-indigo-300 dark:border-indigo-700 shadow-indigo-100 dark:shadow-indigo-900/10 shadow-md' : 'border-slate-200 dark:border-slate-800'} rounded-xl sm:rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer h-full" onclick="window.location.href='/src/pages/learning/learning-interface/index.html?course=${encodeURIComponent(course.id)}'">
         <div class="aspect-video relative overflow-hidden bg-slate-100 dark:bg-slate-800 shrink-0">
             ${updateBadgeHtml}
-            <img src="${course.thumbnail_url || 'https://placehold.co/600x400'}" alt="${course.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+            <img src="${resolvedThumbnail || 'https://placehold.co/600x400'}" alt="${course.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
             <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                 <span class="material-symbols-outlined text-white text-3xl sm:text-5xl">${progress === 100 ? 'replay' : 'play_circle'}</span>
             </div>
