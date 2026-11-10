@@ -309,3 +309,60 @@ begin
     return v_course_data;
 end;
 $function$;
+
+
+-- Keep private avatar storage keys available to the existing admin bookings UI.
+create or replace function public.admin_get_all_mentorship_sessions(p_admin_id uuid)
+returns table(
+    id uuid, student_id uuid, mentor_id uuid, scheduled_at timestamptz, status text,
+    notes text, created_at timestamptz, meeting_type text, meeting_location text,
+    student_phone text, topic text, meeting_link text, booking_status text,
+    mentor_notes text, rejection_note text, duration_minutes integer,
+    mentorship_type text, program_start_date timestamptz, end_date timestamptz,
+    duration_days integer, total_sessions integer, completed_sessions_count integer,
+    reschedule_requested_by text, reschedule_note text, reschedule_history jsonb,
+    student jsonb, mentor jsonb, session_serial_id integer, mentor_serial_id integer,
+    payment_serial_id integer
+)
+language plpgsql
+security definer
+set search_path to 'public'
+as $function$
+declare
+    v_is_admin boolean;
+begin
+    select exists (
+        select 1 from public.admin_auth aa
+        where aa.id = auth.uid() and coalesce(aa.is_suspended, false) = false
+    ) into v_is_admin;
+    if not v_is_admin then
+        raise exception 'Unauthorized: Not a valid admin';
+    end if;
+
+    return query
+    select
+        ms.id, ms.student_id, ms.mentor_id, ms.scheduled_at, ms.status::text, ms.notes,
+        ms.created_at, ms.meeting_type, ms.meeting_location, ms.student_phone,
+        ms.topic, ms.meeting_link, ms.booking_status, ms.mentor_notes,
+        ms.rejection_note, ms.duration_minutes, ms.mentorship_type, ms.program_start_date,
+        ms.end_date, ms.duration_days, ms.total_sessions, ms.completed_sessions_count,
+        ms.reschedule_requested_by, ms.reschedule_note, ms.reschedule_history,
+        jsonb_build_object(
+            'id', sp.id, 'full_name', sp.full_name, 'avatar_url', sp.avatar_url,
+            'avatar_storage_key', sp.avatar_storage_key, 'email', sp.email,
+            'phone_number', sp.phone_number, 'social_links', sp.social_links
+        ) as student,
+        jsonb_build_object(
+            'id', mp.id, 'full_name', mp.full_name, 'avatar_url', mp.avatar_url,
+            'avatar_storage_key', mp.avatar_storage_key, 'email', mp.email,
+            'phone_number', mp.phone_number
+        ) as mentor,
+        ms.serial_id as session_serial_id, mp.serial_id as mentor_serial_id,
+        pay.serial_id as payment_serial_id
+    from public.mentorship_sessions ms
+    left join public.profiles sp on sp.id = ms.student_id
+    left join public.profiles mp on mp.id = ms.mentor_id
+    left join public.payments pay on pay.mentorship_session_id = ms.id
+    order by ms.created_at desc;
+end;
+$function$;
