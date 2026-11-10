@@ -1311,7 +1311,7 @@ let _lastRenderedMessageId = null;
 let _isTyping = false;
 let _typingTimeout = null;
 
-function renderChatMessages(messages, myRole) {
+async function renderChatMessages(messages, myRole) {
     if (messages.length === 0) {
         return `<div class="flex flex-col items-center justify-center h-full text-center py-20 px-8">
             <span class="material-symbols-outlined text-slate-200 dark:text-slate-700 text-7xl mb-4">chat_bubble</span>
@@ -1319,9 +1319,9 @@ function renderChatMessages(messages, myRole) {
             <p class="text-sm text-slate-400 max-w-[200px] mt-2">Start the conversation with your mentor here.</p>
         </div>`;
     }
-    return messages.map(msg => {
+    return (await Promise.all(messages.map(async msg => {
         const isMe = msg.sender_role === myRole;
-        const senderAvatar = msg.sender?.avatar_url
+        const senderAvatar = await resolveProfileAvatar(msg.sender || {}).catch(() => null)
             || `https://ui-avatars.com/api/?name=${encodeURIComponent(msg.sender?.full_name || (isMe ? 'Me' : 'Them'))}&background=random&color=fff`;
         const timeStr = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         const avatarHtml = `<img src="${senderAvatar}" class="w-8 h-8 rounded-full object-cover shrink-0 shadow-sm" title="${msg.sender?.full_name || ''}" />`;
@@ -1336,7 +1336,7 @@ function renderChatMessages(messages, myRole) {
                 </div>
                 ${isMe ? avatarHtml : ''}
             </div>`;
-    }).join('');
+    }))).join('');
 }
 
 function appendTypingIndicatorStudent(container) {
@@ -1400,7 +1400,7 @@ window.openMessagingModal = async function(bookingId, mentorName) {
             if (latestId === _lastRenderedMessageId && !isFirstLoad) return;
             _lastRenderedMessageId = latestId;
             const atBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 60;
-            container.innerHTML = renderChatMessages(messages, 'student');
+            container.innerHTML = await renderChatMessages(messages, 'student');
             appendTypingIndicatorStudent(container);
             if (atBottom || isFirstLoad) container.scrollTop = container.scrollHeight;
         } catch { /* silent poll failure */ }
