@@ -1969,7 +1969,7 @@ async function bindCompletedInteractions(container, userId) {
                 const date = new Date(session.scheduled_at);
                 const dateStr = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
                 const student = session.student || { full_name: 'Unknown Student', avatar_url: '', email: '' };
-                const studentAvatar = student.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.full_name || 'S')}&background=random&color=fff`;
+                const studentAvatar = student._resolvedAvatar || student.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.full_name || 'S')}&background=random&color=fff`;
 
                 const isProgram = session.mentorship_type === 'program';
                 return `
