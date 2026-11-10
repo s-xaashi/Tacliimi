@@ -68,9 +68,9 @@ export async function resolvePrivateImage({ resourceType, resourceId, visibility
 
 /** Invalidate signed URLs after a resource's storage key changes. */
 export function invalidatePrivateImageCache({ resourceType, resourceId }) {
-    const suffix = `:${resourceType}:${resourceId}`;
+    const prefix = `:${resourceType}:${resourceId}:`;
     for (const key of signedImageCache.keys()) {
-        if (key.endsWith(suffix)) signedImageCache.delete(key);
+        if (key.includes(prefix)) signedImageCache.delete(key);
     }
 }
 
