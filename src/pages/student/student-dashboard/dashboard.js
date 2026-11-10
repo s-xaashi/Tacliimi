@@ -1041,8 +1041,6 @@ async function loadMentors(forceRefresh = false) {
             const dateStr = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
             const startTimeStr = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
             const endTimeStr = meetingSlotEnd.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-            
-            const mentor = session.mentor || {};
             const bookingStatus = session.booking_status || session.status || 'pending_review';
 
             let statusLabel = 'Pending';
