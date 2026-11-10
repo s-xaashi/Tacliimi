@@ -323,6 +323,7 @@ export async function getMentorConversationList(studentId) {
             mentor_id: entry.mentor_id,
             mentor_name: entry.mentor_name,
             avatar_url: entry.avatar_url,
+            avatar_storage_key: entry.avatar_storage_key,
             session_count: entry.sessions.length,
             last_message: lastMsg ? lastMsg.message_text : null,
             last_message_at: lastMsg ? lastMsg.created_at : null,
