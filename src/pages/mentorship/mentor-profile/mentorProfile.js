@@ -276,10 +276,13 @@ async function renderProfile(mentor) {
         reviewsSection.classList.remove('hidden');
         const reviews = mentor.reviews || [];
         if (reviews.length > 0) {
-            reviewsContainer.innerHTML = reviews.map(rev => `
+            const reviewAvatarUrls = await Promise.all(reviews.map(rev =>
+                resolveProfileAvatar(rev.student || {}, 'mentor-reviewer').catch(() => null)
+            ));
+            reviewsContainer.innerHTML = reviews.map((rev, index) => `
                 <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm">
                     <div class="flex items-center gap-3 mb-4">
-                        <img src="${rev.student?.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(rev.student?.full_name || 'Student') + '&background=random&color=fff'}" class="w-10 h-10 rounded-full object-cover">
+                        <img src="${reviewAvatarUrls[index] || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(rev.student?.full_name || 'Student') + '&background=random&color=fff'}" class="w-10 h-10 rounded-full object-cover">
                         <div>
                             <h4 class="text-sm font-bold text-slate-900 dark:text-white">${rev.student?.full_name || 'Student'}</h4>
                             <div class="flex text-orange-400">
