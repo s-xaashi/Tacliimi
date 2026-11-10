@@ -336,6 +336,7 @@
         import { AuthService } from '/src/services/authService.js';
         import { showToast, showConfirmModal, showAlertModal } from '/src/services/uiUtils.js';
         import { getEmbedUrl } from '/src/utils/js/videoEmbed.js';
+        import { resolveCourseThumbnail, resolveProfileAvatar } from '/src/services/r2ImageUpload.js';
 
         let currentCourse = null;
 
@@ -359,7 +360,7 @@
                     currentCourse.coupons = await CourseService.getCourseCoupons(courseId).catch(() => []);
                 }
 
-                renderCourseDetails(currentCourse);
+                await renderCourseDetails(currentCourse);
                 document.getElementById('loader').classList.add('hidden');
 
                 // Moderation History & Appeal Handling
@@ -451,7 +452,9 @@
             });
         });
 
-        function renderCourseDetails(course) {
+        async function renderCourseDetails(course) {
+            const resolvedThumbnail = await resolveCourseThumbnail(course).catch(() => null);
+            const resolvedInstructorAvatar = await resolveProfileAvatar(course.instructor).catch(() => null);
             document.getElementById('header-title').innerText = course.title || 'Untitled';
             document.getElementById('course-title').innerText = course.title || 'Untitled';
             document.getElementById('course-subtitle').innerText = course.subtitle || '';
@@ -502,10 +505,10 @@
                     iframe.setAttribute('frameborder', '0');
                     vidContainer.appendChild(iframe);
                 }
-            } else if (course.thumbnail_url) {
+            } else if (resolvedThumbnail) {
                 vidElement.classList.add('hidden');
                 noVidElement.classList.remove('hidden');
-                vidContainer.style.backgroundImage = "url('" + course.thumbnail_url + "')";
+                vidContainer.style.backgroundImage = "url('" + resolvedThumbnail + "')";
                 vidContainer.style.backgroundSize = 'cover';
                 vidContainer.style.backgroundPosition = 'center';
             } else {
@@ -555,7 +558,7 @@
             const inst = course.instructor;
             document.getElementById('instructor-name').innerText = inst ? inst.full_name : 'Unknown';
             document.getElementById('instructor-email').innerText = inst ? inst.email : '';
-            document.getElementById('instructor-avatar').src = (inst && inst.avatar_url) ? inst.avatar_url : 'https://ui-avatars.com/api/?name=' + (inst ? encodeURIComponent(inst.full_name) : 'X');
+            document.getElementById('instructor-avatar').src = resolvedInstructorAvatar || 'https://ui-avatars.com/api/?name=' + (inst ? encodeURIComponent(inst.full_name) : 'X');
             
             if (inst && inst.id) {
                 document.getElementById('instructor-link').href = `/src/pages/instructor/public-profile/index.html?id=${inst.id}`;
