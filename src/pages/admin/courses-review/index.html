@@ -229,6 +229,7 @@
         import { CourseService } from '/src/services/courseService.js';
         import { AuthService } from '/src/services/authService.js';
         import { showToast, showConfirmModal, showAlertModal } from '/src/services/uiUtils.js';
+        import { resolveCourseThumbnail, resolveProfileAvatar } from '/src/services/r2ImageUpload.js';
 
         document.addEventListener('DOMContentLoaded', async () => {
             const grid = document.getElementById('courses-grid');
@@ -255,8 +256,8 @@
                     const { data: modCourses, error } = await supabase
                         .from('courses')
                         .select(`
-                            id, title, thumbnail_url, level, status,
-                            instructor:profiles(full_name, email, avatar_url),
+                            id, title, thumbnail_url, thumbnail_storage_key, level, status,
+                            instructor:profiles(id, full_name, email, avatar_url, avatar_storage_key),
                             category:course_categories(name),
                             moderation_logs:course_moderation_logs(decision, notes, created_at)
                         `)
@@ -265,7 +266,14 @@
                         .order('created_at', { foreignTable: 'course_moderation_logs', ascending: false });
 
                     if (error) throw error;
-                    allCourses = modCourses || [];
+                    allCourses = await Promise.all((modCourses || []).map(async course => ({
+                        ...course,
+                        _resolvedThumbnail: await resolveCourseThumbnail(course).catch(() => null),
+                        instructor: course.instructor ? {
+                            ...course.instructor,
+                            _resolvedAvatar: await resolveProfileAvatar(course.instructor).catch(() => null)
+                        } : null
+                    })));
                     renderModeration();
                 } catch (e) {
                     console.error("Failed to load reviews:", e);
@@ -309,7 +317,7 @@
                     card.onclick = () => window.open(`/src/pages/admin/courses-review/details.html?id=${course.id}`, '_blank');
 
                     const instructorName = course.instructor ? course.instructor.full_name : 'Unknown';
-                    const thumb = course.thumbnail_url || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400';
+                    const thumb = course._resolvedThumbnail || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400';
 
                     const statusLabels = {
                         pending_review: { text: 'Pending Review', color: 'text-amber-600', dot: 'bg-amber-500' },
@@ -324,8 +332,8 @@
                         : (logs.length > 0 ? logs[0] : null);
 
                     const categoryName = course.category ? course.category.name : 'General';
-                    const instructorAvatar = (course.instructor && course.instructor.avatar_url)
-                        ? course.instructor.avatar_url
+                    const instructorAvatar = (course.instructor && course.instructor._resolvedAvatar)
+                        ? course.instructor._resolvedAvatar
                         : `https://ui-avatars.com/api/?name=${encodeURIComponent(instructorName)}&background=4F46E5&color=fff`;
 
                     card.innerHTML = `
@@ -401,9 +409,9 @@
                     const { data, error } = await supabase
                         .from('courses')
                         .select(`
-                            id, root_course_id, serial_id, title, thumbnail_url, status, updated_at, created_at,
+                            id, root_course_id, serial_id, title, thumbnail_url, thumbnail_storage_key, status, updated_at, created_at,
                             price, price_type, is_public,
-                            instructor:profiles(full_name, avatar_url),
+                            instructor:profiles(id, full_name, avatar_url, avatar_storage_key),
                             category:course_categories(name),
                             moderation_logs:course_moderation_logs(decision, created_at)
                         `)
@@ -424,7 +432,7 @@
                     }
 
                     // Default Sort by latest approval log date (FIFO — newest approved first)
-                    publishedCourses = (data || []).map(c => {
+                    publishedCourses = await Promise.all((data || []).map(async c => {
                         const logs = c.moderation_logs || [];
                         const approvedLogs = logs
                             .filter(l => l.decision === 'approved')
@@ -436,8 +444,14 @@
                         c._enrollmentCount = Number(s.enrollments_count || 0);
                         c._revenue = Number(s.total_revenue || 0);
                         
+                        c._resolvedThumbnail = await resolveCourseThumbnail(c).catch(() => null);
+                        c.instructor = c.instructor ? {
+                            ...c.instructor,
+                            _resolvedAvatar: await resolveProfileAvatar(c.instructor).catch(() => null)
+                        } : null;
                         return c;
-                    }).sort((a, b) => new Date(b._approvedAt) - new Date(a._approvedAt));
+                    }));
+                    publishedCourses.sort((a, b) => new Date(b._approvedAt) - new Date(a._approvedAt));
 
                     publishedLoaded = true;
                     renderPublished();
@@ -515,7 +529,7 @@
                 publishedWrap.classList.remove('hidden');
 
                 publishedBody.innerHTML = filtered.map(course => {
-                    const thumb = course.thumbnail_url || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=80';
+                    const thumb = course._resolvedThumbnail || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=80';
                     const instructorName = course.instructor ? course.instructor.full_name : 'Unknown';
                     const crsId = course.serial_id ? `CRS-${course.serial_id}` : '—';
                     const approvedDateStr = formatDate(course._approvedAt);
