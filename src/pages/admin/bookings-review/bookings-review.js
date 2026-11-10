@@ -819,7 +819,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     // 6. Student Profile Modal Logic
-    window.openStudentProfile = function(student) {
+    window.openStudentProfile = async function(student) {
         const modal = document.getElementById('student-profile-modal');
         if (!modal) return;
 
