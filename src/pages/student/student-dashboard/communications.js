@@ -226,7 +226,7 @@ export async function initStudentCommunications() {
     `;
     document.head.appendChild(style);
 
-    function renderList(list) {
+    async function renderList(list) {
         loadingEl.classList.add('hidden');
         if (!list || list.length === 0) {
             emptyEl.classList.remove('hidden');
