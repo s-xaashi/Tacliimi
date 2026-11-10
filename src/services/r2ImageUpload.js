@@ -44,12 +44,12 @@ export async function uploadPrivateImage({ file, purpose, courseId = null }) {
  */
 const signedImageCache = new Map();
 
-export async function resolvePrivateImage({ resourceType, resourceId }) {
+export async function resolvePrivateImage({ resourceType, resourceId, visibilityContext = null }) {
     if (!resourceType || !resourceId) return null;
     // Do not reuse a signed URL cached under a different authenticated account.
     // The URL remains a bearer token until expiry, so cache isolation matters.
     const { data: { session } } = await supabase.auth.getSession();
-    const cacheKey = `${session?.user?.id || "anonymous"}:${resourceType}:${resourceId}`;
+    const cacheKey = `${session?.user?.id || "anonymous"}:${resourceType}:${resourceId}:${visibilityContext || "default"}`;
     // Bound memory use and discard expired URLs while resolving.
     for (const [key, value] of signedImageCache) {
         if (value.expiresAt <= Date.now()) signedImageCache.delete(key);
@@ -58,7 +58,7 @@ export async function resolvePrivateImage({ resourceType, resourceId }) {
     const cached = signedImageCache.get(cacheKey);
     if (cached && cached.expiresAt > Date.now() + 5000) return cached.url;
     const { data, error } = await supabase.functions.invoke("r2-image-url", {
-        body: { resource_type: resourceType, resource_id: resourceId }
+        body: { resource_type: resourceType, resource_id: resourceId, visibility_context: visibilityContext }
     });
     if (error) throw new Error(error.message || "Could not resolve image.");
     if (!data?.signed_url) return null;
@@ -79,11 +79,11 @@ export function invalidatePrivateImageCache({ resourceType, resourceId }) {
  * after private resolution fails, because that could bypass visibility checks.
  * Legacy URLs are used only for records that have no private storage key.
  */
-export async function resolveProfileAvatar(profile) {
+export async function resolveProfileAvatar(profile, visibilityContext = null) {
     const profileId = profile?.id || profile?.instructor_id;
     if (profile?.avatar_storage_key) {
         if (!profileId) return null;
-        return await resolvePrivateImage({ resourceType: "avatar", resourceId: profileId });
+        return await resolvePrivateImage({ resourceType: "avatar", resourceId: profileId, visibilityContext });
     }
     return profile?.avatar_url || null;
 }
