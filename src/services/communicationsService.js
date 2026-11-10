@@ -160,6 +160,7 @@ export async function getStudentThread(mentorId, studentId) {
             message_text,
             created_at,
             sender:profiles!mentorship_booking_messages_sender_id_fkey (
+                id,
                 full_name,
                 avatar_url,
                 avatar_storage_key
