@@ -1275,7 +1275,7 @@ async function bindRequestsInteractions(container, userId) {
                 ...session,
                 student: session.student ? {
                     ...session.student,
-                    _resolvedAvatar: await resolveProfileAvatar(session.student, 'mentorship-participant').catch(() => null)
+                    _resolvedAvatar: await resolveProfileAvatar(session.student, 'mentorship-session', session.id).catch(() => null)
                 } : session.student
             })));
             listContainer.innerHTML = filtered.map(session => {
@@ -1733,7 +1733,7 @@ async function bindUpcomingInteractions(container, userId) {
                 ...session,
                 student: session.student ? {
                     ...session.student,
-                    _resolvedAvatar: await resolveProfileAvatar(session.student, 'mentorship-participant').catch(() => null)
+                    _resolvedAvatar: await resolveProfileAvatar(session.student, 'mentorship-session', session.id).catch(() => null)
                 } : session.student
             })));
             listContainer.innerHTML = displaySessions.map(session => {
@@ -1962,7 +1962,7 @@ async function bindCompletedInteractions(container, userId) {
                 ...session,
                 student: session.student ? {
                     ...session.student,
-                    _resolvedAvatar: await resolveProfileAvatar(session.student, 'mentorship-participant').catch(() => null)
+                    _resolvedAvatar: await resolveProfileAvatar(session.student, 'mentorship-session', session.id).catch(() => null)
                 } : session.student
             })));
             listContainer.innerHTML = displayHistory.map(session => {
@@ -2068,7 +2068,7 @@ async function renderChatMessages(messages, myRole, myAvatarUrl) {
     }
     return (await Promise.all(messages.map(async msg => {
         const isMe = msg.sender_role === myRole;
-        const resolvedSenderAvatar = await resolveProfileAvatar(msg.sender || {}, 'mentorship-participant').catch(() => null);
+        const resolvedSenderAvatar = await resolveProfileAvatar(msg.sender || {}, 'mentorship-session', msg.booking_id).catch(() => null);
         const senderAvatar = (isMe ? myAvatarUrl : resolvedSenderAvatar) || msg.sender?.avatar_url
             || `https://ui-avatars.com/api/?name=${encodeURIComponent(msg.sender?.full_name || (isMe ? 'Me' : 'Them'))}&background=random&color=fff`;
         const timeStr = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
