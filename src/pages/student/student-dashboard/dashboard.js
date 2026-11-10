@@ -1031,7 +1031,7 @@ async function loadMentors(forceRefresh = false) {
 
         const renderSessionCard = async (session, isHistory = false) => {
             const mentor = session.mentor || {};
-            const resolvedMentorAvatar = await resolveProfileAvatar(mentor, 'mentorship-session', session.id).catch(() => null);
+            const resolvedMentorAvatar = await resolveProfileAvatar(mentor, 'mentorship-participant').catch(() => null);
             const date = new Date(session.scheduled_at);
             const duration = session.duration_minutes || 60;
             // Meeting slot end — always duration-based, never program end_date
