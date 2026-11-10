@@ -1536,7 +1536,7 @@ export const CourseService = {
             .from('courses')
             .select(`
                 id, title, status, version_status, version_number, is_latest_published, 
-                root_course_id, created_at, rejection_reason, thumbnail_url, subtitle, 
+                root_course_id, created_at, rejection_reason, thumbnail_url, thumbnail_storage_key, subtitle, 
                 price, price_type, is_public, serial_id,
                 category:course_categories(name),
                 enrollments(count),
@@ -1684,7 +1684,7 @@ export const CourseService = {
             .select(`
                 id, root_course_id, to_version_id, from_version_id, notified_at, redeemed_at,
                 coupon:course_coupons!coupon_id (id, code, discount_percent),
-                to_version:courses!to_version_id(id, title, thumbnail_url, slug, version_number, price, price_type, course_sections(title, course_lessons(title))),
+                to_version:courses!to_version_id(id, title, thumbnail_url, thumbnail_storage_key, slug, version_number, price, price_type, course_sections(title, course_lessons(title))),
                 from_version:courses!from_version_id(id, title, course_sections(title, course_lessons(title)))
             `)
             .is('redeemed_at', null)
