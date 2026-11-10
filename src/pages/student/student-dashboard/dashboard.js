@@ -1028,7 +1028,9 @@ async function loadMentors(forceRefresh = false) {
 
         // Updated: Removed auto-switching of tabs to allow viewing empty states as requested.
 
-        const renderSessionCard = (session, isHistory = false) => {
+        const renderSessionCard = async (session, isHistory = false) => {
+            const mentor = session.mentor || {};
+            const resolvedMentorAvatar = await resolveProfileAvatar(mentor).catch(() => null);
             const date = new Date(session.scheduled_at);
             const duration = session.duration_minutes || 60;
             // Meeting slot end — always duration-based, never program end_date
@@ -1146,7 +1148,7 @@ async function loadMentors(forceRefresh = false) {
                     <div class="flex flex-col lg:flex-row gap-4 lg:gap-8 items-start lg:items-center justify-between relative z-0 mt-3 lg:mt-0">
                         <div class="flex items-center gap-3 sm:gap-4 w-full lg:w-72 shrink-0">
                             <a href="/src/pages/instructor/public-profile/index.html?id=${session.mentor_id}" class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl overflow-hidden border-2 border-primary/20 shrink-0 shadow-sm transition-transform hover:scale-110 block" title="View Public Profile">
-                                <img src="${mentor.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(mentor.full_name || 'M')}&background=random&color=fff`}" class="w-full h-full object-cover" />
+                                <img src="${resolvedMentorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(mentor.full_name || 'M')}&background=random&color=fff`}" class="w-full h-full object-cover" />
                             </a>
                             <div class="flex-1 min-w-0">
                                 <a href="/src/pages/instructor/public-profile/index.html?id=${session.mentor_id}" class="block group/name" title="View Public Profile">
@@ -1283,7 +1285,7 @@ async function loadMentors(forceRefresh = false) {
                 </div>
             `;
         } else {
-            contentContainer.innerHTML = activeSessions.map(s => renderSessionCard(s, currentMentorshipSubTab === 'history')).join('');
+            contentContainer.innerHTML = (await Promise.all(activeSessions.map(s => renderSessionCard(s, currentMentorshipSubTab === 'history')))).join('');
         }
 
     } catch (err) {
