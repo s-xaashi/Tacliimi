@@ -68,7 +68,7 @@ Deno.serve(async (req) => {
         if (mentorError) throw mentorError;
         const mentorIds = (publicMentors || []).map((item) => item.id);
         if (mentorIds.length) {
-          const { data: reviews, error: reviewError } = await admin.from("mentorship_reviews")
+          const { data: reviews, error: reviewError } = await admin.from("mentor_profile_reviews_view")
             .select("id").eq("student_id", id).in("mentor_id", mentorIds).limit(1);
           if (reviewError) throw reviewError;
           visibleInPublicContext = Boolean(reviews?.length);
