@@ -118,7 +118,7 @@ export const CourseService = {
             .select(`
                 *,
                 serial_id,
-                instructor:profiles(full_name, avatar_url, avatar_storage_key, professional_title, short_bio, expertise_list),
+                instructor:profiles(id, full_name, avatar_url, avatar_storage_key, professional_title, short_bio, expertise_list),
                 course_coupons(*),
                 course_sections(
                     id, title, order_index,
@@ -1351,6 +1351,7 @@ export const CourseService = {
 
         const reviewerByReviewId = new Map(
             (reviewerDetails || []).map(reviewer => [reviewer.review_id, {
+                id: reviewer.student_id,
                 full_name: reviewer.full_name,
                 avatar_url: reviewer.avatar_url,
                 avatar_storage_key: reviewer.avatar_storage_key,
