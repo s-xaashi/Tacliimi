@@ -1031,7 +1031,7 @@ async function loadMentors(forceRefresh = false) {
 
         const renderSessionCard = async (session, isHistory = false) => {
             const mentor = session.mentor || {};
-            const resolvedMentorAvatar = await resolveProfileAvatar(mentor, 'mentorship-participant').catch(() => null);
+            const resolvedMentorAvatar = await resolveProfileAvatar(mentor, 'mentorship-session', session.id).catch(() => null);
             const date = new Date(session.scheduled_at);
             const duration = session.duration_minutes || 60;
             // Meeting slot end — always duration-based, never program end_date
@@ -1321,7 +1321,7 @@ async function renderChatMessages(messages, myRole, sessionId) {
     }
     return (await Promise.all(messages.map(async msg => {
         const isMe = msg.sender_role === myRole;
-        const senderAvatar = await resolveProfileAvatar(msg.sender || {}, 'mentorship-participant').catch(() => null)
+        const senderAvatar = await resolveProfileAvatar(msg.sender || {}, 'mentorship-session', msg.booking_id).catch(() => null)
             || `https://ui-avatars.com/api/?name=${encodeURIComponent(msg.sender?.full_name || (isMe ? 'Me' : 'Them'))}&background=random&color=fff`;
         const timeStr = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         const avatarHtml = `<img src="${senderAvatar}" class="w-8 h-8 rounded-full object-cover shrink-0 shadow-sm" title="${msg.sender?.full_name || ''}" />`;
