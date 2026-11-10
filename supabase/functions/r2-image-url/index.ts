@@ -18,6 +18,7 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const type = body?.resource_type;
     const id = typeof body?.resource_id === "string" ? body.resource_id : "";
+    const visibilityContext = typeof body?.visibility_context === "string" ? body.visibility_context : null;
     if (!id || (type !== "avatar" && type !== "thumbnail")) return json({ error: "Invalid image reference" }, 400);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
@@ -47,7 +48,34 @@ Deno.serve(async (req) => {
       const { data: mentor } = await admin.from("mentorship_profiles")
         .select("id, is_public, deleted_at").eq("instructor_id", id).is("deleted_at", null).maybeSingle();
       const isPublic = profile.is_public === true || mentor?.is_public === true;
-      permitted = isPublic || userId === id || isAdmin;
+      let visibleInPublicContext = false;
+
+      // These contexts mirror existing public views that already expose the
+      // legacy avatar_url field. They do not make a profile generally public.
+      if (!isPublic && visibilityContext === "marketplace-instructor") {
+        const { data, error: viewError } = await admin.from("course_marketplace_view")
+          .select("id").eq("instructor_id", id).limit(1);
+        if (viewError) throw viewError;
+        visibleInPublicContext = Boolean(data?.length);
+      } else if (!isPublic && visibilityContext === "course-reviewer") {
+        const { data, error: viewError } = await admin.from("public_course_review_display")
+          .select("review_id").eq("student_id", id).limit(1);
+        if (viewError) throw viewError;
+        visibleInPublicContext = Boolean(data?.length);
+      } else if (!isPublic && visibilityContext === "mentor-reviewer") {
+        const { data: publicMentors, error: mentorError } = await admin.from("mentorship_profiles")
+          .select("id").eq("instructor_id", id).eq("is_public", true).is("deleted_at", null);
+        if (mentorError) throw mentorError;
+        const mentorIds = (publicMentors || []).map((item) => item.id);
+        if (mentorIds.length) {
+          const { data: reviews, error: reviewError } = await admin.from("mentorship_reviews")
+            .select("id").eq("student_id", id).in("mentor_id", mentorIds).limit(1);
+          if (reviewError) throw reviewError;
+          visibleInPublicContext = Boolean(reviews?.length);
+        }
+      }
+
+      permitted = isPublic || visibleInPublicContext || userId === id || isAdmin;
       objectKey = profile.avatar_storage_key;
     } else {
       const { data: course, error } = await admin.from("courses")
