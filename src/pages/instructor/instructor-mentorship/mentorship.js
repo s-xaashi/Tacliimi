@@ -2059,16 +2059,16 @@ let currentMessageBookingId = null;
 let _chatPollInterval = null;
 let _lastRenderedMessageId = null;
 
-function renderChatMessages(messages, myRole, myAvatarUrl) {
+async function renderChatMessages(messages, myRole, myAvatarUrl) {
     if (messages.length === 0) {
         return `<div class="flex flex-col items-center justify-center h-full text-center py-10">
             <span class="material-symbols-outlined text-slate-200 dark:text-slate-700 text-6xl mb-4">chat_bubble</span>
             <p class="text-slate-400 text-sm">No messages yet. Start the conversation!</p>
         </div>`;
     }
-    return messages.map(msg => {
+    return (await Promise.all(messages.map(async msg => {
         const isMe = msg.sender_role === myRole;
-        const senderAvatar = msg.sender?.avatar_url
+        const senderAvatar = await resolveProfileAvatar(msg.sender || {}, 'mentorship-participant').catch(() => null)
             || `https://ui-avatars.com/api/?name=${encodeURIComponent(msg.sender?.full_name || (isMe ? 'Me' : 'Them'))}&background=random&color=fff`;
         const timeStr = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         const avatarHtml = `<img src="${senderAvatar}" class="w-8 h-8 rounded-full object-cover shrink-0 shadow-sm" title="${msg.sender?.full_name || ''}" />`;
@@ -2083,7 +2083,7 @@ function renderChatMessages(messages, myRole, myAvatarUrl) {
                 </div>
                 ${isMe ? avatarHtml : ''}
             </div>`;
-    }).join('');
+    }))).join('');
 }
 
 async function openMessagingModal(bookingId, studentName) {
@@ -2101,7 +2101,8 @@ async function openMessagingModal(bookingId, studentName) {
     _lastRenderedMessageId = null;
 
     const session = await AuthService.getSession();
-    const myAvatarUrl = (await supabase.from('profiles').select('avatar_url').eq('id', session?.user?.id).single()).data?.avatar_url;
+    const myProfile = (await supabase.from('profiles').select('id, avatar_url, avatar_storage_key').eq('id', session?.user?.id).single()).data;
+    const myAvatarUrl = await resolveProfileAvatar(myProfile).catch(() => null) || myProfile?.avatar_url || null;
 
     const loadMessages = async (isFirstLoad = false) => {
         try {
@@ -2112,7 +2113,7 @@ async function openMessagingModal(bookingId, studentName) {
 
             // Preserve scroll position if not at bottom, auto-scroll if at bottom
             const atBottom = historyContainer.scrollHeight - historyContainer.scrollTop - historyContainer.clientHeight < 60;
-            historyContainer.innerHTML = renderChatMessages(messages, 'mentor', myAvatarUrl);
+            historyContainer.innerHTML = await renderChatMessages(messages, 'mentor', myAvatarUrl);
             appendTypingIndicator(historyContainer);
             if (atBottom || isFirstLoad) historyContainer.scrollTop = historyContainer.scrollHeight;
         } catch { /* silent on background poll failures */ }
