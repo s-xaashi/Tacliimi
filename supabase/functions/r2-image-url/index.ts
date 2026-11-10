@@ -19,6 +19,7 @@ Deno.serve(async (req) => {
     const type = body?.resource_type;
     const id = typeof body?.resource_id === "string" ? body.resource_id : "";
     const visibilityContext = typeof body?.visibility_context === "string" ? body.visibility_context : null;
+    const visibilityContextId = typeof body?.visibility_context_id === "string" ? body.visibility_context_id : null;
     if (!id || (type !== "avatar" && type !== "thumbnail")) return json({ error: "Invalid image reference" }, 400);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
@@ -62,6 +63,12 @@ Deno.serve(async (req) => {
           .select("review_id").eq("student_id", id).limit(1);
         if (viewError) throw viewError;
         visibleInPublicContext = Boolean(data?.length);
+      } else if (!isPublic && visibilityContext === "mentorship-session" && visibilityContextId && userId) {
+        const { data: session, error: sessionError } = await admin.from("mentorship_sessions")
+          .select("mentor_id, student_id").eq("id", visibilityContextId).maybeSingle();
+        if (sessionError) throw sessionError;
+        const participants = session ? [session.mentor_id, session.student_id] : [];
+        visibleInPublicContext = participants.includes(userId) && participants.includes(id);
       } else if (!isPublic && visibilityContext === "mentor-reviewer") {
         const { data: publicMentors, error: mentorError } = await admin.from("mentorship_profiles")
           .select("id").eq("instructor_id", id).eq("is_public", true).is("deleted_at", null);
