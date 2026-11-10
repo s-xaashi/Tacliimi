@@ -195,7 +195,7 @@ async function loadMyCourses() {
             id, root_course_id, from_version_id, to_version_id, notified_at, created_at,
             coupon:course_coupons(id, code, discount_percent),
             to_version:courses!course_update_offers_to_version_id_fkey(
-                id, title, subtitle, thumbnail_url, version_number, price, price_type,
+                id, title, subtitle, thumbnail_url, thumbnail_storage_key, version_number, price, price_type,
                 course_sections(id, title, course_lessons(id, title))
             ),
             from_version:courses!course_update_offers_from_version_id_fkey(
