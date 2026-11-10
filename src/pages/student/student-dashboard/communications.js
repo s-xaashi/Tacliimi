@@ -420,10 +420,10 @@ export async function initStudentCommunications() {
     });
     btnSend.addEventListener('click', handleSend);
 
-    searchInput.addEventListener('input', e => {
+    searchInput.addEventListener('input', async e => {
         const q = e.target.value.toLowerCase().trim();
         const filtered = q ? allConversations.filter(c => c.mentor_name.toLowerCase().includes(q)) : allConversations;
-        renderList(filtered);
+        await renderList(filtered);
     });
 
     btnBack.addEventListener('click', () => {
@@ -433,7 +433,7 @@ export async function initStudentCommunications() {
 
     try {
         allConversations = await getMentorConversationList(currentStudentId);
-        renderList(allConversations);
+        await renderList(allConversations);
     } catch(e) {
         console.error('Init error:', e);
     }
