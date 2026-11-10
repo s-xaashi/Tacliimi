@@ -373,7 +373,7 @@ async function loadMyCourses() {
 // ----- Update Offer Modal State -----
 window._activeOffer = null;
 
-window.openUpdateModal = function(offerId) {
+window.openUpdateModal = async function(offerId) {
     const offer = window._offerRegistry?.[offerId];
     if (!offer) return;
     window._activeOffer = offer;
@@ -436,7 +436,7 @@ window.openUpdateModal = function(offerId) {
 
     document.getElementById('modal-update-version').textContent = versionLabel;
     document.getElementById('modal-update-title').textContent = newCourse?.title || 'Updated Course';
-    document.getElementById('modal-update-thumbnail').src = newCourse?.thumbnail_url || 'https://placehold.co/600x400';
+    document.getElementById('modal-update-thumbnail').src = await resolveCourseThumbnail(newCourse).catch(() => null) || 'https://placehold.co/600x400';
     document.getElementById('modal-update-price').textContent = priceDisplay;
     document.getElementById('modal-update-changelog').innerHTML = changelogHtml;
     document.getElementById('modal-update-coupon').innerHTML = couponHtml;
