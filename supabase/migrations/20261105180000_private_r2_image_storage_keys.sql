@@ -105,7 +105,8 @@ select
     r.created_at,
     p.full_name,
     p.avatar_url,
-    p.avatar_storage_key
+    p.avatar_storage_key,
+    r.student_id
 from mentorship_reviews r
 left join profiles p on r.student_id = p.id;
 
