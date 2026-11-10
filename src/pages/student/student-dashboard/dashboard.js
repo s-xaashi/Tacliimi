@@ -611,8 +611,17 @@ async function loadCourseWishlist() {
     wishlistContainer.innerHTML = '<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-6"></div>';
     const grid = wishlistContainer.querySelector('.grid');
     
+    const displayWishlistCourses = await Promise.all(wishlistedCourses.map(async course => ({
+        ...course,
+        _resolvedThumbnail: await resolveCourseThumbnail(course).catch(() => null),
+        _resolvedInstructorAvatar: await resolveProfileAvatar({
+            id: course.instructor_id,
+            avatar_storage_key: course.instructor_avatar_storage_key,
+            avatar_url: course.instructor_avatar
+        }, 'marketplace-instructor').catch(() => null)
+    })));
     let html = '';
-    wishlistedCourses.forEach(course => {
+    displayWishlistCourses.forEach(course => {
         const categoryName = course.category_name || 'Course';
         const instructorName = course.instructor_name || 'Expert Instructor';
         const rating = course.average_rating || 0;
@@ -645,7 +654,7 @@ async function loadCourseWishlist() {
                 <div class="relative overflow-hidden shrink-0 aspect-[16/10]">
                     <img alt="${course.title}"
                         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                        src="${course.thumbnail_url || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80'}" />
+                        src="${course._resolvedThumbnail || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80'}" />
                     
                     <!-- Hover Overlay -->
                     <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -689,7 +698,7 @@ async function loadCourseWishlist() {
 
                     <div class="flex items-center gap-2 mb-6">
                         <div class="relative">
-                            <img src="${course.instructor_avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(instructorName) + '&background=random'}"
+                            <img src="${course._resolvedInstructorAvatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(instructorName) + '&background=random'}"
                                  class="w-6 h-6 rounded-full object-cover ring-2 ring-white dark:ring-gray-800"
                                  alt="${instructorName}">
                         </div>
@@ -785,8 +794,12 @@ async function loadMentorWishlist() {
         wishlistContainer.innerHTML = '<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 pt-6"></div>';
         const grid = wishlistContainer.querySelector('.grid');
         
+        const displayWishlistedMentors = await Promise.all(wishlisted.map(async mentor => ({
+            ...mentor,
+            _resolvedAvatar: await resolveProfileAvatar(mentor).catch(() => null)
+        })));
         let html = '';
-        wishlisted.forEach(mentor => {
+        displayWishlistedMentors.forEach(mentor => {
             const isBoosted = mentor._boost_order !== undefined && mentor._boost_order !== 999999;
             const boostRing = isBoosted ? 'boosted-card' : '';
             const roleBadge = isBoosted 
@@ -823,7 +836,7 @@ async function loadMentorWishlist() {
                     <div class="flex items-start justify-between mb-4">
                         <div class="relative cursor-pointer shrink-0">
                             <div class="absolute -top-3 -left-3">${roleBadge}</div>
-                            <img src="${mentor.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(mentor.full_name) + '&background=random&color=fff'}" 
+                            <img src="${mentor._resolvedAvatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(mentor.full_name) + '&background=random&color=fff'}" 
                                  class="w-16 h-16 rounded-2xl object-cover ring-4 ring-slate-50 dark:ring-slate-800 text-[10px] italic mt-3">
                             <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 border-4 border-white dark:border-slate-900 rounded-full"></div>
                         </div>
