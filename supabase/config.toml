@@ -2,3 +2,7 @@
 # performs its own optional-user authentication and checks public visibility.
 [functions.r2-image-url]
 verify_jwt = false
+
+# Multipart signing performs its own authenticated session and ownership checks.
+[functions.r2-multipart-presign]
+verify_jwt = false
