@@ -823,7 +823,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const modal = document.getElementById('student-profile-modal');
         if (!modal) return;
 
-        document.getElementById('student-modal-avatar').src = await resolveProfileAvatar(student).catch(() => null) || student.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.full_name || 'S')}&background=random&color=fff`;
+        document.getElementById('student-modal-avatar').src = await resolveProfileAvatar(student).catch(() => null) || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.full_name || 'S')}&background=random&color=fff`;
         document.getElementById('student-modal-name').textContent = student.full_name || 'Unknown Student';
         document.getElementById('student-modal-title').textContent = student.professional_title || 'Student';
         document.getElementById('student-modal-email').textContent = student.email || 'No email shared';
