@@ -16,7 +16,7 @@ function getConfig() {
   const accessKeyId = Deno.env.get("R2_ACCESS_KEY_ID");
   const secretAccessKey = Deno.env.get("R2_SECRET_ACCESS_KEY");
   const bucket = Deno.env.get("R2_BUCKET_NAME");
-  if (![url,key,endpoint,accessKeyId,secretAccessKey,bucket].every(Boolean)) throw new Error("R2 server configuration is incomplete");
+  if (![url, key, endpoint, accessKeyId, secretAccessKey, bucket].every(Boolean)) throw new Error("R2 server configuration is incomplete");
   return { url: url!, key: key!, endpoint: endpoint!, accessKeyId: accessKeyId!, secretAccessKey: secretAccessKey!, bucket: bucket! };
 }
 async function authenticate(req: Request) {
@@ -30,7 +30,12 @@ async function authenticate(req: Request) {
   return { supabase, user, cfg };
 }
 function makeS3(cfg: ReturnType<typeof getConfig>) {
-  return new S3Client({ region: "auto", endpoint: cfg.endpoint, credentials: { accessKeyId: cfg.accessKeyId, secretAccessKey: cfg.secretAccessKey }, requestChecksumCalculation: "WHEN_REQUIRED" });
+  return new S3Client({
+    region: "auto",
+    endpoint: cfg.endpoint,
+    credentials: { accessKeyId: cfg.accessKeyId, secretAccessKey: cfg.secretAccessKey },
+    requestChecksumCalculation: "WHEN_REQUIRED",
+  });
 }
 async function ownedSession(supabase: any, input: any, userId: string) {
   const { data, error } = await supabase.from("r2_multipart_upload_sessions").select("*")
@@ -49,31 +54,52 @@ Deno.serve(async (req: Request) => {
     const { supabase, user, cfg } = await authenticate(req);
     const body = await req.json();
     const { course_id, upload_id, object_key, parts } = body;
-    if (!course_id || !upload_id || !object_key || !Array.isArray(parts)) throw new Error("Missing required multipart completion fields");
+    if (!course_id || !upload_id || !object_key || !Array.isArray(parts)) {
+      throw new Error("Missing required multipart completion fields");
+    }
+
     const session = await ownedSession(supabase, { course_id, upload_id, object_key }, user.id);
     if (parts.length !== session.part_count) throw new Error("Uploaded part count does not match the expected file size");
-    const normalized = parts.map((part: any) => ({ PartNumber: part?.PartNumber, ETag: typeof part?.ETag === "string" ? part.ETag.trim() : "" }));
-    if (normalized.some((p: any) => !Number.isInteger(p.PartNumber) || p.PartNumber < 1 || p.PartNumber > session.part_count || !p.ETag || p.ETag.length > 1024)) throw new Error("Invalid multipart part metadata");
-    normalized.sort((a: any,b: any) => a.PartNumber - b.PartNumber);
-    if (normalized.some((p: any,i: number) => p.PartNumber !== i + 1)) throw new Error("Multipart parts must be unique and sequential from 1 to the final part");
-    const { CompleteMultipartUploadCommand } = await import("npm:@aws-sdk/client-s3");
-    await makeS3(cfg).send(new CompleteMultipartUploadCommand({ Bucket: cfg.bucket, Key: session.object_key, UploadId: session.upload_id, MultipartUpload: { Parts: normalized } }));
-    const { error: updateError } = await supabase.from("r2_multipart_upload_sessions").update({ status: "completed", completed_at: new Date().toISOString() }).eq("upload_id", session.upload_id).eq("status", "in_progress");
-    if (updateError) throw updateError;
-    const { data: asset, error: assetError } = await supabase.from("course_media_assets").insert({
-      storage_provider: "r2", storage_path: session.object_key, file_size_bytes: session.file_size_bytes
-    }).select("id").single();
-    if (assetError) throw assetError;
-    if (session.upload_type === "intro") {
-      const { error } = await supabase.from("courses").update({ intro_video_provider: "r2", intro_video_storage_key: session.object_key }).eq("id", session.course_id).eq("instructor_id", user.id);
-      if (error) throw error;
-    } else {
-      const { data: lesson, error: lessonError } = await supabase.from("course_lessons").select("id,course_sections!inner(course_id)").eq("id", session.lesson_id).eq("course_sections.course_id", session.course_id).maybeSingle();
-      if (lessonError) throw lessonError;
-      if (!lesson) throw new Error("The target lesson no longer belongs to this course");
-      const { error } = await supabase.from("course_lessons").update({ video_provider: "r2", video_storage_key: session.object_key, media_asset_id: asset.id }).eq("id", session.lesson_id);
-      if (error) throw error;
+
+    const normalized = parts.map((part: any) => ({
+      PartNumber: part?.PartNumber,
+      ETag: typeof part?.ETag === "string" ? part.ETag.trim() : "",
+    }));
+    if (normalized.some((part: any) =>
+      !Number.isInteger(part.PartNumber) ||
+      part.PartNumber < 1 ||
+      part.PartNumber > session.part_count ||
+      !part.ETag ||
+      part.ETag.length > 1024
+    )) {
+      throw new Error("Invalid multipart part metadata");
     }
+    normalized.sort((a: any, b: any) => a.PartNumber - b.PartNumber);
+    if (normalized.some((part: any, index: number) => part.PartNumber !== index + 1)) {
+      throw new Error("Multipart parts must be unique and sequential from 1 to the final part");
+    }
+
+    const { CompleteMultipartUploadCommand } = await import("npm:@aws-sdk/client-s3");
+    await makeS3(cfg).send(new CompleteMultipartUploadCommand({
+      Bucket: cfg.bucket,
+      Key: session.object_key,
+      UploadId: session.upload_id,
+      MultipartUpload: { Parts: normalized },
+    }));
+
+    // Completion only stages the R2 object. The existing client workflow commits
+    // lesson videos through commit_r2_video_upload after the instructor clicks
+    // Save Video; intro videos are persisted by the course-draft save flow.
+    // Keeping database attachment out of this endpoint also allows a completed
+    // but unsaved upload to be safely discarded without deleting a referenced asset.
+    const { error: updateError } = await supabase.from("r2_multipart_upload_sessions")
+      .update({ status: "completed", completed_at: new Date().toISOString() })
+      .eq("upload_id", session.upload_id)
+      .eq("status", "in_progress");
+    if (updateError) throw updateError;
+
     return json({ success: true, objectKey: session.object_key });
-  } catch (error) { return json({ error: error instanceof Error ? error.message : "Multipart completion failed" }, 400); }
+  } catch (error) {
+    return json({ error: error instanceof Error ? error.message : "Multipart completion failed" }, 400);
+  }
 });
