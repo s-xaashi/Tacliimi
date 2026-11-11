@@ -1,5 +1,6 @@
 import { supabase } from '/src/services/supabaseClient.js';
 import { MentorService } from '/src/services/mentorService.js';
+import { resolveProfileAvatar, resolveCourseThumbnail } from '/src/services/r2ImageUpload.js';
 
 let instructorId = null;
 
@@ -76,9 +77,8 @@ async function loadInstructorProfile() {
         document.getElementById('instructor-location').textContent = mentorData.country ? `${mentorData.city ? mentorData.city + ', ' : ''}${mentorData.country}` : 'Global';
         document.getElementById('instructor-experience').textContent = `${mentorData.experience || 0}+ Years Experience`;
         
-        if (mentorData.avatar_url) {
-            document.getElementById('instructor-avatar').src = mentorData.avatar_url;
-        }
+        const avatarUrl = await resolveProfileAvatar(mentorData);
+        if (avatarUrl) document.getElementById('instructor-avatar').src = avatarUrl;
 
         // Bio
         document.getElementById('instructor-bio').innerHTML = mentorData.short_bio ? `<p>${mentorData.short_bio.replace(/\n/g, '</p><p>')}</p>` : 'No bio available.';
@@ -251,7 +251,8 @@ async function loadInstructorCourses() {
         const urlParams = new URLSearchParams(window.location.search);
         const focusCourseId = urlParams.get('focusCourse');
 
-        grid.innerHTML = courses.map(course => {
+        const thumbnailUrls = await Promise.all(courses.map(course => resolveCourseThumbnail(course)));
+        grid.innerHTML = courses.map((course, courseIndex) => {
             const familyId = course.root_course_id || course.id;
             const isBoosted = boostedIds.includes(familyId);
             const bannerText = bannerMap[familyId];
@@ -277,7 +278,7 @@ async function loadInstructorCourses() {
                 ` : ''}
 
                 <div class="aspect-video relative overflow-hidden">
-                    <img src="${course.thumbnail_url || 'https://images.unsplash.com/photo-1542744094-24638eff58bb?w=800'}" 
+                    <img src="${thumbnailUrls[courseIndex] || 'https://images.unsplash.com/photo-1542744094-24638eff58bb?w=800'}" 
                          class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                     <div class="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent flex items-end p-4 opacity-0 group-hover:opacity-100 transition-opacity">
                         <span class="text-white text-xs font-bold uppercase tracking-wider">Learn More</span>

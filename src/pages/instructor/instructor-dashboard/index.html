@@ -279,6 +279,7 @@
             import { MentorService } from '/src/services/mentorService.js';
             import { PayoutService } from '/src/services/payoutService.js';
             import { instructorEarningsService } from '/src/services/instructorEarningsService.js';
+            import { resolveCourseThumbnail } from '/src/services/r2ImageUpload.js';
 
             let allCourses = [];
 
@@ -338,7 +339,7 @@
                     });
 
                     // 3. Render Portfolio
-                    renderPortfolio(allCourses);
+                    await renderPortfolio(allCourses);
 
                     // 4. Setup Search & Filters
                     setupListeners();
@@ -433,7 +434,11 @@
                 }
             }
 
-            function renderPortfolio(courses) {
+            async function renderPortfolio(courses) {
+                courses = await Promise.all((courses || []).map(async course => ({
+                    ...course,
+                    _resolvedThumbnail: await resolveCourseThumbnail(course).catch(() => null)
+                })));
                 const container = document.getElementById('dashboard-portfolio-container');
                 if (container) container.removeAttribute('aria-busy');
                 
@@ -474,7 +479,7 @@
                                 <td class="block md:table-cell px-4 py-4 md:px-6 md:py-5 border-b md:border-b-0 border-slate-100 dark:border-slate-800 w-full md:w-auto">
                                     <div class="flex flex-col sm:flex-row items-center md:items-center gap-4 text-center sm:text-left w-full">
                                         <div class="w-full sm:w-24 md:w-16 h-32 sm:h-16 md:h-12 rounded-xl md:rounded-lg bg-slate-100 dark:bg-slate-800 overflow-hidden flex-shrink-0 border border-slate-200 dark:border-slate-700 mx-auto sm:mx-0">
-                                            ${course.thumbnail_url ? `<img src="${course.thumbnail_url}" class="w-full h-full object-cover">` : `<span class="material-symbols-outlined text-slate-400 w-full h-full flex items-center justify-center">image</span>`}
+                                            ${course._resolvedThumbnail ? `<img src="${course._resolvedThumbnail}" class="w-full h-full object-cover">` : `<span class="material-symbols-outlined text-slate-400 w-full h-full flex items-center justify-center">image</span>`}
                                         </div>
                                         <div>
                                             <div class="font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors text-base md:text-sm mb-1 md:mb-0 line-clamp-2">${course.title || 'Untitled Course'}</div>
@@ -560,7 +565,7 @@
                 const statusFilter = document.getElementById('status-filter');
 
                 if (searchInput && statusFilter) {
-                    const handleFilter = () => {
+                    const handleFilter = async () => {
                         const searchTerm = searchInput.value.toLowerCase();
                         const statusValue = statusFilter.value;
 
@@ -586,7 +591,7 @@
                             return matchesSearch && matchesStatus;
                         });
 
-                        renderPortfolio(filtered);
+                        await renderPortfolio(filtered);
                     };
 
                     searchInput.addEventListener('input', handleFilter);

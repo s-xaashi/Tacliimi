@@ -1,6 +1,7 @@
 import { supabase } from '/src/services/supabaseClient.js';
 import { AuthService } from '/src/services/authService.js';
 import { MentorService } from '/src/services/mentorService.js';
+import { resolveCourseThumbnail, resolveProfileAvatar } from '/src/services/r2ImageUpload.js';
 import { buildProgramProgressHtml, getProgramMeetingStatus } from '/src/utils/js/mentorshipUI.js';
 
 let currentUserSession = null;
@@ -12,7 +13,7 @@ const MENTORSHIP_CACHE_TTL = 60000; // 1 minute
 window.userActiveEnrollments = [];
 window.currentActiveCourseIndex = 0;
 
-window.renderActiveCourseBanner = function(step = 0) {
+window.renderActiveCourseBanner = async function(step = 0) {
     if (!window.userActiveEnrollments || window.userActiveEnrollments.length === 0) return;
     
     window.currentActiveCourseIndex += step;
@@ -26,6 +27,7 @@ window.renderActiveCourseBanner = function(step = 0) {
     const enr = window.userActiveEnrollments[window.currentActiveCourseIndex];
     const course = enr.courses;
     if (!course) return;
+    const resolvedThumbnail = await resolveCourseThumbnail(course).catch(() => null);
 
     const continueSection = document.getElementById('continue-learning-section');
     if (!continueSection) return;
@@ -58,7 +60,7 @@ window.renderActiveCourseBanner = function(step = 0) {
             ${dotsHtml}
             <div class="relative z-10 flex flex-col md:flex-row items-center gap-6 md:gap-8 h-full ${hasMultiple ? 'px-6 md:px-12' : ''}">
                 <div class="w-full md:w-1/3 aspect-video rounded-2xl overflow-hidden shadow-2xl shrink-0 bg-black/10">
-                    <img src="${course.thumbnail_url || 'https://placehold.co/600x400'}" alt="${course.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                    <img src="${resolvedThumbnail || 'https://placehold.co/600x400'}" alt="${course.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                 </div>
                 <div class="flex-1 flex flex-col justify-center text-center md:text-left min-w-0 h-full w-full">
                     <div>
@@ -194,7 +196,7 @@ async function loadMyCourses() {
             id, root_course_id, from_version_id, to_version_id, notified_at, created_at,
             coupon:course_coupons(id, code, discount_percent),
             to_version:courses!course_update_offers_to_version_id_fkey(
-                id, title, subtitle, thumbnail_url, version_number, price, price_type,
+                id, title, subtitle, thumbnail_url, thumbnail_storage_key, version_number, price, price_type,
                 course_sections(id, title, course_lessons(id, title))
             ),
             from_version:courses!course_update_offers_from_version_id_fkey(
@@ -304,7 +306,7 @@ async function loadMyCourses() {
                 // Populate Continue Learning Section with active courses
                 window.userActiveEnrollments = activeEnrollments;
                 window.currentActiveCourseIndex = 0;
-                window.renderActiveCourseBanner(0);
+                await window.renderActiveCourseBanner(0);
             } else {
                 welcomeMsg.textContent = `Congratulations! You've completed all your enrolled courses. Ready for something new?`;
                 continueSection.classList.add('hidden');
@@ -328,15 +330,15 @@ async function loadMyCourses() {
 
         // Render active courses grid
         let activeHtml = '';
-        activeEnrollments.forEach(enr => {
+        for (const enr of activeEnrollments) {
             // Match offer by: enrolled course_id → from_version_id, or root_course_id
             const offer = offerMap[enr.course_id]
                 || offerMap[enr.courses?.root_course_id]
                 || null;
             const payId = paymentMap[enr.course_id] || paymentMap[enr.courses?.root_course_id] || null;
             const payDate = paymentDateMap[enr.course_id] || paymentDateMap[enr.courses?.root_course_id] || enr.enrolled_at || null;
-            activeHtml += renderCourseCard(enr, offer, payId, payDate);
-        });
+            activeHtml += await renderCourseCard(enr, offer, payId, payDate);
+        }
         enrolledCoursesGrid.innerHTML = activeHtml || `
             <div class="col-span-full py-12 text-center">
                 <p class="text-slate-500 italic">No in-progress courses.</p>
@@ -347,14 +349,14 @@ async function loadMyCourses() {
         const completedGrid = document.getElementById('completed-courses-grid');
         const completedEmptyState = document.getElementById('completed-courses-empty-state');
         let completedHtml = '';
-        completedEnrollments.forEach(enr => {
+        for (const enr of completedEnrollments) {
             const offer = offerMap[enr.course_id]
                 || offerMap[enr.courses?.root_course_id]
                 || null;
             const payId = paymentMap[enr.course_id] || paymentMap[enr.courses?.root_course_id] || null;
             const payDate = paymentDateMap[enr.course_id] || paymentDateMap[enr.courses?.root_course_id] || enr.enrolled_at || null;
-            completedHtml += renderCourseCard(enr, offer, payId, payDate);
-        });
+            completedHtml += await renderCourseCard(enr, offer, payId, payDate);
+        }
         
         if (completedGrid) {
             completedGrid.innerHTML = completedHtml;
@@ -372,7 +374,7 @@ async function loadMyCourses() {
 // ----- Update Offer Modal State -----
 window._activeOffer = null;
 
-window.openUpdateModal = function(offerId) {
+window.openUpdateModal = async function(offerId) {
     const offer = window._offerRegistry?.[offerId];
     if (!offer) return;
     window._activeOffer = offer;
@@ -435,7 +437,7 @@ window.openUpdateModal = function(offerId) {
 
     document.getElementById('modal-update-version').textContent = versionLabel;
     document.getElementById('modal-update-title').textContent = newCourse?.title || 'Updated Course';
-    document.getElementById('modal-update-thumbnail').src = newCourse?.thumbnail_url || 'https://placehold.co/600x400';
+    document.getElementById('modal-update-thumbnail').src = await resolveCourseThumbnail(newCourse).catch(() => null) || 'https://placehold.co/600x400';
     document.getElementById('modal-update-price').textContent = priceDisplay;
     document.getElementById('modal-update-changelog').innerHTML = changelogHtml;
     document.getElementById('modal-update-coupon').innerHTML = couponHtml;
@@ -463,9 +465,10 @@ window.reEnrollWithCoupon = async function() {
     window.location.href = `/src/pages/marketplace/course-details/index.html?id=${offer.to_version_id}${couponParam}&offer=${offer.id}`;
 };
 
-function renderCourseCard(enr, updateOffer, payId = null, payDate = null) {
+async function renderCourseCard(enr, updateOffer, payId = null, payDate = null) {
     const course = enr.courses;
     if(!course) return '';
+    const resolvedThumbnail = await resolveCourseThumbnail(course).catch(() => null);
     const category = course.course_categories ? course.course_categories.name : 'Course';
     const progress = enr.progress_percentage || 0;
     
@@ -489,7 +492,7 @@ function renderCourseCard(enr, updateOffer, payId = null, payDate = null) {
     <div class="flex flex-col group bg-white dark:bg-slate-900 border ${updateOffer ? 'border-indigo-300 dark:border-indigo-700 shadow-indigo-100 dark:shadow-indigo-900/10 shadow-md' : 'border-slate-200 dark:border-slate-800'} rounded-xl sm:rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer h-full" onclick="window.location.href='/src/pages/learning/learning-interface/index.html?course=${encodeURIComponent(course.id)}'">
         <div class="aspect-video relative overflow-hidden bg-slate-100 dark:bg-slate-800 shrink-0">
             ${updateBadgeHtml}
-            <img src="${course.thumbnail_url || 'https://placehold.co/600x400'}" alt="${course.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+            <img src="${resolvedThumbnail || 'https://placehold.co/600x400'}" alt="${course.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
             <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                 <span class="material-symbols-outlined text-white text-3xl sm:text-5xl">${progress === 100 ? 'replay' : 'play_circle'}</span>
             </div>
@@ -609,8 +612,17 @@ async function loadCourseWishlist() {
     wishlistContainer.innerHTML = '<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-6"></div>';
     const grid = wishlistContainer.querySelector('.grid');
     
+    const displayWishlistCourses = await Promise.all(wishlistedCourses.map(async course => ({
+        ...course,
+        _resolvedThumbnail: await resolveCourseThumbnail(course).catch(() => null),
+        _resolvedInstructorAvatar: await resolveProfileAvatar({
+            id: course.instructor_id,
+            avatar_storage_key: course.instructor_avatar_storage_key,
+            avatar_url: course.instructor_avatar
+        }, 'marketplace-instructor').catch(() => null)
+    })));
     let html = '';
-    wishlistedCourses.forEach(course => {
+    displayWishlistCourses.forEach(course => {
         const categoryName = course.category_name || 'Course';
         const instructorName = course.instructor_name || 'Expert Instructor';
         const rating = course.average_rating || 0;
@@ -643,7 +655,7 @@ async function loadCourseWishlist() {
                 <div class="relative overflow-hidden shrink-0 aspect-[16/10]">
                     <img alt="${course.title}"
                         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                        src="${course.thumbnail_url || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80'}" />
+                        src="${course._resolvedThumbnail || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80'}" />
                     
                     <!-- Hover Overlay -->
                     <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -687,7 +699,7 @@ async function loadCourseWishlist() {
 
                     <div class="flex items-center gap-2 mb-6">
                         <div class="relative">
-                            <img src="${course.instructor_avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(instructorName) + '&background=random'}"
+                            <img src="${course._resolvedInstructorAvatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(instructorName) + '&background=random'}"
                                  class="w-6 h-6 rounded-full object-cover ring-2 ring-white dark:ring-gray-800"
                                  alt="${instructorName}">
                         </div>
@@ -783,8 +795,12 @@ async function loadMentorWishlist() {
         wishlistContainer.innerHTML = '<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 pt-6"></div>';
         const grid = wishlistContainer.querySelector('.grid');
         
+        const displayWishlistedMentors = await Promise.all(wishlisted.map(async mentor => ({
+            ...mentor,
+            _resolvedAvatar: await resolveProfileAvatar(mentor).catch(() => null)
+        })));
         let html = '';
-        wishlisted.forEach(mentor => {
+        displayWishlistedMentors.forEach(mentor => {
             const isBoosted = mentor._boost_order !== undefined && mentor._boost_order !== 999999;
             const boostRing = isBoosted ? 'boosted-card' : '';
             const roleBadge = isBoosted 
@@ -821,7 +837,7 @@ async function loadMentorWishlist() {
                     <div class="flex items-start justify-between mb-4">
                         <div class="relative cursor-pointer shrink-0">
                             <div class="absolute -top-3 -left-3">${roleBadge}</div>
-                            <img src="${mentor.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(mentor.full_name) + '&background=random&color=fff'}" 
+                            <img src="${mentor._resolvedAvatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(mentor.full_name) + '&background=random&color=fff'}" 
                                  class="w-16 h-16 rounded-2xl object-cover ring-4 ring-slate-50 dark:ring-slate-800 text-[10px] italic mt-3">
                             <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 border-4 border-white dark:border-slate-900 rounded-full"></div>
                         </div>
@@ -1013,7 +1029,9 @@ async function loadMentors(forceRefresh = false) {
 
         // Updated: Removed auto-switching of tabs to allow viewing empty states as requested.
 
-        const renderSessionCard = (session, isHistory = false) => {
+        const renderSessionCard = async (session, isHistory = false) => {
+            const mentor = session.mentor || {};
+            const resolvedMentorAvatar = await resolveProfileAvatar(mentor, 'mentorship-session', session.id).catch(() => null);
             const date = new Date(session.scheduled_at);
             const duration = session.duration_minutes || 60;
             // Meeting slot end — always duration-based, never program end_date
@@ -1024,8 +1042,6 @@ async function loadMentors(forceRefresh = false) {
             const dateStr = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
             const startTimeStr = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
             const endTimeStr = meetingSlotEnd.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-            
-            const mentor = session.mentor || {};
             const bookingStatus = session.booking_status || session.status || 'pending_review';
 
             let statusLabel = 'Pending';
@@ -1131,7 +1147,7 @@ async function loadMentors(forceRefresh = false) {
                     <div class="flex flex-col lg:flex-row gap-4 lg:gap-8 items-start lg:items-center justify-between relative z-0 mt-3 lg:mt-0">
                         <div class="flex items-center gap-3 sm:gap-4 w-full lg:w-72 shrink-0">
                             <a href="/src/pages/instructor/public-profile/index.html?id=${session.mentor_id}" class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl overflow-hidden border-2 border-primary/20 shrink-0 shadow-sm transition-transform hover:scale-110 block" title="View Public Profile">
-                                <img src="${mentor.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(mentor.full_name || 'M')}&background=random&color=fff`}" class="w-full h-full object-cover" />
+                                <img src="${resolvedMentorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(mentor.full_name || 'M')}&background=random&color=fff`}" class="w-full h-full object-cover" />
                             </a>
                             <div class="flex-1 min-w-0">
                                 <a href="/src/pages/instructor/public-profile/index.html?id=${session.mentor_id}" class="block group/name" title="View Public Profile">
@@ -1268,7 +1284,7 @@ async function loadMentors(forceRefresh = false) {
                 </div>
             `;
         } else {
-            contentContainer.innerHTML = activeSessions.map(s => renderSessionCard(s, currentMentorshipSubTab === 'history')).join('');
+            contentContainer.innerHTML = (await Promise.all(activeSessions.map(s => renderSessionCard(s, currentMentorshipSubTab === 'history')))).join('');
         }
 
     } catch (err) {
@@ -1295,7 +1311,7 @@ let _lastRenderedMessageId = null;
 let _isTyping = false;
 let _typingTimeout = null;
 
-function renderChatMessages(messages, myRole) {
+async function renderChatMessages(messages, myRole, sessionId) {
     if (messages.length === 0) {
         return `<div class="flex flex-col items-center justify-center h-full text-center py-20 px-8">
             <span class="material-symbols-outlined text-slate-200 dark:text-slate-700 text-7xl mb-4">chat_bubble</span>
@@ -1303,9 +1319,9 @@ function renderChatMessages(messages, myRole) {
             <p class="text-sm text-slate-400 max-w-[200px] mt-2">Start the conversation with your mentor here.</p>
         </div>`;
     }
-    return messages.map(msg => {
+    return (await Promise.all(messages.map(async msg => {
         const isMe = msg.sender_role === myRole;
-        const senderAvatar = msg.sender?.avatar_url
+        const senderAvatar = await resolveProfileAvatar(msg.sender || {}, 'mentorship-session', msg.booking_id).catch(() => null)
             || `https://ui-avatars.com/api/?name=${encodeURIComponent(msg.sender?.full_name || (isMe ? 'Me' : 'Them'))}&background=random&color=fff`;
         const timeStr = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         const avatarHtml = `<img src="${senderAvatar}" class="w-8 h-8 rounded-full object-cover shrink-0 shadow-sm" title="${msg.sender?.full_name || ''}" />`;
@@ -1320,7 +1336,7 @@ function renderChatMessages(messages, myRole) {
                 </div>
                 ${isMe ? avatarHtml : ''}
             </div>`;
-    }).join('');
+    }))).join('');
 }
 
 function appendTypingIndicatorStudent(container) {
@@ -1384,7 +1400,7 @@ window.openMessagingModal = async function(bookingId, mentorName) {
             if (latestId === _lastRenderedMessageId && !isFirstLoad) return;
             _lastRenderedMessageId = latestId;
             const atBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 60;
-            container.innerHTML = renderChatMessages(messages, 'student');
+            container.innerHTML = await renderChatMessages(messages, 'student', bookingId);
             appendTypingIndicatorStudent(container);
             if (atBottom || isFirstLoad) container.scrollTop = container.scrollHeight;
         } catch { /* silent poll failure */ }
@@ -1540,15 +1556,19 @@ async function loadBeginnerCourses() {
         coursesContainer = div;
     }
 
+    const displaySuggestedCourses = await Promise.all(suggestedCourses.map(async course => ({
+        ...course,
+        _resolvedThumbnail: await resolveCourseThumbnail(course).catch(() => null)
+    })));
     const levelLabel = `Popular ${chosenLevel} Courses`;
     let html = `<div class="col-span-full border-b border-primary/20 pb-4 mb-4"><h3 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-400">${levelLabel}</h3></div>`;
     
-    suggestedCourses.forEach(course => {
+    displaySuggestedCourses.forEach(course => {
         html += `
         <div onclick="window.location.href='/src/pages/marketplace/course-details/index.html?id=${encodeURIComponent(course.id)}'"
             class="flex flex-col group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer h-full relative">
             <div class="aspect-video relative overflow-hidden bg-slate-100 dark:bg-slate-800 shrink-0">
-                <img src="${course.thumbnail_url || 'https://placehold.co/600x400'}" alt="${course.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                <img src="${course._resolvedThumbnail || 'https://placehold.co/600x400'}" alt="${course.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                 <div class="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors"></div>
             </div>
             <div class="p-5 flex flex-col flex-1">

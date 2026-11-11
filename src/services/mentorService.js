@@ -216,6 +216,7 @@ export const MentorService = {
                     profile:profiles!inner (
                         full_name,
                         avatar_url,
+                        avatar_storage_key,
                         short_bio,
                         professional_title,
                         country,
@@ -358,6 +359,7 @@ export const MentorService = {
                     instructor_id: mentor.instructor_id,
                     full_name: mentor.profile?.full_name || 'Anonymous Mentor',
                     avatar_url: mentor.profile?.avatar_url,
+                    avatar_storage_key: mentor.profile?.avatar_storage_key,
                     short_bio: mentor.profile?.short_bio || mentor.bio || 'No bio available.',
                     expertise: mentor.profile?.expertise?.map(e => e.expertise_name) || [],
                     introduction_video: introVideoUrl,
@@ -408,6 +410,7 @@ export const MentorService = {
                         profile:profiles (
                             full_name,
                             avatar_url,
+                            avatar_storage_key,
                             short_bio,
                             serial_id,
                             gender,
@@ -433,7 +436,7 @@ export const MentorService = {
                     .maybeSingle(),
                 supabase
                     .from('mentor_profile_reviews_view')
-                    .select('rating, comment, created_at, full_name, avatar_url')
+                    .select('rating, comment, created_at, full_name, avatar_url, avatar_storage_key, student_id')
                     .eq('mentor_id', mentorId),
                 supabase
                     .from('mentor_availability')
@@ -483,7 +486,9 @@ export const MentorService = {
                 created_at: r.created_at,
                 student: {
                     full_name: r.full_name,
-                    avatar_url: r.avatar_url
+                    avatar_url: r.avatar_url,
+                    avatar_storage_key: r.avatar_storage_key,
+                id: r.student_id
                 }
             }));
 
@@ -550,6 +555,7 @@ export const MentorService = {
                 instructor_id: data.instructor_id,
                 full_name: data.profile?.full_name,
                 avatar_url: data.profile?.avatar_url,
+                avatar_storage_key: data.profile?.avatar_storage_key,
                 short_bio: data.profile?.short_bio || data.bio,
                 gender: data.profile?.gender,
                 expertise: data.profile?.expertise?.map(e => e.expertise_name) || [],
@@ -812,8 +818,10 @@ export const MentorService = {
                 program_start_date,
                 end_date,
                 mentor:profiles!mentorship_sessions_mentor_id_fkey (
+                    id,
                     full_name,
                     avatar_url,
+                    avatar_storage_key,
                     professional_title
                 )
             `)
@@ -850,7 +858,7 @@ export const MentorService = {
         if (studentIds.length > 0) {
             const { data: profiles, error: pErr } = await supabase
                 .from('profiles')
-                .select('id, full_name, avatar_url, email, phone_number, country, city, professional_title, short_bio, gender, learning_interests, social_links')
+                .select('id, full_name, avatar_url, avatar_storage_key, email, phone_number, country, city, professional_title, short_bio, gender, learning_interests, social_links')
                 .in('id', studentIds);
 
             if (pErr) throw pErr;
@@ -1073,7 +1081,7 @@ export const MentorService = {
             .from('mentorship_booking_messages')
             .select(`
                 *,
-                sender:profiles(full_name, avatar_url)
+                sender:profiles(id, full_name, avatar_url, avatar_storage_key)
             `)
             .eq('booking_id', bookingId)
             .order('created_at', { ascending: true });

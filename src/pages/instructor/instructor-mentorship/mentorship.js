@@ -1,6 +1,7 @@
 import { MentorService } from '../../../services/mentorService.js';
 import { supabase } from '../../../services/supabaseClient.js';
 import { AuthService } from '../../../services/authService.js';
+import { resolveProfileAvatar } from '../../../services/r2ImageUpload.js';
 import { PaymentService } from '../../../services/paymentService.js';
 import { instructorEarningsService } from '../../../services/instructorEarningsService.js';
 import { buildProgramProgressHtml, buildMonthlyBadgeHtml, getProgramMeetingStatus, openMentorshipRescheduleModal } from '../../../utils/js/mentorshipUI.js';
@@ -54,12 +55,13 @@ window.closeTopicModal = function() {
 };
 
 // ── Student Profile Modal ───────────────────────────────────────
-window.openStudentProfile = function(studentJson) {
+window.openStudentProfile = async function(studentJson) {
     const student = typeof studentJson === 'string' ? JSON.parse(studentJson) : studentJson;
     const modal = document.getElementById('student-profile-modal');
     if (!modal) return;
 
-    document.getElementById('student-modal-avatar').src = student.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.full_name || 'S')}&background=random&color=fff`;
+    const resolvedAvatar = await resolveProfileAvatar(student, 'mentorship-participant').catch(() => null);
+    document.getElementById('student-modal-avatar').src = resolvedAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.full_name || 'S')}&background=random&color=fff`;
     document.getElementById('student-modal-name').textContent = student.full_name || 'Unknown Student';
     document.getElementById('student-modal-title').textContent = student.professional_title || 'Student';
     document.getElementById('student-modal-email').textContent = student.email || 'No email shared';
@@ -1269,13 +1271,20 @@ async function bindRequestsInteractions(container, userId) {
 
             emptyState.classList.add('hidden');
             listContainer.removeAttribute('aria-busy');
+            filtered = await Promise.all(filtered.map(async session => ({
+                ...session,
+                student: session.student ? {
+                    ...session.student,
+                    _resolvedAvatar: await resolveProfileAvatar(session.student, 'mentorship-session', session.id).catch(() => null)
+                } : session.student
+            })));
             listContainer.innerHTML = filtered.map(session => {
                 const date = new Date(session.scheduled_at);
                 const dateStr = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
                 const timeStr = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
                 const student = session.student || {};
                 const studentName = student.full_name || (student.email ? student.email.split('@')[0] : 'Unknown Student');
-                const studentAvatar = student.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(studentName)}&background=random&color=fff`;
+                const studentAvatar = student._resolvedAvatar || student.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(studentName)}&background=random&color=fff`;
                 const status = session.booking_status || 'pending_review';
 
                 const duration = session.duration_minutes || 60;
@@ -1720,7 +1729,14 @@ async function bindUpcomingInteractions(container, userId) {
 
             emptyState.classList.add('hidden');
             listContainer.removeAttribute('aria-busy');
-            listContainer.innerHTML = typeFiltered.map(session => {
+            const displaySessions = await Promise.all(typeFiltered.map(async session => ({
+                ...session,
+                student: session.student ? {
+                    ...session.student,
+                    _resolvedAvatar: await resolveProfileAvatar(session.student, 'mentorship-session', session.id).catch(() => null)
+                } : session.student
+            })));
+            listContainer.innerHTML = displaySessions.map(session => {
                 const date = new Date(session.scheduled_at);
                 const duration = session.duration_minutes || 60;
                 const endDate = new Date(date.getTime() + duration * 60000);
@@ -1735,7 +1751,7 @@ async function bindUpcomingInteractions(container, userId) {
                 // Show "Next meeting" badge only when the current daily slot has fully ended (not while live or before it starts)
                 const showNextMeeting = progStatus && !progStatus.isMeetingLive && progStatus.nextMeetingLabel && now >= progStatus.meetingSlotEnd;
                 const student = session.student || { full_name: 'Unknown Student', avatar_url: '', email: '' };
-                const studentAvatar = student.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.full_name || 'S')}&background=random&color=fff`;
+                const studentAvatar = student._resolvedAvatar || student.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.full_name || 'S')}&background=random&color=fff`;
 
                 const isCancelled = session.booking_status === 'cancelled';
                 const isPendingRejection = session.booking_status === 'pending_rejection_review';
@@ -1942,11 +1958,18 @@ async function bindCompletedInteractions(container, userId) {
 
             emptyState.classList.add('hidden');
             listContainer.removeAttribute('aria-busy');
-            listContainer.innerHTML = historical.map(session => {
+            const displayHistory = await Promise.all(historical.map(async session => ({
+                ...session,
+                student: session.student ? {
+                    ...session.student,
+                    _resolvedAvatar: await resolveProfileAvatar(session.student, 'mentorship-session', session.id).catch(() => null)
+                } : session.student
+            })));
+            listContainer.innerHTML = displayHistory.map(session => {
                 const date = new Date(session.scheduled_at);
                 const dateStr = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
                 const student = session.student || { full_name: 'Unknown Student', avatar_url: '', email: '' };
-                const studentAvatar = student.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.full_name || 'S')}&background=random&color=fff`;
+                const studentAvatar = student._resolvedAvatar || student.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.full_name || 'S')}&background=random&color=fff`;
 
                 const isProgram = session.mentorship_type === 'program';
                 return `
@@ -2036,16 +2059,17 @@ let currentMessageBookingId = null;
 let _chatPollInterval = null;
 let _lastRenderedMessageId = null;
 
-function renderChatMessages(messages, myRole, myAvatarUrl) {
+async function renderChatMessages(messages, myRole, myAvatarUrl) {
     if (messages.length === 0) {
         return `<div class="flex flex-col items-center justify-center h-full text-center py-10">
             <span class="material-symbols-outlined text-slate-200 dark:text-slate-700 text-6xl mb-4">chat_bubble</span>
             <p class="text-slate-400 text-sm">No messages yet. Start the conversation!</p>
         </div>`;
     }
-    return messages.map(msg => {
+    return (await Promise.all(messages.map(async msg => {
         const isMe = msg.sender_role === myRole;
-        const senderAvatar = msg.sender?.avatar_url
+        const resolvedSenderAvatar = await resolveProfileAvatar(msg.sender || {}, 'mentorship-session', msg.booking_id).catch(() => null);
+        const senderAvatar = (isMe ? myAvatarUrl : resolvedSenderAvatar)
             || `https://ui-avatars.com/api/?name=${encodeURIComponent(msg.sender?.full_name || (isMe ? 'Me' : 'Them'))}&background=random&color=fff`;
         const timeStr = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         const avatarHtml = `<img src="${senderAvatar}" class="w-8 h-8 rounded-full object-cover shrink-0 shadow-sm" title="${msg.sender?.full_name || ''}" />`;
@@ -2060,7 +2084,7 @@ function renderChatMessages(messages, myRole, myAvatarUrl) {
                 </div>
                 ${isMe ? avatarHtml : ''}
             </div>`;
-    }).join('');
+    }))).join('');
 }
 
 async function openMessagingModal(bookingId, studentName) {
@@ -2078,7 +2102,8 @@ async function openMessagingModal(bookingId, studentName) {
     _lastRenderedMessageId = null;
 
     const session = await AuthService.getSession();
-    const myAvatarUrl = (await supabase.from('profiles').select('avatar_url').eq('id', session?.user?.id).single()).data?.avatar_url;
+    const myProfile = (await supabase.from('profiles').select('id, avatar_url, avatar_storage_key').eq('id', session?.user?.id).single()).data;
+    const myAvatarUrl = await resolveProfileAvatar(myProfile).catch(() => null);
 
     const loadMessages = async (isFirstLoad = false) => {
         try {
@@ -2089,7 +2114,7 @@ async function openMessagingModal(bookingId, studentName) {
 
             // Preserve scroll position if not at bottom, auto-scroll if at bottom
             const atBottom = historyContainer.scrollHeight - historyContainer.scrollTop - historyContainer.clientHeight < 60;
-            historyContainer.innerHTML = renderChatMessages(messages, 'mentor', myAvatarUrl);
+            historyContainer.innerHTML = await renderChatMessages(messages, 'mentor', myAvatarUrl);
             appendTypingIndicator(historyContainer);
             if (atBottom || isFirstLoad) historyContainer.scrollTop = historyContainer.scrollHeight;
         } catch { /* silent on background poll failures */ }

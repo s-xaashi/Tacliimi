@@ -1,5 +1,6 @@
 import { supabase } from './supabaseClient.js';
 import { AuthService } from './authService.js';
+import { uploadPrivateImage } from './r2ImageUpload.js';
 
 // ── File Validation Constants ───────────────────────────────────────────────
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
@@ -92,7 +93,7 @@ export const CourseService = {
             .select(`
                 *,
                 serial_id,
-                instructor:profiles(full_name, avatar_url, professional_title, short_bio, expertise_list),
+                instructor:profiles(id, full_name, avatar_url, avatar_storage_key, professional_title, short_bio, expertise_list),
                 course_categories(name),
                 course_sections(
                     id, title, order_index,
@@ -117,7 +118,7 @@ export const CourseService = {
             .select(`
                 *,
                 serial_id,
-                instructor:profiles(full_name, avatar_url, professional_title, short_bio, expertise_list),
+                instructor:profiles(id, full_name, avatar_url, avatar_storage_key, professional_title, short_bio, expertise_list),
                 course_coupons(*),
                 course_sections(
                     id, title, order_index,
@@ -286,7 +287,7 @@ export const CourseService = {
         // 🔴 SECURITY FIX: Strict Field Allowlist
         // Prevent mass assignment (e.g., injecting status, version_status, is_latest_published, etc.)
         const allowedFields = [
-            'title', 'subtitle', 'description', 'thumbnail_url', 'intro_video_url',
+            'title', 'subtitle', 'description', 'thumbnail_url', 'thumbnail_storage_key', 'intro_video_url',
             'intro_video_provider', 'intro_video_storage_key',
             'category_id', 'level', 'price', 'price_type', 'currency', 'is_public',
             'language', 'total_duration_minutes', 'what_you_learn', 'requirements',
@@ -923,7 +924,8 @@ export const CourseService = {
             throw new Error(`File too large (${(file.size / 1024 / 1024).toFixed(1)} MB). Maximum allowed: ${maxMB} MB.`);
         }
 
-        const { data, error } = await supabase.storage.from(bucket).upload(path, file, { upsert: true });
+        // These upload paths are versioned/unique, so long-lived CDN caching is safe.
+        const { data, error } = await supabase.storage.from(bucket).upload(path, file, { upsert: true, cacheControl: '31536000' });
         if (error) throw error;
 
         const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(data.path);
@@ -933,9 +935,14 @@ export const CourseService = {
     async uploadCourseThumbnail(courseId, file) {
         const session = await AuthService.getSession();
         if (!session?.user?.id) throw new Error("Not authenticated");
-        
-        const fileName = `${session.user.id}/${courseId ? courseId : 'new'}/thumb_${Date.now()}`;
-        return await this.uploadFile('course_thumbnails', fileName, file, ALLOWED_IMAGE_TYPES, MAX_IMAGE_BYTES);
+        if (!ALLOWED_IMAGE_TYPES.includes(file?.type)) {
+            throw new Error(`Invalid image type "${file?.type}". Allowed: ${ALLOWED_IMAGE_TYPES.join(', ')}`);
+        }
+        if (file.size > MAX_IMAGE_BYTES) {
+            throw new Error(`Image too large. Maximum allowed: ${(MAX_IMAGE_BYTES / (1024 * 1024)).toFixed(0)} MB.`);
+        }
+
+        return await uploadPrivateImage({ file, purpose: 'thumbnail', courseId: courseId || null });
     },
 
     async uploadCourseVideo(courseId, file) {
@@ -1042,8 +1049,8 @@ export const CourseService = {
             const { data, error } = await supabase
                 .from('courses')
                 .select(`
-                    id, serial_id, title, subtitle, thumbnail_url, category_id, level, created_at,
-                    instructor:profiles(id, full_name, email, avatar_url),
+                    id, serial_id, title, subtitle, thumbnail_url, thumbnail_storage_key, category_id, level, created_at,
+                    instructor:profiles(id, full_name, email, avatar_url, avatar_storage_key),
                     category:course_categories(name)
                 `)
                 .eq('status', 'pending_review')
@@ -1078,7 +1085,7 @@ export const CourseService = {
                 .from('courses')
                 .select(`
                     *,
-                    instructor:profiles(id, full_name, email, avatar_url),
+                    instructor:profiles(id, full_name, email, avatar_url, avatar_storage_key),
                     category:course_categories(name),
                     sections:course_sections(
                         *,
@@ -1337,15 +1344,18 @@ export const CourseService = {
         // on public published courses, without making private profiles public.
         const { data: reviewerDetails, error: reviewerError } = await supabase
             .from('public_course_review_display')
-            .select('review_id, full_name, avatar_url')
+            .select('review_id, student_id, full_name, avatar_url, avatar_storage_key')
             .eq('course_id', courseId);
 
         if (reviewerError) throw reviewerError;
 
         const reviewerByReviewId = new Map(
             (reviewerDetails || []).map(reviewer => [reviewer.review_id, {
+                id: reviewer.student_id,
                 full_name: reviewer.full_name,
-                avatar_url: reviewer.avatar_url
+                avatar_url: reviewer.avatar_url,
+                avatar_storage_key: reviewer.avatar_storage_key,
+                id: reviewer.student_id
             }])
         );
 
@@ -1527,7 +1537,7 @@ export const CourseService = {
             .from('courses')
             .select(`
                 id, title, status, version_status, version_number, is_latest_published, 
-                root_course_id, created_at, rejection_reason, thumbnail_url, subtitle, 
+                root_course_id, created_at, rejection_reason, thumbnail_url, thumbnail_storage_key, subtitle, 
                 price, price_type, is_public, serial_id,
                 category:course_categories(name),
                 enrollments(count),
@@ -1675,7 +1685,7 @@ export const CourseService = {
             .select(`
                 id, root_course_id, to_version_id, from_version_id, notified_at, redeemed_at,
                 coupon:course_coupons!coupon_id (id, code, discount_percent),
-                to_version:courses!to_version_id(id, title, thumbnail_url, slug, version_number, price, price_type, course_sections(title, course_lessons(title))),
+                to_version:courses!to_version_id(id, title, thumbnail_url, thumbnail_storage_key, slug, version_number, price, price_type, course_sections(title, course_lessons(title))),
                 from_version:courses!from_version_id(id, title, course_sections(title, course_lessons(title)))
             `)
             .is('redeemed_at', null)
@@ -1868,7 +1878,11 @@ export const CourseService = {
                             }
 
                             if (xhr.status >= 200 && xhr.status < 300) {
-                                const etag = xhr.getResponseHeader('ETag') || xhr.getResponseHeader('etag') || `"part-${partNumber}"`;
+                                const etag = xhr.getResponseHeader('ETag') || xhr.getResponseHeader('etag');
+                                if (!etag) {
+                                    reject(new Error('R2 did not expose the uploaded part ETag. Check the bucket CORS ExposeHeaders configuration.'));
+                                    return;
+                                }
                                 resolve({ PartNumber: partNumber, ETag: etag });
                             } else {
                                 reject(new Error(`Chunk upload failed: ${xhr.statusText}`));
@@ -1925,14 +1939,17 @@ export const CourseService = {
 
             if (hasError) throw globalError;
 
-            // Complete upload (assembles R2 object, NO DB WRITES)
+            // Complete the multipart object and attach it to its validated course target.
             const t0_complete = performance.now();
             const completeRes = await supabase.functions.invoke('r2-multipart-complete', {
                 body: {
                     course_id: courseId,
+                    lesson_id: lessonId || null,
+                    type,
                     upload_id: uploadId,
                     object_key: objectKey,
-                    parts: parts
+                    parts,
+                    file_size: file.size
                 }
             });
             const t1_complete = performance.now();

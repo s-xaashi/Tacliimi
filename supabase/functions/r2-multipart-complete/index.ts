@@ -1,111 +1,105 @@
-
 import { createClient } from "jsr:@supabase/supabase-js@2";
-import { S3Client, CompleteMultipartUploadCommand } from "npm:@aws-sdk/client-s3";
+import { S3Client } from "npm:@aws-sdk/client-s3";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
-
-Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
-  }
+const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), {
+  status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+});
+function getConfig() {
+  const url = Deno.env.get("SUPABASE_URL");
+  const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const endpoint = Deno.env.get("R2_ENDPOINT");
+  const accessKeyId = Deno.env.get("R2_ACCESS_KEY_ID");
+  const secretAccessKey = Deno.env.get("R2_SECRET_ACCESS_KEY");
+  const bucket = Deno.env.get("R2_BUCKET_NAME");
+  if (![url, key, endpoint, accessKeyId, secretAccessKey, bucket].every(Boolean)) throw new Error("R2 server configuration is incomplete");
+  return { url: url!, key: key!, endpoint: endpoint!, accessKeyId: accessKeyId!, secretAccessKey: secretAccessKey!, bucket: bucket! };
+}
+async function authenticate(req: Request) {
+  const header = req.headers.get("Authorization") || "";
+  const match = header.match(/^Bearer\s+(.+)$/i);
+  if (!match) throw new Error("Missing or invalid Authorization header");
+  const cfg = getConfig();
+  const supabase = createClient(cfg.url, cfg.key);
+  const { data: { user }, error } = await supabase.auth.getUser(match[1]);
+  if (error || !user) throw new Error("Invalid authentication token");
+  return { supabase, user, cfg };
+}
+function makeS3(cfg: ReturnType<typeof getConfig>) {
+  return new S3Client({
+    region: "auto",
+    endpoint: cfg.endpoint,
+    credentials: { accessKeyId: cfg.accessKeyId, secretAccessKey: cfg.secretAccessKey },
+    requestChecksumCalculation: "WHEN_REQUIRED",
+  });
+}
+async function ownedSession(supabase: any, input: any, userId: string) {
+  const { data, error } = await supabase.from("r2_multipart_upload_sessions").select("*")
+    .eq("upload_id", input.upload_id).eq("object_key", input.object_key)
+    .eq("course_id", input.course_id).eq("instructor_id", userId)
+    .eq("status", "in_progress").gt("expires_at", new Date().toISOString()).maybeSingle();
+  if (error) throw error;
+  if (!data) throw new Error("Upload session not found, expired, or not authorized");
+  return data;
+}
+Deno.serve(async (req: Request) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
 
   try {
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) throw new Error('Missing Authorization header');
-
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
-
-    const { data: { user }, error: userError } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
-    if (userError || !user) throw new Error('Invalid token');
-
-    const { course_id, lesson_id, type = 'lesson', upload_id, object_key, parts, file_size } = await req.json();
-
+    const { supabase, user, cfg } = await authenticate(req);
+    const body = await req.json();
+    const { course_id, upload_id, object_key, parts } = body;
     if (!course_id || !upload_id || !object_key || !Array.isArray(parts)) {
-      throw new Error('Missing required fields');
+      throw new Error("Missing required multipart completion fields");
     }
 
-    // Verify course ownership
-    const { data: course, error: courseError } = await supabase
-      .from('courses')
-      .select('instructor_id')
-      .eq('id', course_id)
-      .single();
+    const session = await ownedSession(supabase, { course_id, upload_id, object_key }, user.id);
+    if (parts.length !== session.part_count) throw new Error("Uploaded part count does not match the expected file size");
 
-    if (courseError || !course) throw new Error('Course not found');
-    if (course.instructor_id !== user.id) throw new Error('Not authorized for this course');
-
-    const s3Client = new S3Client({
-      region: 'auto',
-      endpoint: Deno.env.get('R2_ENDPOINT') ?? '',
-      credentials: {
-        accessKeyId: Deno.env.get('R2_ACCESS_KEY_ID') ?? '',
-        secretAccessKey: Deno.env.get('R2_SECRET_ACCESS_KEY') ?? '',
-      },
-    });
-
-    const command = new CompleteMultipartUploadCommand({
-      Bucket: Deno.env.get('R2_BUCKET_NAME') ?? '',
-      Key: object_key,
-      UploadId: upload_id,
-      MultipartUpload: {
-        Parts: parts.sort((a, b) => a.PartNumber - b.PartNumber),
-      },
-    });
-
-    await s3Client.send(command);
-
-    // Save to database
-    let mediaAssetId = null;
-
-    // Create course_media_assets record
-    const { data: asset, error: assetError } = await supabase
-      .from('course_media_assets')
-      .insert({
-        storage_provider: 'r2',
-        storage_path: object_key,
-        file_size_bytes: file_size || 0
-      })
-      .select()
-      .single();
-
-    if (assetError) throw assetError;
-    mediaAssetId = asset.id;
-
-    if (type === 'intro') {
-      const { error: updateError } = await supabase
-        .from('courses')
-        .update({
-          intro_video_provider: 'r2',
-          intro_video_storage_key: object_key
-        })
-        .eq('id', course_id);
-      if (updateError) throw updateError;
-    } else {
-      if (!lesson_id) throw new Error('Missing lesson_id');
-      const { error: updateError } = await supabase
-        .from('course_lessons')
-        .update({
-          video_provider: 'r2',
-          video_storage_key: object_key,
-          media_asset_id: mediaAssetId
-        })
-        .eq('id', lesson_id)
-        .eq('section_id', (await supabase.from('course_sections').select('id').eq('course_id', course_id).limit(1)).data?.[0]?.id ?? ''); // Using robust schema relation or trusting the instructor
-        
-      if (updateError) throw updateError;
+    const normalized = parts.map((part: any) => ({
+      PartNumber: part?.PartNumber,
+      ETag: typeof part?.ETag === "string" ? part.ETag.trim() : "",
+    }));
+    if (normalized.some((part: any) =>
+      !Number.isInteger(part.PartNumber) ||
+      part.PartNumber < 1 ||
+      part.PartNumber > session.part_count ||
+      !part.ETag ||
+      part.ETag.length > 1024
+    )) {
+      throw new Error("Invalid multipart part metadata");
+    }
+    normalized.sort((a: any, b: any) => a.PartNumber - b.PartNumber);
+    if (normalized.some((part: any, index: number) => part.PartNumber !== index + 1)) {
+      throw new Error("Multipart parts must be unique and sequential from 1 to the final part");
     }
 
-    return new Response(JSON.stringify({ success: true, objectKey: object_key }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-  } catch (error: any) {
-    return new Response(JSON.stringify({ error: error.message }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 400,
-    });
+    const { CompleteMultipartUploadCommand } = await import("npm:@aws-sdk/client-s3");
+    await makeS3(cfg).send(new CompleteMultipartUploadCommand({
+      Bucket: cfg.bucket,
+      Key: session.object_key,
+      UploadId: session.upload_id,
+      MultipartUpload: { Parts: normalized },
+    }));
+
+    // Completion only stages the R2 object. The existing client workflow commits
+    // lesson videos through commit_r2_video_upload after the instructor clicks
+    // Save Video; intro videos are persisted by the course-draft save flow.
+    // Keeping database attachment out of this endpoint also allows a completed
+    // but unsaved upload to be safely discarded without deleting a referenced asset.
+    const { error: updateError } = await supabase.from("r2_multipart_upload_sessions")
+      .update({ status: "completed", completed_at: new Date().toISOString() })
+      .eq("upload_id", session.upload_id)
+      .eq("status", "in_progress");
+    if (updateError) throw updateError;
+
+    return json({ success: true, objectKey: session.object_key });
+  } catch (error) {
+    return json({ error: error instanceof Error ? error.message : "Multipart completion failed" }, 400);
   }
 });

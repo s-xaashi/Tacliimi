@@ -28,7 +28,8 @@ export async function getConversationList(mentorId) {
             student:profiles!mentorship_sessions_student_id_fkey (
                 id,
                 full_name,
-                avatar_url
+                avatar_url,
+                avatar_storage_key
             )
         `)
         .eq('mentor_id', mentorId)
@@ -64,6 +65,7 @@ export async function getConversationList(mentorId) {
                 student_id: sid,
                 student_name: session.student?.full_name || 'Unknown Student',
                 avatar_url: session.student?.avatar_url || null,
+                avatar_storage_key: session.student?.avatar_storage_key || null,
                 sessions: [],
                 all_messages: [],
             });
@@ -91,6 +93,7 @@ export async function getConversationList(mentorId) {
             student_id: entry.student_id,
             student_name: entry.student_name,
             avatar_url: entry.avatar_url,
+            avatar_storage_key: entry.avatar_storage_key,
             session_count: entry.sessions.length,
             last_message: lastMsg ? lastMsg.message_text : null,
             last_message_at: lastMsg ? lastMsg.created_at : null,
@@ -157,8 +160,10 @@ export async function getStudentThread(mentorId, studentId) {
             message_text,
             created_at,
             sender:profiles!mentorship_booking_messages_sender_id_fkey (
+                id,
                 full_name,
-                avatar_url
+                avatar_url,
+                avatar_storage_key
             )
         `)
         .in('booking_id', sessionIds)
@@ -261,7 +266,7 @@ export async function getMentorConversationList(studentId) {
         .from('mentorship_sessions')
         .select(`
             id, mentor_id, topic, scheduled_at, status, created_at, serial_id,
-            mentor:profiles!mentorship_sessions_mentor_id_fkey (id, full_name, avatar_url)
+            mentor:profiles!mentorship_sessions_mentor_id_fkey (id, full_name, avatar_url, avatar_storage_key)
         `)
         .eq('student_id', studentId)
         .neq('mentor_id', studentId)
@@ -296,6 +301,7 @@ export async function getMentorConversationList(studentId) {
                 mentor_id: mid,
                 mentor_name: session.mentor?.full_name || 'Unknown Mentor',
                 avatar_url: session.mentor?.avatar_url || null,
+                avatar_storage_key: session.mentor?.avatar_storage_key || null,
                 sessions: [],
                 all_messages: [],
             });
@@ -318,6 +324,7 @@ export async function getMentorConversationList(studentId) {
             mentor_id: entry.mentor_id,
             mentor_name: entry.mentor_name,
             avatar_url: entry.avatar_url,
+            avatar_storage_key: entry.avatar_storage_key,
             session_count: entry.sessions.length,
             last_message: lastMsg ? lastMsg.message_text : null,
             last_message_at: lastMsg ? lastMsg.created_at : null,
@@ -362,7 +369,7 @@ export async function getMentorThread(studentId, mentorId) {
         .from('mentorship_booking_messages')
         .select(`
             id, booking_id, sender_id, sender_role, message_text, created_at,
-            sender:profiles!mentorship_booking_messages_sender_id_fkey (full_name, avatar_url)
+            sender:profiles!mentorship_booking_messages_sender_id_fkey (full_name, avatar_url, avatar_storage_key)
         `)
         .in('booking_id', sessionIds)
         .order('created_at', { ascending: true });

@@ -1,3 +1,4 @@
+import { uploadPrivateImage, deletePrivateImage, invalidatePrivateImageCache, cleanupPrivateImages } from './r2ImageUpload.js';
 import { supabase } from './supabaseClient.js';
 import { AuthService } from './authService.js';
 import { PayoutService } from './payoutService.js';
@@ -279,7 +280,10 @@ export const ProfileService = {
         if (!session) throw new Error('Unauthorized: No active session');
         const userId = session.user.id;
 
-        // SECURITY: Validate file type and size
+        // SECURITY: Validate that a real, non-empty image file was supplied.
+        if (!fileObject || typeof fileObject.size !== 'number' || fileObject.size <= 0) {
+            throw new Error('Please select a non-empty image file.');
+        }
         if (!ALLOWED_AVATAR_TYPES.includes(fileObject.type)) {
             throw new Error('Invalid file type. Only JPEG, PNG, WebP, and GIF are allowed.');
         }
@@ -287,26 +291,56 @@ export const ProfileService = {
             throw new Error('File too large. Maximum avatar size is 5MB.');
         }
 
-        const fileExt = fileObject.name.split('.').pop().toLowerCase();
-        const filePath = `${userId}/profile_${Date.now()}.${fileExt}`;
+        const { data: previousProfile, error: previousError } = await supabase
+            .from('profiles').select('avatar_storage_key').eq('id', userId).maybeSingle();
+        if (previousError) throw previousError;
 
-        const { error: uploadError } = await supabase.storage
-            .from('avatars')
-            .upload(filePath, fileObject, { upsert: true });
-
-        if (uploadError) throw uploadError;
-
-        const { data: publicUrlData } = supabase.storage.from('avatars').getPublicUrl(filePath);
-
+        const avatarObjectKey = await uploadPrivateImage({ file: fileObject, purpose: 'avatar' });
         const { data, error } = await supabase
             .from('profiles')
-            .update({ avatar_url: publicUrlData.publicUrl, updated_at: new Date() })
+            .update({ avatar_url: null, avatar_storage_key: avatarObjectKey, updated_at: new Date() })
             .eq('id', userId)
             .select()
             .maybeSingle();
 
-        if (error) throw error;
+        if (error || !data) {
+            try { await deletePrivateImage({ resourceType: 'avatar', resourceId: userId, objectKey: avatarObjectKey }); }
+            catch (cleanupError) { console.warn('Could not clean up uncommitted avatar upload.', cleanupError); }
+            if (error) throw error;
+            throw new Error('Profile was not updated.');
+        }
+
+        invalidatePrivateImageCache({ resourceType: 'avatar', resourceId: userId });
+        const previousKey = previousProfile?.avatar_storage_key;
+        if (previousKey && previousKey !== avatarObjectKey) {
+            try { await deletePrivateImage({ resourceType: 'avatar', resourceId: userId, objectKey: previousKey }); }
+            catch (cleanupError) { console.warn('Could not clean up replaced avatar.', cleanupError); }
+        }
+        try { await cleanupPrivateImages(); }
+        catch (cleanupError) { console.warn('Could not sweep abandoned private images.', cleanupError); }
         return data;
+
+    },
+
+    async removeAvatar() {
+        const session = await AuthService.getSession();
+        if (!session?.user?.id) throw new Error('Unauthorized: No active session');
+        const userId = session.user.id;
+        const { data: profile, error: readError } = await supabase
+            .from('profiles').select('avatar_storage_key').eq('id', userId).maybeSingle();
+        if (readError) throw readError;
+
+        const { error } = await supabase.from('profiles')
+            .update({ avatar_url: null, avatar_storage_key: null, updated_at: new Date() })
+            .eq('id', userId);
+        if (error) throw error;
+
+        invalidatePrivateImageCache({ resourceType: 'avatar', resourceId: userId });
+        if (profile?.avatar_storage_key) {
+            try { await deletePrivateImage({ resourceType: 'avatar', resourceId: userId, objectKey: profile.avatar_storage_key }); }
+            catch (cleanupError) { console.warn('Could not clean up removed avatar.', cleanupError); }
+        }
+        return true;
     },
 
     /**
@@ -397,7 +431,11 @@ export const ProfileService = {
                         xhr.onload = () => {
                             if (signal) signal.removeEventListener('abort', handleAbort);
                             if (xhr.status >= 200 && xhr.status < 300) {
-                                const etag = xhr.getResponseHeader('ETag') || xhr.getResponseHeader('etag') || `"part-${partNumber}"`;
+                                const etag = xhr.getResponseHeader('ETag') || xhr.getResponseHeader('etag');
+                                if (!etag) {
+                                    reject(new Error('R2 did not expose the uploaded part ETag. Check the bucket CORS ExposeHeaders configuration.'));
+                                    return;
+                                }
                                 resolve({ PartNumber: partNumber, ETag: etag });
                             } else {
                                 reject(new Error(`Chunk upload failed: ${xhr.statusText}`));

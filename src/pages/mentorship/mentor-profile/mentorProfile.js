@@ -1,5 +1,6 @@
 import { MentorService } from '../../../services/mentorService.js';
 import { supabase } from '../../../services/supabaseClient.js';
+import { resolveProfileAvatar } from '../../../services/r2ImageUpload.js';
 
 function formatProfileResponseTime(seconds) {
     if (seconds == null || !Number.isFinite(Number(seconds)) || Number(seconds) < 0) return 'Not enough data';
@@ -66,7 +67,7 @@ async function initMentorProfile() {
     }
 }
 
-function renderProfile(mentor) {
+async function renderProfile(mentor) {
     // 1. Booking Button - Do this FIRST so it works even if other rendering fails
     const bookBtn = document.getElementById('book-session-btn');
     if (bookBtn) {
@@ -98,7 +99,8 @@ function renderProfile(mentor) {
     const avatarContainer = document.querySelector('.w-24.h-24.rounded-full');
     if (avatarContainer) {
         const fallbackAvatar = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(mentor.full_name) + '&background=random&color=fff';
-        avatarContainer.innerHTML = `<img src="${mentor.avatar_url || fallbackAvatar}" class="w-full h-full rounded-full object-cover" alt="${mentor.full_name}">`;
+        const resolvedAvatar = await resolveProfileAvatar(mentor);
+        avatarContainer.innerHTML = `<img src="${resolvedAvatar || fallbackAvatar}" class="w-full h-full rounded-full object-cover" alt="${mentor.full_name}">`;
     }
 
     const ratingEl = document.getElementById('mentor-rating');
@@ -274,10 +276,13 @@ function renderProfile(mentor) {
         reviewsSection.classList.remove('hidden');
         const reviews = mentor.reviews || [];
         if (reviews.length > 0) {
-            reviewsContainer.innerHTML = reviews.map(rev => `
+            const reviewAvatarUrls = await Promise.all(reviews.map(rev =>
+                resolveProfileAvatar(rev.student || {}, 'mentor-reviewer').catch(() => null)
+            ));
+            reviewsContainer.innerHTML = reviews.map((rev, index) => `
                 <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm">
                     <div class="flex items-center gap-3 mb-4">
-                        <img src="${rev.student?.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(rev.student?.full_name || 'Student') + '&background=random&color=fff'}" class="w-10 h-10 rounded-full object-cover">
+                        <img src="${reviewAvatarUrls[index] || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(rev.student?.full_name || 'Student') + '&background=random&color=fff'}" class="w-10 h-10 rounded-full object-cover">
                         <div>
                             <h4 class="text-sm font-bold text-slate-900 dark:text-white">${rev.student?.full_name || 'Student'}</h4>
                             <div class="flex text-orange-400">

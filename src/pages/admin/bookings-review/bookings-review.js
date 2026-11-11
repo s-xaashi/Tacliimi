@@ -2,6 +2,7 @@ import { supabase } from '/src/services/supabaseClient.js';
 import { AuthService } from '/src/services/authService.js';
 import { MentorService } from '/src/services/mentorService.js';
 import { showToast, showConfirmModal, showAlertModal } from '/src/services/uiUtils.js';
+import { resolveProfileAvatar } from '/src/services/r2ImageUpload.js';
 import { buildProgramProgressHtml, getProgramMeetingStatus, openMentorshipRescheduleModal } from '/src/utils/js/mentorshipUI.js';
 
 // XSS safety helper
@@ -100,11 +101,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             ]);
 
             if (dataRes.error) throw dataRes.error;
-            allSessions = dataRes.data || [];
+            allSessions = await Promise.all((dataRes.data || []).map(async session => ({
+                ...session,
+                student: session.student ? { ...session.student, _resolvedAvatar: await resolveProfileAvatar(session.student).catch(() => null) } : null,
+                mentor: session.mentor ? { ...session.mentor, _resolvedAvatar: await resolveProfileAvatar(session.mentor).catch(() => null) } : null
+            })));
             
             // Update profile UI if needed
             if (profileRes && avatarEl) {
-                avatarEl.src = profileRes.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(profileRes.full_name)}&background=4F46E5&color=fff`;
+                avatarEl.src = await resolveProfileAvatar(profileRes).catch(() => null) || `https://ui-avatars.com/api/?name=${encodeURIComponent(profileRes.full_name)}&background=4F46E5&color=fff`;
             }
 
             renderStats();
@@ -264,8 +269,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (session.booking_status === 'awaiting_meeting_link') statusColor = "bg-blue-100 text-blue-600";
             }
 
-            const studentAvatar = student.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.full_name)}&background=6366f1&color=fff`;
-            const mentorAvatar = mentor.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(mentor.full_name)}&background=7c3aed&color=fff`;
+            const studentAvatar = student._resolvedAvatar || student.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.full_name)}&background=6366f1&color=fff`;
+            const mentorAvatar = mentor._resolvedAvatar || mentor.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(mentor.full_name)}&background=7c3aed&color=fff`;
             
             let healthHtml = '';
             if (session.mentorship_type === 'program') {
@@ -814,11 +819,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     // 6. Student Profile Modal Logic
-    window.openStudentProfile = function(student) {
+    window.openStudentProfile = async function(student) {
         const modal = document.getElementById('student-profile-modal');
         if (!modal) return;
 
-        document.getElementById('student-modal-avatar').src = student.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.full_name || 'S')}&background=random&color=fff`;
+        document.getElementById('student-modal-avatar').src = await resolveProfileAvatar(student).catch(() => null) || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.full_name || 'S')}&background=random&color=fff`;
         document.getElementById('student-modal-name').textContent = student.full_name || 'Unknown Student';
         document.getElementById('student-modal-title').textContent = student.professional_title || 'Student';
         document.getElementById('student-modal-email').textContent = student.email || 'No email shared';
