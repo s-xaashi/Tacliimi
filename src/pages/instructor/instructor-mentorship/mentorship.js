@@ -2069,7 +2069,7 @@ async function renderChatMessages(messages, myRole, myAvatarUrl) {
     return (await Promise.all(messages.map(async msg => {
         const isMe = msg.sender_role === myRole;
         const resolvedSenderAvatar = await resolveProfileAvatar(msg.sender || {}, 'mentorship-session', msg.booking_id).catch(() => null);
-        const senderAvatar = (isMe ? myAvatarUrl : resolvedSenderAvatar) || msg.sender?.avatar_url
+        const senderAvatar = (isMe ? myAvatarUrl : resolvedSenderAvatar)
             || `https://ui-avatars.com/api/?name=${encodeURIComponent(msg.sender?.full_name || (isMe ? 'Me' : 'Them'))}&background=random&color=fff`;
         const timeStr = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         const avatarHtml = `<img src="${senderAvatar}" class="w-8 h-8 rounded-full object-cover shrink-0 shadow-sm" title="${msg.sender?.full_name || ''}" />`;
@@ -2103,7 +2103,7 @@ async function openMessagingModal(bookingId, studentName) {
 
     const session = await AuthService.getSession();
     const myProfile = (await supabase.from('profiles').select('id, avatar_url, avatar_storage_key').eq('id', session?.user?.id).single()).data;
-    const myAvatarUrl = await resolveProfileAvatar(myProfile).catch(() => null) || myProfile?.avatar_url || null;
+    const myAvatarUrl = await resolveProfileAvatar(myProfile).catch(() => null);
 
     const loadMessages = async (isFirstLoad = false) => {
         try {
