@@ -21,7 +21,7 @@ window.courseDraft = {
     thumbnail_storage_key: null,
     thumbnail_preview_url: null,
     intro_video_url: null,
-    intro_video_provider: null,
+    intro_video_provider: 'youtube',
     intro_video_storage_key: null,
     curriculum: [],
     pricing: {
@@ -279,7 +279,7 @@ async function loadDraft(courseId) {
             thumbnail_url: course.thumbnail_url || null,
             thumbnail_storage_key: course.thumbnail_storage_key || null,
             intro_video_url: course.intro_video_url || null,
-            intro_video_provider: course.intro_video_provider || null,
+            intro_video_provider: course.intro_video_provider || (course.intro_video_storage_key ? 'r2' : 'youtube'),
             intro_video_storage_key: course.intro_video_storage_key || null,
             curriculum: [],
             pricing: {
@@ -510,7 +510,7 @@ async function performSave(silent = false) {
             thumbnail_url: window.courseDraft.thumbnail_storage_key ? null : (window.courseDraft.thumbnail_url || null),
             thumbnail_storage_key: window.courseDraft.thumbnail_storage_key || null,
             intro_video_url: window.courseDraft.intro_video_url || null,
-            intro_video_provider: window.courseDraft.intro_video_provider || (window.courseDraft.intro_video_url ? 'youtube' : null),
+            intro_video_provider: window.courseDraft.intro_video_provider || (window.courseDraft.intro_video_storage_key ? 'r2' : 'youtube'),
             intro_video_storage_key: window.courseDraft.intro_video_storage_key || null,
             price_type: window.courseDraft.pricing.type || 'free',
             price: (window.courseDraft.pricing.price != null && !isNaN(parseFloat(window.courseDraft.pricing.price)))
