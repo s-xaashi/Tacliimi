@@ -476,7 +476,7 @@
                 
                 (async () => {
                     try {
-                        const signedUrl = await CourseService.getR2PlaybackUrl(currentCourse.id, null, 'course');
+                        const signedUrl = await CourseService.getR2PlaybackUrl(currentCourse.id, null, 'intro');
                         vidElement.src = `${signedUrl}#t=1`;
                     } catch (e) {
                         console.error('Failed to load intro video:', e);

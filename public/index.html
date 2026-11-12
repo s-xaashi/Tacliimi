@@ -796,6 +796,7 @@
 
             try {
                 const { CourseService } = await import('/src/services/courseService.js');
+                const { resolveCourseThumbnail, resolveProfileAvatar } = await import('/src/services/r2ImageUpload.js');
                 const allCourses = await CourseService.getPublishedCourses({ sort: 'Newest' });
                 const courses = allCourses.slice(0, 4);
 
@@ -804,8 +805,26 @@
                     return;
                 }
 
+                const displayCourses = await Promise.all(courses.map(async course => {
+                    const [thumbnail, instructorAvatar] = await Promise.all([
+                        resolveCourseThumbnail(course).catch(error => {
+                            console.warn('Could not resolve homepage course thumbnail:', course.id, error);
+                            return null;
+                        }),
+                        resolveProfileAvatar({
+                            id: course.instructor_id,
+                            avatar_storage_key: course.instructor_avatar_storage_key,
+                            avatar_url: course.instructor_avatar
+                        }, 'marketplace-instructor').catch(error => {
+                            console.warn('Could not resolve homepage instructor avatar:', course.instructor_id, error);
+                            return null;
+                        })
+                    ]);
+                    return { ...course, _resolvedThumbnail: thumbnail, _resolvedInstructorAvatar: instructorAvatar };
+                }));
+
                 let html = '';
-                courses.forEach(course => {
+                displayCourses.forEach(course => {
                     const categoryName = course.category_name || 'Uncategorized';
                     const instructorName = course.instructor_name || 'Anonymous Instructor';
                     const rating = course.average_rating || 0;
@@ -844,7 +863,7 @@
                         <div class="relative overflow-hidden shrink-0 aspect-[16/10]">
                             <img alt="${course.title}"
                                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                                src="${course.thumbnail_url || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80'}" />
+                                src="${course._resolvedThumbnail || (!course.thumbnail_storage_key ? course.thumbnail_url : null) || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80'}" />
                             
                             <!-- Hover Overlay -->
                             <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -887,7 +906,7 @@
 
                             <div class="flex items-center gap-2 mb-6">
                                 <div class="relative">
-                                    <img src="${course.instructor_avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(instructorName) + '&background=random'}"
+                                    <img src="${course._resolvedInstructorAvatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(instructorName) + '&background=random'}"
                                          class="w-6 h-6 rounded-full object-cover ring-2 ring-edu-purple"
                                          alt="${instructorName}">
                                 </div>

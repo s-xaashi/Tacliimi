@@ -21,6 +21,9 @@ window.courseDraft = {
     thumbnail_storage_key: null,
     thumbnail_preview_url: null,
     intro_video_url: null,
+    intro_video_preview_url: null,
+    intro_video_provider: 'youtube',
+    intro_video_storage_key: null,
     curriculum: [],
     pricing: {
         type: 'free',
@@ -277,6 +280,9 @@ async function loadDraft(courseId) {
             thumbnail_url: course.thumbnail_url || null,
             thumbnail_storage_key: course.thumbnail_storage_key || null,
             intro_video_url: course.intro_video_url || null,
+            intro_video_preview_url: null,
+            intro_video_provider: course.intro_video_provider || (course.intro_video_storage_key ? 'r2' : 'youtube'),
+            intro_video_storage_key: course.intro_video_storage_key || null,
             curriculum: [],
             pricing: {
                 type: String(course.price_type || 'free').toLowerCase(),
@@ -400,7 +406,7 @@ async function loadDraft(courseId) {
         
         const thumbnailPreviewUrl = getCourseThumbnailPreviewUrl();
         if (thumbnailPreviewUrl) showThumbnailPreview(thumbnailPreviewUrl);
-        if (window.courseDraft.intro_video_url) showVideoPreview(window.courseDraft.intro_video_url, "Introduction Video");
+        await restoreIntroVideoPreview(window.courseDraft);
         
         const certToggle = document.getElementById('certificate-enabled-toggle');
         if (certToggle) certToggle.checked = window.courseDraft.certificate_enabled;
@@ -414,6 +420,33 @@ async function loadDraft(courseId) {
             showToast("Error loading course draft: " + e.message, true);
         }
     }
+}
+
+let introPreviewRequestId = 0;
+
+/** Restore legacy embed URLs and private R2 introduction-video previews. */
+async function restoreIntroVideoPreview(course = window.courseDraft) {
+    if (!course) return;
+    const requestId = ++introPreviewRequestId;
+    const storageKey = course.intro_video_storage_key;
+    const legacyUrl = course.intro_video_url;
+    if (storageKey) {
+        try {
+            const playbackUrl = await CourseService.getR2PlaybackUrl(course.id, null, 'intro');
+            if (requestId !== introPreviewRequestId || course !== window.courseDraft) return;
+            window.courseDraft.intro_video_preview_url = playbackUrl;
+            showVideoPreview(playbackUrl, 'Introduction Video');
+        } catch (error) {
+            if (requestId !== introPreviewRequestId || course !== window.courseDraft) return;
+            console.warn('Could not restore the saved R2 introduction-video preview:', error);
+            window.courseDraft.intro_video_preview_url = null;
+            showVideoPreview('', 'Introduction Video');
+        }
+        return;
+    }
+    window.courseDraft.intro_video_preview_url = null;
+    if (legacyUrl) showVideoPreview(legacyUrl, 'Introduction Video');
+    else showVideoPreview('', '');
 }
 
 // --- STATE MANAGEMENT & PERSISTENCE ---
@@ -506,6 +539,8 @@ async function performSave(silent = false) {
             thumbnail_url: window.courseDraft.thumbnail_storage_key ? null : (window.courseDraft.thumbnail_url || null),
             thumbnail_storage_key: window.courseDraft.thumbnail_storage_key || null,
             intro_video_url: window.courseDraft.intro_video_url || null,
+            intro_video_provider: window.courseDraft.intro_video_provider || (window.courseDraft.intro_video_storage_key ? 'r2' : 'youtube'),
+            intro_video_storage_key: window.courseDraft.intro_video_storage_key || null,
             price_type: window.courseDraft.pricing.type || 'free',
             price: (window.courseDraft.pricing.price != null && !isNaN(parseFloat(window.courseDraft.pricing.price)))
                 ? parseFloat(window.courseDraft.pricing.price)
@@ -852,7 +887,7 @@ function populateFields() {
         // Restore Asset Previews
         const thumbnailPreviewUrl = getCourseThumbnailPreviewUrl();
         if (thumbnailPreviewUrl) showThumbnailPreview(thumbnailPreviewUrl);
-        if (window.courseDraft.intro_video_url) showVideoPreview(window.courseDraft.intro_video_url, "Introduction Video");
+        void restoreIntroVideoPreview(window.courseDraft);
 
     } else if (window.currentStep === 2) {
         renderCurriculum();
@@ -1065,10 +1100,22 @@ async function setupEventListeners() {
                     window.courseDraft.intro_video_storage_key = uploadResult.objectKey;
                     window.courseDraft.intro_video_url = null; // Clear old URL
 
-                    // We can't generate a stable playback URL here without invoking the R2 presigned GET, 
-                    // so we just show the filename. The learning interface handles GET URLs.
-                    showVideoPreview('', file.name);
-                    window.saveDraft(true);
+                    // Persist the R2 provider and object key before treating this upload as saved.
+                    // If the database write fails, keep it in sessionUploadedFiles so Exit can clean it up.
+                    await window.saveDraft(true, true);
+                    window.sessionUploadedFiles = window.sessionUploadedFiles.filter(
+                        uploaded => !(uploaded.provider === 'r2' && uploaded.key === uploadResult.objectKey)
+                    );
+                    // Resolve a short-lived preview URL after the key has been saved.
+                    // A preview-signing failure must not mark a successful upload as failed.
+                    try {
+                        window.courseDraft.intro_video_preview_url = await CourseService.getR2PlaybackUrl(window.courseDraft.id, null, 'intro');
+                        showVideoPreview(window.courseDraft.intro_video_preview_url, file.name);
+                    } catch (previewError) {
+                        console.warn('Intro video uploaded, but its preview URL could not be resolved:', previewError);
+                        window.courseDraft.intro_video_preview_url = null;
+                        showVideoPreview('', file.name);
+                    }
                 } catch (err) {
                     console.error('Video upload error:', err);
                     alert('Upload failed: ' + err.message);
@@ -1105,6 +1152,7 @@ async function setupEventListeners() {
             if (!window.courseDraft.id) await window.saveDraft(true, true);
             window.courseDraft.intro_video_provider = 'youtube';
             window.courseDraft.intro_video_url = url;
+            window.courseDraft.intro_video_preview_url = null;
             window.courseDraft.intro_video_storage_key = null; // Clear R2 key
 
             showVideoPreview(url, "Embedded Video");
@@ -2295,31 +2343,32 @@ function showVideoPreview(url, filename) {
     const icon = document.getElementById('video-placeholder-icon');
     const nameDisplay = document.getElementById('video-filename-display');
     const btn = document.getElementById('btn-upload-video');
-
-    if (container) {
-        // Create actual video preview
-        let video = container.querySelector('video.intro-preview-vid');
+    if (!container) return;
+    let video = container.querySelector('video.intro-preview-vid');
+    if (url) {
         if (!video) {
             video = document.createElement('video');
             video.className = 'intro-preview-vid absolute inset-0 w-full h-full object-cover z-20';
             video.controls = true;
             video.muted = true;
-            video.preload = "metadata";
+            video.preload = 'metadata';
             container.appendChild(video);
         }
-        
-        // Append #t=1 if it doesn't already have a hash, to force thumbnail frame
         video.src = url.includes('#') ? url : url + '#t=1';
-        
         if (icon) icon.classList.add('hidden');
-        if (tick) {
-            tick.classList.remove('hidden');
-            tick.style.display = 'flex';
-            tick.classList.add('z-30'); // Keep tick on top or visible
-        }
-        if (nameDisplay) nameDisplay.innerText = filename || "Video Attached";
-        if (btn) btn.innerText = "Update Intro Video";
+    } else {
+        // Keep attachment state visible without creating a video element with an empty source.
+        if (video) { video.pause(); video.removeAttribute('src'); video.load(); video.remove(); }
+        if (icon) icon.classList.remove('hidden');
     }
+    const hasAttachment = Boolean(filename || url);
+    if (tick) {
+        tick.classList.toggle('hidden', !hasAttachment);
+        tick.style.display = hasAttachment ? 'flex' : 'none';
+        tick.classList.add('z-30');
+    }
+    if (nameDisplay) nameDisplay.innerText = filename || (url ? 'Video Attached' : '');
+    if (btn) btn.innerText = hasAttachment ? 'Update Intro Video' : 'Upload Intro Video';
 }
 
 function markFieldError(el) {

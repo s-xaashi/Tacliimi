@@ -35,13 +35,28 @@ Deno.serve(async (req) => {
         return json({ error: "Avatar object is not owned by this account" }, 403);
       }
     } else {
-      if (!new RegExp("^course-thumbnails/" + user.id + "/" + id + "/[a-f0-9-]+\\.(jpg|png|webp|gif)$", "i").test(key)) {
-        return json({ error: "Thumbnail object is not owned by this account or course" }, 403);
+      const keyMatch = key.match(/^course-thumbnails\/([a-f0-9-]+)\/([a-f0-9-]+)\/[a-f0-9-]+\.(jpg|png|webp|gif)$/i);
+      if (!keyMatch || keyMatch[1].toLowerCase() !== user.id.toLowerCase()) {
+        return json({ error: "Thumbnail object is not owned by this account" }, 403);
       }
-      const { data: course, error } = await admin.from("courses").select("id")
+      const { data: course, error } = await admin.from("courses")
+        .select("id, instructor_id, root_course_id")
         .eq("id", id).eq("instructor_id", user.id).maybeSingle();
       if (error) throw error;
       if (!course) return json({ error: "Course not found or not owned by this instructor" }, 403);
+
+      const sourceCourseId = keyMatch[2];
+      if (sourceCourseId !== id) {
+        const { data: sourceCourse, error: sourceError } = await admin.from("courses")
+          .select("id, instructor_id, root_course_id")
+          .eq("id", sourceCourseId).eq("instructor_id", user.id).maybeSingle();
+        if (sourceError) throw sourceError;
+        if (!sourceCourse || (sourceCourse.root_course_id ?? sourceCourse.id) !== (course.root_course_id ?? course.id)) {
+          // Leave the object untouched when its source version can no longer
+          // be proven to belong to this family. Orphan cleanup can handle it.
+          return json({ deleted: false, reason: "source_version_unavailable" });
+        }
+      }
     }
 
     // Never delete an object that any profile/course row still references.

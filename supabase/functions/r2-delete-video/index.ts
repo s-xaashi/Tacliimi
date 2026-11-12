@@ -42,9 +42,20 @@ Deno.serve(async (req) => {
 
     let objectKey = null;
     let mediaAssetId = null;
+    let preserveSharedIntro = false;
 
     if (delete_type === 'intro') {
       objectKey = course.intro_video_storage_key;
+      if (objectKey) {
+        const { data: otherIntroReferences, error: referenceError } = await supabase
+          .from('courses')
+          .select('id')
+          .eq('intro_video_storage_key', objectKey)
+          .neq('id', course_id)
+          .limit(1);
+        if (referenceError) throw referenceError;
+        preserveSharedIntro = Boolean(otherIntroReferences?.length);
+      }
       // Intros might not have media_asset_id linked directly yet
     } else {
       if (!lesson_id) throw new Error('Missing lesson_id');
@@ -72,21 +83,23 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ success: true, message: 'No R2 video found to delete' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    const s3Client = new S3Client({
-      region: 'auto',
-      endpoint: Deno.env.get('R2_ENDPOINT') ?? '',
-      credentials: {
-        accessKeyId: Deno.env.get('R2_ACCESS_KEY_ID') ?? '',
-        secretAccessKey: Deno.env.get('R2_SECRET_ACCESS_KEY') ?? '',
-      },
-    });
+    if (!preserveSharedIntro) {
+      const s3Client = new S3Client({
+        region: 'auto',
+        endpoint: Deno.env.get('R2_ENDPOINT') ?? '',
+        credentials: {
+          accessKeyId: Deno.env.get('R2_ACCESS_KEY_ID') ?? '',
+          secretAccessKey: Deno.env.get('R2_SECRET_ACCESS_KEY') ?? '',
+        },
+      });
 
-    const command = new DeleteObjectCommand({
-      Bucket: Deno.env.get('R2_BUCKET_NAME') ?? '',
-      Key: objectKey,
-    });
+      const command = new DeleteObjectCommand({
+        Bucket: Deno.env.get('R2_BUCKET_NAME') ?? '',
+        Key: objectKey,
+      });
 
-    await s3Client.send(command);
+      await s3Client.send(command);
+    }
 
     // Update database
     if (delete_type === 'intro') {
@@ -108,7 +121,10 @@ Deno.serve(async (req) => {
       }
     }
 
-    return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    return new Response(JSON.stringify({
+      success: true,
+      preservedSharedObject: preserveSharedIntro
+    }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch (error: any) {
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
