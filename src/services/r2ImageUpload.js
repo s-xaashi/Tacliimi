@@ -80,7 +80,8 @@ export function invalidatePrivateImageCache({ resourceType, resourceId }) {
  * Legacy URLs are used only for records that have no private storage key.
  */
 export async function resolveProfileAvatar(profile, visibilityContext = null, visibilityContextId = null) {
-    const profileId = profile?.id || profile?.instructor_id;
+    // Mentorship records have their own `id`; avatar ownership always belongs to the user profile.
+    const profileId = profile?.instructor_id || profile?.id;
     if (profile?.avatar_storage_key) {
         if (!profileId) return null;
         return await resolvePrivateImage({ resourceType: "avatar", resourceId: profileId, visibilityContext, visibilityContextId });
