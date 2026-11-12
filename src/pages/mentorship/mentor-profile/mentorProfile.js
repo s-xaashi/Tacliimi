@@ -99,7 +99,11 @@ async function renderProfile(mentor) {
     const avatarContainer = document.querySelector('.w-24.h-24.rounded-full');
     if (avatarContainer) {
         const fallbackAvatar = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(mentor.full_name) + '&background=random&color=fff';
-        const resolvedAvatar = await resolveProfileAvatar(mentor);
+        // A private-avatar signing failure should not block the mentor profile page.
+        const resolvedAvatar = await resolveProfileAvatar(mentor).catch(error => {
+            console.warn('Could not resolve mentor profile avatar:', mentor.instructor_id || mentor.id, error);
+            return null;
+        });
         avatarContainer.innerHTML = `<img src="${resolvedAvatar || fallbackAvatar}" class="w-full h-full rounded-full object-cover" alt="${mentor.full_name}">`;
     }
 
