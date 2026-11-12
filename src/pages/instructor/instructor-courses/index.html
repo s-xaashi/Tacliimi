@@ -258,6 +258,7 @@
         import { supabase } from '/src/services/supabaseClient.js';
         import { PaymentService } from '/src/services/paymentService.js';
         import { injectSecureWalletModal } from '/src/utils/js/paymentUI.js';
+        import { resolveCourseThumbnail } from '/src/services/r2ImageUpload.js';
 
         // Initialize the global Sifalo Payment UI immediately
         injectSecureWalletModal();
@@ -289,6 +290,15 @@
                     grid.classList.remove('hidden');
 
                     allCourses = await CourseService.getInstructorCoursesForDisplay(null);
+                    // Resolve private R2 thumbnails once per refresh; rendering remains synchronous
+                    // so tab changes and other card updates do not race asynchronous image requests.
+                    allCourses = await Promise.all(allCourses.map(async course => ({
+                        ...course,
+                        _resolvedThumbnail: await resolveCourseThumbnail(course).catch(error => {
+                            console.warn('Could not resolve course thumbnail:', course.id, error);
+                            return null;
+                        })
+                    })));
                     
                     boostSettings = await boostService.getBoostSettings();
                     
@@ -552,7 +562,7 @@
                                 <!-- Thumbnail Section -->
                                 <div class="relative overflow-hidden shrink-0 aspect-[16/10]">
                                     <img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                                        src="${course.thumbnail_url || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80'}" alt="${course.title}">
+                                        src="${course._resolvedThumbnail || (!course.thumbnail_storage_key ? course.thumbnail_url : null) || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80'}" alt="${course.title}">
                                     
                                     <div class="absolute top-4 right-4 flex flex-col items-end gap-2">
                                         <div class="px-3 py-1 rounded-full text-[10px] font-black ${isResubmitted ? 'bg-emerald-500 text-white shadow-lg' : color} shadow-sm backdrop-blur-md flex items-center gap-1.5">
