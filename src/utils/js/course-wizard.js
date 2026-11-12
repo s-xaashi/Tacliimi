@@ -21,6 +21,8 @@ window.courseDraft = {
     thumbnail_storage_key: null,
     thumbnail_preview_url: null,
     intro_video_url: null,
+    intro_video_provider: null,
+    intro_video_storage_key: null,
     curriculum: [],
     pricing: {
         type: 'free',
@@ -277,6 +279,8 @@ async function loadDraft(courseId) {
             thumbnail_url: course.thumbnail_url || null,
             thumbnail_storage_key: course.thumbnail_storage_key || null,
             intro_video_url: course.intro_video_url || null,
+            intro_video_provider: course.intro_video_provider || null,
+            intro_video_storage_key: course.intro_video_storage_key || null,
             curriculum: [],
             pricing: {
                 type: String(course.price_type || 'free').toLowerCase(),
@@ -506,6 +510,8 @@ async function performSave(silent = false) {
             thumbnail_url: window.courseDraft.thumbnail_storage_key ? null : (window.courseDraft.thumbnail_url || null),
             thumbnail_storage_key: window.courseDraft.thumbnail_storage_key || null,
             intro_video_url: window.courseDraft.intro_video_url || null,
+            intro_video_provider: window.courseDraft.intro_video_provider || (window.courseDraft.intro_video_url ? 'youtube' : null),
+            intro_video_storage_key: window.courseDraft.intro_video_storage_key || null,
             price_type: window.courseDraft.pricing.type || 'free',
             price: (window.courseDraft.pricing.price != null && !isNaN(parseFloat(window.courseDraft.pricing.price)))
                 ? parseFloat(window.courseDraft.pricing.price)
@@ -1068,7 +1074,12 @@ async function setupEventListeners() {
                     // We can't generate a stable playback URL here without invoking the R2 presigned GET, 
                     // so we just show the filename. The learning interface handles GET URLs.
                     showVideoPreview('', file.name);
-                    window.saveDraft(true);
+                    // Persist the R2 provider and object key before treating this upload as saved.
+                    // If the database write fails, keep it in sessionUploadedFiles so Exit can clean it up.
+                    await window.saveDraft(true, true);
+                    window.sessionUploadedFiles = window.sessionUploadedFiles.filter(
+                        uploaded => !(uploaded.provider === 'r2' && uploaded.key === uploadResult.objectKey)
+                    );
                 } catch (err) {
                     console.error('Video upload error:', err);
                     alert('Upload failed: ' + err.message);
