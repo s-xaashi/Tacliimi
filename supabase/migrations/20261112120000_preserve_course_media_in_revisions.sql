@@ -43,7 +43,7 @@ set
       and source.deleted_at is null
       and source.intro_video_storage_key is not null
       and target.intro_video_url is not distinct from source.intro_video_url
-      and (target.intro_video_provider is null or target.intro_video_provider = source.intro_video_provider)
+      and (target.intro_video_provider is null or target.intro_video_provider = 'youtube' or target.intro_video_provider = source.intro_video_provider)
     order by source.version_number desc, source.is_latest_published desc
     limit 1
   ),
@@ -56,7 +56,7 @@ set
       and source.deleted_at is null
       and source.intro_video_storage_key is not null
       and target.intro_video_url is not distinct from source.intro_video_url
-      and (target.intro_video_provider is null or target.intro_video_provider = source.intro_video_provider)
+      and (target.intro_video_provider is null or target.intro_video_provider = 'youtube' or target.intro_video_provider = source.intro_video_provider)
     order by source.version_number desc, source.is_latest_published desc
     limit 1
   )
@@ -71,7 +71,7 @@ where target.deleted_at is null
       and source.deleted_at is null
       and source.intro_video_storage_key is not null
       and target.intro_video_url is not distinct from source.intro_video_url
-      and (target.intro_video_provider is null or target.intro_video_provider = source.intro_video_provider)
+      and (target.intro_video_provider is null or target.intro_video_provider = 'youtube' or target.intro_video_provider = source.intro_video_provider)
   );
 
 create or replace function public.get_or_create_course_revision(p_course_id uuid)
