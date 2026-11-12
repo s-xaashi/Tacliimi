@@ -406,7 +406,7 @@ async function loadDraft(courseId) {
         
         const thumbnailPreviewUrl = getCourseThumbnailPreviewUrl();
         if (thumbnailPreviewUrl) showThumbnailPreview(thumbnailPreviewUrl);
-        await restoreIntroVideoPreview(course);
+        await restoreIntroVideoPreview(window.courseDraft);
         
         const certToggle = document.getElementById('certificate-enabled-toggle');
         if (certToggle) certToggle.checked = window.courseDraft.certificate_enabled;
