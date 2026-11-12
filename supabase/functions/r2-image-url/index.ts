@@ -39,6 +39,7 @@ Deno.serve(async (req) => {
 
     let objectKey: string | null = null;
     let resourceOwnerId: string | null = null;
+    let resourceFamilyId: string | null = null;
     let permitted = false;
     if (type === "avatar") {
       const { data: profile, error } = await admin.from("profiles")
@@ -96,7 +97,7 @@ Deno.serve(async (req) => {
       objectKey = profile.avatar_storage_key;
     } else {
       const { data: course, error } = await admin.from("courses")
-        .select("id, instructor_id, thumbnail_url, thumbnail_storage_key, status, is_public, deleted_at, is_latest_published")
+        .select("id, instructor_id, root_course_id, thumbnail_url, thumbnail_storage_key, status, is_public, deleted_at, is_latest_published")
         .eq("id", id).maybeSingle();
       if (error) throw error;
       if (!course || course.deleted_at) return json({ error: "Image not found" }, 404);
@@ -122,6 +123,7 @@ Deno.serve(async (req) => {
       permitted = isPublic || userId === course.instructor_id || isAdmin || isEnrolledStudent;
       objectKey = course.thumbnail_storage_key;
       resourceOwnerId = course.instructor_id;
+      resourceFamilyId = course.root_course_id ?? course.id;
     }
     if (!permitted) return json({ error: "Image not available" }, 403);
     // Only keys in the dedicated image namespaces are eligible. Legacy URLs
@@ -132,7 +134,22 @@ Deno.serve(async (req) => {
 
     const expectedPrefix = type === "avatar" ? `avatars/${id}/` : `course-thumbnails/${resourceOwnerId}/${id}/`;
     if (!objectKey.startsWith(expectedPrefix)) {
-      return json({ error: "Image reference does not match its owner or resource" }, 403);
+      // A revision may intentionally reuse the published version's private
+      // thumbnail. Permit that only when the key's source course belongs to
+      // this exact instructor-owned course family.
+      if (type !== "thumbnail" || !resourceOwnerId || !resourceFamilyId) {
+        return json({ error: "Image reference does not match its owner or resource" }, 403);
+      }
+      const sourceCourseId = objectKey.split("/")[2];
+      const { data: sourceCourse, error: sourceCourseError } = await admin.from("courses")
+        .select("id, instructor_id, root_course_id")
+        .eq("id", sourceCourseId)
+        .eq("instructor_id", resourceOwnerId)
+        .maybeSingle();
+      if (sourceCourseError) throw sourceCourseError;
+      if (!sourceCourse || (sourceCourse.root_course_id ?? sourceCourse.id) !== resourceFamilyId) {
+        return json({ error: "Image reference does not belong to this course family" }, 403);
+      }
     }
 
     const endpoint = Deno.env.get("R2_ENDPOINT") ?? "";
