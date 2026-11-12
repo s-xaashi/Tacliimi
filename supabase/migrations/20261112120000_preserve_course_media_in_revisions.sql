@@ -13,6 +13,7 @@ where coalesce(target.root_course_id, target.id) = coalesce(source.root_course_i
   and target.deleted_at is null
   and target.version_status in ('draft', 'pending_review', 'rejected')
   and target.thumbnail_storage_key is null
+  and target.thumbnail_url is not distinct from source.thumbnail_url
   and source.is_latest_published = true
   and source.thumbnail_storage_key is not null;
 
@@ -27,6 +28,8 @@ where coalesce(target.root_course_id, target.id) = coalesce(source.root_course_i
   and target.deleted_at is null
   and target.version_status in ('draft', 'pending_review', 'rejected')
   and target.intro_video_storage_key is null
+  and target.intro_video_url is not distinct from source.intro_video_url
+  and (target.intro_video_provider is null or target.intro_video_provider = source.intro_video_provider)
   and source.is_latest_published = true
   and source.intro_video_storage_key is not null;
 
