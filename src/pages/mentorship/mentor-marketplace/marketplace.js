@@ -458,7 +458,11 @@ async function renderMentors(mentors) {
 
     grid.innerHTML = '';
     for (const mentor of mentors) {
-        const resolvedAvatar = await resolveProfileAvatar(mentor);
+        // Avatar signing must never prevent the mentor card itself from rendering.
+        const resolvedAvatar = await resolveProfileAvatar(mentor).catch(error => {
+            console.warn('Could not resolve mentor avatar:', mentor.instructor_id, error);
+            return null;
+        });
         const card = document.createElement('div');
         const isBoosted = mentor._boost_order !== undefined && mentor._boost_order !== 999999;
         const boostRing = isBoosted ? 'boosted-card' : '';
