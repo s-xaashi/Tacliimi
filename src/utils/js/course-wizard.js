@@ -1105,7 +1105,8 @@ async function setupEventListeners() {
                     await window.saveDraft(true, true);
                     window.sessionUploadedFiles = window.sessionUploadedFiles.filter(
                         uploaded => !(uploaded.provider === 'r2' && uploaded.key === uploadResult.objectKey)
-                    );                    // Resolve a short-lived preview URL after the key has been saved.
+                    );
+                    // Resolve a short-lived preview URL after the key has been saved.
                     // A preview-signing failure must not mark a successful upload as failed.
                     try {
                         window.courseDraft.intro_video_preview_url = await CourseService.getR2PlaybackUrl(window.courseDraft.id, null, 'intro');
