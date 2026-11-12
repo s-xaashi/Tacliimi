@@ -2,36 +2,77 @@
 -- Thumbnail keys are shared only inside one course family; r2-image-url and
 -- r2-image-delete validate that family relationship before signing or deleting.
 
--- Repair revisions created before this migration. Never overwrite an existing
--- revision asset; use only the family's currently published version as source.
+-- Repair older versions and revisions whose media keys were omitted by the
+-- previous revision-cloning function. Copy only when the legacy URL fields still
+-- match, so an intentionally changed URL is never overwritten. A source row
+-- must be in the same instructor-owned course family.
 update public.courses as target
-set thumbnail_storage_key = source.thumbnail_storage_key
-from public.courses as source
-where coalesce(target.root_course_id, target.id) = coalesce(source.root_course_id, source.id)
-  and target.instructor_id = source.instructor_id
-  and target.id <> source.id
-  and target.deleted_at is null
-  and target.version_status in ('draft', 'pending_review', 'rejected')
+set thumbnail_storage_key = (
+  select source.thumbnail_storage_key
+  from public.courses as source
+  where coalesce(source.root_course_id, source.id) = coalesce(target.root_course_id, target.id)
+    and source.instructor_id = target.instructor_id
+    and source.id <> target.id
+    and source.deleted_at is null
+    and source.thumbnail_storage_key is not null
+    and target.thumbnail_url is not distinct from source.thumbnail_url
+  order by source.version_number desc, source.is_latest_published desc
+  limit 1
+)
+where target.deleted_at is null
   and target.thumbnail_storage_key is null
-  and target.thumbnail_url is not distinct from source.thumbnail_url
-  and source.is_latest_published = true
-  and source.thumbnail_storage_key is not null;
+  and exists (
+    select 1
+    from public.courses as source
+    where coalesce(source.root_course_id, source.id) = coalesce(target.root_course_id, target.id)
+      and source.instructor_id = target.instructor_id
+      and source.id <> target.id
+      and source.deleted_at is null
+      and source.thumbnail_storage_key is not null
+      and target.thumbnail_url is not distinct from source.thumbnail_url
+  );
 
 update public.courses as target
 set
-  intro_video_provider = source.intro_video_provider,
-  intro_video_storage_key = source.intro_video_storage_key
-from public.courses as source
-where coalesce(target.root_course_id, target.id) = coalesce(source.root_course_id, source.id)
-  and target.instructor_id = source.instructor_id
-  and target.id <> source.id
-  and target.deleted_at is null
-  and target.version_status in ('draft', 'pending_review', 'rejected')
+  intro_video_provider = (
+    select source.intro_video_provider
+    from public.courses as source
+    where coalesce(source.root_course_id, source.id) = coalesce(target.root_course_id, target.id)
+      and source.instructor_id = target.instructor_id
+      and source.id <> target.id
+      and source.deleted_at is null
+      and source.intro_video_storage_key is not null
+      and target.intro_video_url is not distinct from source.intro_video_url
+      and (target.intro_video_provider is null or target.intro_video_provider = source.intro_video_provider)
+    order by source.version_number desc, source.is_latest_published desc
+    limit 1
+  ),
+  intro_video_storage_key = (
+    select source.intro_video_storage_key
+    from public.courses as source
+    where coalesce(source.root_course_id, source.id) = coalesce(target.root_course_id, target.id)
+      and source.instructor_id = target.instructor_id
+      and source.id <> target.id
+      and source.deleted_at is null
+      and source.intro_video_storage_key is not null
+      and target.intro_video_url is not distinct from source.intro_video_url
+      and (target.intro_video_provider is null or target.intro_video_provider = source.intro_video_provider)
+    order by source.version_number desc, source.is_latest_published desc
+    limit 1
+  )
+where target.deleted_at is null
   and target.intro_video_storage_key is null
-  and target.intro_video_url is not distinct from source.intro_video_url
-  and (target.intro_video_provider is null or target.intro_video_provider = source.intro_video_provider)
-  and source.is_latest_published = true
-  and source.intro_video_storage_key is not null;
+  and exists (
+    select 1
+    from public.courses as source
+    where coalesce(source.root_course_id, source.id) = coalesce(target.root_course_id, target.id)
+      and source.instructor_id = target.instructor_id
+      and source.id <> target.id
+      and source.deleted_at is null
+      and source.intro_video_storage_key is not null
+      and target.intro_video_url is not distinct from source.intro_video_url
+      and (target.intro_video_provider is null or target.intro_video_provider = source.intro_video_provider)
+  );
 
 create or replace function public.get_or_create_course_revision(p_course_id uuid)
 returns uuid
