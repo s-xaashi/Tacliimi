@@ -991,7 +991,7 @@ async function setupEventListeners() {
                 try {
                     // The R2 signer requires an existing course owned by this instructor.
                     if (!window.courseDraft.id) await window.saveDraft(true, true);
-                    uploadedObjectKey = await CourseService.uploadCourseThumbnail(window.courseDraft.id, file);
+                    uploadedObjectKey = await CourseService.uploadCourseThumbnail(window.courseDraft.id, file, previousObjectKey);
 
                     // Persist the new key before deleting the previous object. Clear
                     // any legacy public URL so private access cannot be bypassed.
@@ -1096,7 +1096,7 @@ async function setupEventListeners() {
                     const uploadResult = await CourseService.uploadToR2(window.courseDraft.id, null, 'intro', file, (percent) => {
                         if (progressBar) progressBar.style.width = `${percent}%`;
                         if (percentText) percentText.innerText = `${Math.round(percent)}%`;
-                    }, window.introUploadAbortController.signal);
+                    }, window.introUploadAbortController.signal, previousIntroStorageKey);
                     
                     window.sessionUploadedFiles.push({ provider: 'r2', key: uploadResult.objectKey });
 
