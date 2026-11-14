@@ -1828,6 +1828,20 @@ function wizardOpenModal(modalId, sIdx, iIdx) {
 
         const st = getLessonVideoState(lesson.id);
 
+        // Restore the saved provider when reopening an existing lesson. The radio
+        // controls default to YouTube on a fresh page, which previously made an
+        // attached private R2 lesson video look as though it had not been restored.
+        const savedProvider = lesson.video_storage_key
+            ? 'r2'
+            : (lesson.video_provider || 'youtube');
+        const providerRadio = document.querySelector(
+            `input[name="modal-provider-radio"][value="${savedProvider}"]`
+        );
+        if (providerRadio) {
+            providerRadio.checked = true;
+            providerRadio.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+
         if (st.phase === 'uploading' || st.phase === 'completing' || st.phase === 'saving') {
             if (titleEl) titleEl.value = lesson.video?.title || '';
             if (nameEl) nameEl.innerText = st.fileName || 'Uploading...';
