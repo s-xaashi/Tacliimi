@@ -30,12 +30,12 @@ export async function uploadPrivateImage({ file, purpose, courseId = null, exist
     // Verify the actual stored object server-side before allowing its key to be
     // persisted in a profile/course row.
     const { data: verified, error: verifyError } = await supabase.functions.invoke("r2-image-upload-complete", {
-        body: { purpose, course_id: courseId, object_key: data.object_key }
+        body: { purpose, course_id: courseId, object_key: data.object_key, replace_object_key: data.replace_object_key }
     });
     if (verifyError || verified?.verified !== true) {
         throw new Error(verifyError?.message || verified?.error || "The uploaded image failed server-side verification.");
     }
-    return data.object_key;
+    return verified.final_object_key || data.object_key;
 }
 
 /**
