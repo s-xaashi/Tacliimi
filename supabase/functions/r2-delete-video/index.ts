@@ -51,10 +51,18 @@ Deno.serve(async (req) => {
         // points at its new upload. Restrict that request to this course family's
         // own introduction namespace; callers cannot delete arbitrary bucket keys.
         const familyId = course.root_course_id || course_id;
-        const expectedPrefix = `courses/${familyId}/introduction/`;
-        if (typeof requestedObjectKey !== 'string' ||
-            !requestedObjectKey.startsWith(expectedPrefix) ||
-            !/^courses\/[a-f0-9-]+\/introduction\/[a-f0-9-]+\.mp4$/i.test(requestedObjectKey)) {
+        const keyMatch = typeof requestedObjectKey === 'string'
+          ? requestedObjectKey.match(/^courses\/([a-f0-9-]+)\/introduction\/[a-f0-9-]+\.mp4$/i)
+          : null;
+        if (!keyMatch) throw new Error('Invalid introduction object key');
+        const { data: sourceCourse, error: sourceCourseError } = await supabase
+          .from('courses')
+          .select('id, instructor_id, root_course_id')
+          .eq('id', keyMatch[1])
+          .maybeSingle();
+        if (sourceCourseError) throw sourceCourseError;
+        if (!sourceCourse || sourceCourse.instructor_id !== user.id ||
+            (sourceCourse.root_course_id || sourceCourse.id) !== familyId) {
           throw new Error('Introduction object does not belong to this course family');
         }
       }
