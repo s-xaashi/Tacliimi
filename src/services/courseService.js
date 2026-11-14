@@ -932,7 +932,7 @@ export const CourseService = {
         return urlData.publicUrl;
     },
 
-    async uploadCourseThumbnail(courseId, file) {
+    async uploadCourseThumbnail(courseId, file, existingObjectKey = null) {
         const session = await AuthService.getSession();
         if (!session?.user?.id) throw new Error("Not authenticated");
         if (!ALLOWED_IMAGE_TYPES.includes(file?.type)) {
@@ -942,7 +942,7 @@ export const CourseService = {
             throw new Error(`Image too large. Maximum allowed: ${(MAX_IMAGE_BYTES / (1024 * 1024)).toFixed(0)} MB.`);
         }
 
-        return await uploadPrivateImage({ file, purpose: 'thumbnail', courseId: courseId || null });
+        return await uploadPrivateImage({ file, purpose: 'thumbnail', courseId: courseId || null, existingObjectKey });
     },
 
     async uploadCourseVideo(courseId, file) {
@@ -1747,7 +1747,7 @@ export const CourseService = {
 
     /** CLOUDFLARE R2 VIDEO INTEGRATION */
 
-    async uploadToR2(courseId, lessonId, type, file, onProgress, signal) {
+    async uploadToR2(courseId, lessonId, type, file, onProgress, signal, existingObjectKey = null) {
         const session = await AuthService.getSession();
         if (!session) throw new Error("Not authenticated");
 
@@ -1776,7 +1776,8 @@ export const CourseService = {
                 lesson_id: lessonId, 
                 type: type, 
                 content_type: file.type,
-                file_size: file.size
+                file_size: file.size,
+                existing_object_key: type === 'intro' ? existingObjectKey : null
             }
         });
         telemetry.createDuration = performance.now() - t0_create;
