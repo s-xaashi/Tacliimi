@@ -1019,9 +1019,12 @@ async function setupEventListeners() {
 
                     if (previousObjectKey && previousObjectKey !== uploadedObjectKey) {
                         try {
-                            await deletePrivateImage({ resourceType: 'thumbnail', resourceId: window.courseDraft.id, objectKey: previousObjectKey });
+                            const deleted = await deletePrivateImage({ resourceType: 'thumbnail', resourceId: window.courseDraft.id, objectKey: previousObjectKey });
+                            if (!deleted) {
+                                console.info('Previous thumbnail retained because another course version still references it or its source version could not be verified.');
+                            }
                         } catch (cleanupError) {
-                            console.warn('Could not clean up replaced course thumbnail.', cleanupError);
+                            console.warn('New thumbnail was saved, but the previous R2 object could not be cleaned up:', cleanupError);
                         }
                     }
                     try { await cleanupPrivateImages(); }
@@ -1089,6 +1092,7 @@ async function setupEventListeners() {
                         };
                     }
 
+                    const previousIntroStorageKey = window.courseDraft.intro_video_storage_key || null;
                     const uploadResult = await CourseService.uploadToR2(window.courseDraft.id, null, 'intro', file, (percent) => {
                         if (progressBar) progressBar.style.width = `${percent}%`;
                         if (percentText) percentText.innerText = `${Math.round(percent)}%`;
@@ -1106,6 +1110,23 @@ async function setupEventListeners() {
                     window.sessionUploadedFiles = window.sessionUploadedFiles.filter(
                         uploaded => !(uploaded.provider === 'r2' && uploaded.key === uploadResult.objectKey)
                     );
+
+                    // The new key is now committed. Delete the previous intro only
+                    // through the server-side reference check; older course revisions
+                    // may still depend on that same object.
+                    if (previousIntroStorageKey && previousIntroStorageKey !== uploadResult.objectKey) {
+                        try {
+                            const cleanup = await CourseService.deleteR2Video(
+                                window.courseDraft.id, null, 'intro', previousIntroStorageKey
+                            );
+                            if (cleanup?.preservedSharedObject) {
+                                console.info('Previous intro video retained because another course version still references it.');
+                            }
+                        } catch (cleanupError) {
+                            console.warn('New intro video was saved, but the previous R2 object could not be cleaned up:', cleanupError);
+                        }
+                    }
+
                     // Resolve a short-lived preview URL after the key has been saved.
                     // A preview-signing failure must not mark a successful upload as failed.
                     try {
@@ -1150,13 +1171,26 @@ async function setupEventListeners() {
             if (errEl) errEl.classList.add('hidden');
             
             if (!window.courseDraft.id) await window.saveDraft(true, true);
+            const previousIntroStorageKey = window.courseDraft.intro_video_storage_key || null;
             window.courseDraft.intro_video_provider = 'youtube';
             window.courseDraft.intro_video_url = url;
             window.courseDraft.intro_video_preview_url = null;
             window.courseDraft.intro_video_storage_key = null; // Clear R2 key
 
             showVideoPreview(url, "Embedded Video");
-            window.saveDraft(true);
+            await window.saveDraft(true, true);
+            if (previousIntroStorageKey) {
+                try {
+                    const cleanup = await CourseService.deleteR2Video(
+                        window.courseDraft.id, null, 'intro', previousIntroStorageKey
+                    );
+                    if (cleanup?.preservedSharedObject) {
+                        console.info('Previous intro video retained because another course version still references it.');
+                    }
+                } catch (cleanupError) {
+                    console.warn('Embedded video was saved, but the previous R2 intro could not be cleaned up:', cleanupError);
+                }
+            }
             introUrlInput.value = '';
             if (typeof showToast === 'function') showToast("Intro video URL saved.");
         });
