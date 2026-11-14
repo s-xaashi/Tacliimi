@@ -37,24 +37,39 @@ Deno.serve(async (req) => {
     if (!Number.isSafeInteger(fileSize) || fileSize <= 0 || fileSize > maxBytes) return json({ error: "Image size is invalid or exceeds the limit" }, 400);
  
 
+    let reusableThumbnailKey: string | null = null;
     if (purpose === "thumbnail") {
-      // Thumbnails must be attached to an existing course owned by the caller.
-      // The wizard creates its draft first; accepting a missing course ID would
-      // otherwise permit authenticated users to create arbitrary orphan objects.
       if (!courseId) return json({ error: "A course ID is required for thumbnail uploads" }, 400);
       const { data: course, error } = await admin.from("courses")
-        .select("id")
+        .select("id, instructor_id, root_course_id")
         .eq("id", courseId)
         .eq("instructor_id", user.id)
         .maybeSingle();
       if (error) throw error;
       if (!course) return json({ error: "Course not found or not owned by this instructor" }, 403);
+
+      const requestedKey = typeof body?.existing_object_key === "string" ? body.existing_object_key : "";
+      const match = requestedKey.match(/^course-thumbnails\/([a-f0-9-]+)\/([a-f0-9-]+)\/([a-f0-9-]+)\.(jpg|png|webp|gif)$/i);
+      if (match && match[1].toLowerCase() === user.id.toLowerCase() && match[4].toLowerCase() === IMAGE_TYPES[contentType]) {
+        const { data: source, error: sourceError } = await admin.from("courses")
+          .select("id, instructor_id, root_course_id")
+          .eq("id", match[2]).eq("instructor_id", user.id).maybeSingle();
+        if (sourceError) throw sourceError;
+        const targetFamily = course.root_course_id || course.id;
+        if (source && (source.root_course_id || source.id) === targetFamily) {
+          const { data: refs, error: refsError } = await admin.from("courses")
+            .select("id").eq("thumbnail_storage_key", requestedKey);
+          if (refsError) throw refsError;
+          // Never overwrite an image shared by archived/published course versions.
+          if ((refs || []).length === 1 && refs[0].id === courseId) reusableThumbnailKey = requestedKey;
+        }
+      }
     }
 
     const extension = IMAGE_TYPES[contentType];
     const objectKey = purpose === "avatar"
       ? `avatars/${user.id}/${crypto.randomUUID()}.${extension}`
-      : `course-thumbnails/${user.id}/${courseId ?? "new"}/${crypto.randomUUID()}.${extension}`;
+      : (reusableThumbnailKey || `course-thumbnails/${user.id}/${courseId ?? "new"}/${crypto.randomUUID()}.${extension}`);
     const endpoint = Deno.env.get("R2_ENDPOINT") ?? "";
     const bucket = Deno.env.get("R2_BUCKET_NAME") ?? "";
     const accessKeyId = Deno.env.get("R2_ACCESS_KEY_ID") ?? "";
@@ -64,17 +79,20 @@ Deno.serve(async (req) => {
     const s3 = new S3Client({ region: "auto", endpoint, credentials: { accessKeyId, secretAccessKey } });
     const command = new PutObjectCommand({
       Bucket: bucket, Key: objectKey, ContentType: contentType,
-      IfNoneMatch: "*",
+      // New keys remain write-once. Reuse is allowed only after the ownership,
+      // course-family and single-reference checks above.
+      ...(reusableThumbnailKey ? {} : { IfNoneMatch: "*" }),
       CacheControl: "private, max-age=0, no-store",
     });
     const uploadUrl = await getSignedUrl(s3, command, { expiresIn: 300 });
     return json({
       upload_url: uploadUrl,
       object_key: objectKey,
+      reused_existing_key: !!reusableThumbnailKey,
       required_headers: {
         "Content-Type": contentType,
         "Cache-Control": "private, max-age=0, no-store",
-        "If-None-Match": "*",
+        ...(reusableThumbnailKey ? {} : { "If-None-Match": "*" }),
        },
     });
   } catch (error) {
