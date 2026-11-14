@@ -2060,15 +2060,18 @@ export const CourseService = {
         return data.playbackUrl;
     },
 
-    async deleteR2Video(courseId, lessonId, deleteType = 'lesson') {
+    async deleteR2Video(courseId, lessonId, deleteType = 'lesson', objectKey = null) {
         const session = await AuthService.getSession();
         if (!session) throw new Error("Not authenticated");
 
         const { data, error } = await supabase.functions.invoke('r2-delete-video', {
-            body: { 
-                course_id: courseId, 
+            body: {
+                course_id: courseId,
                 lesson_id: lessonId,
-                delete_type: deleteType
+                delete_type: deleteType,
+                // Supplying an object key requests cleanup of a previously replaced
+                // intro object without changing the course's newly saved DB pointer.
+                ...(objectKey ? { object_key: objectKey } : {})
             }
         });
 
