@@ -67,9 +67,12 @@ Deno.serve(async (req) => {
     }
 
     const extension = IMAGE_TYPES[contentType];
+    // Always upload to a fresh staging key first. The completion endpoint
+    // validates the actual bytes and only then copies to the old key if it is
+    // still exclusively referenced by this course.
     const objectKey = purpose === "avatar"
       ? `avatars/${user.id}/${crypto.randomUUID()}.${extension}`
-      : (reusableThumbnailKey || `course-thumbnails/${user.id}/${courseId ?? "new"}/${crypto.randomUUID()}.${extension}`);
+      : `course-thumbnails/${user.id}/${courseId ?? "new"}/${crypto.randomUUID()}.${extension}`;
     const endpoint = Deno.env.get("R2_ENDPOINT") ?? "";
     const bucket = Deno.env.get("R2_BUCKET_NAME") ?? "";
     const accessKeyId = Deno.env.get("R2_ACCESS_KEY_ID") ?? "";
@@ -81,18 +84,18 @@ Deno.serve(async (req) => {
       Bucket: bucket, Key: objectKey, ContentType: contentType,
       // New keys remain write-once. Reuse is allowed only after the ownership,
       // course-family and single-reference checks above.
-      ...(reusableThumbnailKey ? {} : { IfNoneMatch: "*" }),
+      IfNoneMatch: "*",
       CacheControl: "private, max-age=0, no-store",
     });
     const uploadUrl = await getSignedUrl(s3, command, { expiresIn: 300 });
     return json({
       upload_url: uploadUrl,
       object_key: objectKey,
-      reused_existing_key: !!reusableThumbnailKey,
+      replace_object_key: reusableThumbnailKey,
       required_headers: {
         "Content-Type": contentType,
         "Cache-Control": "private, max-age=0, no-store",
-        ...(reusableThumbnailKey ? {} : { "If-None-Match": "*" }),
+        "If-None-Match": "*",
        },
     });
   } catch (error) {
