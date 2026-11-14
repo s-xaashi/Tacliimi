@@ -1,5 +1,5 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
-import { S3Client, HeadObjectCommand, GetObjectCommand, DeleteObjectCommand } from "npm:@aws-sdk/client-s3";
+import { S3Client, HeadObjectCommand, GetObjectCommand, DeleteObjectCommand, CopyObjectCommand } from "npm:@aws-sdk/client-s3";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -39,6 +39,7 @@ Deno.serve(async (req) => {
     const purpose = body?.purpose;
     const courseId = typeof body?.course_id === "string" ? body.course_id : "";
     const objectKey = typeof body?.object_key === "string" ? body.object_key : "";
+    const replaceObjectKey = typeof body?.replace_object_key === "string" ? body.replace_object_key : "";
     if (purpose !== "avatar" && purpose !== "thumbnail") return json({ error: "Invalid image purpose" }, 400);
     if (purpose === "thumbnail" && !UUID_RE.test(courseId)) return json({ error: "Invalid course reference" }, 400);
 
@@ -84,7 +85,45 @@ Deno.serve(async (req) => {
       return json({ error: "Uploaded file content does not match an allowed image format" }, 422);
     }
 
-    return json({ verified: true, size: head.ContentLength, content_type: contentType });
+    let finalObjectKey = objectKey;
+    if (purpose === "thumbnail" && replaceObjectKey) {
+      const targetMatch = replaceObjectKey.match(/^course-thumbnails\/([a-f0-9-]+)\/([a-f0-9-]+)\/[a-f0-9-]+\.(jpg|png|webp|gif)$/i);
+      const targetExtension = expectedExtension;
+      if (targetMatch && targetMatch[1].toLowerCase() === user.id.toLowerCase() &&
+          targetMatch[3].toLowerCase() === targetExtension) {
+        const { data: targetCourse, error: targetError } = await admin.from("courses")
+          .select("id, instructor_id, root_course_id")
+          .eq("id", courseId).eq("instructor_id", user.id).maybeSingle();
+        if (targetError) throw targetError;
+        const { data: sourceCourse, error: sourceError } = await admin.from("courses")
+          .select("id, instructor_id, root_course_id")
+          .eq("id", targetMatch[2]).eq("instructor_id", user.id).maybeSingle();
+        if (sourceError) throw sourceError;
+        const sameFamily = targetCourse && sourceCourse &&
+          (targetCourse.root_course_id || targetCourse.id) === (sourceCourse.root_course_id || sourceCourse.id);
+        if (sameFamily) {
+          const { data: refs, error: refsError } = await admin.from("courses")
+            .select("id").eq("thumbnail_storage_key", replaceObjectKey);
+          if (refsError) throw refsError;
+          // Recheck at completion time. If a new revision began referencing the
+          // old key while bytes were uploading, keep the new staging key instead.
+          if ((refs || []).length === 1 && refs[0].id === courseId) {
+            await s3.send(new CopyObjectCommand({
+              Bucket: bucket,
+              Key: replaceObjectKey,
+              CopySource: `${bucket}/${replaceObjectKey.split("/").map(encodeURIComponent).join("/")}`,
+              MetadataDirective: "REPLACE",
+              ContentType: contentType,
+              CacheControl: "private, max-age=0, no-store",
+            }));
+            await s3.send(new DeleteObjectCommand({ Bucket: bucket, Key: objectKey }));
+            finalObjectKey = replaceObjectKey;
+          }
+        }
+      }
+    }
+
+    return json({ verified: true, size: head.ContentLength, content_type: contentType, final_object_key: finalObjectKey });
   } catch (error) {
     console.error("r2-image-upload-complete:", error);
     return json({ error: error instanceof Error ? error.message : "Image verification failed" }, 400);
