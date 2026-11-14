@@ -79,6 +79,21 @@ Deno.serve(async (req: Request) => {
       throw new Error("Multipart parts must be unique and sequential from 1 to the final part");
     }
 
+    // If this multipart upload is overwriting an existing introduction key,
+    // recheck its references immediately before committing the replacement.
+    // A new course revision may have started referencing that key while parts
+    // were uploading; in that case refuse completion rather than changing media
+    // used by the newly-created revision.
+    if (session.upload_type === "intro") {
+      const { data: currentReferences, error: referenceError } = await supabase.from("courses")
+        .select("id").eq("intro_video_storage_key", session.object_key);
+      if (referenceError) throw referenceError;
+      if ((currentReferences || []).length > 1 ||
+          ((currentReferences || []).length === 1 && currentReferences[0].id !== session.course_id)) {
+        throw new Error("This introduction video became shared by another course version during upload. Please retry; a separate media object will be created.");
+      }
+    }
+
     const { CompleteMultipartUploadCommand } = await import("npm:@aws-sdk/client-s3");
     await makeS3(cfg).send(new CompleteMultipartUploadCommand({
       Bucket: cfg.bucket,
