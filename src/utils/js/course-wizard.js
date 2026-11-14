@@ -1997,13 +1997,24 @@ async function wizardSaveModalVideo() {
                 st.fileSize
             );
 
-            // Delete the OLD R2 object if this was a replacement, to avoid storage bloat.
-            // st.prevSavedVideo is snapshotted at upload-start time (line ~937).
-            if (st.prevSavedVideo?.video_storage_key) {
-                CourseService.discardStagedUpload(
-                    window.courseDraft.id,
-                    st.prevSavedVideo.video_storage_key
-                ).catch(err => console.warn('Old R2 cleanup failed (non-critical):', err));
+            // The previous object is already committed media, not a staged upload.
+            // Clean it through the authenticated media endpoint only after the new
+            // lesson key has been committed. The server checks every lesson reference.
+            if (st.prevSavedVideo?.video_storage_key &&
+                st.prevSavedVideo.video_storage_key !== st.objectKey) {
+                try {
+                    const cleanup = await CourseService.deleteR2Video(
+                        window.courseDraft.id,
+                        item.id,
+                        'lesson',
+                        st.prevSavedVideo.video_storage_key
+                    );
+                    if (cleanup?.preservedSharedObject) {
+                        console.info('Previous lesson video retained because another lesson/version still references it.');
+                    }
+                } catch (err) {
+                    console.warn('New lesson video was saved, but previous R2 cleanup failed:', err);
+                }
                 st.prevSavedVideo = null;
             }
 
