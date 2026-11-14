@@ -101,8 +101,34 @@ Deno.serve(async (req) => {
         .maybeSingle();
       if (sectionError || !section) throw new Error('Lesson does not belong to this course');
 
-      objectKey = lesson.video_storage_key;
+      objectKey = requestedObjectKey || lesson.video_storage_key;
       mediaAssetId = lesson.media_asset_id;
+
+      if (requestedObjectKey) {
+        // Post-commit replacement cleanup: accept only the previous key for this
+        // exact lesson namespace. Never clear the lesson's newly committed pointer.
+        const keyPattern = new RegExp(
+          "^courses/" + course_id + "/lessons/" + lesson_id + "/video/[a-f0-9-]+\\.mp4$",
+          "i"
+        );
+        if (typeof requestedObjectKey !== "string" || !keyPattern.test(requestedObjectKey)) {
+          throw new Error("Invalid previous lesson video key");
+        }
+        const { data: references, error: referenceError } = await supabase
+          .from("course_lessons")
+          .select("id")
+          .eq("video_storage_key", requestedObjectKey);
+        if (referenceError) throw referenceError;
+        preserveSharedIntro = Boolean(references?.length);
+
+        if (!preserveSharedIntro) {
+          const { error: assetDeleteError } = await supabase
+            .from("course_media_assets")
+            .delete()
+            .eq("storage_path", requestedObjectKey);
+          if (assetDeleteError) throw assetDeleteError;
+        }
+      }
     }
 
     if (!objectKey) {
@@ -135,7 +161,7 @@ Deno.serve(async (req) => {
         intro_video_storage_key: null
       }).eq('id', course_id).eq('intro_video_storage_key', objectKey);
       if (introUpdateError) throw introUpdateError;
-    } else if (delete_type !== 'intro') {
+    } else if (delete_type !== 'intro' && !requestedObjectKey) {
       const { error: lessonUpdateError } = await supabase.from('course_lessons').update({
         video_provider: 'youtube',
         video_storage_key: null,
