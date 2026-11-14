@@ -49,7 +49,7 @@ Deno.serve(async (req: Request) => {
   try {
     const { supabase, user, cfg } = await authenticate(req);
     const body = await req.json();
-    const { course_id, lesson_id, type = "lesson", content_type, file_size } = body;
+    const { course_id, lesson_id, type = "lesson", content_type, file_size, existing_object_key } = body;
     if (!course_id || !Number.isSafeInteger(file_size) || file_size <= 0 || file_size > 5 * 1024 * 1024 * 1024) throw new Error("Invalid course_id or file_size (maximum 5 GB)");
     if (!["lesson", "intro"].includes(type)) throw new Error("Invalid upload type");
     if (!["video/mp4", "video/quicktime"].includes(content_type)) throw new Error("Only MP4 and MOV videos are supported");
@@ -70,8 +70,32 @@ Deno.serve(async (req: Request) => {
     } else if (lesson_id) {
       throw new Error("Introduction uploads must not include a lesson_id");
     }
+    let reusableIntroKey: string | null = null;
+    if (type === "intro" && typeof existing_object_key === "string") {
+      const match = existing_object_key.match(/^courses\/([a-f0-9-]+)\/introduction\/[a-f0-9-]+\.mp4$/i);
+      if (match) {
+        const { data: sourceCourse, error: sourceError } = await supabase.from("courses")
+          .select("id, instructor_id, root_course_id")
+          .eq("id", match[1]).maybeSingle();
+        if (sourceError) throw sourceError;
+        const { data: targetCourse, error: targetError } = await supabase.from("courses")
+          .select("id, instructor_id, root_course_id")
+          .eq("id", course_id).eq("instructor_id", user.id).maybeSingle();
+        if (targetError) throw targetError;
+        const sameFamily = sourceCourse && targetCourse &&
+          sourceCourse.instructor_id === user.id &&
+          (sourceCourse.root_course_id || sourceCourse.id) === (targetCourse.root_course_id || targetCourse.id);
+        if (sameFamily) {
+          const { data: refs, error: refsError } = await supabase.from("courses")
+            .select("id").eq("intro_video_storage_key", existing_object_key);
+          if (refsError) throw refsError;
+          // A key used by any other revision must remain immutable.
+          if ((refs || []).length === 1 && refs[0].id === course_id) reusableIntroKey = existing_object_key;
+        }
+      }
+    }
     const objectKey = type === "intro"
-      ? `courses/${course_id}/introduction/${crypto.randomUUID()}.mp4`
+      ? (reusableIntroKey || `courses/${course_id}/introduction/${crypto.randomUUID()}.mp4`)
       : `courses/${course_id}/lessons/${lesson_id}/video/${crypto.randomUUID()}.mp4`;
     const s3 = makeS3(cfg);
     const { CreateMultipartUploadCommand } = await import("npm:@aws-sdk/client-s3");
