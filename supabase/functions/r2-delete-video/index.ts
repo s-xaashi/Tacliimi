@@ -24,7 +24,7 @@ Deno.serve(async (req) => {
     const { data: { user }, error: userError } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
     if (userError || !user) throw new Error('Invalid token');
 
-    const { course_id, lesson_id, delete_type = 'lesson' } = await req.json();
+    const { course_id, lesson_id, delete_type = 'lesson', object_key: requestedObjectKey = null } = await req.json();
 
     if (!course_id) {
       throw new Error('Missing course_id');
@@ -33,7 +33,7 @@ Deno.serve(async (req) => {
     // Verify course ownership
     const { data: course, error: courseError } = await supabase
       .from('courses')
-      .select('instructor_id, intro_video_storage_key')
+      .select('instructor_id, intro_video_storage_key, root_course_id')
       .eq('id', course_id)
       .single();
 
@@ -45,18 +45,36 @@ Deno.serve(async (req) => {
     let preserveSharedIntro = false;
 
     if (delete_type === 'intro') {
-      objectKey = course.intro_video_storage_key;
-      if (objectKey) {
-        const { data: otherIntroReferences, error: referenceError } = await supabase
-          .from('courses')
-          .select('id')
-          .eq('intro_video_storage_key', objectKey)
-          .neq('id', course_id)
-          .limit(1);
-        if (referenceError) throw referenceError;
-        preserveSharedIntro = Boolean(otherIntroReferences?.length);
+      objectKey = requestedObjectKey || course.intro_video_storage_key;
+      if (requestedObjectKey) {
+        // Replacement cleanup may target an old key after the course row already
+        // points at its new upload. Restrict that request to this course family's
+        // own introduction namespace; callers cannot delete arbitrary bucket keys.
+        const familyId = course.root_course_id || course_id;
+        const expectedPrefix = `courses/${familyId}/introduction/`;
+        if (typeof requestedObjectKey !== 'string' ||
+            !requestedObjectKey.startsWith(expectedPrefix) ||
+            !/^courses\/[a-f0-9-]+\/introduction\/[a-f0-9-]+\.mp4$/i.test(requestedObjectKey)) {
+          throw new Error('Introduction object does not belong to this course family');
+        }
       }
-      // Intros might not have media_asset_id linked directly yet
+      if (objectKey) {
+        // Service-role client sees every revision, including archived versions,
+        // so a shared object is never removed while any course still references it.
+        const { data: introReferences, error: referenceError } = await supabase
+          .from('courses')
+          .select('id, instructor_id, root_course_id')
+          .eq('intro_video_storage_key', objectKey);
+        if (referenceError) throw referenceError;
+        const invalidReference = (introReferences || []).some(reference =>
+          reference.instructor_id !== user.id ||
+          (reference.root_course_id || reference.id) !== (course.root_course_id || course_id)
+        );
+        if (invalidReference) throw new Error('Introduction object is referenced outside this course family');
+        preserveSharedIntro = Boolean(introReferences?.length);
+      }
+      // When object_key is explicitly supplied, this is post-save replacement
+      // cleanup only: do not change the course's current provider or storage key.
     } else {
       if (!lesson_id) throw new Error('Missing lesson_id');
       const { data: lesson, error } = await supabase
@@ -101,13 +119,15 @@ Deno.serve(async (req) => {
       await s3Client.send(command);
     }
 
-    // Update database
-    if (delete_type === 'intro') {
-      await supabase.from('courses').update({
+    // Only the normal "remove intro" action clears the current course pointer.
+    // Replacement cleanup supplies object_key and must leave the newly saved key intact.
+    if (delete_type === 'intro' && !requestedObjectKey) {
+      const { error: introUpdateError } = await supabase.from('courses').update({
         intro_video_provider: 'youtube',
         intro_video_storage_key: null
-      }).eq('id', course_id);
-    } else {
+      }).eq('id', course_id).eq('intro_video_storage_key', objectKey);
+      if (introUpdateError) throw introUpdateError;
+    } else if (delete_type !== 'intro') {
       const { error: lessonUpdateError } = await supabase.from('course_lessons').update({
         video_provider: 'youtube',
         video_storage_key: null,
@@ -123,7 +143,9 @@ Deno.serve(async (req) => {
 
     return new Response(JSON.stringify({
       success: true,
-      preservedSharedObject: preserveSharedIntro
+      deleted: !preserveSharedIntro,
+      preservedSharedObject: preserveSharedIntro,
+      reason: preserveSharedIntro ? 'still_referenced_by_course_version' : null
     }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch (error: any) {
     return new Response(JSON.stringify({ error: error.message }), {
