@@ -32,6 +32,65 @@ async function authenticate(req: Request) {
 function makeS3(cfg: ReturnType<typeof getConfig>) {
   return new S3Client({ region: "auto", endpoint: cfg.endpoint, credentials: { accessKeyId: cfg.accessKeyId, secretAccessKey: cfg.secretAccessKey }, requestChecksumCalculation: "WHEN_REQUIRED" });
 }
+
+/**
+ * The session table intentionally has a unique index on object_key. Reusing an
+ * introduction-video key therefore requires retiring its previous terminal
+ * session row before a new multipart upload can be registered.
+ *
+ * Never remove a live session. An expired in-progress multipart upload is
+ * aborted in R2 first, then marked aborted before its row is removed.
+ */
+async function retirePreviousIntroSession(supabase: any, s3: S3Client, cfg: ReturnType<typeof getConfig>, objectKey: string, courseId: string, userId: string) {
+  const { data: previous, error: lookupError } = await supabase
+    .from("r2_multipart_upload_sessions")
+    .select("upload_id, object_key, instructor_id, course_id, upload_type, status, expires_at")
+    .eq("object_key", objectKey)
+    .maybeSingle();
+  if (lookupError) throw lookupError;
+  if (!previous) return;
+
+  // The existing row must describe this instructor's introduction upload.
+  // Do not touch a row belonging to another course, owner, or upload type.
+  if (previous.instructor_id !== userId || previous.course_id !== courseId || previous.upload_type !== "intro") {
+    throw new Error("This introduction video key already has an upload session that cannot safely be reused. Please retry to create a separate media object.");
+  }
+
+  if (previous.status === "in_progress") {
+    if (new Date(previous.expires_at).getTime() > Date.now()) {
+      throw new Error("An upload for this introduction video is already in progress. Please wait for it to finish before trying again.");
+    }
+
+    // Expired multipart uploads cannot be completed by the normal completion
+    // endpoint. Abort the old R2 multipart upload before releasing its key.
+    const { AbortMultipartUploadCommand } = await import("npm:@aws-sdk/client-s3");
+    await s3.send(new AbortMultipartUploadCommand({
+      Bucket: cfg.bucket,
+      Key: previous.object_key,
+      UploadId: previous.upload_id,
+    }));
+
+    const { error: markError } = await supabase
+      .from("r2_multipart_upload_sessions")
+      .update({ status: "aborted" })
+      .eq("upload_id", previous.upload_id)
+      .eq("object_key", objectKey)
+      .eq("status", "in_progress");
+    if (markError) throw markError;
+  } else if (!["completed", "aborted"].includes(previous.status)) {
+    throw new Error("The previous introduction upload has an unexpected status and cannot safely be replaced.");
+  }
+
+  // This deletes only the obsolete session metadata. It does not delete the
+  // completed R2 object or alter the course's media reference.
+  const { error: deleteError } = await supabase
+    .from("r2_multipart_upload_sessions")
+    .delete()
+    .eq("upload_id", previous.upload_id)
+    .eq("object_key", objectKey)
+    .in("status", ["completed", "aborted"]);
+  if (deleteError) throw deleteError;
+}
 async function ownedSession(supabase: any, input: any, userId: string) {
   const { data, error } = await supabase.from("r2_multipart_upload_sessions").select("*")
     .eq("upload_id", input.upload_id).eq("object_key", input.object_key)
@@ -98,6 +157,9 @@ Deno.serve(async (req: Request) => {
       ? (reusableIntroKey || `courses/${course_id}/introduction/${crypto.randomUUID()}.mp4`)
       : `courses/${course_id}/lessons/${lesson_id}/video/${crypto.randomUUID()}.mp4`;
     const s3 = makeS3(cfg);
+    if (type === "intro" && reusableIntroKey) {
+      await retirePreviousIntroSession(supabase, s3, cfg, objectKey, course_id, user.id);
+    }
     const { CreateMultipartUploadCommand } = await import("npm:@aws-sdk/client-s3");
     const result = await s3.send(new CreateMultipartUploadCommand({ Bucket: cfg.bucket, Key: objectKey, ContentType: content_type }));
     if (!result.UploadId) throw new Error("R2 did not return an upload ID");
