@@ -26,7 +26,9 @@ window.courseDraft = {
     intro_video_storage_key: null,
     curriculum: [],
     pricing: {
-        type: 'free',
+        // New courses default to Paid so R2 lesson uploads never trigger
+        // the free-course hosting restriction during curriculum creation.
+        type: 'paid',
         currency: 'USD',
         price: null,
         coupon: '',
@@ -514,12 +516,6 @@ async function performSave(silent = false) {
     // The save queue guarantees that only one performSave pass runs at a time.
     if (window.courseDraft.id && !window.courseDraft.isLoaded) {
         throw new Error("Cannot save this course because its existing data has not finished loading. Please wait and try again.");
-    }
-
-    if (freeTierHasR2LessonVideos(true)) {
-        const message = 'Replace direct-upload lesson videos with YouTube/Vimeo links before saving a free course.';
-        if (!silent && typeof showToast === 'function') showToast(message, true);
-        throw new Error(message);
     }
 
     isSaving = true;
@@ -2289,12 +2285,12 @@ function showFreeCourseVideoRestriction() {
                     </div>
                     <div>
                         <h2 id="free-course-video-restriction-title" class="text-lg font-bold text-slate-900 dark:text-white">Free courses require externally hosted lesson videos</h2>
-                        <p class="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">This curriculum contains a video uploaded directly to Tacliimi storage. To set this course as Free, every lesson video must use a YouTube or Vimeo link instead.</p>
-                        <p class="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-300">Upload your video to YouTube and set it to <strong>Unlisted</strong>, or upload it to Vimeo. Then replace each direct upload with its YouTube/Vimeo URL in the lesson video settings. Once all direct uploads have been replaced, you can select Free again.</p>
+                        <p class="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">This course contains a lesson video uploaded directly to Tacliimi storage. Free courses must use externally hosted lesson videos from YouTube or Vimeo.</p>
+                        <p class="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-300">Your course has been kept or switched to <strong>Paid</strong>, so you can continue without changing your lesson videos. If you want to offer it for Free, upload the videos to YouTube as <strong>Unlisted</strong> or to Vimeo, replace the direct uploads with those links, and then select Free.</p>
                     </div>
                 </div>
                 <div class="mt-6 flex justify-end">
-                    <button type="button" id="free-course-video-restriction-close" class="rounded-lg bg-primary px-5 py-2.5 text-sm font-bold text-white hover:opacity-90">Understood</button>
+                    <button type="button" id="free-course-video-restriction-close" class="rounded-lg bg-primary px-5 py-2.5 text-sm font-bold text-white hover:opacity-90">Continue with Paid</button>
                 </div>
             </div>`;
         document.body.appendChild(modal);
@@ -2315,10 +2311,12 @@ function freeTierHasR2LessonVideos(showMessage = true) {
 }
 
 function setPricingTier(tier, restoring = false) {
-    tier = String(tier || 'free').toLowerCase();
+    tier = String(tier || 'paid').toLowerCase();
     if (tier === 'free' && !restoring && getR2LessonVideos().length > 0) {
+        // Keep the course publishable without forcing instructors to replace
+        // uploaded lesson videos just to continue creating a Paid course.
+        tier = 'paid';
         showFreeCourseVideoRestriction();
-        return false;
     }
     window.courseDraft.pricing.type = tier;
     const detailsContainer = document.getElementById('pricing-details-container');
@@ -2494,8 +2492,10 @@ function validateStep(step) {
         }
     } else if (step === 3) {
         if (window.courseDraft.pricing.type === 'free' && getR2LessonVideos().length > 0) {
+            // Also cover older drafts that were already saved as Free before
+            // direct-upload lesson videos were added.
+            setPricingTier('paid', true);
             showFreeCourseVideoRestriction();
-            return false;
         }
         const type = window.courseDraft.pricing.type;
         const price = document.getElementById('course-price');
@@ -2764,8 +2764,13 @@ async function publishCourse() {
     // Guard immediately, before any awaited work, so rapid taps or duplicate
     // click handlers cannot submit the same course twice.
     if (window.courseReviewSubmissionInProgress) return;
-    if (freeTierHasR2LessonVideos(true)) {
-        if (typeof showToast === 'function') showToast('Replace direct-upload lesson videos with YouTube/Vimeo links before publishing a free course.', true);
+    if (freeTierHasR2LessonVideos(false)) {
+        // Never submit a Free course containing private R2 lesson videos.
+        // Convert legacy invalid drafts to Paid and let the instructor continue
+        // from Pricing, where a valid paid price can be confirmed.
+        setPricingTier('paid', true);
+        showFreeCourseVideoRestriction();
+        goToStep(3);
         return;
     }
 
