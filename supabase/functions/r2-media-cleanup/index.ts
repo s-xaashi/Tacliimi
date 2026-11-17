@@ -147,12 +147,12 @@ Deno.serve(async (req: Request) => {
     }
 
     const { data: imageSessions, error: imageError } = await admin.from("r2_image_upload_sessions")
-      .select("*").eq("instructor_id", user.id).in("status", ["in_progress", "completed", "committed", "discarding"]);
+      .select("*").eq("instructor_id", user.id).in("status", ["in_progress", "completed", "committed", "discarding", "aborted"]);
     if (imageError) throw imageError;
 
     for (const session of imageSessions || []) {
       const isExpiredPut = ["in_progress", "discarding"].includes(session.status) && new Date(session.expires_at).getTime() <= Date.now();
-      const isStaleCompleted = ["completed", "committed", "discarding"].includes(session.status) &&
+      const isStaleCompleted = ["completed", "committed", "discarding", "aborted"].includes(session.status) &&
         new Date(session.committed_at || session.completed_at || session.created_at).getTime() <= cutoff;
       if (!isExpiredPut && !isStaleCompleted) continue;
 
