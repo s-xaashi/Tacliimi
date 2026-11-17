@@ -2139,6 +2139,14 @@ export const CourseService = {
         return await this.deleteR2Video(courseId, resolvedLessonId, resolvedType, objectKey);
     },
 
+    async cleanupStaleR2Uploads() {
+        const session = await AuthService.getSession();
+        if (!session) return null;
+        const { data, error } = await supabase.functions.invoke('r2-media-cleanup', { body: {} });
+        if (error) throw new Error(error.message || 'Could not reconcile stale R2 uploads.');
+        return data;
+    },
+
     async getR2PlaybackUrl(courseId, lessonId, playbackType = 'lesson') {
         const session = await AuthService.getSession();
         if (!session) throw new Error("Not authenticated");
