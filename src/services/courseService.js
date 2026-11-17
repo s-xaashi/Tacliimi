@@ -1747,7 +1747,7 @@ export const CourseService = {
 
     /** CLOUDFLARE R2 VIDEO INTEGRATION */
 
-    async uploadToR2(courseId, lessonId, type, file, onProgress, signal, existingObjectKey = null) {
+    async uploadToR2(courseId, lessonId, type, file, onProgress, signal, existingObjectKey = null, onStage = null) {
         const throwIfAborted = () => {
             if (signal?.aborted) throw new Error('Upload cancelled');
         };
@@ -1812,7 +1812,18 @@ export const CourseService = {
         
         ({ uploadId, objectKey } = createRes.data);
         const { partCount, partSize } = createRes.data;
+        if (signal?.aborted && uploadId && objectKey) {
+            try { await abortMultipart(); } catch (abortError) {
+                console.warn('Could not abort multipart upload after an early cancellation:', abortError);
+            }
+            throw new Error('Upload cancelled');
+        }
         if (!uploadId || !objectKey || !Number.isInteger(partCount) || partCount < 1 || !partSize) {
+            if (uploadId && objectKey) {
+                try { await abortMultipart(); } catch (abortError) {
+                    console.warn('Could not abort incomplete multipart session:', abortError);
+                }
+            }
             throw new Error('Multipart upload initialization returned incomplete session details.');
         }
         telemetry.partCount = partCount;
@@ -1998,6 +2009,10 @@ export const CourseService = {
             if (hasError) throw globalError;
             throwIfAborted();
 
+            // Once R2 completion starts, the UI disables Cancel. This matters for
+            // intro replacement because an exclusive existing key may be reused.
+            onStage?.('completing');
+            const reusingExistingIntroKey = type === 'intro' && !!existingObjectKey && objectKey === existingObjectKey;
             // Complete the multipart object and attach it to its validated course target.
             const t0_complete = performance.now();
             const completeRes = await supabase.functions.invoke('r2-multipart-complete', {
@@ -2018,9 +2033,14 @@ export const CourseService = {
             multipartCompleted = true;
             // Completion may finish server-side just as the user cancels. In that
             // case the object is still staged; remove it safely before rejecting.
-            if (signal?.aborted) {
+            if (signal?.aborted && !reusingExistingIntroKey) {
                 await discardCompletedObject();
                 throw new Error('Upload cancelled');
+            }
+            if (signal?.aborted && reusingExistingIntroKey) {
+                // The server has already completed an in-place replacement. Do not
+                // delete or report cancellation for the previously referenced key.
+                console.warn('Cancellation arrived after an in-place intro replacement completed; preserving the completed object.');
             }
 
             if (onProgress) onProgress(100);
