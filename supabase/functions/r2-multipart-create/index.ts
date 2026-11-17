@@ -50,7 +50,7 @@ Deno.serve(async (req: Request) => {
   try {
     const { supabase, user, cfg } = await authenticate(req);
     const body = await req.json();
-    const { course_id, lesson_id, type = "lesson", content_type, file_size, existing_object_key } = body;
+    const { course_id, lesson_id, type = "lesson", content_type, file_size } = body;
     if (!course_id || !Number.isSafeInteger(file_size) || file_size <= 0 || file_size > 5 * 1024 * 1024 * 1024) throw new Error("Invalid course_id or file_size (maximum 5 GB)");
     if (!["lesson", "intro"].includes(type)) throw new Error("Invalid upload type");
     if (!["video/mp4", "video/quicktime"].includes(content_type)) throw new Error("Only MP4 and MOV videos are supported");
