@@ -74,6 +74,23 @@ Deno.serve(async (req) => {
       if (uploadSession.status === "discarded") return json({ deleted: true, already_discarded: true });
     }
 
+    if (uploadId) {
+      const { data: claimed, error: claimError } = await admin.from("r2_image_upload_sessions")
+        .update({ status: "discarding" })
+        .eq("upload_id", uploadId).eq("instructor_id", user.id)
+        .in("status", ["in_progress", "completed", "discarding"])
+        .select("upload_id").maybeSingle();
+      if (claimError) throw claimError;
+      if (!claimed) {
+        const { data: latest, error: latestError } = await admin.from("r2_image_upload_sessions")
+          .select("status").eq("upload_id", uploadId).maybeSingle();
+        if (latestError) throw latestError;
+        if (latest?.status === "committed") return json({ deleted: false, reason: "already_committed" });
+        if (latest?.status === "discarded") return json({ deleted: true, already_discarded: true });
+        throw new Error("Thumbnail upload is changing state; retry cleanup shortly.");
+      }
+    }
+
     // Never delete an object that any profile/course row still references.
     const [avatarRefs, thumbnailRefs] = await Promise.all([
       admin.from("profiles").select("id").eq("avatar_storage_key", key).limit(1),
@@ -88,14 +105,6 @@ Deno.serve(async (req) => {
           .eq("upload_id", uploadId).in("status", ["completed", "discarding"]);
       }
       return json({ deleted: false, reason: "still_referenced" });
-    }
-
-    if (uploadId) {
-      const { error: claimError } = await admin.from("r2_image_upload_sessions")
-        .update({ status: "discarding" })
-        .eq("upload_id", uploadId).eq("instructor_id", user.id)
-        .in("status", ["in_progress", "completed", "discarding"]);
-      if (claimError) throw claimError;
     }
 
     const endpoint = Deno.env.get("R2_ENDPOINT") ?? "";
