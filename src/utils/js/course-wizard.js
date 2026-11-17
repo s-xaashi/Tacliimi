@@ -1005,7 +1005,6 @@ async function setupEventListeners() {
                     uploadedObjectKey = await CourseService.uploadCourseThumbnail(
                         window.courseDraft.id,
                         file,
-                        null,
                         controller.signal,
                         (stage) => {
                             if (stage === 'verifying') {
@@ -1151,7 +1150,7 @@ async function setupEventListeners() {
                     const uploadResult = await CourseService.uploadToR2(window.courseDraft.id, null, 'intro', file, (percent) => {
                         if (progressBar) progressBar.style.width = `${percent}%`;
                         if (percentText) percentText.innerText = `${Math.round(percent)}%`;
-                    }, controller.signal, null, (stage) => {
+                    }, controller.signal, (stage) => {
                         if (stage === 'completing') {
                             if (statusText) statusText.textContent = 'Finalizing upload...';
                             if (cancelBtn) {
