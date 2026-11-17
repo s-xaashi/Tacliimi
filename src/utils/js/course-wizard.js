@@ -2369,6 +2369,7 @@ async function discardAndCloseModalVideo() {
     if (st.phase !== 'completing') {
         st.phase = 'idle';
         st.objectKey = null;
+        st.uploadId = null;
         st.progress = 0;
         st.fileName = '';
         st.errorMessage = '';
