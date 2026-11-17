@@ -2181,16 +2181,10 @@ async function wizardSaveModalVideo() {
 }
 
 function closeModalVideoClean() {
-    // Closing the modal during an active or completed-but-unsaved upload must
-    // follow the same cancellation path as the explicit Cancel button.
-    if (activeModalItemIdx !== -1 && window.courseDraft?.curriculum?.[activeModalSectionIdx]?.items?.[activeModalItemIdx]) {
-        const activeItem = window.courseDraft.curriculum[activeModalSectionIdx].items[activeModalItemIdx];
-        const activeState = getLessonVideoState(activeItem.id);
-        if (['uploading', 'completing', 'pending_save'].includes(activeState.phase)) {
-            void discardAndCloseModalVideo();
-            return;
-        }
-    }
+    // The X button only dismisses the dialog. It must not cancel or discard an
+    // upload; the upload state remains attached to the lesson and is restored
+    // by wizardOpenModal() if the instructor opens this lesson again.
+    // Explicit cancellation remains exclusively in discardAndCloseModalVideo().
     const progressContainer = document.getElementById('modal-upload-progress-container');
     if (progressContainer) progressContainer.classList.add('hidden');
     
