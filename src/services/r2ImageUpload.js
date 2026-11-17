@@ -4,7 +4,7 @@ import { supabase } from "./supabaseClient.js";
  * Upload an image into the existing private R2 bucket.
  * Returns only the opaque object key; never constructs or returns a public URL.
  */
-export async function uploadPrivateImage({ file, purpose, courseId = null, existingObjectKey = null, signal = null, onStage = null, onSession = null }) {
+export async function uploadPrivateImage({ file, purpose, courseId = null, signal = null, onStage = null, onSession = null }) {
     if (!file) throw new Error("An image file is required.");
     const throwIfAborted = () => {
         if (signal?.aborted) throw new Error("Upload cancelled");
@@ -15,7 +15,7 @@ export async function uploadPrivateImage({ file, purpose, courseId = null, exist
     try {
         throwIfAborted();
         const { data, error } = await supabase.functions.invoke("r2-image-upload-url", {
-            body: { purpose, course_id: courseId, content_type: file.type, file_size: file.size, existing_object_key: existingObjectKey }
+            body: { purpose, course_id: courseId, content_type: file.type, file_size: file.size }
         });
         if (error) throw new Error(error.message || "Could not prepare image upload.");
         if (!data?.upload_url || !data?.object_key || !data?.required_headers) {
