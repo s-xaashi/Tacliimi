@@ -2,6 +2,7 @@
  * Course Creation Wizard Logic with Supabase Backend
  */
 import { CourseService } from '/src/services/courseService.js';
+import { supabase } from '/src/services/supabaseClient.js';
 import { AuthService } from '/src/services/authService.js';
 import { financeSettingsService } from '/src/services/financeSettingsService.js';
 import { getEmbedUrl } from '/src/utils/js/videoEmbed.js';
