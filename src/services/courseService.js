@@ -2124,7 +2124,7 @@ export const CourseService = {
         // lesson ID from the strict course-scoped object-key structure.
         const introPrefix = `courses/${courseId}/introduction/`;
         const introSuffix = objectKey.startsWith(introPrefix) ? objectKey.slice(introPrefix.length) : "";
-        const isIntroKey = /^[a-f0-9-]+\\.mp4$/i.test(introSuffix);
+        const isIntroKey = /^[a-f0-9-]+\.mp4$/i.test(introSuffix);
         const lessonPrefix = `courses/${courseId}/lessons/`;
         const lessonParts = objectKey.startsWith(lessonPrefix)
             ? objectKey.slice(lessonPrefix.length).split("/")
@@ -2132,7 +2132,7 @@ export const CourseService = {
         const isLessonKey = lessonParts.length === 3 &&
             /^[a-f0-9-]+$/i.test(lessonParts[0]) &&
             lessonParts[1] === "video" &&
-            /^[a-f0-9-]+\\.mp4$/i.test(lessonParts[2]);
+            /^[a-f0-9-]+\.mp4$/i.test(lessonParts[2]);
         const resolvedType = type || (isIntroKey ? "intro" : "lesson");
         const resolvedLessonId = resolvedType === "intro" ? null : (lessonId || (isLessonKey ? lessonParts[0] : null));
 
