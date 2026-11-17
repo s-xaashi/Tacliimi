@@ -1079,7 +1079,10 @@ async function setupEventListeners() {
                     if (btn) btn.innerText = btn.getAttribute('data-orig') || 'Upload File';
                 } finally {
                     e.target.value = '';
-                    if (btn) btn.disabled = false;
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerText = btn.getAttribute('data-orig') || 'Upload File';
+                    }
                     if (cancelBtn) cancelBtn.onclick = null;
                     if (window.thumbnailUploadAbortController === controller) window.thumbnailUploadAbortController = null;
                     setTimeout(() => { if (progressContainer) progressContainer.classList.add('hidden'); }, 1800);
@@ -2237,7 +2240,17 @@ async function discardAndCloseModalVideo() {
             );
         } catch (e) {
             console.error('Error discarding upload:', e);
+            st.phase = 'pending_save';
             st.errorMessage = 'Could not remove the cancelled upload. Please retry.';
+            updateLessonVideoCardUI(st.sIdx, st.iIdx);
+            const errEl = document.getElementById('modal-video-url-error');
+            if (errEl) {
+                errEl.textContent = st.errorMessage;
+                errEl.classList.remove('hidden');
+            }
+            // Keep the modal and object key available so the instructor can retry
+            // cancellation or explicitly save the staged video.
+            return;
         }
     }
 
