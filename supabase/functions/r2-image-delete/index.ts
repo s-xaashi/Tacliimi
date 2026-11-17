@@ -27,6 +27,7 @@ Deno.serve(async (req) => {
     const type = body?.resource_type;
     const id = typeof body?.resource_id === "string" ? body.resource_id : "";
     const key = typeof body?.object_key === "string" ? body.object_key : "";
+    const uploadId = typeof body?.upload_id === "string" ? body.upload_id : "";
     if (!id || !key || (type !== "avatar" && type !== "thumbnail")) return json({ error: "Invalid image reference" }, 400);
     if (type === "thumbnail" && !UUID_RE.test(id)) return json({ error: "Invalid course reference" }, 400);
 
@@ -59,6 +60,20 @@ Deno.serve(async (req) => {
       }
     }
 
+    // A session ID explicitly identifies an uncommitted thumbnail upload.
+    // Never allow this path to delete a committed session or a referenced key.
+    if (uploadId) {
+      if (type !== "thumbnail" || !UUID_RE.test(uploadId)) return json({ error: "Invalid staged thumbnail session" }, 400);
+      const { data: uploadSession, error: sessionError } = await admin.from("r2_image_upload_sessions")
+        .select("upload_id, status")
+        .eq("upload_id", uploadId).eq("object_key", key)
+        .eq("course_id", id).eq("instructor_id", user.id).maybeSingle();
+      if (sessionError) throw sessionError;
+      if (!uploadSession) return json({ error: "Thumbnail upload session not found" }, 404);
+      if (uploadSession.status === "committed") return json({ deleted: false, reason: "already_committed" });
+      if (uploadSession.status === "discarded") return json({ deleted: true, already_discarded: true });
+    }
+
     // Never delete an object that any profile/course row still references.
     const [avatarRefs, thumbnailRefs] = await Promise.all([
       admin.from("profiles").select("id").eq("avatar_storage_key", key).limit(1),
@@ -67,7 +82,20 @@ Deno.serve(async (req) => {
     if (avatarRefs.error) throw avatarRefs.error;
     if (thumbnailRefs.error) throw thumbnailRefs.error;
     if ((avatarRefs.data?.length ?? 0) > 0 || (thumbnailRefs.data?.length ?? 0) > 0) {
+      if (uploadId) {
+        await admin.from("r2_image_upload_sessions")
+          .update({ status: "committed", committed_at: new Date().toISOString() })
+          .eq("upload_id", uploadId).in("status", ["completed", "discarding"]);
+      }
       return json({ deleted: false, reason: "still_referenced" });
+    }
+
+    if (uploadId) {
+      const { error: claimError } = await admin.from("r2_image_upload_sessions")
+        .update({ status: "discarding" })
+        .eq("upload_id", uploadId).eq("instructor_id", user.id)
+        .in("status", ["in_progress", "completed", "discarding"]);
+      if (claimError) throw claimError;
     }
 
     const endpoint = Deno.env.get("R2_ENDPOINT") ?? "";
@@ -77,6 +105,11 @@ Deno.serve(async (req) => {
     if (!endpoint || !bucket || !accessKeyId || !secretAccessKey) throw new Error("Private R2 configuration is incomplete");
     const s3 = new S3Client({ region: "auto", endpoint, credentials: { accessKeyId, secretAccessKey } });
     await s3.send(new DeleteObjectCommand({ Bucket: bucket, Key: key }));
+    if (uploadId) {
+      const { error: finishError } = await admin.from("r2_image_upload_sessions")
+        .update({ status: "discarded" }).eq("upload_id", uploadId).eq("status", "discarding");
+      if (finishError) throw finishError;
+    }
     return json({ deleted: true });
   } catch (error) {
     console.error("r2-image-delete:", error);
