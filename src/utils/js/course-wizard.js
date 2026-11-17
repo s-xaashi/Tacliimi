@@ -1331,9 +1331,11 @@ async function setupEventListeners() {
                     // Race condition: if cancel clicked just as completion returns
                     if (st.cancelAfterComplete) {
                         st.phase = 'cancelling';
-                        await CourseService.discardStagedUpload(
+                        st.cancelCleanupPromise = CourseService.discardStagedUpload(
                             window.courseDraft.id, uploadResult.objectKey, null, item.id, 'lesson'
                         );
+                        await st.cancelCleanupPromise;
+                        st.cancelCleanupPromise = null;
                         window.sessionUploadedFiles = window.sessionUploadedFiles.filter(
                             uploaded => !(uploaded.provider === 'r2' && uploaded.key === uploadResult.objectKey)
                         );
@@ -2224,6 +2226,7 @@ async function discardAndCloseModalVideo() {
     } else if (st.phase === 'completing') {
         st.cancelAfterComplete = true;
         if (st.uploadPromise) await st.uploadPromise.catch(() => {});
+        if (st.cancelCleanupPromise) await st.cancelCleanupPromise.catch(() => {});
     } else if (st.phase === 'pending_save' && st.objectKey) {
         try {
             st.phase = 'cancelling';
