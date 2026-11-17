@@ -95,7 +95,7 @@ Deno.serve(async (req: Request) => {
       throw new Error("Upload is changing state; retry cleanup shortly.");
     }
 
-    if (session.status === "in_progress") {
+    if (session.status === "in_progress" || session.status === "discarding") {
       try {
         await s3.send(new AbortMultipartUploadCommand({
           Bucket: cfg.bucket, Key: session.object_key, UploadId: session.upload_id,
