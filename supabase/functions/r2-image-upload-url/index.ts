@@ -65,8 +65,7 @@ Deno.serve(async (req) => {
     const s3 = new S3Client({ region: "auto", endpoint, credentials: { accessKeyId, secretAccessKey } });
     const command = new PutObjectCommand({
       Bucket: bucket, Key: objectKey, ContentType: contentType,
-      // New keys remain write-once. Reuse is allowed only after the ownership,
-      // course-family and single-reference checks above.
+      // Every upload gets a write-once staging key; committed thumbnails are immutable.
       IfNoneMatch: "*",
       CacheControl: "private, max-age=0, no-store",
     });
