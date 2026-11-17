@@ -40,9 +40,9 @@ export async function uploadPrivateImage({ file, purpose, courseId = null, signa
             throw new Error(detail || `Image upload failed (HTTP ${response.status}).`);
         }
 
-        // From this point onward the object is being validated and may be copied
-        // onto an existing, exclusively-owned thumbnail key. Do not cancel this
-        // server-side commit midway; the UI disables Cancel at this stage.
+        // From this point onward the unique staging object is being validated.
+        // Do not cancel verification midway; the UI disables Cancel at this stage.
+        // The previous committed thumbnail key remains untouched.
         onStage?.("verifying");
         const { data: verified, error: verifyError } = await supabase.functions.invoke("r2-image-upload-complete", {
             body: { purpose, course_id: courseId, object_key: objectKey, upload_id: uploadId }
