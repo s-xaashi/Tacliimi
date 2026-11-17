@@ -51,12 +51,12 @@ Deno.serve(async (req: Request) => {
     let reconciledImages = 0;
 
     const { data: videoSessions, error: videoError } = await admin.from("r2_multipart_upload_sessions")
-      .select("*").eq("instructor_id", user.id).in("status", ["in_progress", "completed"]);
+      .select("*").eq("instructor_id", user.id).in("status", ["in_progress", "completed", "discarding"]);
     if (videoError) throw videoError;
 
     for (const session of videoSessions || []) {
-      const isExpiredMultipart = session.status === "in_progress" && new Date(session.expires_at).getTime() <= Date.now();
-      const isStaleCompleted = session.status === "completed" &&
+      const isExpiredMultipart = ["in_progress", "discarding"].includes(session.status) && new Date(session.expires_at).getTime() <= Date.now();
+      const isStaleCompleted = ["completed", "discarding"].includes(session.status) &&
         new Date(session.completed_at || session.created_at).getTime() <= cutoff;
       if (!isExpiredMultipart && !isStaleCompleted) continue;
 
@@ -124,12 +124,12 @@ Deno.serve(async (req: Request) => {
     }
 
     const { data: imageSessions, error: imageError } = await admin.from("r2_image_upload_sessions")
-      .select("*").eq("instructor_id", user.id).in("status", ["in_progress", "completed"]);
+      .select("*").eq("instructor_id", user.id).in("status", ["in_progress", "completed", "discarding"]);
     if (imageError) throw imageError;
 
     for (const session of imageSessions || []) {
-      const isExpiredPut = session.status === "in_progress" && new Date(session.expires_at).getTime() <= Date.now();
-      const isStaleCompleted = session.status === "completed" &&
+      const isExpiredPut = ["in_progress", "discarding"].includes(session.status) && new Date(session.expires_at).getTime() <= Date.now();
+      const isStaleCompleted = ["completed", "discarding"].includes(session.status) &&
         new Date(session.completed_at || session.created_at).getTime() <= cutoff;
       if (!isExpiredPut && !isStaleCompleted) continue;
 
