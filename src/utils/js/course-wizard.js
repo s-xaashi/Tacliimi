@@ -993,6 +993,7 @@ async function setupEventListeners() {
                 }
 
                 let uploadedObjectKey = null;
+                let thumbnailUploadId = null;
                 const previousObjectKey = window.courseDraft.thumbnail_storage_key || null;
                 const previousThumbnailUrl = window.courseDraft.thumbnail_url || null;
                 const previousPreviewUrl = window.courseDraft.thumbnail_preview_url || null;
@@ -1004,7 +1005,7 @@ async function setupEventListeners() {
                     uploadedObjectKey = await CourseService.uploadCourseThumbnail(
                         window.courseDraft.id,
                         file,
-                        previousObjectKey,
+                        null,
                         controller.signal,
                         (stage) => {
                             if (stage === 'verifying') {
@@ -1014,6 +1015,13 @@ async function setupEventListeners() {
                                     cancelBtn.textContent = 'Verifying...';
                                 }
                             }
+                        },
+                        (uploadSession) => {
+                            thumbnailUploadId = uploadSession.uploadId;
+                            window.sessionUploadedFiles.push({
+                                provider: 'r2', type: 'thumbnail',
+                                uploadId: uploadSession.uploadId, key: uploadSession.objectKey
+                            });
                         }
                     );
 
@@ -1023,6 +1031,21 @@ async function setupEventListeners() {
                     window.courseDraft.thumbnail_url = null;
                     await window.saveDraft(true, true);
                     persisted = true;
+                    if (thumbnailUploadId) {
+                        const { error: commitError } = await supabase.rpc('mark_r2_thumbnail_upload_committed', {
+                            p_course_id: window.courseDraft.id,
+                            p_upload_id: thumbnailUploadId,
+                            p_object_key: uploadedObjectKey
+                        });
+                        if (commitError) {
+                            // The DB pointer is already saved. Keep the object and let
+                            // the safe cleanup sweep reconcile this session by reference.
+                            console.warn('Thumbnail saved, but upload session status reconciliation failed:', commitError);
+                        }
+                    }
+                    window.sessionUploadedFiles = window.sessionUploadedFiles.filter(
+                        uploaded => !(uploaded.provider === 'r2' && uploaded.key === uploadedObjectKey)
+                    );
 
                     invalidatePrivateImageCache({ resourceType: 'thumbnail', resourceId: window.courseDraft.id });
                     try {
@@ -1064,7 +1087,7 @@ async function setupEventListeners() {
                         if (restoredPreviewUrl) showThumbnailPreview(restoredPreviewUrl);
                         if (uploadedObjectKey) {
                             try {
-                                await deletePrivateImage({ resourceType: 'thumbnail', resourceId: window.courseDraft.id, objectKey: uploadedObjectKey });
+                                await deletePrivateImage({ resourceType: 'thumbnail', resourceId: window.courseDraft.id, objectKey: uploadedObjectKey, uploadId: thumbnailUploadId });
                             } catch (cleanupError) {
                                 console.warn('Could not clean up failed thumbnail upload.', cleanupError);
                             }
