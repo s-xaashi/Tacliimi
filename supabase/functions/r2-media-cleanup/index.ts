@@ -87,17 +87,26 @@ Deno.serve(async (req: Request) => {
           }));
           abortedMultipart++;
         } catch (abortError) {
-          // If R2 already completed but the DB update was lost, treat it as an
-          // object candidate and remove it only after the reference check below.
+          const status = (abortError as any)?.$metadata?.httpStatusCode;
+          const isMissingUpload = status === 404 || (abortError as Error)?.name === "NoSuchUpload" ||
+            /NoSuchUpload|not found/i.test((abortError as Error)?.message || "");
+          if (!isMissingUpload) throw abortError;
+
+          // If R2 already completed but the DB update was lost, the multipart
+          // ID is gone and the object exists. A confirmed 404 means no object.
           try {
             await s3.send(new HeadObjectCommand({ Bucket: cfg.bucket, Key: session.object_key }));
             completedObjectFound = true;
-          } catch (_) {
+          } catch (headError) {
+            const headStatus = (headError as any)?.$metadata?.httpStatusCode;
+            const isMissingObject = headStatus === 404 || (headError as Error)?.name === "NotFound" ||
+              /not found|404/i.test((headError as Error)?.message || "");
+            if (!isMissingObject) throw headError;
             await admin.from("r2_multipart_upload_sessions")
-              .update({ status: "aborted" }).eq("upload_id", session.upload_id).eq("status", "discarding");
+              .update({ status: "discarded" }).eq("upload_id", session.upload_id).eq("status", "discarding");
             continue;
           }
-          console.warn("Expired multipart upload no longer exists; checking for a completed object.", abortError);
+          console.warn("Expired multipart upload no longer exists; checking its completed object.", abortError);
         }
       }
 
