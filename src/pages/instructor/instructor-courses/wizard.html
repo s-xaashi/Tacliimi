@@ -174,6 +174,10 @@
 <input accept="image/*" class="hidden" id="thumbnail-upload" type="file"/>
 <button class="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-6 py-2 rounded-lg font-semibold text-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition" id="btn-upload-thumbnail" onclick="document.getElementById('thumbnail-upload').click()">Upload
                             File</button>
+                            <div id="thumbnail-upload-progress-container" class="hidden mt-3 text-xs text-slate-500 flex items-center gap-3">
+                                <span id="thumbnail-upload-status">Uploading thumbnail...</span>
+                                <button type="button" id="thumbnail-upload-cancel" class="font-semibold text-red-500 hover:text-red-700">Cancel</button>
+                            </div>
 </div>
 </div>
 </div>
@@ -215,9 +219,12 @@
                                 
                                 <!-- R2 Upload Progress -->
                                 <div id="intro-upload-progress-container" class="hidden mt-3 max-w-sm">
-                                    <div class="flex justify-between text-xs text-slate-500 mb-1">
-                                        <span>Uploading...</span>
-                                        <span id="intro-upload-percent">0%</span>
+                                    <div class="flex justify-between items-center text-xs text-slate-500 mb-1 gap-3">
+                                        <span id="intro-upload-status">Uploading...</span>
+                                        <div class="flex items-center gap-3">
+                                            <span id="intro-upload-percent">0%</span>
+                                            <button type="button" id="intro-upload-cancel" class="font-semibold text-red-500 hover:text-red-700">Cancel</button>
+                                        </div>
                                     </div>
                                     <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1.5">
                                         <div id="intro-upload-progress-bar" class="bg-primary h-1.5 rounded-full" style="width: 0%"></div>
