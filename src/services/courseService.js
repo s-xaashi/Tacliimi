@@ -1748,8 +1748,13 @@ export const CourseService = {
     /** CLOUDFLARE R2 VIDEO INTEGRATION */
 
     async uploadToR2(courseId, lessonId, type, file, onProgress, signal, existingObjectKey = null) {
+        const throwIfAborted = () => {
+            if (signal?.aborted) throw new Error('Upload cancelled');
+        };
+        throwIfAborted();
         const session = await AuthService.getSession();
         if (!session) throw new Error("Not authenticated");
+        throwIfAborted();
 
         // Telemetry instrumentation
         const telemetry = {
@@ -1768,6 +1773,27 @@ export const CourseService = {
             clientProcessingNote: "No client-side video processing, hashing, converting or compressing is performed before/during upload. Raw file object from input is uploaded."
         };
 
+        let uploadId = null;
+        let objectKey = null;
+        let multipartCompleted = false;
+        const abortMultipart = async () => {
+            if (!uploadId || !objectKey) return;
+            const { error } = await supabase.functions.invoke('r2-multipart-abort', {
+                body: { course_id: courseId, upload_id: uploadId, object_key: objectKey }
+            });
+            if (error) throw error;
+        };
+        const discardCompletedObject = async () => {
+            if (!objectKey || !multipartCompleted) return;
+            try {
+                // The upload has not yet been committed by its caller. The
+                // server-side delete function rechecks references before deletion.
+                await this.deleteR2Video(courseId, lessonId, type, objectKey);
+            } catch (cleanupError) {
+                console.warn('Could not discard cancelled staged R2 video:', cleanupError);
+            }
+        };
+
         const t0_create = performance.now();
         // 1. Create Multipart Upload
         const createRes = await supabase.functions.invoke('r2-multipart-create', {
@@ -1784,7 +1810,11 @@ export const CourseService = {
         
         if (createRes.error) throw new Error(`Init upload failed: ${createRes.error.message}`);
         
-        const { uploadId, objectKey, partCount, partSize } = createRes.data;
+        ({ uploadId, objectKey } = createRes.data);
+        const { partCount, partSize } = createRes.data;
+        if (!uploadId || !objectKey || !Number.isInteger(partCount) || partCount < 1 || !partSize) {
+            throw new Error('Multipart upload initialization returned incomplete session details.');
+        }
         telemetry.partCount = partCount;
         telemetry.partSize = partSize;
 
@@ -1796,7 +1826,19 @@ export const CourseService = {
         let totalUploadedBytes = 0;
 
         // Exponential Backoff Delay
-        const delay = (ms) => new Promise(res => setTimeout(res, ms));
+        const delay = (ms) => new Promise((resolve, reject) => {
+            if (signal?.aborted) return reject(new Error('Upload cancelled'));
+            const timer = setTimeout(() => {
+                signal?.removeEventListener('abort', onAbort);
+                resolve();
+            }, ms);
+            const onAbort = () => {
+                clearTimeout(timer);
+                signal?.removeEventListener('abort', onAbort);
+                reject(new Error('Upload cancelled'));
+            };
+            signal?.addEventListener('abort', onAbort, { once: true });
+        });
 
         // Part uploader function
         const uploadPart = async (partNumber) => {
@@ -1825,6 +1867,7 @@ export const CourseService = {
                 try {
                     const t0_presign = performance.now();
                     // Get presigned URL for this part
+                    throwIfAborted();
                     const preRes = await supabase.functions.invoke('r2-multipart-presign', {
                         body: {
                             course_id: courseId,
@@ -1837,24 +1880,39 @@ export const CourseService = {
                     partTelemetry.presignDuration += (t1_presign - t0_presign);
 
                     if (preRes.error) throw new Error(`Presign failed: ${preRes.error.message}`);
-                    const presignedUrl = preRes.data.presignedUrls[0].url;
+                    throwIfAborted();
+                    const presignedUrl = preRes.data?.presignedUrls?.[0]?.url;
+                    if (!presignedUrl) throw new Error('Presigned upload URL was not returned.');
 
                     // Upload chunk
                     const partResult = await new Promise((resolve, reject) => {
+                        if (signal?.aborted) return reject(new Error('Upload cancelled'));
                         const xhr = new XMLHttpRequest();
+                        let settled = false;
+                        const cleanup = () => signal?.removeEventListener('abort', handleAbort);
+                        const finish = (callback, value) => {
+                            if (settled) return;
+                            settled = true;
+                            cleanup();
+                            callback(value);
+                        };
                         xhr.open('PUT', presignedUrl, true);
-                        
+
                         partTelemetry.uploadStart = performance.now();
                         if (!telemetry.firstPartUploadStart || partTelemetry.uploadStart < telemetry.firstPartUploadStart) {
                             telemetry.firstPartUploadStart = partTelemetry.uploadStart;
                         }
 
                         const handleAbort = () => {
-                            xhr.abort();
-                            reject(new Error('Upload cancelled'));
+                            try { xhr.abort(); } catch (_) {}
+                            finish(reject, new Error('Upload cancelled'));
                         };
-                        
-                        if (signal) signal.addEventListener('abort', handleAbort);
+
+                        signal?.addEventListener('abort', handleAbort, { once: true });
+                        if (signal?.aborted) {
+                            handleAbort();
+                            return;
+                        }
                         
                         let currentLoaded = 0;
                         
@@ -1872,8 +1930,8 @@ export const CourseService = {
                             partTelemetry.uploadEnd = performance.now();
                             partTelemetry.duration = partTelemetry.uploadEnd - partTelemetry.uploadStart;
                             partTelemetry.httpStatus = xhr.status;
-                            if (signal) signal.removeEventListener('abort', handleAbort);
-                            
+                            cleanup();
+
                             if (!telemetry.lastPartUploadFinish || partTelemetry.uploadEnd > telemetry.lastPartUploadFinish) {
                                 telemetry.lastPartUploadFinish = partTelemetry.uploadEnd;
                             }
@@ -1881,18 +1939,16 @@ export const CourseService = {
                             if (xhr.status >= 200 && xhr.status < 300) {
                                 const etag = xhr.getResponseHeader('ETag') || xhr.getResponseHeader('etag');
                                 if (!etag) {
-                                    reject(new Error('R2 did not expose the uploaded part ETag. Check the bucket CORS ExposeHeaders configuration.'));
+                                    finish(reject, new Error('R2 did not expose the uploaded part ETag. Check the bucket CORS ExposeHeaders configuration.'));
                                     return;
                                 }
-                                resolve({ PartNumber: partNumber, ETag: etag });
+                                finish(resolve, { PartNumber: partNumber, ETag: etag });
                             } else {
-                                reject(new Error(`Chunk upload failed: ${xhr.statusText}`));
+                                finish(reject, new Error(`Chunk upload failed: ${xhr.statusText}`));
                             }
                         };
-                        xhr.onerror = () => {
-                            if (signal) signal.removeEventListener('abort', handleAbort);
-                            reject(new Error('Network error during chunk upload'));
-                        };
+                        xhr.onerror = () => finish(reject, new Error('Network error during chunk upload'));
+                        xhr.onabort = () => finish(reject, new Error('Upload cancelled'));
                         xhr.send(chunk);
                     });
 
@@ -1900,6 +1956,7 @@ export const CourseService = {
                     return partResult;
                 } catch (err) {
                     partTelemetry.errs.push(err.message);
+                    if (signal?.aborted || err?.message === 'Upload cancelled') throw new Error('Upload cancelled');
                     attempt++;
                     if (attempt > MAX_RETRIES) {
                         telemetry.partUploadTimings.push(partTelemetry);
@@ -1939,6 +1996,7 @@ export const CourseService = {
             await Promise.all(workers);
 
             if (hasError) throw globalError;
+            throwIfAborted();
 
             // Complete the multipart object and attach it to its validated course target.
             const t0_complete = performance.now();
@@ -1957,7 +2015,14 @@ export const CourseService = {
             telemetry.completeDuration = t1_complete - t0_complete;
 
             if (completeRes.error) throw new Error(`Completion failed: ${completeRes.error.message}`);
-            
+            multipartCompleted = true;
+            // Completion may finish server-side just as the user cancels. In that
+            // case the object is still staged; remove it safely before rejecting.
+            if (signal?.aborted) {
+                await discardCompletedObject();
+                throw new Error('Upload cancelled');
+            }
+
             if (onProgress) onProgress(100);
             
             const totalEndTime = performance.now();
@@ -1997,10 +2062,16 @@ export const CourseService = {
             return { objectKey: objectKey };
 
         } catch (err) {
-            // Abort the multipart upload logic (if in progress)
-            await supabase.functions.invoke('r2-multipart-abort', {
-                body: { course_id: courseId, upload_id: uploadId, object_key: objectKey }
-            });
+            // Stop unfinished multipart parts. If completion already succeeded,
+            // remove only the uncommitted object using the reference-checked path.
+            if (multipartCompleted) {
+                await discardCompletedObject();
+            } else if (uploadId && objectKey) {
+                try { await abortMultipart(); }
+                catch (abortError) {
+                    console.warn('Could not abort multipart upload immediately; orphan cleanup will retry:', abortError);
+                }
+            }
             throw err;
         }
     },
