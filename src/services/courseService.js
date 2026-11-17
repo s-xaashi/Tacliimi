@@ -932,7 +932,7 @@ export const CourseService = {
         return urlData.publicUrl;
     },
 
-    async uploadCourseThumbnail(courseId, file, existingObjectKey = null, signal = null, onStage = null) {
+    async uploadCourseThumbnail(courseId, file, existingObjectKey = null, signal = null, onStage = null, onSession = null) {
         const session = await AuthService.getSession();
         if (!session?.user?.id) throw new Error("Not authenticated");
         if (!ALLOWED_IMAGE_TYPES.includes(file?.type)) {
@@ -942,7 +942,7 @@ export const CourseService = {
             throw new Error(`Image too large. Maximum allowed: ${(MAX_IMAGE_BYTES / (1024 * 1024)).toFixed(0)} MB.`);
         }
 
-        return await uploadPrivateImage({ file, purpose: 'thumbnail', courseId: courseId || null, existingObjectKey, signal, onStage });
+        return await uploadPrivateImage({ file, purpose: 'thumbnail', courseId: courseId || null, signal, onStage, onSession });
     },
 
     async uploadCourseVideo(courseId, file) {
