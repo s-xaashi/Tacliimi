@@ -2120,46 +2120,32 @@ export const CourseService = {
         if (!session) throw new Error("Not authenticated");
         if (!courseId || !objectKey) throw new Error("Course ID and staged object key are required.");
 
-        // Preserve the existing call shape used by session cleanup: infer the
-        // upload type and lesson ID from the strict course-scoped object path.
+        // Preserve existing call sites by inferring the staged media type and
+        // lesson ID from the strict course-scoped object-key structure.
         const introPrefix = `courses/${courseId}/introduction/`;
-        const lessonMatch = objectKey.match(new RegExp(
-            "^courses/" + courseId.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\\\    async discardStagedUpload(courseId, objectKey, uploadId = null, lessonId = null, type = 'lesson') {
-        const session = await AuthService.getSession();
-        if (!session) throw new Error("Not authenticated");
+        const introSuffix = objectKey.startsWith(introPrefix) ? objectKey.slice(introPrefix.length) : "";
+        const isIntroKey = /^[a-f0-9-]+\\.mp4$/i.test(introSuffix);
+        const lessonPrefix = `courses/${courseId}/lessons/`;
+        const lessonParts = objectKey.startsWith(lessonPrefix)
+            ? objectKey.slice(lessonPrefix.length).split("/")
+            : [];
+        const isLessonKey = lessonParts.length === 3 &&
+            /^[a-f0-9-]+$/i.test(lessonParts[0]) &&
+            lessonParts[1] === "video" &&
+            /^[a-f0-9-]+\\.mp4$/i.test(lessonParts[2]);
+        const resolvedType = type || (isIntroKey ? "intro" : "lesson");
+        const resolvedLessonId = resolvedType === "intro" ? null : (lessonId || (isLessonKey ? lessonParts[0] : null));
 
-        // An in-flight multipart session must be aborted before attempting to
-        // remove its completed object. This method is for staged, uncommitted
-        // media only; r2-delete-video verifies ownership and references.
-        if (uploadId) {
-            const { error } = await supabase.functions.invoke('r2-multipart-abort', {
-                body: { course_id: courseId, upload_id: uploadId, object_key: objectKey }
-            });
-            if (error) throw new Error(`Could not abort staged multipart upload: ${error.message}`);
-        }
-
-        return await this.deleteR2Video(
-            courseId,
-            type === 'intro' ? null : lessonId,
-            type,
-            objectKey
-        );
-    },") +
-            "/lessons/([a-f0-9-]+)/video/[a-f0-9-]+\\\\.mp4$",
-            "i"
-        ));
-        const resolvedType = type || (objectKey.startsWith(introPrefix) ? "intro" : "lesson");
-        const resolvedLessonId = resolvedType === "intro" ? null : (lessonId || lessonMatch?.[1]);
-        if (resolvedType === "lesson" && !resolvedLessonId) {
+        if (resolvedType === "intro" && !isIntroKey) throw new Error("Invalid staged introduction video key.");
+        if (resolvedType === "lesson" && (!isLessonKey || !resolvedLessonId)) {
             throw new Error("Could not identify the lesson for this staged video.");
         }
         if (resolvedType !== "lesson" && resolvedType !== "intro") {
             throw new Error("Unsupported staged video type.");
         }
 
-        // An in-flight multipart session must be aborted before attempting to
-        // remove its completed object. The delete endpoint verifies ownership
-        // and references, preserving any object already attached elsewhere.
+        // Abort active multipart parts first. Then use the existing authenticated
+        // delete endpoint, which rechecks course ownership and database references.
         if (uploadId) {
             const { error } = await supabase.functions.invoke('r2-multipart-abort', {
                 body: { course_id: courseId, upload_id: uploadId, object_key: objectKey }
