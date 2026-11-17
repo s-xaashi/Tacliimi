@@ -89,30 +89,35 @@ Deno.serve(async (req) => {
         .from('course_lessons')
         .select('section_id, video_storage_key, media_asset_id')
         .eq('id', lesson_id)
-        .single();
-      if (error || !lesson) throw new Error('Lesson not found');
-
-      // Ensure the lesson belongs to the course whose ownership was verified above.
-      const { data: section, error: sectionError } = await supabase
-        .from('course_sections')
-        .select('id')
-        .eq('id', lesson.section_id)
-        .eq('course_id', course_id)
         .maybeSingle();
-      if (sectionError || !section) throw new Error('Lesson does not belong to this course');
+      if (error) throw error;
 
-      objectKey = requestedObjectKey || lesson.video_storage_key;
-      mediaAssetId = lesson.media_asset_id;
+      if (lesson) {
+        // When a lesson row exists, verify it belongs to the course.
+        const { data: section, error: sectionError } = await supabase
+          .from('course_sections')
+          .select('id')
+          .eq('id', lesson.section_id)
+          .eq('course_id', course_id)
+          .maybeSingle();
+        if (sectionError || !section) throw new Error('Lesson does not belong to this course');
+        mediaAssetId = lesson.media_asset_id;
+      } else if (!requestedObjectKey) {
+        throw new Error('Lesson not found');
+      }
+
+      objectKey = requestedObjectKey || lesson?.video_storage_key;
 
       if (requestedObjectKey) {
-        // Post-commit replacement cleanup: accept only the previous key for this
-        // exact lesson namespace. Never clear the lesson's newly committed pointer.
+        // Staged uploads may be cancelled before their lesson row is persisted.
+        // Accept only this exact course/lesson namespace and recheck every DB
+        // reference before deleting; a committed/shared object is never removed.
         const keyPattern = new RegExp(
           "^courses/" + course_id + "/lessons/" + lesson_id + "/video/[a-f0-9-]+\\.mp4$",
           "i"
         );
         if (typeof requestedObjectKey !== "string" || !keyPattern.test(requestedObjectKey)) {
-          throw new Error("Invalid previous lesson video key");
+          throw new Error("Invalid staged or previous lesson video key");
         }
         const { data: references, error: referenceError } = await supabase
           .from("course_lessons")
