@@ -50,6 +50,28 @@ Deno.serve(async (req: Request) => {
     let deletedImages = 0;
     let reconciledImages = 0;
 
+    const hasVideoReferences = async (session: any) => {
+      if (session.upload_type === "intro") {
+        const { data, error } = await admin.from("courses")
+          .select("id").eq("intro_video_storage_key", session.object_key);
+        if (error) throw error;
+        return (data || []).length > 0;
+      }
+      const [directRefs, assets] = await Promise.all([
+        admin.from("course_lessons").select("id").eq("video_storage_key", session.object_key),
+        admin.from("course_media_assets").select("id")
+          .eq("storage_path", session.object_key).eq("storage_provider", "r2"),
+      ]);
+      if (directRefs.error) throw directRefs.error;
+      if (assets.error) throw assets.error;
+      const assetIds = (assets.data || []).map((asset: any) => asset.id);
+      if (!assetIds.length) return (directRefs.data || []).length > 0;
+      const { data: assetRefs, error: assetRefError } = await admin.from("course_lessons")
+        .select("id").in("media_asset_id", assetIds);
+      if (assetRefError) throw assetRefError;
+      return (directRefs.data || []).length > 0 || (assetRefs || []).length > 0;
+    };
+
     const { data: videoSessions, error: videoError } = await admin.from("r2_multipart_upload_sessions")
       .select("*").eq("instructor_id", user.id).in("status", ["in_progress", "completed"]);
     if (videoError) throw videoError;
@@ -67,11 +89,7 @@ Deno.serve(async (req: Request) => {
       if (claimError) throw claimError;
       if (!claimed) continue;
 
-      const refs = session.upload_type === "intro"
-        ? await admin.from("courses").select("id").eq("intro_video_storage_key", session.object_key)
-        : await admin.from("course_lessons").select("id").eq("video_storage_key", session.object_key);
-      if (refs.error) throw refs.error;
-      if ((refs.data || []).length) {
+      if (await hasVideoReferences(session)) {
         await admin.from("r2_multipart_upload_sessions")
           .update({ status: "committed", committed_at: new Date().toISOString() })
           .eq("upload_id", session.upload_id).eq("status", "discarding");
@@ -111,11 +129,7 @@ Deno.serve(async (req: Request) => {
       }
 
       // Recheck all course versions immediately before object deletion.
-      const finalRefs = session.upload_type === "intro"
-        ? await admin.from("courses").select("id").eq("intro_video_storage_key", session.object_key)
-        : await admin.from("course_lessons").select("id").eq("video_storage_key", session.object_key);
-      if (finalRefs.error) throw finalRefs.error;
-      if ((finalRefs.data || []).length) {
+      if (await hasVideoReferences(session)) {
         await admin.from("r2_multipart_upload_sessions")
           .update({ status: "committed", committed_at: new Date().toISOString() })
           .eq("upload_id", session.upload_id).eq("status", "discarding");
