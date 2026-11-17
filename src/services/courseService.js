@@ -1793,7 +1793,6 @@ export const CourseService = {
                 type: type, 
                 content_type: file.type,
                 file_size: file.size,
-                // Replacement uploads always use a new staging key; the previous key stays committed until save.
             }
         });
         telemetry.createDuration = performance.now() - t0_create;
@@ -1809,9 +1808,7 @@ export const CourseService = {
         }
         if (!uploadId || !objectKey || !Number.isInteger(partCount) || partCount < 1 || !partSize) {
             if (uploadId && objectKey) {
-                try { await abortMultipart(); } catch (abortError) {
-                    console.warn('Could not abort incomplete multipart session:', abortError);
-                }
+                await discardUpload();
             }
             throw new Error('Multipart upload initialization returned incomplete session details.');
         }
