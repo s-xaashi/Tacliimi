@@ -7,6 +7,21 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+async function hasLessonReferences(supabase: any, objectKey: string) {
+  const [directRefs, assets] = await Promise.all([
+    supabase.from('course_lessons').select('id').eq('video_storage_key', objectKey),
+    supabase.from('course_media_assets').select('id').eq('storage_path', objectKey),
+  ]);
+  if (directRefs.error) throw directRefs.error;
+  if (assets.error) throw assets.error;
+  const assetIds = (assets.data || []).map((asset: any) => asset.id);
+  if (!assetIds.length) return (directRefs.data || []).length > 0;
+  const { data: assetRefs, error: assetRefError } = await supabase
+    .from('course_lessons').select('id').in('media_asset_id', assetIds);
+  if (assetRefError) throw assetRefError;
+  return (directRefs.data || []).length > 0 || (assetRefs || []).length > 0;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -46,43 +61,42 @@ Deno.serve(async (req) => {
 
     if (delete_type === 'intro') {
       objectKey = requestedObjectKey || course.intro_video_storage_key;
+      if (!objectKey) {
+        return new Response(JSON.stringify({ success: true, message: 'No R2 video found to delete' }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
       if (requestedObjectKey) {
-        // Replacement cleanup may target an old key after the course row already
-        // points at its new upload. Restrict that request to this course family's
-        // own introduction namespace; callers cannot delete arbitrary bucket keys.
-        const familyId = course.root_course_id || course_id;
-        const keyMatch = typeof requestedObjectKey === 'string'
-          ? requestedObjectKey.match(/^courses\/([a-f0-9-]+)\/introduction\/[a-f0-9-]+\.mp4$/i)
-          : null;
+        const keyMatch = String(requestedObjectKey).match(/^courses\/([a-f0-9-]+)\/introduction\/[a-f0-9-]+\.mp4$/i);
         if (!keyMatch) throw new Error('Invalid introduction object key');
-        const { data: sourceCourse, error: sourceCourseError } = await supabase
-          .from('courses')
-          .select('id, instructor_id, root_course_id')
-          .eq('id', keyMatch[1])
-          .maybeSingle();
-        if (sourceCourseError) throw sourceCourseError;
+        const { data: sourceCourse, error: sourceError } = await supabase.from('courses')
+          .select('id, instructor_id, root_course_id').eq('id', keyMatch[1]).maybeSingle();
+        if (sourceError) throw sourceError;
         if (!sourceCourse || sourceCourse.instructor_id !== user.id ||
-            (sourceCourse.root_course_id || sourceCourse.id) !== familyId) {
+            (sourceCourse.root_course_id || sourceCourse.id) !== (course.root_course_id || course_id)) {
           throw new Error('Introduction object does not belong to this course family');
         }
+      } else {
+        // Clear this version's pointer before checking whether another version
+        // still references the object.
+        const { error: updateError } = await supabase.from('courses').update({
+          intro_video_provider: 'youtube',
+          intro_video_storage_key: null
+        }).eq('id', course_id).eq('intro_video_storage_key', objectKey);
+        if (updateError) throw updateError;
       }
-      if (objectKey) {
-        // Service-role client sees every revision, including archived versions,
-        // so a shared object is never removed while any course still references it.
-        const { data: introReferences, error: referenceError } = await supabase
-          .from('courses')
-          .select('id, instructor_id, root_course_id')
-          .eq('intro_video_storage_key', objectKey);
-        if (referenceError) throw referenceError;
-        const invalidReference = (introReferences || []).some(reference =>
-          reference.instructor_id !== user.id ||
-          (reference.root_course_id || reference.id) !== (course.root_course_id || course_id)
-        );
-        if (invalidReference) throw new Error('Introduction object is referenced outside this course family');
-        preserveSharedIntro = Boolean(introReferences?.length);
-      }
-      // When object_key is explicitly supplied, this is post-save replacement
-      // cleanup only: do not change the course's current provider or storage key.
+
+      const { data: introReferences, error: referenceError } = await supabase
+        .from('courses').select('id, instructor_id, root_course_id')
+        .eq('intro_video_storage_key', objectKey);
+      if (referenceError) throw referenceError;
+      const invalidReference = (introReferences || []).some(reference =>
+        reference.instructor_id !== user.id ||
+        (reference.root_course_id || reference.id) !== (course.root_course_id || course_id)
+      );
+      if (invalidReference) throw new Error('Introduction object is referenced outside this course family');
+      preserveSharedIntro = Boolean(introReferences?.length);
     } else {
       if (!lesson_id) throw new Error('Missing lesson_id');
       const { data: lesson, error } = await supabase
@@ -93,7 +107,6 @@ Deno.serve(async (req) => {
       if (error) throw error;
 
       if (lesson) {
-        // When a lesson row exists, verify it belongs to the course.
         const { data: section, error: sectionError } = await supabase
           .from('course_sections')
           .select('id')
@@ -106,78 +119,70 @@ Deno.serve(async (req) => {
         throw new Error('Lesson not found');
       }
 
-      objectKey = requestedObjectKey || lesson?.video_storage_key;
+      let linkedAsset = null;
+      if (lesson?.media_asset_id) {
+        const { data: asset, error: assetError } = await supabase.from('course_media_assets')
+          .select('id, storage_path').eq('id', lesson.media_asset_id).maybeSingle();
+        if (assetError) throw assetError;
+        linkedAsset = asset;
+      }
+      objectKey = requestedObjectKey || lesson?.video_storage_key || linkedAsset?.storage_path;
+
+      if (!objectKey) {
+        return new Response(JSON.stringify({ success: true, message: 'No R2 video found to delete' }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
 
       if (requestedObjectKey) {
-        // Staged uploads may be cancelled before their lesson row is persisted.
-        // Accept only this exact course/lesson namespace and recheck every DB
-        // reference before deleting; a committed/shared object is never removed.
-        const expectedPrefix = `courses/${course_id}/lessons/${lesson_id}/video/`;
-        const filename = typeof requestedObjectKey === "string" && requestedObjectKey.startsWith(expectedPrefix)
-          ? requestedObjectKey.slice(expectedPrefix.length)
-          : "";
-        if (!/^[a-f0-9-]+\.mp4$/i.test(filename)) {
-          throw new Error("Invalid staged or previous lesson video key");
+        // A replacement can refer to the prior version's lesson key. Prove that
+        // source lesson and course belong to the same instructor/course family.
+        const keyMatch = String(requestedObjectKey).match(/^courses\/([a-f0-9-]+)\/lessons\/([a-f0-9-]+)\/video\/[a-f0-9-]+\.mp4$/i);
+        if (!keyMatch) throw new Error('Invalid lesson video object key');
+        const { data: sourceCourse, error: sourceCourseError } = await supabase.from('courses')
+          .select('id, instructor_id, root_course_id').eq('id', keyMatch[1]).maybeSingle();
+        if (sourceCourseError) throw sourceCourseError;
+        if (!sourceCourse || sourceCourse.instructor_id !== user.id ||
+            (sourceCourse.root_course_id || sourceCourse.id) !== (course.root_course_id || course_id)) {
+          throw new Error('Lesson video does not belong to this course family');
         }
-        const { data: references, error: referenceError } = await supabase
-          .from("course_lessons")
-          .select("id")
-          .eq("video_storage_key", requestedObjectKey);
-        if (referenceError) throw referenceError;
-        preserveSharedIntro = Boolean(references?.length);
-
-        if (!preserveSharedIntro) {
-          const { error: assetDeleteError } = await supabase
-            .from("course_media_assets")
-            .delete()
-            .eq("storage_path", requestedObjectKey);
-          if (assetDeleteError) throw assetDeleteError;
-        }
+        const { data: sourceLesson, error: sourceLessonError } = await supabase.from('course_lessons')
+          .select('id, course_sections!inner(course_id)')
+          .eq('id', keyMatch[2]).eq('course_sections.course_id', keyMatch[1]).maybeSingle();
+        if (sourceLessonError) throw sourceLessonError;
+        if (!sourceLesson) throw new Error('Source lesson for this video key could not be verified');
+      } else {
+        // Detach only the current lesson. A cloned version may share its media
+        // asset ID, so object deletion waits for the global reference check below.
+        const { error: lessonUpdateError } = await supabase.from('course_lessons').update({
+          video_provider: 'youtube',
+          video_storage_key: null,
+          media_asset_id: null
+        }).eq('id', lesson_id);
+        if (lessonUpdateError) throw lessonUpdateError;
       }
-    }
 
-    if (!objectKey) {
-      return new Response(JSON.stringify({ success: true, message: 'No R2 video found to delete' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      preserveSharedIntro = await hasLessonReferences(supabase, objectKey);
+      if (!preserveSharedIntro) {
+        const { error: assetDeleteError } = await supabase.from('course_media_assets')
+          .delete().eq('storage_path', objectKey);
+        if (assetDeleteError) throw assetDeleteError;
+      }
     }
 
     if (!preserveSharedIntro) {
-      const s3Client = new S3Client({
-        region: 'auto',
-        endpoint: Deno.env.get('R2_ENDPOINT') ?? '',
-        credentials: {
-          accessKeyId: Deno.env.get('R2_ACCESS_KEY_ID') ?? '',
-          secretAccessKey: Deno.env.get('R2_SECRET_ACCESS_KEY') ?? '',
-        },
-      });
-
-      const command = new DeleteObjectCommand({
-        Bucket: Deno.env.get('R2_BUCKET_NAME') ?? '',
-        Key: objectKey,
-      });
-
-      await s3Client.send(command);
-    }
-
-    // Only the normal "remove intro" action clears the current course pointer.
-    // Replacement cleanup supplies object_key and must leave the newly saved key intact.
-    if (delete_type === 'intro' && !requestedObjectKey) {
-      const { error: introUpdateError } = await supabase.from('courses').update({
-        intro_video_provider: 'youtube',
-        intro_video_storage_key: null
-      }).eq('id', course_id).eq('intro_video_storage_key', objectKey);
-      if (introUpdateError) throw introUpdateError;
-    } else if (delete_type !== 'intro' && !requestedObjectKey) {
-      const { error: lessonUpdateError } = await supabase.from('course_lessons').update({
-        video_provider: 'youtube',
-        video_storage_key: null,
-        media_asset_id: null
-      }).eq('id', lesson_id);
-      if (lessonUpdateError) throw lessonUpdateError;
-
-      if (mediaAssetId) {
-        const { error: assetDeleteError } = await supabase.from('course_media_assets').delete().eq('id', mediaAssetId);
-        if (assetDeleteError) throw assetDeleteError;
+      const endpoint = Deno.env.get('R2_ENDPOINT') ?? '';
+      const bucket = Deno.env.get('R2_BUCKET_NAME') ?? '';
+      const accessKeyId = Deno.env.get('R2_ACCESS_KEY_ID') ?? '';
+      const secretAccessKey = Deno.env.get('R2_SECRET_ACCESS_KEY') ?? '';
+      if (!endpoint || !bucket || !accessKeyId || !secretAccessKey) {
+        throw new Error('Private R2 configuration is incomplete');
       }
+      const s3Client = new S3Client({
+        region: 'auto', endpoint,
+        credentials: { accessKeyId, secretAccessKey },
+      });
+      await s3Client.send(new DeleteObjectCommand({ Bucket: bucket, Key: objectKey }));
     }
 
     return new Response(JSON.stringify({
