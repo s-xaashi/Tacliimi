@@ -1995,11 +1995,9 @@ export const CourseService = {
             if (hasError) throw globalError;
             throwIfAborted();
 
-            // Once R2 completion starts, the UI disables Cancel. This matters for
-            // intro replacement because an exclusive existing key may be reused.
+            // Once R2 completion starts, the UI can no longer abort the transfer.
+            // The object is always a fresh staging key; the previous saved key remains intact.
             onStage?.('completing');
-            const reusingExistingIntroKey = type === 'intro' && !!existingObjectKey && objectKey === existingObjectKey;
-            // Complete the multipart object and attach it to its validated course target.
             const t0_complete = performance.now();
             const completeRes = await supabase.functions.invoke('r2-multipart-complete', {
                 body: {
@@ -2016,16 +2014,11 @@ export const CourseService = {
             telemetry.completeDuration = t1_complete - t0_complete;
 
             if (completeRes.error) throw new Error(`Completion failed: ${completeRes.error.message}`);
-            // Completion may finish server-side just as the user cancels. In that
-            // case the object is still staged; remove it safely before rejecting.
-            if (signal?.aborted && !reusingExistingIntroKey) {
-                await discardCompletedObject();
+            // Completion may finish server-side just as cancellation arrives.
+            // Discard only this fresh staging key; never touch the previous saved key.
+            if (signal?.aborted) {
+                await discardUpload();
                 throw new Error('Upload cancelled');
-            }
-            if (signal?.aborted && reusingExistingIntroKey) {
-                // The server has already completed an in-place replacement. Do not
-                // delete or report cancellation for the previously referenced key.
-                console.warn('Cancellation arrived after an in-place intro replacement completed; preserving the completed object.');
             }
 
             if (onProgress) onProgress(100);
