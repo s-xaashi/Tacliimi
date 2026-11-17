@@ -2115,7 +2115,16 @@ export const CourseService = {
         return data;
     },
 
-    async discardStagedUpload(courseId, objectKey, uploadId = null, lessonId = null, type = 'lesson') {
+    async discardStagedUpload(courseId, objectKey, uploadId = null, lessonId = null, type = null) {
+        const session = await AuthService.getSession();
+        if (!session) throw new Error("Not authenticated");
+        if (!courseId || !objectKey) throw new Error("Course ID and staged object key are required.");
+
+        // Preserve the existing call shape used by session cleanup: infer the
+        // upload type and lesson ID from the strict course-scoped object path.
+        const introPrefix = `courses/${courseId}/introduction/`;
+        const lessonMatch = objectKey.match(new RegExp(
+            "^courses/" + courseId.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\\\    async discardStagedUpload(courseId, objectKey, uploadId = null, lessonId = null, type = 'lesson') {
         const session = await AuthService.getSession();
         if (!session) throw new Error("Not authenticated");
 
@@ -2135,6 +2144,30 @@ export const CourseService = {
             type,
             objectKey
         );
+    },") +
+            "/lessons/([a-f0-9-]+)/video/[a-f0-9-]+\\\\.mp4$",
+            "i"
+        ));
+        const resolvedType = type || (objectKey.startsWith(introPrefix) ? "intro" : "lesson");
+        const resolvedLessonId = resolvedType === "intro" ? null : (lessonId || lessonMatch?.[1]);
+        if (resolvedType === "lesson" && !resolvedLessonId) {
+            throw new Error("Could not identify the lesson for this staged video.");
+        }
+        if (resolvedType !== "lesson" && resolvedType !== "intro") {
+            throw new Error("Unsupported staged video type.");
+        }
+
+        // An in-flight multipart session must be aborted before attempting to
+        // remove its completed object. The delete endpoint verifies ownership
+        // and references, preserving any object already attached elsewhere.
+        if (uploadId) {
+            const { error } = await supabase.functions.invoke('r2-multipart-abort', {
+                body: { course_id: courseId, upload_id: uploadId, object_key: objectKey }
+            });
+            if (error) throw new Error(`Could not abort staged multipart upload: ${error.message}`);
+        }
+
+        return await this.deleteR2Video(courseId, resolvedLessonId, resolvedType, objectKey);
     },
 
     async getR2PlaybackUrl(courseId, lessonId, playbackType = 'lesson') {
