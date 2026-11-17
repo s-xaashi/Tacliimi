@@ -932,7 +932,7 @@ export const CourseService = {
         return urlData.publicUrl;
     },
 
-    async uploadCourseThumbnail(courseId, file, existingObjectKey = null) {
+    async uploadCourseThumbnail(courseId, file, existingObjectKey = null, signal = null, onStage = null) {
         const session = await AuthService.getSession();
         if (!session?.user?.id) throw new Error("Not authenticated");
         if (!ALLOWED_IMAGE_TYPES.includes(file?.type)) {
@@ -942,7 +942,7 @@ export const CourseService = {
             throw new Error(`Image too large. Maximum allowed: ${(MAX_IMAGE_BYTES / (1024 * 1024)).toFixed(0)} MB.`);
         }
 
-        return await uploadPrivateImage({ file, purpose: 'thumbnail', courseId: courseId || null, existingObjectKey });
+        return await uploadPrivateImage({ file, purpose: 'thumbnail', courseId: courseId || null, existingObjectKey, signal, onStage });
     },
 
     async uploadCourseVideo(courseId, file) {
@@ -2092,28 +2092,26 @@ export const CourseService = {
         return data;
     },
 
-    async discardStagedUpload(courseId, objectKey, uploadId = null) {
+    async discardStagedUpload(courseId, objectKey, uploadId = null, lessonId = null, type = 'lesson') {
         const session = await AuthService.getSession();
         if (!session) throw new Error("Not authenticated");
 
-        // If we have an uploadId, it means it was still in progress (multipart abort)
+        // An in-flight multipart session must be aborted before attempting to
+        // remove its completed object. This method is for staged, uncommitted
+        // media only; r2-delete-video verifies ownership and references.
         if (uploadId) {
-            await supabase.functions.invoke('r2-multipart-abort', {
+            const { error } = await supabase.functions.invoke('r2-multipart-abort', {
                 body: { course_id: courseId, upload_id: uploadId, object_key: objectKey }
             });
+            if (error) throw new Error(`Could not abort staged multipart upload: ${error.message}`);
         }
 
-        // Always attempt to delete the object in case Complete was called before Cancel hit
-        // The endpoint is idempotent if the object doesn't exist
-        const { error } = await supabase.functions.invoke('r2-discard-staged', {
-            body: { course_id: courseId, object_key: objectKey }
-        });
-
-        if (error) {
-            console.error('Failed to discard staged upload:', error);
-            // Non-critical, cleanup worker will catch it later if it really failed
-        }
-        return true;
+        return await this.deleteR2Video(
+            courseId,
+            type === 'intro' ? null : lessonId,
+            type,
+            objectKey
+        );
     },
 
     async getR2PlaybackUrl(courseId, lessonId, playbackType = 'lesson') {
