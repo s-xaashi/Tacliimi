@@ -61,14 +61,31 @@ Deno.serve(async (req: Request) => {
       requestChecksumCalculation: "WHEN_REQUIRED",
     });
 
-    const getReferences = async () => session.upload_type === "intro"
-      ? await supabase.from("courses").select("id").eq("intro_video_storage_key", session.object_key)
-      : await supabase.from("course_lessons").select("id").eq("video_storage_key", session.object_key);
+    const hasReferences = async () => {
+      if (session.upload_type === "intro") {
+        const { data, error } = await supabase.from("courses")
+          .select("id").eq("intro_video_storage_key", session.object_key);
+        if (error) throw error;
+        return (data || []).length > 0;
+      }
+      const [directRefs, assets] = await Promise.all([
+        supabase.from("course_lessons").select("id").eq("video_storage_key", session.object_key),
+        supabase.from("course_media_assets").select("id")
+          .eq("storage_path", session.object_key).eq("storage_provider", "r2"),
+      ]);
+      if (directRefs.error) throw directRefs.error;
+      if (assets.error) throw assets.error;
+      const assetIds = (assets.data || []).map((asset: any) => asset.id);
+      if (!assetIds.length) return (directRefs.data || []).length > 0;
+      const { data: assetRefs, error: assetRefError } = await supabase.from("course_lessons")
+        .select("id").in("media_asset_id", assetIds);
+      if (assetRefError) throw assetRefError;
+      return (directRefs.data || []).length > 0 || (assetRefs || []).length > 0;
+    };
 
-    // Never discard a key already attached to any course version or lesson.
-    const firstRefs = await getReferences();
-    if (firstRefs.error) throw firstRefs.error;
-    if ((firstRefs.data || []).length) {
+    // Never discard a key attached directly or through a shared media asset.
+    const firstHasReferences = await hasReferences();
+    if (firstHasReferences) {
       await supabase.from("r2_multipart_upload_sessions")
         .update({ status: "committed", committed_at: new Date().toISOString() })
         .eq("upload_id", upload_id)
@@ -124,9 +141,8 @@ Deno.serve(async (req: Request) => {
     }
 
     // Recheck immediately before deletion. A concurrent commit must win.
-    const finalRefs = await getReferences();
-    if (finalRefs.error) throw finalRefs.error;
-    if ((finalRefs.data || []).length) {
+    const finalHasReferences = await hasReferences();
+    if (finalHasReferences) {
       await supabase.from("r2_multipart_upload_sessions")
         .update({ status: "committed", committed_at: new Date().toISOString() })
         .eq("upload_id", upload_id).eq("status", "discarding");
