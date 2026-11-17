@@ -1747,7 +1747,7 @@ export const CourseService = {
 
     /** CLOUDFLARE R2 VIDEO INTEGRATION */
 
-    async uploadToR2(courseId, lessonId, type, file, onProgress, signal, existingObjectKey = null, onStage = null) {
+    async uploadToR2(courseId, lessonId, type, file, onProgress, signal, existingObjectKey = null, onStage = null, onSession = null) {
         const throwIfAborted = () => {
             if (signal?.aborted) throw new Error('Upload cancelled');
         };
@@ -1776,21 +1776,12 @@ export const CourseService = {
         let uploadId = null;
         let objectKey = null;
         let multipartCompleted = false;
-        const abortMultipart = async () => {
+        const discardUpload = async () => {
             if (!uploadId || !objectKey) return;
-            const { error } = await supabase.functions.invoke('r2-multipart-abort', {
-                body: { course_id: courseId, upload_id: uploadId, object_key: objectKey }
-            });
-            if (error) throw error;
-        };
-        const discardCompletedObject = async () => {
-            if (!objectKey) return;
             try {
-                // The upload has not yet been committed by its caller. The
-                // server-side delete function rechecks references before deletion.
-                await this.deleteR2Video(courseId, lessonId, type, objectKey);
+                await this.discardStagedUpload(courseId, objectKey, uploadId, lessonId, type);
             } catch (cleanupError) {
-                console.warn('Could not discard cancelled staged R2 video:', cleanupError);
+                console.warn('Could not discard staged R2 video; its server-side session remains available for safe cleanup:', cleanupError);
             }
         };
 
@@ -1803,7 +1794,7 @@ export const CourseService = {
                 type: type, 
                 content_type: file.type,
                 file_size: file.size,
-                existing_object_key: type === 'intro' ? existingObjectKey : null
+                // Replacement uploads always use a new staging key; the previous key stays committed until save.
             }
         });
         telemetry.createDuration = performance.now() - t0_create;
@@ -1812,10 +1803,9 @@ export const CourseService = {
         
         ({ uploadId, objectKey } = createRes.data);
         const { partCount, partSize } = createRes.data;
+        if (uploadId && objectKey) onSession?.({ uploadId, objectKey, type, courseId, lessonId });
         if (signal?.aborted && uploadId && objectKey) {
-            try { await abortMultipart(); } catch (abortError) {
-                console.warn('Could not abort multipart upload after an early cancellation:', abortError);
-            }
+            await discardUpload();
             throw new Error('Upload cancelled');
         }
         if (!uploadId || !objectKey || !Number.isInteger(partCount) || partCount < 1 || !partSize) {
@@ -2079,21 +2069,15 @@ export const CourseService = {
             console.groupEnd();
             console.groupEnd();
 
-            return { objectKey: objectKey };
+            return { objectKey, uploadId };
 
         } catch (err) {
             // Stop unfinished multipart parts. If completion already succeeded,
             // remove only the uncommitted object using the reference-checked path.
-            if (multipartCompleted) {
-                await discardCompletedObject();
-            } else if (uploadId && objectKey) {
-                try { await abortMultipart(); }
-                catch (abortError) {
-                    console.warn('Could not abort multipart upload immediately; orphan cleanup will retry:', abortError);
-                }
-                // Also attempt reference-checked object deletion in case the
-                // completion request succeeded remotely but its response was lost.
-                await discardCompletedObject();
+            if (uploadId && objectKey) {
+                // The same server-side discard operation handles both an active
+                // multipart session and an object completed just before an error.
+                await discardUpload();
             }
             throw err;
         }
@@ -2144,15 +2128,16 @@ export const CourseService = {
             throw new Error("Unsupported staged video type.");
         }
 
-        // Abort active multipart parts first. Then use the existing authenticated
-        // delete endpoint, which rechecks course ownership and database references.
         if (uploadId) {
-            const { error } = await supabase.functions.invoke('r2-multipart-abort', {
+            const { data, error } = await supabase.functions.invoke('r2-multipart-discard', {
                 body: { course_id: courseId, upload_id: uploadId, object_key: objectKey }
             });
-            if (error) throw new Error(`Could not abort staged multipart upload: ${error.message}`);
+            if (error) throw new Error(`Could not discard staged multipart upload: ${error.message}`);
+            return data;
         }
 
+        // Backward-compatible cleanup for staged uploads created before session
+        // identities were returned to the wizard.
         return await this.deleteR2Video(courseId, resolvedLessonId, resolvedType, objectKey);
     },
 
