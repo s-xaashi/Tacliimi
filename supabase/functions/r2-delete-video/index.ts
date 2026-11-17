@@ -10,7 +10,7 @@ const corsHeaders = {
 async function hasLessonReferences(supabase: any, objectKey: string) {
   const [directRefs, assets] = await Promise.all([
     supabase.from('course_lessons').select('id').eq('video_storage_key', objectKey),
-    supabase.from('course_media_assets').select('id').eq('storage_path', objectKey),
+    supabase.from('course_media_assets').select('id').eq('storage_path', objectKey).eq('storage_provider', 'r2'),
   ]);
   if (directRefs.error) throw directRefs.error;
   if (assets.error) throw assets.error;
@@ -56,7 +56,6 @@ Deno.serve(async (req) => {
     if (course.instructor_id !== user.id) throw new Error('Not authorized for this course');
 
     let objectKey = null;
-    let mediaAssetId = null;
     let preserveSharedIntro = false;
 
     if (delete_type === 'intro') {
@@ -114,7 +113,6 @@ Deno.serve(async (req) => {
           .eq('course_id', course_id)
           .maybeSingle();
         if (sectionError || !section) throw new Error('Lesson does not belong to this course');
-        mediaAssetId = lesson.media_asset_id;
       } else if (!requestedObjectKey) {
         throw new Error('Lesson not found');
       }
@@ -122,7 +120,7 @@ Deno.serve(async (req) => {
       let linkedAsset = null;
       if (lesson?.media_asset_id) {
         const { data: asset, error: assetError } = await supabase.from('course_media_assets')
-          .select('id, storage_path').eq('id', lesson.media_asset_id).maybeSingle();
+          .select('id, storage_path').eq('id', lesson.media_asset_id).eq('storage_provider', 'r2').maybeSingle();
         if (assetError) throw assetError;
         linkedAsset = asset;
       }
