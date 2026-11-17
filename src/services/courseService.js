@@ -932,7 +932,7 @@ export const CourseService = {
         return urlData.publicUrl;
     },
 
-    async uploadCourseThumbnail(courseId, file, existingObjectKey = null, signal = null, onStage = null, onSession = null) {
+    async uploadCourseThumbnail(courseId, file, signal = null, onStage = null, onSession = null) {
         const session = await AuthService.getSession();
         if (!session?.user?.id) throw new Error("Not authenticated");
         if (!ALLOWED_IMAGE_TYPES.includes(file?.type)) {
@@ -1747,7 +1747,7 @@ export const CourseService = {
 
     /** CLOUDFLARE R2 VIDEO INTEGRATION */
 
-    async uploadToR2(courseId, lessonId, type, file, onProgress, signal, existingObjectKey = null, onStage = null, onSession = null) {
+    async uploadToR2(courseId, lessonId, type, file, onProgress, signal, onStage = null, onSession = null) {
         const throwIfAborted = () => {
             if (signal?.aborted) throw new Error('Upload cancelled');
         };
@@ -1775,7 +1775,6 @@ export const CourseService = {
 
         let uploadId = null;
         let objectKey = null;
-        let multipartCompleted = false;
         const discardUpload = async () => {
             if (!uploadId || !objectKey) return;
             try {
@@ -2020,7 +2019,6 @@ export const CourseService = {
             telemetry.completeDuration = t1_complete - t0_complete;
 
             if (completeRes.error) throw new Error(`Completion failed: ${completeRes.error.message}`);
-            multipartCompleted = true;
             // Completion may finish server-side just as the user cancels. In that
             // case the object is still staged; remove it safely before rejecting.
             if (signal?.aborted && !reusingExistingIntroKey) {
