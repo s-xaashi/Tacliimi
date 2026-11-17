@@ -4,12 +4,13 @@ import { supabase } from "./supabaseClient.js";
  * Upload an image into the existing private R2 bucket.
  * Returns only the opaque object key; never constructs or returns a public URL.
  */
-export async function uploadPrivateImage({ file, purpose, courseId = null, existingObjectKey = null, signal = null, onStage = null }) {
+export async function uploadPrivateImage({ file, purpose, courseId = null, existingObjectKey = null, signal = null, onStage = null, onSession = null }) {
     if (!file) throw new Error("An image file is required.");
     const throwIfAborted = () => {
         if (signal?.aborted) throw new Error("Upload cancelled");
     };
     let objectKey = null;
+    let uploadId = null;
     let completed = false;
     try {
         throwIfAborted();
@@ -21,6 +22,9 @@ export async function uploadPrivateImage({ file, purpose, courseId = null, exist
             throw new Error("The private image upload service returned an invalid response.");
         }
         objectKey = data.object_key;
+        uploadId = data.upload_id || null;
+        if (purpose === "thumbnail" && !uploadId) throw new Error("The thumbnail upload service did not return an upload ID.");
+        if (uploadId) onSession?.({ uploadId, objectKey, purpose, courseId });
         throwIfAborted();
 
         const response = await fetch(data.upload_url, {
@@ -41,7 +45,7 @@ export async function uploadPrivateImage({ file, purpose, courseId = null, exist
         // server-side commit midway; the UI disables Cancel at this stage.
         onStage?.("verifying");
         const { data: verified, error: verifyError } = await supabase.functions.invoke("r2-image-upload-complete", {
-            body: { purpose, course_id: courseId, object_key: objectKey, replace_object_key: data.replace_object_key }
+            body: { purpose, course_id: courseId, object_key: objectKey, upload_id: uploadId }
         });
         if (verifyError || verified?.verified !== true) {
             throw new Error(verifyError?.message || verified?.error || "The uploaded image failed server-side verification.");
@@ -53,7 +57,7 @@ export async function uploadPrivateImage({ file, purpose, courseId = null, exist
         // staging object. The deletion endpoint refuses to remove referenced keys.
         if (objectKey && !completed) {
             try {
-                await deletePrivateImage({ resourceType: purpose, resourceId: courseId, objectKey });
+                await deletePrivateImage({ resourceType: purpose, resourceId: courseId, objectKey, uploadId });
             } catch (cleanupError) {
                 console.warn("Could not clean up cancelled/failed private image upload:", cleanupError);
             }
@@ -127,10 +131,10 @@ export async function resolveCourseThumbnail(course) {
  * Delete a replaced/orphaned private image only after the database no longer
  * references its object key. The Edge Function rechecks ownership and refs.
  */
-export async function deletePrivateImage({ resourceType, resourceId, objectKey }) {
+export async function deletePrivateImage({ resourceType, resourceId, objectKey, uploadId = null }) {
     if (!resourceType || !resourceId || !objectKey) return false;
     const { data, error } = await supabase.functions.invoke("r2-image-delete", {
-        body: { resource_type: resourceType, resource_id: resourceId, object_key: objectKey }
+        body: { resource_type: resourceType, resource_id: resourceId, object_key: objectKey, ...(uploadId ? { upload_id: uploadId } : {}) }
     });
     if (error) throw new Error(error.message || "Could not clean up the old image.");
     return data?.deleted === true;
