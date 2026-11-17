@@ -79,6 +79,7 @@ Deno.serve(async (req: Request) => {
         continue;
       }
 
+      let completedObjectFound = false;
       if (isExpiredMultipart) {
         try {
           await s3.send(new AbortMultipartUploadCommand({
@@ -90,6 +91,7 @@ Deno.serve(async (req: Request) => {
           // object candidate and remove it only after the reference check below.
           try {
             await s3.send(new HeadObjectCommand({ Bucket: cfg.bucket, Key: session.object_key }));
+            completedObjectFound = true;
           } catch (_) {
             await admin.from("r2_multipart_upload_sessions")
               .update({ status: "aborted" }).eq("upload_id", session.upload_id).eq("status", "discarding");
@@ -112,7 +114,7 @@ Deno.serve(async (req: Request) => {
         continue;
       }
 
-      if (isStaleCompleted) {
+      if (isStaleCompleted || completedObjectFound) {
         await s3.send(new DeleteObjectCommand({ Bucket: cfg.bucket, Key: session.object_key }));
         deletedVideos++;
       }
