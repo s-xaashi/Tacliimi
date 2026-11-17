@@ -1,5 +1,5 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
-import { S3Client, HeadObjectCommand, GetObjectCommand, DeleteObjectCommand, CopyObjectCommand } from "npm:@aws-sdk/client-s3";
+import { S3Client, HeadObjectCommand, GetObjectCommand, DeleteObjectCommand } from "npm:@aws-sdk/client-s3";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -39,7 +39,7 @@ Deno.serve(async (req) => {
     const purpose = body?.purpose;
     const courseId = typeof body?.course_id === "string" ? body.course_id : "";
     const objectKey = typeof body?.object_key === "string" ? body.object_key : "";
-    const replaceObjectKey = typeof body?.replace_object_key === "string" ? body.replace_object_key : "";
+    const uploadId = typeof body?.upload_id === "string" ? body.upload_id : "";
     if (purpose !== "avatar" && purpose !== "thumbnail") return json({ error: "Invalid image purpose" }, 400);
     if (purpose === "thumbnail" && !UUID_RE.test(courseId)) return json({ error: "Invalid course reference" }, 400);
 
@@ -55,6 +55,16 @@ Deno.serve(async (req) => {
         .eq("id", courseId).eq("instructor_id", user.id).maybeSingle();
       if (error) throw error;
       if (!course) return json({ error: "Course not found or not owned by this instructor" }, 403);
+      if (!UUID_RE.test(uploadId)) return json({ error: "Thumbnail upload session is missing" }, 400);
+      const { data: uploadSession, error: sessionError } = await admin.from("r2_image_upload_sessions")
+        .select("upload_id, object_key, content_type, file_size_bytes, status")
+        .eq("upload_id", uploadId).eq("object_key", objectKey)
+        .eq("course_id", courseId).eq("instructor_id", user.id)
+        .eq("status", "in_progress").maybeSingle();
+      if (sessionError) throw sessionError;
+      if (!uploadSession || uploadSession.content_type !== body?.content_type && body?.content_type) {
+        return json({ error: "Thumbnail upload session is invalid or no longer active" }, 409);
+      }
     }
 
     const endpoint = Deno.env.get("R2_ENDPOINT") ?? "";
@@ -75,6 +85,9 @@ Deno.serve(async (req) => {
 
     if (!validHead) {
       await s3.send(new DeleteObjectCommand({ Bucket: bucket, Key: objectKey }));
+      if (purpose === "thumbnail") {
+        await admin.from("r2_image_upload_sessions").update({ status: "discarded" }).eq("upload_id", uploadId).eq("status", "in_progress");
+      }
       return json({ error: "Uploaded image failed size or file-type validation" }, 422);
     }
 
@@ -82,11 +95,37 @@ Deno.serve(async (req) => {
     const bytes = object.Body ? await object.Body.transformToByteArray() : new Uint8Array();
     if (!matchesImageSignature(contentType, bytes)) {
       await s3.send(new DeleteObjectCommand({ Bucket: bucket, Key: objectKey }));
+      if (purpose === "thumbnail") {
+        await admin.from("r2_image_upload_sessions").update({ status: "discarded" }).eq("upload_id", uploadId).eq("status", "in_progress");
+      }
       return json({ error: "Uploaded file content does not match an allowed image format" }, 422);
     }
 
-    let finalObjectKey = objectKey;
-    if (purpose === "thumbnail" && replaceObjectKey) {
+    if (purpose === "thumbnail") {
+      const { data: completedSession, error: completeError } = await admin.from("r2_image_upload_sessions")
+        .update({ status: "completed", completed_at: new Date().toISOString() })
+        .eq("upload_id", uploadId).eq("object_key", objectKey)
+        .eq("status", "in_progress").select("upload_id").maybeSingle();
+      if (completeError) throw completeError;
+      if (!completedSession) {
+        const { data: refs, error: refsError } = await admin.from("courses")
+          .select("id").eq("thumbnail_storage_key", objectKey);
+        if (refsError) throw refsError;
+        if ((refs || []).length) {
+          await admin.from("r2_image_upload_sessions")
+            .update({ status: "committed", committed_at: new Date().toISOString() })
+            .eq("upload_id", uploadId).eq("status", "discarding");
+          return json({ error: "Thumbnail was committed while cancellation was requested; it was preserved." }, 409);
+        }
+        await s3.send(new DeleteObjectCommand({ Bucket: bucket, Key: objectKey }));
+        await admin.from("r2_image_upload_sessions").update({ status: "discarded" })
+          .eq("upload_id", uploadId).in("status", ["discarding", "aborted"]);
+        return json({ error: "Thumbnail upload was cancelled before verification completed." }, 409);
+      }
+    }
+
+    const finalObjectKey = objectKey;
+    /*
       const targetMatch = replaceObjectKey.match(/^course-thumbnails\/([a-f0-9-]+)\/([a-f0-9-]+)\/[a-f0-9-]+\.(jpg|png|webp|gif)$/i);
       const targetExtension = expectedExtension;
       if (targetMatch && targetMatch[1].toLowerCase() === user.id.toLowerCase() &&
@@ -121,7 +160,7 @@ Deno.serve(async (req) => {
           }
         }
       }
-    }
+    */
 
     return json({ verified: true, size: head.ContentLength, content_type: contentType, final_object_key: finalObjectKey });
   } catch (error) {
