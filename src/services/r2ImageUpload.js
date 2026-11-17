@@ -4,38 +4,62 @@ import { supabase } from "./supabaseClient.js";
  * Upload an image into the existing private R2 bucket.
  * Returns only the opaque object key; never constructs or returns a public URL.
  */
-export async function uploadPrivateImage({ file, purpose, courseId = null, existingObjectKey = null }) {
+export async function uploadPrivateImage({ file, purpose, courseId = null, existingObjectKey = null, signal = null, onStage = null }) {
     if (!file) throw new Error("An image file is required.");
+    const throwIfAborted = () => {
+        if (signal?.aborted) throw new Error("Upload cancelled");
+    };
+    let objectKey = null;
+    let completed = false;
+    try {
+        throwIfAborted();
+        const { data, error } = await supabase.functions.invoke("r2-image-upload-url", {
+            body: { purpose, course_id: courseId, content_type: file.type, file_size: file.size, existing_object_key: existingObjectKey }
+        });
+        if (error) throw new Error(error.message || "Could not prepare image upload.");
+        if (!data?.upload_url || !data?.object_key || !data?.required_headers) {
+            throw new Error("The private image upload service returned an invalid response.");
+        }
+        objectKey = data.object_key;
+        throwIfAborted();
 
-    const { data, error } = await supabase.functions.invoke("r2-image-upload-url", {
-        body: { purpose, course_id: courseId, content_type: file.type, file_size: file.size, existing_object_key: existingObjectKey }
-    });
-    if (error) throw new Error(error.message || "Could not prepare image upload.");
-    if (!data?.upload_url || !data?.object_key || !data?.required_headers) {
-        throw new Error("The private image upload service returned an invalid response.");
-    }
+        const response = await fetch(data.upload_url, {
+            method: "PUT",
+            headers: data.required_headers,
+            body: file,
+            signal
+        });
+        // A 412 means a prior attempt already created this one-time object key.
+        // Continue to server verification so a lost PUT response can be retried safely.
+        if (!response.ok && response.status !== 412) {
+            const detail = await response.text().catch(() => "");
+            throw new Error(detail || `Image upload failed (HTTP ${response.status}).`);
+        }
 
-    const response = await fetch(data.upload_url, {
-        method: "PUT",
-        headers: data.required_headers,
-        body: file
-    });
-    // A 412 means a prior attempt already created this one-time object key.
-    // Continue to server verification so a lost PUT response can be retried safely.
-    if (!response.ok && response.status !== 412) {
-        const detail = await response.text().catch(() => "");
-        throw new Error(detail || `Image upload failed (HTTP ${response.status}).`);
+        // From this point onward the object is being validated and may be copied
+        // onto an existing, exclusively-owned thumbnail key. Do not cancel this
+        // server-side commit midway; the UI disables Cancel at this stage.
+        onStage?.("verifying");
+        const { data: verified, error: verifyError } = await supabase.functions.invoke("r2-image-upload-complete", {
+            body: { purpose, course_id: courseId, object_key: objectKey, replace_object_key: data.replace_object_key }
+        });
+        if (verifyError || verified?.verified !== true) {
+            throw new Error(verifyError?.message || verified?.error || "The uploaded image failed server-side verification.");
+        }
+        completed = true;
+        return verified.final_object_key || objectKey;
+    } catch (error) {
+        // If the PUT was cancelled or validation failed, clean only the fresh
+        // staging object. The deletion endpoint refuses to remove referenced keys.
+        if (objectKey && !completed) {
+            try {
+                await deletePrivateImage({ resourceType: purpose, resourceId: courseId, objectKey });
+            } catch (cleanupError) {
+                console.warn("Could not clean up cancelled/failed private image upload:", cleanupError);
+            }
+        }
+        throw error;
     }
-
-    // Verify the actual stored object server-side before allowing its key to be
-    // persisted in a profile/course row.
-    const { data: verified, error: verifyError } = await supabase.functions.invoke("r2-image-upload-complete", {
-        body: { purpose, course_id: courseId, object_key: data.object_key, replace_object_key: data.replace_object_key }
-    });
-    if (verifyError || verified?.verified !== true) {
-        throw new Error(verifyError?.message || verified?.error || "The uploaded image failed server-side verification.");
-    }
-    return verified.final_object_key || data.object_key;
 }
 
 /**
