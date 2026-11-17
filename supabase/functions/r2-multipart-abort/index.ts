@@ -36,7 +36,7 @@ async function ownedSession(supabase: any, input: any, userId: string) {
   const { data, error } = await supabase.from("r2_multipart_upload_sessions").select("*")
     .eq("upload_id", input.upload_id).eq("object_key", input.object_key)
     .eq("course_id", input.course_id).eq("instructor_id", userId)
-    .eq("status", "in_progress").gt("expires_at", new Date().toISOString()).maybeSingle();
+    .eq("status", "in_progress").maybeSingle();
   if (error) throw error;
   if (!data) throw new Error("Upload session not found, expired, or not authorized");
   return data;
