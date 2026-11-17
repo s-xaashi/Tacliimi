@@ -1,5 +1,5 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
-import { S3Client } from "npm:@aws-sdk/client-s3";
+import { S3Client, DeleteObjectCommand } from "npm:@aws-sdk/client-s3";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -79,20 +79,7 @@ Deno.serve(async (req: Request) => {
       throw new Error("Multipart parts must be unique and sequential from 1 to the final part");
     }
 
-    // If this multipart upload is overwriting an existing introduction key,
-    // recheck its references immediately before committing the replacement.
-    // A new course revision may have started referencing that key while parts
-    // were uploading; in that case refuse completion rather than changing media
-    // used by the newly-created revision.
-    if (session.upload_type === "intro") {
-      const { data: currentReferences, error: referenceError } = await supabase.from("courses")
-        .select("id").eq("intro_video_storage_key", session.object_key);
-      if (referenceError) throw referenceError;
-      if ((currentReferences || []).length > 1 ||
-          ((currentReferences || []).length === 1 && currentReferences[0].id !== session.course_id)) {
-        throw new Error("This introduction video became shared by another course version during upload. Please retry; a separate media object will be created.");
-      }
-    }
+    // All new uploads use unique staging keys; committed media is never overwritten.
 
     const { CompleteMultipartUploadCommand } = await import("npm:@aws-sdk/client-s3");
     await makeS3(cfg).send(new CompleteMultipartUploadCommand({
@@ -107,11 +94,36 @@ Deno.serve(async (req: Request) => {
     // Save Video; intro videos are persisted by the course-draft save flow.
     // Keeping database attachment out of this endpoint also allows a completed
     // but unsaved upload to be safely discarded without deleting a referenced asset.
-    const { error: updateError } = await supabase.from("r2_multipart_upload_sessions")
+    const { data: completedSession, error: updateError } = await supabase.from("r2_multipart_upload_sessions")
       .update({ status: "completed", completed_at: new Date().toISOString() })
       .eq("upload_id", session.upload_id)
-      .eq("status", "in_progress");
+      .eq("status", "in_progress")
+      .select("upload_id")
+      .maybeSingle();
     if (updateError) throw updateError;
+
+    if (!completedSession) {
+      // Cancellation may have claimed the session while R2 completion was in
+      // flight. Recheck references after completion before removing the object.
+      const referenceQuery = session.upload_type === "intro"
+        ? await supabase.from("courses").select("id").eq("intro_video_storage_key", session.object_key)
+        : await supabase.from("course_lessons").select("id").eq("video_storage_key", session.object_key);
+      if (referenceQuery.error) throw referenceQuery.error;
+      if ((referenceQuery.data || []).length) {
+        await supabase.from("r2_multipart_upload_sessions")
+          .update({ status: "committed", committed_at: new Date().toISOString() })
+          .eq("upload_id", session.upload_id)
+          .eq("status", "discarding");
+        return json({ error: "Upload was committed while cancellation was requested; the referenced media was preserved." }, 409);
+      }
+
+      await makeS3(cfg).send(new DeleteObjectCommand({ Bucket: cfg.bucket, Key: session.object_key }));
+      await supabase.from("r2_multipart_upload_sessions")
+        .update({ status: "discarded" })
+        .eq("upload_id", session.upload_id)
+        .in("status", ["discarding", "aborted"]);
+      return json({ error: "Upload was cancelled before it could be staged." }, 409);
+    }
 
     return json({ success: true, objectKey: session.object_key });
   } catch (error) {
