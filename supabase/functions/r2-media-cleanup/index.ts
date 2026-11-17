@@ -30,7 +30,7 @@ Deno.serve(async (req: Request) => {
 
   try {
     const authorization = req.headers.get("Authorization") || "";
-    const match = authorization.match(/^Bearer\\s+(.+)$/i);
+    const match = authorization.match(/^Bearer\s+(.+)$/i);
     if (!match) return json({ error: "Authentication required" }, 401);
 
     const cfg = getConfig();
