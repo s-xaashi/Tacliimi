@@ -993,6 +993,7 @@ async function setupEventListeners() {
                 }
 
                 let uploadedObjectKey = null;
+                let thumbnailStagedObjectKey = null;
                 let thumbnailUploadId = null;
                 const previousObjectKey = window.courseDraft.thumbnail_storage_key || null;
                 const previousThumbnailUrl = window.courseDraft.thumbnail_url || null;
@@ -1017,6 +1018,7 @@ async function setupEventListeners() {
                         },
                         (uploadSession) => {
                             thumbnailUploadId = uploadSession.uploadId;
+                            thumbnailStagedObjectKey = uploadSession.objectKey;
                             window.sessionUploadedFiles.push({
                                 provider: 'r2', type: 'thumbnail',
                                 uploadId: uploadSession.uploadId, key: uploadSession.objectKey
@@ -1037,8 +1039,8 @@ async function setupEventListeners() {
                             p_object_key: uploadedObjectKey
                         });
                         if (commitError) {
-                            // The DB pointer is already saved. Keep the object and let
-                            // the safe cleanup sweep reconcile this session by reference.
+                            // The DB pointer is already saved. Keep the object; the
+                            // reference check prevents cleanup from deleting it.
                             console.warn('Thumbnail saved, but upload session status reconciliation failed:', commitError);
                         }
                     }
@@ -1084,11 +1086,20 @@ async function setupEventListeners() {
                         window.courseDraft.thumbnail_preview_url = previousPreviewUrl;
                         const restoredPreviewUrl = getCourseThumbnailPreviewUrl();
                         if (restoredPreviewUrl) showThumbnailPreview(restoredPreviewUrl);
-                        if (uploadedObjectKey) {
+                        const stagedKey = uploadedObjectKey || thumbnailStagedObjectKey;
+                        if (stagedKey) {
                             try {
-                                await deletePrivateImage({ resourceType: 'thumbnail', resourceId: window.courseDraft.id, objectKey: uploadedObjectKey, uploadId: thumbnailUploadId });
+                                await deletePrivateImage({
+                                    resourceType: 'thumbnail',
+                                    resourceId: window.courseDraft.id,
+                                    objectKey: stagedKey,
+                                    uploadId: thumbnailUploadId
+                                });
+                                window.sessionUploadedFiles = window.sessionUploadedFiles.filter(
+                                    uploaded => !(uploaded.provider === 'r2' && uploaded.key === stagedKey)
+                                );
                             } catch (cleanupError) {
-                                console.warn('Could not clean up failed thumbnail upload.', cleanupError);
+                                console.warn('Could not clean up failed thumbnail upload; session retained for retry.', cleanupError);
                             }
                         }
                     }
@@ -1183,7 +1194,11 @@ async function setupEventListeners() {
                         p_upload_id: uploadResult.uploadId,
                         p_object_key: uploadResult.objectKey
                     });
-                    if (commitError) throw new Error('Introduction video was saved but its upload session could not be marked committed: ' + commitError.message);
+                    if (commitError) {
+                        // The course pointer is already saved. A reference-aware
+                        // cleanup will reconcile the session without deleting it.
+                        console.warn('Introduction video saved, but session status reconciliation failed:', commitError);
+                    }
                     window.sessionUploadedFiles = window.sessionUploadedFiles.filter(
                         uploaded => !(uploaded.provider === 'r2' && uploaded.key === uploadResult.objectKey)
                     );
@@ -1216,6 +1231,20 @@ async function setupEventListeners() {
                         showVideoPreview('', file.name);
                     }
                 } catch (err) {
+                    const stagedIntro = window.introUploadState;
+                    if (stagedIntro?.uploadId && stagedIntro?.objectKey) {
+                        try {
+                            await CourseService.discardStagedUpload(
+                                stagedIntro.courseId, stagedIntro.objectKey, stagedIntro.uploadId, null, 'intro'
+                            );
+                            window.sessionUploadedFiles = window.sessionUploadedFiles.filter(
+                                uploaded => !(uploaded.provider === 'r2' && uploaded.key === stagedIntro.objectKey)
+                            );
+                            window.introUploadState = null;
+                        } catch (cleanupError) {
+                            console.warn('Introduction upload cleanup is pending a safe retry:', cleanupError);
+                        }
+                    }
                     if (err?.message === 'Upload cancelled' || controller.signal.aborted) {
                         if (statusText) statusText.textContent = 'Upload cancelled.';
                     } else {
@@ -1389,6 +1418,20 @@ async function setupEventListeners() {
 
                 } catch (err) {
                     st.uploadPromise = null;
+                    if (st.uploadId && st.objectKey) {
+                        try {
+                            await CourseService.discardStagedUpload(
+                                window.courseDraft.id, st.objectKey, st.uploadId, item.id, 'lesson'
+                            );
+                            window.sessionUploadedFiles = window.sessionUploadedFiles.filter(
+                                uploaded => !(uploaded.provider === 'r2' && uploaded.key === st.objectKey)
+                            );
+                            st.uploadId = null;
+                            st.objectKey = null;
+                        } catch (cleanupError) {
+                            console.warn('Lesson upload cleanup is pending a safe retry:', cleanupError);
+                        }
+                    }
                     if (err.message !== 'Upload cancelled' && st.phase !== 'cancelling') {
                         console.error('Modal upload failed:', err);
                         st.phase = 'error';
