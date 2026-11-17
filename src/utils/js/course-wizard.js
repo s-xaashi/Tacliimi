@@ -1138,6 +1138,7 @@ async function setupEventListeners() {
                         }
                     }, (uploadSession) => {
                         window.introUploadState = { uploadId: uploadSession.uploadId, objectKey: uploadSession.objectKey, courseId: window.courseDraft.id };
+                        window.sessionUploadedFiles.push({ provider: 'r2', type: 'intro', uploadId: uploadSession.uploadId, key: uploadSession.objectKey });
                     });
                     
                     // The R2 object is now complete. Disable cancellation while the
@@ -1148,8 +1149,6 @@ async function setupEventListeners() {
                         cancelBtn.textContent = 'Saving...';
                     }
                     if (statusText) statusText.textContent = 'Saving introduction video...';
-                    window.sessionUploadedFiles.push({ provider: 'r2', type: 'lesson', lessonId: item.id, uploadId: uploadResult.uploadId, key: uploadResult.objectKey });
-
                     window.courseDraft.intro_video_provider = 'r2';
                     window.courseDraft.intro_video_storage_key = uploadResult.objectKey;
                     window.courseDraft.intro_video_url = null; // Clear old URL
@@ -1332,13 +1331,12 @@ async function setupEventListeners() {
                         }, (uploadSession) => {
                             st.uploadId = uploadSession.uploadId;
                             st.objectKey = uploadSession.objectKey;
+                            window.sessionUploadedFiles.push({ provider: 'r2', type: 'lesson', lessonId: item.id, uploadId: uploadSession.uploadId, key: uploadSession.objectKey });
                         }
                     );
                     st.uploadPromise = uploadPromise;
                     const uploadResult = await uploadPromise;
                     st.uploadPromise = null;
-
-                    window.sessionUploadedFiles.push({ provider: 'r2', type: 'intro', uploadId: uploadResult.uploadId, key: uploadResult.objectKey });
 
                     // Race condition: if cancel clicked just as completion returns
                     if (st.cancelAfterComplete) {
@@ -2126,6 +2124,9 @@ async function wizardSaveModalVideo() {
             item.description = title;
 
             // Clear state
+            window.sessionUploadedFiles = window.sessionUploadedFiles.filter(
+                uploaded => !(uploaded.provider === 'r2' && uploaded.key === st.objectKey)
+            );
             st.phase = 'saved';
             st.uploadId = null;
             updateLessonVideoCardUI(st.sIdx, st.iIdx);
