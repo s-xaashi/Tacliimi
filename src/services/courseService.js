@@ -1784,7 +1784,7 @@ export const CourseService = {
             if (error) throw error;
         };
         const discardCompletedObject = async () => {
-            if (!objectKey || !multipartCompleted) return;
+            if (!objectKey) return;
             try {
                 // The upload has not yet been committed by its caller. The
                 // server-side delete function rechecks references before deletion.
@@ -2071,6 +2071,9 @@ export const CourseService = {
                 catch (abortError) {
                     console.warn('Could not abort multipart upload immediately; orphan cleanup will retry:', abortError);
                 }
+                // Also attempt reference-checked object deletion in case the
+                // completion request succeeded remotely but its response was lost.
+                await discardCompletedObject();
             }
             throw err;
         }
