@@ -101,16 +101,25 @@ Deno.serve(async (req: Request) => {
           Bucket: cfg.bucket, Key: session.object_key, UploadId: session.upload_id,
         }));
       } catch (abortError) {
-        // The multipart request may have completed at R2 while its response was
-        // lost. Continue only if an object now exists; otherwise surface the abort.
+        const status = (abortError as any)?.$metadata?.httpStatusCode;
+        const isMissingUpload = status === 404 || (abortError as Error)?.name === "NoSuchUpload" ||
+          /NoSuchUpload|not found/i.test((abortError as Error)?.message || "");
+        if (!isMissingUpload) throw abortError;
+
+        // R2 reports NoSuchUpload when completion already won the race. Only
+        // treat a missing object as safely aborted when HeadObject confirms 404.
         try {
           await s3.send(new HeadObjectCommand({ Bucket: cfg.bucket, Key: session.object_key }));
-        } catch (_) {
+        } catch (headError) {
+          const headStatus = (headError as any)?.$metadata?.httpStatusCode;
+          const isMissingObject = headStatus === 404 || (headError as Error)?.name === "NotFound" ||
+            /not found|404/i.test((headError as Error)?.message || "");
+          if (!isMissingObject) throw headError;
           await supabase.from("r2_multipart_upload_sessions")
-            .update({ status: "aborted" }).eq("upload_id", upload_id).eq("status", "discarding");
+            .update({ status: "discarded" }).eq("upload_id", upload_id).eq("status", "discarding");
           return json({ discarded: true, multipart_aborted: true });
         }
-        console.warn("Multipart abort did not find an active upload; checking the completed object before cleanup.", abortError);
+        console.warn("Multipart upload no longer exists; deleting its unreferenced completed object.", abortError);
       }
     }
 
