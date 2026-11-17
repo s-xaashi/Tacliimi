@@ -1344,7 +1344,7 @@ async function setupEventListeners() {
                                 if (percentText) percentText.innerText = `${Math.round(percent)}%`;
                             }
                             updateLessonVideoCardUI(st.sIdx, st.iIdx);
-                        }, st.abortController.signal, null, (stage) => {
+                        }, st.abortController.signal, (stage) => {
                             if (stage === 'completing') {
                                 st.phase = 'completing';
                                 updateLessonVideoCardUI(st.sIdx, st.iIdx);
