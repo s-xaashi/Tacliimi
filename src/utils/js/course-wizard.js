@@ -1125,7 +1125,15 @@ async function setupEventListeners() {
                     const uploadResult = await CourseService.uploadToR2(window.courseDraft.id, null, 'intro', file, (percent) => {
                         if (progressBar) progressBar.style.width = `${percent}%`;
                         if (percentText) percentText.innerText = `${Math.round(percent)}%`;
-                    }, controller.signal, previousIntroStorageKey);
+                    }, controller.signal, previousIntroStorageKey, (stage) => {
+                        if (stage === 'completing') {
+                            if (statusText) statusText.textContent = 'Finalizing upload...';
+                            if (cancelBtn) {
+                                cancelBtn.disabled = true;
+                                cancelBtn.textContent = 'Finalizing...';
+                            }
+                        }
+                    });
                     
                     // The R2 object is now complete. Disable cancellation while the
                     // course draft is being persisted so UI cancellation cannot
@@ -1303,7 +1311,13 @@ async function setupEventListeners() {
                                 if (percentText) percentText.innerText = `${Math.round(percent)}%`;
                             }
                             updateLessonVideoCardUI(st.sIdx, st.iIdx);
-                        }, st.abortController.signal
+                        }, st.abortController.signal, null, (stage) => {
+                            if (stage === 'completing') {
+                                st.phase = 'completing';
+                                updateLessonVideoCardUI(st.sIdx, st.iIdx);
+                                if (percentText) percentText.innerText = 'Finalizing upload...';
+                            }
+                        }
                     );
                     st.uploadPromise = uploadPromise;
                     const uploadResult = await uploadPromise;
@@ -1314,7 +1328,12 @@ async function setupEventListeners() {
                     // Race condition: if cancel clicked just as completion returns
                     if (st.cancelAfterComplete) {
                         st.phase = 'cancelling';
-                        await CourseService.discardStagedUpload(window.courseDraft.id, uploadResult.objectKey);
+                        await CourseService.discardStagedUpload(
+                            window.courseDraft.id, uploadResult.objectKey, null, item.id, 'lesson'
+                        );
+                        window.sessionUploadedFiles = window.sessionUploadedFiles.filter(
+                            uploaded => !(uploaded.provider === 'r2' && uploaded.key === uploadResult.objectKey)
+                        );
                         throw new Error('Upload cancelled');
                     }
 
@@ -2201,6 +2220,7 @@ async function discardAndCloseModalVideo() {
         if (st.uploadPromise) await st.uploadPromise.catch(() => {});
     } else if (st.phase === 'completing') {
         st.cancelAfterComplete = true;
+        if (st.uploadPromise) await st.uploadPromise.catch(() => {});
     } else if (st.phase === 'pending_save' && st.objectKey) {
         try {
             st.phase = 'cancelling';
