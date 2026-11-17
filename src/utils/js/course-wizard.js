@@ -1127,6 +1127,14 @@ async function setupEventListeners() {
                         if (percentText) percentText.innerText = `${Math.round(percent)}%`;
                     }, controller.signal, previousIntroStorageKey);
                     
+                    // The R2 object is now complete. Disable cancellation while the
+                    // course draft is being persisted so UI cancellation cannot
+                    // race a successful server-side completion.
+                    if (cancelBtn) {
+                        cancelBtn.disabled = true;
+                        cancelBtn.textContent = 'Saving...';
+                    }
+                    if (statusText) statusText.textContent = 'Saving introduction video...';
                     window.sessionUploadedFiles.push({ provider: 'r2', key: uploadResult.objectKey });
 
                     window.courseDraft.intro_video_provider = 'r2';
@@ -1312,6 +1320,7 @@ async function setupEventListeners() {
 
                     st.objectKey = uploadResult.objectKey;
                     st.phase = 'pending_save';
+                    if (cancelProgressBtn) cancelProgressBtn.onclick = () => discardAndCloseModalVideo();
                     
                     if (activeModalItemIdx === st.iIdx && activeModalSectionIdx === st.sIdx) {
                         if (percentText) percentText.innerText = 'Upload complete! Click Save Video';
@@ -2148,8 +2157,16 @@ async function wizardSaveModalVideo() {
 }
 
 function closeModalVideoClean() {
-    // This is the "Close via X / Click Outside" handler.
-    // It NO LONGER ABORTS uploads. It just hides the UI.
+    // Closing the modal during an active or completed-but-unsaved upload must
+    // follow the same cancellation path as the explicit Cancel button.
+    if (activeModalItemIdx !== -1 && window.courseDraft?.curriculum?.[activeModalSectionIdx]?.items?.[activeModalItemIdx]) {
+        const activeItem = window.courseDraft.curriculum[activeModalSectionIdx].items[activeModalItemIdx];
+        const activeState = getLessonVideoState(activeItem.id);
+        if (['uploading', 'completing', 'pending_save'].includes(activeState.phase)) {
+            void discardAndCloseModalVideo();
+            return;
+        }
+    }
     const progressContainer = document.getElementById('modal-upload-progress-container');
     if (progressContainer) progressContainer.classList.add('hidden');
     
