@@ -1128,7 +1128,7 @@ async function setupEventListeners() {
                     const uploadResult = await CourseService.uploadToR2(window.courseDraft.id, null, 'intro', file, (percent) => {
                         if (progressBar) progressBar.style.width = `${percent}%`;
                         if (percentText) percentText.innerText = `${Math.round(percent)}%`;
-                    }, controller.signal, previousIntroStorageKey, (stage) => {
+                    }, controller.signal, null, (stage) => {
                         if (stage === 'completing') {
                             if (statusText) statusText.textContent = 'Finalizing upload...';
                             if (cancelBtn) {
@@ -1136,6 +1136,8 @@ async function setupEventListeners() {
                                 cancelBtn.textContent = 'Finalizing...';
                             }
                         }
+                    }, (uploadSession) => {
+                        window.introUploadState = { uploadId: uploadSession.uploadId, objectKey: uploadSession.objectKey, courseId: window.courseDraft.id };
                     });
                     
                     // The R2 object is now complete. Disable cancellation while the
@@ -1146,7 +1148,7 @@ async function setupEventListeners() {
                         cancelBtn.textContent = 'Saving...';
                     }
                     if (statusText) statusText.textContent = 'Saving introduction video...';
-                    window.sessionUploadedFiles.push({ provider: 'r2', key: uploadResult.objectKey });
+                    window.sessionUploadedFiles.push({ provider: 'r2', type: 'lesson', lessonId: item.id, uploadId: uploadResult.uploadId, key: uploadResult.objectKey });
 
                     window.courseDraft.intro_video_provider = 'r2';
                     window.courseDraft.intro_video_storage_key = uploadResult.objectKey;
@@ -1155,9 +1157,16 @@ async function setupEventListeners() {
                     // Persist the R2 provider and object key before treating this upload as saved.
                     // If the database write fails, keep it in sessionUploadedFiles so Exit can clean it up.
                     await window.saveDraft(true, true);
+                    const { error: commitError } = await supabase.rpc('mark_r2_intro_upload_committed', {
+                        p_course_id: window.courseDraft.id,
+                        p_upload_id: uploadResult.uploadId,
+                        p_object_key: uploadResult.objectKey
+                    });
+                    if (commitError) throw new Error('Introduction video was saved but its upload session could not be marked committed: ' + commitError.message);
                     window.sessionUploadedFiles = window.sessionUploadedFiles.filter(
                         uploaded => !(uploaded.provider === 'r2' && uploaded.key === uploadResult.objectKey)
                     );
+                    window.introUploadState = null;
 
                     // The new key is now committed. Delete the previous intro only
                     // through the server-side reference check; older course revisions
@@ -1320,19 +1329,22 @@ async function setupEventListeners() {
                                 updateLessonVideoCardUI(st.sIdx, st.iIdx);
                                 if (percentText) percentText.innerText = 'Finalizing upload...';
                             }
+                        }, (uploadSession) => {
+                            st.uploadId = uploadSession.uploadId;
+                            st.objectKey = uploadSession.objectKey;
                         }
                     );
                     st.uploadPromise = uploadPromise;
                     const uploadResult = await uploadPromise;
                     st.uploadPromise = null;
 
-                    window.sessionUploadedFiles.push({ provider: 'r2', key: uploadResult.objectKey });
+                    window.sessionUploadedFiles.push({ provider: 'r2', type: 'intro', uploadId: uploadResult.uploadId, key: uploadResult.objectKey });
 
                     // Race condition: if cancel clicked just as completion returns
                     if (st.cancelAfterComplete) {
                         st.phase = 'cancelling';
                         st.cancelCleanupPromise = CourseService.discardStagedUpload(
-                            window.courseDraft.id, uploadResult.objectKey, null, item.id, 'lesson'
+                            window.courseDraft.id, uploadResult.objectKey, uploadResult.uploadId, item.id, 'lesson'
                         );
                         await st.cancelCleanupPromise;
                         st.cancelCleanupPromise = null;
@@ -1343,6 +1355,7 @@ async function setupEventListeners() {
                     }
 
                     st.objectKey = uploadResult.objectKey;
+                    st.uploadId = uploadResult.uploadId;
                     st.phase = 'pending_save';
                     if (cancelProgressBtn) cancelProgressBtn.onclick = () => discardAndCloseModalVideo();
                     
@@ -2114,6 +2127,7 @@ async function wizardSaveModalVideo() {
 
             // Clear state
             st.phase = 'saved';
+            st.uploadId = null;
             updateLessonVideoCardUI(st.sIdx, st.iIdx);
 
         } else { // youtube
@@ -2228,7 +2242,7 @@ async function discardAndCloseModalVideo() {
             await CourseService.discardStagedUpload(
                 window.courseDraft.id,
                 st.objectKey,
-                null,
+                st.uploadId,
                 item.id,
                 'lesson'
             );
