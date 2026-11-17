@@ -62,7 +62,7 @@ Deno.serve(async (req) => {
         .eq("course_id", courseId).eq("instructor_id", user.id)
         .eq("status", "in_progress").maybeSingle();
       if (sessionError) throw sessionError;
-      if (!uploadSession || uploadSession.content_type !== body?.content_type && body?.content_type) {
+      if (!uploadSession) {
         return json({ error: "Thumbnail upload session is invalid or no longer active" }, 409);
       }
     }
@@ -102,6 +102,14 @@ Deno.serve(async (req) => {
     }
 
     if (purpose === "thumbnail") {
+      const { data: uploadSession, error: sessionReadError } = await admin.from("r2_image_upload_sessions")
+        .select("content_type, file_size_bytes").eq("upload_id", uploadId).single();
+      if (sessionReadError) throw sessionReadError;
+      if (uploadSession.content_type !== contentType || Number(uploadSession.file_size_bytes) !== Number(head.ContentLength)) {
+        await s3.send(new DeleteObjectCommand({ Bucket: bucket, Key: objectKey }));
+        await admin.from("r2_image_upload_sessions").update({ status: "discarded" }).eq("upload_id", uploadId).eq("status", "in_progress");
+        return json({ error: "Uploaded thumbnail does not match its registered file details" }, 422);
+      }
       const { data: completedSession, error: completeError } = await admin.from("r2_image_upload_sessions")
         .update({ status: "completed", completed_at: new Date().toISOString() })
         .eq("upload_id", uploadId).eq("object_key", objectKey)
@@ -125,42 +133,6 @@ Deno.serve(async (req) => {
     }
 
     const finalObjectKey = objectKey;
-    /*
-      const targetMatch = replaceObjectKey.match(/^course-thumbnails\/([a-f0-9-]+)\/([a-f0-9-]+)\/[a-f0-9-]+\.(jpg|png|webp|gif)$/i);
-      const targetExtension = expectedExtension;
-      if (targetMatch && targetMatch[1].toLowerCase() === user.id.toLowerCase() &&
-          targetMatch[3].toLowerCase() === targetExtension) {
-        const { data: targetCourse, error: targetError } = await admin.from("courses")
-          .select("id, instructor_id, root_course_id")
-          .eq("id", courseId).eq("instructor_id", user.id).maybeSingle();
-        if (targetError) throw targetError;
-        const { data: sourceCourse, error: sourceError } = await admin.from("courses")
-          .select("id, instructor_id, root_course_id")
-          .eq("id", targetMatch[2]).eq("instructor_id", user.id).maybeSingle();
-        if (sourceError) throw sourceError;
-        const sameFamily = targetCourse && sourceCourse &&
-          (targetCourse.root_course_id || targetCourse.id) === (sourceCourse.root_course_id || sourceCourse.id);
-        if (sameFamily) {
-          const { data: refs, error: refsError } = await admin.from("courses")
-            .select("id").eq("thumbnail_storage_key", replaceObjectKey);
-          if (refsError) throw refsError;
-          // Recheck at completion time. If a new revision began referencing the
-          // old key while bytes were uploading, keep the new staging key instead.
-          if ((refs || []).length === 1 && refs[0].id === courseId) {
-            await s3.send(new CopyObjectCommand({
-              Bucket: bucket,
-              Key: replaceObjectKey,
-              CopySource: `${bucket}/${replaceObjectKey.split("/").map(encodeURIComponent).join("/")}`,
-              MetadataDirective: "REPLACE",
-              ContentType: contentType,
-              CacheControl: "private, max-age=0, no-store",
-            }));
-            await s3.send(new DeleteObjectCommand({ Bucket: bucket, Key: objectKey }));
-            finalObjectKey = replaceObjectKey;
-          }
-        }
-      }
-    */
 
     return json({ verified: true, size: head.ContentLength, content_type: contentType, final_object_key: finalObjectKey });
   } catch (error) {
