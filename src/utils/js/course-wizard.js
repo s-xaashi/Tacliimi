@@ -1518,6 +1518,22 @@ async function setupEventListeners() {
     }
     await window.loadUserProfile();
 
+    // Reconcile expired/incomplete R2 sessions on wizard entry. The server only
+    // removes objects older than the grace period and rechecks every DB reference.
+    try {
+        const cleanup = await CourseService.cleanupStaleR2Uploads();
+        if (cleanup && (cleanup.deleted_videos || cleanup.deleted_thumbnails || cleanup.aborted_multipart_uploads)) {
+            console.info('Stale R2 media reconciled:', cleanup);
+        }
+    } catch (cleanupError) {
+        console.warn('Stale R2 media cleanup will be retried on a later wizard visit:', cleanupError);
+    }
+    try {
+        await cleanupPrivateImages();
+    } catch (cleanupError) {
+        console.warn('Legacy private image cleanup will be retried later:', cleanupError);
+    }
+
     document.getElementById('course-price')?.addEventListener('input', () => {
         calculatePayout();
         syncCourseCoupons();
