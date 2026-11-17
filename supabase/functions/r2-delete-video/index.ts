@@ -112,11 +112,11 @@ Deno.serve(async (req) => {
         // Staged uploads may be cancelled before their lesson row is persisted.
         // Accept only this exact course/lesson namespace and recheck every DB
         // reference before deleting; a committed/shared object is never removed.
-        const keyPattern = new RegExp(
-          "^courses/" + course_id + "/lessons/" + lesson_id + "/video/[a-f0-9-]+\\.mp4$",
-          "i"
-        );
-        if (typeof requestedObjectKey !== "string" || !keyPattern.test(requestedObjectKey)) {
+        const expectedPrefix = `courses/${course_id}/lessons/${lesson_id}/video/`;
+        const filename = typeof requestedObjectKey === "string" && requestedObjectKey.startsWith(expectedPrefix)
+          ? requestedObjectKey.slice(expectedPrefix.length)
+          : "";
+        if (!/^[a-f0-9-]+\.mp4$/i.test(filename)) {
           throw new Error("Invalid staged or previous lesson video key");
         }
         const { data: references, error: referenceError } = await supabase
