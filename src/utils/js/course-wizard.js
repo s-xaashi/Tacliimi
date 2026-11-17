@@ -3300,8 +3300,11 @@ async function saveDraftManual() {
         showToast("Draft safely saved in Supabase.");
         // A newly-created revision is now explicitly saved and must be kept on Exit.
         window.revisionCreatedInSession = false;
-        // Clear session tracking since these files are now permanently part of the saved draft
-        window.sessionUploadedFiles = [];
+        // R2 entries are removed only by their own successful commit flow.
+        // Keep pending staged uploads registered so Exit can discard them safely.
+        window.sessionUploadedFiles = (window.sessionUploadedFiles || []).filter(
+            file => file.provider === 'r2'
+        );
     } catch (e) {
         console.error("Manual save failed:", e);
         showToast("Failed to save draft: " + (e?.message || "Please check your connection and try again."), true);
@@ -3328,7 +3331,19 @@ async function exitWizard() {
         for (const file of window.sessionUploadedFiles) {
             try {
                 if (file.provider === 'r2' && file.key) {
-                    await CourseService.discardStagedUpload(window.courseDraft.id, file.key);
+                    if (file.type === 'thumbnail') {
+                        await deletePrivateImage({
+                            resourceType: 'thumbnail',
+                            resourceId: window.courseDraft.id,
+                            objectKey: file.key,
+                            uploadId: file.uploadId
+                        });
+                    } else {
+                        await CourseService.discardStagedUpload(
+                            window.courseDraft.id, file.key, file.uploadId || null,
+                            file.lessonId || null, file.type || null
+                        );
+                    }
                 } else if (file.provider === 'supabase' && file.url) {
                     const pathParts = file.url.split('public/' + file.bucket + '/');
                     if (pathParts.length > 1) {
