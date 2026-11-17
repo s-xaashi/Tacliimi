@@ -1138,6 +1138,13 @@ async function setupEventListeners() {
                 const cancelBtn = document.getElementById('intro-upload-cancel');
                 const controller = new AbortController();
                 window.introUploadAbortController = controller;
+                const previousIntroState = {
+                    provider: window.courseDraft.intro_video_provider || 'youtube',
+                    storageKey: window.courseDraft.intro_video_storage_key || null,
+                    url: window.courseDraft.intro_video_url || null,
+                    previewUrl: window.courseDraft.intro_video_preview_url || null
+                };
+                const previousIntroStorageKey = previousIntroState.storageKey;
 
                 if (btn) { btn.setAttribute('data-orig', btn.innerText); btn.innerText = 'Initializing...'; btn.disabled = true; }
                 if (cancelBtn) {
@@ -1157,7 +1164,6 @@ async function setupEventListeners() {
                     if (controller.signal.aborted) throw new Error('Upload cancelled');
 
                     if (btn) btn.innerText = 'Uploading...';
-                    const previousIntroStorageKey = window.courseDraft.intro_video_storage_key || null;
                     const uploadResult = await CourseService.uploadToR2(window.courseDraft.id, null, 'intro', file, (percent) => {
                         if (progressBar) progressBar.style.width = `${percent}%`;
                         if (percentText) percentText.innerText = `${Math.round(percent)}%`;
@@ -1231,6 +1237,13 @@ async function setupEventListeners() {
                         showVideoPreview('', file.name);
                     }
                 } catch (err) {
+                    if (window.introUploadState?.objectKey &&
+                        window.courseDraft.intro_video_storage_key === window.introUploadState.objectKey) {
+                        window.courseDraft.intro_video_provider = previousIntroState.provider;
+                        window.courseDraft.intro_video_storage_key = previousIntroState.storageKey;
+                        window.courseDraft.intro_video_url = previousIntroState.url;
+                        window.courseDraft.intro_video_preview_url = previousIntroState.previewUrl;
+                    }
                     const stagedIntro = window.introUploadState;
                     if (stagedIntro?.uploadId && stagedIntro?.objectKey) {
                         try {
@@ -2229,7 +2242,12 @@ async function wizardSaveModalVideo() {
                 // Clean up any completed-but-unsaved R2 replacement first. This object
                 // is not the currently attached lesson video, so use staged-upload cleanup.
                 if (st.phase === 'pending_save' && st.objectKey) {
-                    await CourseService.discardStagedUpload(window.courseDraft.id, st.objectKey);
+                    await CourseService.discardStagedUpload(
+                        window.courseDraft.id, st.objectKey, st.uploadId, item.id, 'lesson'
+                    );
+                    window.sessionUploadedFiles = window.sessionUploadedFiles.filter(
+                        uploaded => !(uploaded.provider === 'r2' && uploaded.key === st.objectKey)
+                    );
                 }
 
                 // If the lesson currently points at a saved R2 object, delete it through the
@@ -2247,6 +2265,7 @@ async function wizardSaveModalVideo() {
 
                 st.phase = 'saved';
                 st.objectKey = null;
+                st.uploadId = null;
                 st.fileName = '';
                 st.progress = 0;
                 st.prevSavedVideo = null;
