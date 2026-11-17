@@ -77,6 +77,7 @@ function getLessonVideoState(lessonId) {
             fileName: '', fileSize: 0,
             objectKey: null, uploadId: null,
             abortController: null,
+            uploadPromise: null,
             cancelAfterComplete: false,
             prevSavedVideo: null,
             sIdx: -1, iIdx: -1,
@@ -977,7 +978,19 @@ async function setupEventListeners() {
             if (e.target.files && e.target.files[0]) {
                 const file = e.target.files[0];
                 const btn = document.getElementById('btn-upload-thumbnail');
+                const progressContainer = document.getElementById('thumbnail-upload-progress-container');
+                const statusText = document.getElementById('thumbnail-upload-status');
+                const cancelBtn = document.getElementById('thumbnail-upload-cancel');
+                const controller = new AbortController();
+                window.thumbnailUploadAbortController = controller;
                 if (btn) { btn.setAttribute('data-orig', btn.innerText); btn.innerText = 'Uploading...'; btn.disabled = true; }
+                if (progressContainer) progressContainer.classList.remove('hidden');
+                if (statusText) statusText.textContent = 'Uploading thumbnail...';
+                if (cancelBtn) {
+                    cancelBtn.disabled = false;
+                    cancelBtn.textContent = 'Cancel';
+                    cancelBtn.onclick = () => controller.abort();
+                }
 
                 let uploadedObjectKey = null;
                 const previousObjectKey = window.courseDraft.thumbnail_storage_key || null;
@@ -987,7 +1000,22 @@ async function setupEventListeners() {
                 try {
                     // The R2 signer requires an existing course owned by this instructor.
                     if (!window.courseDraft.id) await window.saveDraft(true, true);
-                    uploadedObjectKey = await CourseService.uploadCourseThumbnail(window.courseDraft.id, file, previousObjectKey);
+                    if (controller.signal.aborted) throw new Error('Upload cancelled');
+                    uploadedObjectKey = await CourseService.uploadCourseThumbnail(
+                        window.courseDraft.id,
+                        file,
+                        previousObjectKey,
+                        controller.signal,
+                        (stage) => {
+                            if (stage === 'verifying') {
+                                if (statusText) statusText.textContent = 'Verifying thumbnail...';
+                                if (cancelBtn) {
+                                    cancelBtn.disabled = true;
+                                    cancelBtn.textContent = 'Verifying...';
+                                }
+                            }
+                        }
+                    );
 
                     // Persist the new key before deleting the previous object. Clear
                     // any legacy public URL so private access cannot be bypassed.
@@ -1042,12 +1070,19 @@ async function setupEventListeners() {
                             }
                         }
                     }
-                    console.error('Thumbnail upload error:', err);
-                    alert('Upload failed: ' + (err?.message || 'Please check your storage bucket configuration.'));
+                    if (err?.message === 'Upload cancelled' || controller.signal.aborted) {
+                        if (statusText) statusText.textContent = 'Upload cancelled.';
+                    } else {
+                        console.error('Thumbnail upload error:', err);
+                        alert('Upload failed: ' + (err?.message || 'Please check your storage bucket configuration.'));
+                    }
                     if (btn) btn.innerText = btn.getAttribute('data-orig') || 'Upload File';
                 } finally {
                     e.target.value = '';
                     if (btn) btn.disabled = false;
+                    if (cancelBtn) cancelBtn.onclick = null;
+                    if (window.thumbnailUploadAbortController === controller) window.thumbnailUploadAbortController = null;
+                    setTimeout(() => { if (progressContainer) progressContainer.classList.add('hidden'); }, 1800);
                 }
             }
         });
@@ -1063,8 +1098,17 @@ async function setupEventListeners() {
                 const progressContainer = document.getElementById('intro-upload-progress-container');
                 const progressBar = document.getElementById('intro-upload-progress-bar');
                 const percentText = document.getElementById('intro-upload-percent');
+                const statusText = document.getElementById('intro-upload-status');
+                const cancelBtn = document.getElementById('intro-upload-cancel');
+                const controller = new AbortController();
+                window.introUploadAbortController = controller;
 
                 if (btn) { btn.setAttribute('data-orig', btn.innerText); btn.innerText = 'Initializing...'; btn.disabled = true; }
+                if (cancelBtn) {
+                    cancelBtn.disabled = false;
+                    cancelBtn.textContent = 'Cancel';
+                    cancelBtn.onclick = () => controller.abort();
+                }
                 if (progressContainer) {
                     progressContainer.classList.remove('hidden');
                     progressBar.style.width = '0%';
@@ -1072,27 +1116,16 @@ async function setupEventListeners() {
                 }
 
                 try {
-                    // Ensure we have a course ID before uploading
+                    // Ensure we have a course ID before uploading.
                     if (!window.courseDraft.id) await window.saveDraft(true, true);
-                    
-                    if (btn) btn.innerText = 'Uploading...';
-                    
-                    window.introUploadAbortController = new AbortController();
-                    
-                    const cancelBtn = document.getElementById('modal-upload-cancel');
-                    if (cancelBtn) {
-                        cancelBtn.onclick = () => {
-                            if (window.introUploadAbortController) {
-                                window.introUploadAbortController.abort();
-                            }
-                        };
-                    }
+                    if (controller.signal.aborted) throw new Error('Upload cancelled');
 
+                    if (btn) btn.innerText = 'Uploading...';
                     const previousIntroStorageKey = window.courseDraft.intro_video_storage_key || null;
                     const uploadResult = await CourseService.uploadToR2(window.courseDraft.id, null, 'intro', file, (percent) => {
                         if (progressBar) progressBar.style.width = `${percent}%`;
                         if (percentText) percentText.innerText = `${Math.round(percent)}%`;
-                    }, window.introUploadAbortController.signal, previousIntroStorageKey);
+                    }, controller.signal, previousIntroStorageKey);
                     
                     window.sessionUploadedFiles.push({ provider: 'r2', key: uploadResult.objectKey });
 
@@ -1134,11 +1167,17 @@ async function setupEventListeners() {
                         showVideoPreview('', file.name);
                     }
                 } catch (err) {
-                    console.error('Video upload error:', err);
-                    alert('Upload failed: ' + err.message);
+                    if (err?.message === 'Upload cancelled' || controller.signal.aborted) {
+                        if (statusText) statusText.textContent = 'Upload cancelled.';
+                    } else {
+                        console.error('Video upload error:', err);
+                        alert('Upload failed: ' + err.message);
+                    }
                 } finally {
                     if (btn) btn.innerText = btn.getAttribute('data-orig') || 'Choose File';
                     if (btn) btn.disabled = false;
+                    if (cancelBtn) cancelBtn.onclick = null;
+                    if (window.introUploadAbortController === controller) window.introUploadAbortController = null;
                     setTimeout(() => { if (progressContainer) progressContainer.classList.add('hidden'); }, 2000);
                 }
             }
@@ -1245,7 +1284,9 @@ async function setupEventListeners() {
                 updateLessonVideoCardUI(st.sIdx, st.iIdx);
 
                 try {
-                    const uploadResult = await CourseService.uploadToR2(
+                    const cancelProgressBtn = document.getElementById('modal-upload-cancel');
+                    if (cancelProgressBtn) cancelProgressBtn.onclick = () => discardAndCloseModalVideo();
+                    const uploadPromise = CourseService.uploadToR2(
                         window.courseDraft.id, item.id, 'lesson', file, (percent) => {
                             st.progress = percent;
                             // Only update modal DOM if this modal is currently open and showing the active lesson
@@ -1256,7 +1297,10 @@ async function setupEventListeners() {
                             updateLessonVideoCardUI(st.sIdx, st.iIdx);
                         }, st.abortController.signal
                     );
-                    
+                    st.uploadPromise = uploadPromise;
+                    const uploadResult = await uploadPromise;
+                    st.uploadPromise = null;
+
                     window.sessionUploadedFiles.push({ provider: 'r2', key: uploadResult.objectKey });
 
                     // Race condition: if cancel clicked just as completion returns
@@ -1278,6 +1322,7 @@ async function setupEventListeners() {
                     updateLessonVideoCardUI(st.sIdx, st.iIdx);
 
                 } catch (err) {
+                    st.uploadPromise = null;
                     if (err.message !== 'Upload cancelled' && st.phase !== 'cancelling') {
                         console.error('Modal upload failed:', err);
                         st.phase = 'error';
@@ -2132,21 +2177,30 @@ async function discardAndCloseModalVideo() {
     }
 
     if (st.phase === 'uploading' && st.abortController) {
+        st.phase = 'cancelling';
         st.abortController.abort();
+        // Wait for all active XHR workers and server-side multipart abort/cleanup
+        // before allowing the instructor to close the upload dialog.
+        if (st.uploadPromise) await st.uploadPromise.catch(() => {});
     } else if (st.phase === 'completing') {
-        // Special race-condition flag
         st.cancelAfterComplete = true;
     } else if (st.phase === 'pending_save' && st.objectKey) {
         try {
             st.phase = 'cancelling';
             updateLessonVideoCardUI(st.sIdx, st.iIdx);
             await CourseService.discardStagedUpload(
-                window.courseDraft.id, 
+                window.courseDraft.id,
                 st.objectKey,
-                null // uploadId not needed for completed staged upload
+                null,
+                item.id,
+                'lesson'
+            );
+            window.sessionUploadedFiles = window.sessionUploadedFiles.filter(
+                uploaded => !(uploaded.provider === 'r2' && uploaded.key === st.objectKey)
             );
         } catch (e) {
             console.error('Error discarding upload:', e);
+            st.errorMessage = 'Could not remove the cancelled upload. Please retry.';
         }
     }
 
