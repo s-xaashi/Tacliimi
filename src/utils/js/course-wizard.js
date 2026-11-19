@@ -11,7 +11,7 @@ import { resolveProfileAvatar, resolveCourseThumbnail, resolvePrivateImage, dele
 // Global state
 const wizardParams = new URLSearchParams(window.location.search);
 window.revisionCreatedInSession = wizardParams.get('new_revision') === 'true';
-window.wizardSessionRecord = window.wizardSessionRecord || {
+window.wizardSessionRecord = {
     kind: window.revisionCreatedInSession ? 'revision' : 'new',
     createdCourseId: null,
     explicitlySaved: false
@@ -296,6 +296,10 @@ async function loadDraft(courseId) {
     try {
         const course = await CourseService.getCourseFull(courseId);
         if (!course) return;
+        if (window.revisionCreatedInSession) {
+            window.wizardSessionRecord.kind = 'revision';
+            window.wizardSessionRecord.createdCourseId = course.id;
+        }
 
         window.courseDraft = {
             id: course.id,
@@ -3392,6 +3396,7 @@ async function exitWizard() {
 
         // 2. No upload handler may enqueue a save after this point. Flush the
         // existing debounce/runner without starting an unrelated new draft save.
+        const hadPendingSaveWork = !!(saveTimeout || pendingSave || saveRunnerPromise);
         window.wizardSaveQueueClosing = true;
         if (saveTimeout) {
             clearTimeout(saveTimeout);
@@ -3402,7 +3407,7 @@ async function exitWizard() {
             if (saveRunnerPromise) await saveRunnerPromise;
             else if (pendingSave) await runQueuedSave();
         }
-        if (lastDraftSaveError) {
+        if (hadPendingSaveWork && lastDraftSaveError) {
             throw new Error('A pending draft save failed. Your course was not deleted; please retry Exit after resolving the save error.');
         }
 
@@ -3412,22 +3417,31 @@ async function exitWizard() {
         for (const file of stagedFiles) {
             if (file.provider === 'r2' && file.key) {
                 if (file.type === 'thumbnail') {
-                    const result = await deletePrivateImage({
-                        resourceType: 'thumbnail',
-                        resourceId: window.courseDraft.id,
-                        objectKey: file.key,
-                        uploadId: file.uploadId
+                    const { data, error } = await supabase.functions.invoke('r2-image-delete', {
+                        body: {
+                            resource_type: 'thumbnail',
+                            resource_id: window.courseDraft.id,
+                            object_key: file.key,
+                            ...(file.uploadId ? { upload_id: file.uploadId } : {})
+                        }
                     });
-                    if (result === false) {
-                        throw new Error('A staged thumbnail could not be confirmed as discarded. No course record was deleted.');
+                    if (error) throw new Error(error.message || 'Could not discard staged thumbnail.');
+                    if (data?.deleted !== true && !['already_committed', 'still_referenced'].includes(data?.reason)) {
+                        throw new Error('The staged thumbnail cleanup could not be confirmed. No course record was deleted.');
+                    }
+                    if (data?.deleted !== true) {
+                        console.info('Thumbnail object retained because the server confirmed it is already committed or referenced.');
                     }
                 } else {
                     const result = await CourseService.discardStagedUpload(
                         window.courseDraft.id, file.key, file.uploadId || null,
                         file.lessonId || null, file.type || null
                     );
-                    if (result?.success === false || result?.discarded === false) {
-                        throw new Error('A staged video could not be confirmed as discarded. No course record was deleted.');
+                    if (result?.discarded === false && result?.preserved !== true) {
+                        throw new Error('The staged video cleanup could not be confirmed. No course record was deleted.');
+                    }
+                    if (result?.preserved === true) {
+                        console.info('Video object retained because the server confirmed it is already committed or referenced.');
                     }
                 }
             } else if (file.provider === 'supabase' && file.url) {
