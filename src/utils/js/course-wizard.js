@@ -1019,6 +1019,7 @@ async function setupEventListeners() {
     const thumbUpload = document.getElementById('thumbnail-upload');
     if (thumbUpload) {
         thumbUpload.addEventListener('change', async function (e) {
+            if (window.wizardExitInProgress) { e.target.value = ''; return; }
             if (e.target.files && e.target.files[0]) {
                 const file = e.target.files[0];
                 const btn = document.getElementById('btn-upload-thumbnail');
@@ -1174,6 +1175,7 @@ async function setupEventListeners() {
     const vidUpload = document.getElementById('video-upload');
     if (vidUpload) {
         vidUpload.addEventListener('change', async function (e) {
+            if (window.wizardExitInProgress) { e.target.value = ''; return; }
             if (e.target.files && e.target.files[0]) {
                 const file = e.target.files[0];
                 const btn = document.getElementById('btn-upload-video');
@@ -1374,6 +1376,7 @@ async function setupEventListeners() {
     const modalVidUpload = document.getElementById('modal-video-upload');
     if (modalVidUpload) {
         modalVidUpload.addEventListener('change', async function (e) {
+            if (window.wizardExitInProgress) { e.target.value = ''; return; }
             if (e.target.files && e.target.files[0]) {
                 const file = e.target.files[0];
                 
@@ -3392,7 +3395,7 @@ async function exitWizard() {
         const lessonOperations = lessonStates.flatMap(state =>
             [state.uploadPromise, state.cancelCleanupPromise].filter(Boolean)
         );
-        await Promise.all([...activeOperations, ...lessonOperations]);
+        await Promise.allSettled([...activeOperations, ...lessonOperations]);
 
         // 2. No upload handler may enqueue a save after this point. Flush the
         // existing debounce/runner without starting an unrelated new draft save.
