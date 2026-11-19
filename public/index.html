@@ -1000,6 +1000,19 @@
                 }
 
                 const mentors = allMentors.slice(0, 4); // get top 4
+                const { resolveProfileAvatar } = await import('/src/services/r2ImageUpload.js');
+
+                // Resolve private R2 avatars through the shared profile-aware resolver.
+                // Isolate failures so one inaccessible avatar cannot break the featured mentor list.
+                await Promise.all(mentors.map(async (mentor) => {
+                    try {
+                        mentor.display_avatar_url = await resolveProfileAvatar(mentor);
+                    } catch (avatarError) {
+                        console.warn('Could not resolve featured mentor avatar:', mentor.instructor_id, avatarError);
+                        mentor.display_avatar_url = mentor.avatar_url || null;
+                    }
+                }));
+
                 let html = '';
                 mentors.forEach(mentor => {
                    const formatResponseTime = (hours) => {
@@ -1032,7 +1045,7 @@
                             <div class="flex items-start justify-between mb-4">
                                 <div class="relative">
                                     <div class="absolute -top-3 -left-3">${roleBadge}</div>
-                                    <img src="${mentor.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(mentor.full_name) + '&background=random&color=fff'}" 
+                                    <img src="${mentor.display_avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(mentor.full_name) + '&background=random&color=fff'}" 
                                          alt="${mentor.full_name}" 
                                          class="w-16 h-16 rounded-2xl object-cover ring-4 ring-slate-50 dark:ring-slate-800 text-[10px] italic mt-3">
                                     <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 border-4 border-white dark:border-slate-900 rounded-full"></div>
