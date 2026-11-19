@@ -11,6 +11,14 @@ import { resolveProfileAvatar, resolveCourseThumbnail, resolvePrivateImage, dele
 // Global state
 const wizardParams = new URLSearchParams(window.location.search);
 window.revisionCreatedInSession = wizardParams.get('new_revision') === 'true';
+window.wizardSessionRecord = window.wizardSessionRecord || {
+    kind: window.revisionCreatedInSession ? 'revision' : 'new',
+    createdCourseId: null,
+    explicitlySaved: false
+};
+window.activeWizardUploadOperations = window.activeWizardUploadOperations || new Set();
+window.wizardExitInProgress = false;
+window.wizardSaveQueueClosing = false;
 window.sessionUploadedFiles = window.sessionUploadedFiles || [];
 window.courseDraft = {
     title: '',
@@ -99,7 +107,22 @@ let saveTimeout = null;
 let queuedSaveSilent = true;
 let saveWaiters = [];
 let saveRunnerPromise = null;
+let lastDraftSaveError = null;
 const SAVE_DEBOUNCE_MS = 1500;
+
+function beginWizardUploadOperation(kind) {
+    let finish;
+    const promise = new Promise(resolve => { finish = resolve; });
+    const operation = { kind, promise };
+    window.activeWizardUploadOperations.add(operation);
+    let finished = false;
+    return () => {
+        if (finished) return;
+        finished = true;
+        window.activeWizardUploadOperations.delete(operation);
+        finish();
+    };
+}
 
 // Helper to get localStorage key for last visited step
 function getStepKey(courseId) {
@@ -461,6 +484,9 @@ async function restoreIntroVideoPreview(course = window.courseDraft) {
  * while a save is running are collected into a follow-up pass before waiters settle.
  */
 window.saveDraft = function(silent = false, throwOnError = false) {
+    if (window.wizardSaveQueueClosing) {
+        return Promise.reject(new Error('The wizard is finishing its exit cleanup. Please wait.'));
+    }
     if (saveTimeout) clearTimeout(saveTimeout);
 
     pendingSave = true;
@@ -482,6 +508,7 @@ async function runQueuedSave() {
     if (saveTimeout) clearTimeout(saveTimeout);
     saveTimeout = null;
 
+    lastDraftSaveError = null;
     saveRunnerPromise = (async () => {
         const waiters = [];
         let firstError = null;
@@ -502,6 +529,7 @@ async function runQueuedSave() {
             }
         }
 
+        lastDraftSaveError = firstError;
         waiters.forEach(waiter => {
             if (firstError && waiter.throwOnError) waiter.reject(firstError);
             else waiter.resolve();
@@ -549,8 +577,19 @@ async function performSave(silent = false) {
             status: window.courseDraft.status || 'draft'
         };
 
+        const courseIdBeforeSave = window.courseDraft.id || null;
+        if (window.revisionCreatedInSession && courseIdBeforeSave && !window.wizardSessionRecord.createdCourseId) {
+            window.wizardSessionRecord.kind = 'revision';
+            window.wizardSessionRecord.createdCourseId = courseIdBeforeSave;
+        }
         const savedCourse = await CourseService.saveDraft(payload);
         window.courseDraft.id = savedCourse.id;
+        if (!courseIdBeforeSave && !window.wizardSessionRecord.explicitlySaved) {
+            window.wizardSessionRecord.kind = 'new';
+            window.wizardSessionRecord.createdCourseId = savedCourse.id;
+        } else if (courseIdBeforeSave && !window.revisionCreatedInSession && !window.wizardSessionRecord.createdCourseId) {
+            window.wizardSessionRecord.kind = 'existing';
+        }
         console.log('Basic info saved, ID:', savedCourse.id);
 
         // --- STEP 2: Patch-only Curriculum Sync (Sections, Lessons) ---
@@ -982,6 +1021,7 @@ async function setupEventListeners() {
                 const progressContainer = document.getElementById('thumbnail-upload-progress-container');
                 const statusText = document.getElementById('thumbnail-upload-status');
                 const cancelBtn = document.getElementById('thumbnail-upload-cancel');
+                const finishWizardUpload = beginWizardUploadOperation('thumbnail');
                 const controller = new AbortController();
                 window.thumbnailUploadAbortController = controller;
                 if (btn) { btn.setAttribute('data-orig', btn.innerText); btn.innerText = 'Uploading...'; btn.disabled = true; }
@@ -1119,6 +1159,7 @@ async function setupEventListeners() {
                     }
                     if (cancelBtn) cancelBtn.onclick = null;
                     if (window.thumbnailUploadAbortController === controller) window.thumbnailUploadAbortController = null;
+                    finishWizardUpload();
                     setTimeout(() => { if (progressContainer) progressContainer.classList.add('hidden'); }, 1800);
                 }
             }
@@ -1137,6 +1178,7 @@ async function setupEventListeners() {
                 const percentText = document.getElementById('intro-upload-percent');
                 const statusText = document.getElementById('intro-upload-status');
                 const cancelBtn = document.getElementById('intro-upload-cancel');
+                const finishWizardUpload = beginWizardUploadOperation('introduction');
                 const controller = new AbortController();
                 window.introUploadAbortController = controller;
                 const previousIntroState = {
@@ -1270,6 +1312,7 @@ async function setupEventListeners() {
                     if (btn) btn.disabled = false;
                     if (cancelBtn) cancelBtn.onclick = null;
                     if (window.introUploadAbortController === controller) window.introUploadAbortController = null;
+                    finishWizardUpload();
                     setTimeout(() => { if (progressContainer) progressContainer.classList.add('hidden'); }, 2000);
                 }
             }
@@ -3297,6 +3340,7 @@ async function saveDraftManual() {
         showToast("Draft safely saved in Supabase.");
         // A newly-created revision is now explicitly saved and must be kept on Exit.
         window.revisionCreatedInSession = false;
+        window.wizardSessionRecord.explicitlySaved = true;
         // R2 entries are removed only by their own successful commit flow.
         // Keep pending staged uploads registered so Exit can discard them safely.
         window.sessionUploadedFiles = (window.sessionUploadedFiles || []).filter(
@@ -3314,75 +3358,122 @@ async function saveDraftManual() {
 }
 
 async function exitWizard() {
+    if (window.wizardExitInProgress) return;
+    window.wizardExitInProgress = true;
+
     const btn = document.getElementById('btn-wizard-exit');
+    const originalButtonHtml = btn?.innerHTML;
     if (btn) {
         btn.innerHTML = '<span class="material-symbols-outlined text-sm animate-spin">sync</span> Exiting...';
         btn.disabled = true;
     }
 
-    // Discard any staged or newly uploaded files for this session that weren't saved to draft.
-    // If this session created a brand-new published-course revision and the instructor exits
-    // without explicitly saving it, remove that revision as well (including its DB children).
-    if (window.sessionUploadedFiles && window.sessionUploadedFiles.length > 0) {
-        console.log("Cleaning up unsaved session files...", window.sessionUploadedFiles);
-        for (const file of window.sessionUploadedFiles) {
-            try {
-                if (file.provider === 'r2' && file.key) {
-                    if (file.type === 'thumbnail') {
-                        await deletePrivateImage({
-                            resourceType: 'thumbnail',
-                            resourceId: window.courseDraft.id,
-                            objectKey: file.key,
-                            uploadId: file.uploadId
-                        });
-                    } else {
-                        await CourseService.discardStagedUpload(
-                            window.courseDraft.id, file.key, file.uploadId || null,
-                            file.lessonId || null, file.type || null
-                        );
-                    }
-                } else if (file.provider === 'supabase' && file.url) {
-                    const pathParts = file.url.split('public/' + file.bucket + '/');
-                    if (pathParts.length > 1) {
-                        const path = decodeURIComponent(pathParts[1]);
-                        await supabase.storage.from(file.bucket).remove([path]);
-                    }
-                }
-            } catch (e) {
-                console.error("Cleanup failed for unsaved file", file, e);
+    try {
+        // 1. Stop active transfers first. A completed multipart upload is marked
+        // for discard by its own handler after the completion response returns.
+        window.thumbnailUploadAbortController?.abort();
+        window.introUploadAbortController?.abort();
+
+        const lessonStates = Object.values(window.lessonVideoState || {});
+        for (const state of lessonStates) {
+            if (state.abortController && ['uploading', 'completing', 'cancelling'].includes(state.phase)) {
+                state.cancelAfterComplete = true;
+                state.abortController.abort();
             }
         }
-    }
 
-    if (window.revisionCreatedInSession && window.courseDraft?.id) {
-        try {
-            // Clean up any R2 lesson objects that were committed during this session
-            // before cascading away the new revision's lesson rows.
-            const unsavedRevision = await CourseService.getCourseFull(window.courseDraft.id);
-            for (const section of (unsavedRevision?.course_sections || [])) {
-                for (const lesson of (section.course_lessons || [])) {
-                    if (lesson.video_storage_key) {
-                        await CourseService.deleteR2Video(window.courseDraft.id, lesson.id, 'lesson');
+        // Wait for full thumbnail/introduction handlers and any lesson transfer or
+        // cancellation cleanup already in progress before touching staged objects.
+        const activeOperations = [...(window.activeWizardUploadOperations || [])].map(item => item.promise);
+        const lessonOperations = lessonStates.flatMap(state =>
+            [state.uploadPromise, state.cancelCleanupPromise].filter(Boolean)
+        );
+        await Promise.all([...activeOperations, ...lessonOperations]);
+
+        // 2. No upload handler may enqueue a save after this point. Flush the
+        // existing debounce/runner without starting an unrelated new draft save.
+        window.wizardSaveQueueClosing = true;
+        if (saveTimeout) {
+            clearTimeout(saveTimeout);
+            saveTimeout = null;
+        }
+        if (pendingSave && !saveRunnerPromise) void runQueuedSave();
+        while (saveRunnerPromise || pendingSave) {
+            if (saveRunnerPromise) await saveRunnerPromise;
+            else if (pendingSave) await runQueuedSave();
+        }
+        if (lastDraftSaveError) {
+            throw new Error('A pending draft save failed. Your course was not deleted; please retry Exit after resolving the save error.');
+        }
+
+        // 3. Discard only uploads still registered as staged in this wizard.
+        // A failed/ambiguous response stops navigation and keeps the entry for retry.
+        const stagedFiles = [...(window.sessionUploadedFiles || [])];
+        for (const file of stagedFiles) {
+            if (file.provider === 'r2' && file.key) {
+                if (file.type === 'thumbnail') {
+                    const result = await deletePrivateImage({
+                        resourceType: 'thumbnail',
+                        resourceId: window.courseDraft.id,
+                        objectKey: file.key,
+                        uploadId: file.uploadId
+                    });
+                    if (result === false) {
+                        throw new Error('A staged thumbnail could not be confirmed as discarded. No course record was deleted.');
+                    }
+                } else {
+                    const result = await CourseService.discardStagedUpload(
+                        window.courseDraft.id, file.key, file.uploadId || null,
+                        file.lessonId || null, file.type || null
+                    );
+                    if (result?.success === false || result?.discarded === false) {
+                        throw new Error('A staged video could not be confirmed as discarded. No course record was deleted.');
                     }
                 }
+            } else if (file.provider === 'supabase' && file.url) {
+                const pathParts = file.url.split('public/' + file.bucket + '/');
+                if (pathParts.length > 1) {
+                    const path = decodeURIComponent(pathParts[1]);
+                    const { error } = await supabase.storage.from(file.bucket).remove([path]);
+                    if (error) throw error;
+                }
             }
-            if (unsavedRevision?.intro_video_storage_key) {
-                await CourseService.deleteR2Video(window.courseDraft.id, null, 'intro');
+            window.sessionUploadedFiles = (window.sessionUploadedFiles || []).filter(
+                uploaded => !(uploaded.provider === file.provider && uploaded.key === file.key &&
+                    uploaded.uploadId === file.uploadId && uploaded.url === file.url)
+            );
+        }
+
+        // 4. Delete only the exact course/revision this wizard session created.
+        // Existing courses and explicitly saved drafts are never candidates.
+        const disposableCourseId = window.wizardSessionRecord?.explicitlySaved
+            ? null
+            : window.wizardSessionRecord?.createdCourseId;
+        if (disposableCourseId) {
+            if (disposableCourseId !== window.courseDraft?.id) {
+                throw new Error('The wizard session course ID no longer matches the current draft. No record was deleted.');
             }
-            await CourseService.deleteCourse(window.courseDraft.id);
+            const result = await CourseService.deleteCourseRecord(disposableCourseId);
+            if (!result?.deleted) {
+                throw new Error('The server did not confirm deletion of the unsaved course record.');
+            }
+            window.wizardSessionRecord.createdCourseId = null;
             window.revisionCreatedInSession = false;
-        } catch (e) {
-            console.error("Could not discard unsaved course revision:", e);
-            showToast("Could not discard the unsaved revision. Please try again.", true);
-            if (btn) {
-                btn.disabled = false;
-                btn.innerHTML = '<span class="material-symbols-outlined text-sm">exit_to_app</span> Exit';
-            }
-            return;
         }
-    }
 
-    window.location.href = '/src/pages/instructor/instructor-courses/index.html';
+        // Redirect only after every required cleanup and exact-record deletion
+        // has returned successfully.
+        window.location.href = '/src/pages/instructor/instructor-courses/index.html';
+    } catch (error) {
+        console.error('Safe wizard exit failed; remaining in the wizard:', error);
+        window.wizardSaveQueueClosing = false;
+        window.wizardExitInProgress = false;
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalButtonHtml || '<span class="material-symbols-outlined text-sm">exit_to_app</span> Exit';
+        }
+        showToast(error?.message || 'Exit cleanup could not be confirmed. Please retry.', true);
+    }
 }
 
 function setupInputStability() {
