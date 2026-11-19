@@ -1425,6 +1425,7 @@ async function setupEventListeners() {
 
                 updateLessonVideoCardUI(st.sIdx, st.iIdx);
 
+                const finishWizardUpload = beginWizardUploadOperation('lesson');
                 try {
                     const cancelProgressBtn = document.getElementById('modal-upload-cancel');
                     if (cancelProgressBtn) cancelProgressBtn.onclick = () => discardAndCloseModalVideo();
@@ -1514,6 +1515,8 @@ async function setupEventListeners() {
                         if (progressContainer) progressContainer.classList.add('hidden');
                     }
                     updateLessonVideoCardUI(st.sIdx, st.iIdx);
+                } finally {
+                    finishWizardUpload();
                 }
             }
         });
