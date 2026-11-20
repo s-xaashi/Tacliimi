@@ -1323,36 +1323,30 @@ export const CourseService = {
 
     /** REVIEWS */
     async getCourseReviews(courseId) {
-        const { data: reviews, error } = await supabase
-            .from('course_reviews')
-            .select('id, student_id, rating, review_text, created_at')
+        if (!courseId) return [];
+
+        // Public display view returns only review content and reviewer display
+        // fields for currently published, public courses. It never returns student IDs.
+        const { data, error } = await supabase
+            .from('public_course_reviews_public_view')
+            .select('review_id, course_id, rating, review_text, created_at, full_name, avatar_url, avatar_storage_key')
             .eq('course_id', courseId)
             .order('created_at', { ascending: false });
+
         if (error) throw error;
 
-        if (!reviews?.length) return [];
-
-        // This view exposes only the name/avatar needed to display reviews
-        // on public published courses, without making private profiles public.
-        const { data: reviewerDetails, error: reviewerError } = await supabase
-            .from('public_course_review_display')
-            .select('review_id, full_name, avatar_url, avatar_storage_key')
-            .eq('course_id', courseId);
-
-        if (reviewerError) throw reviewerError;
-
-        const reviewerByReviewId = new Map(
-            (reviewerDetails || []).map(reviewer => [reviewer.review_id, {
-                id: reviewer.review_id,
-                full_name: reviewer.full_name,
-                avatar_url: reviewer.avatar_url,
-                avatar_storage_key: reviewer.avatar_storage_key
-            }])
-        );
-
-        return reviews.map(review => ({
-            ...review,
-            reviewer: reviewerByReviewId.get(review.id) || {}
+        return (data || []).map(review => ({
+            id: review.review_id,
+            course_id: review.course_id,
+            rating: review.rating,
+            review_text: review.review_text,
+            created_at: review.created_at,
+            reviewer: {
+                id: review.review_id,
+                full_name: review.full_name,
+                avatar_url: review.avatar_url,
+                avatar_storage_key: review.avatar_storage_key
+            }
         }));
     },
 
@@ -1410,20 +1404,16 @@ export const CourseService = {
             if (statsError) throw statsError;
             const stats = Array.isArray(publicStats) ? publicStats[0] : publicStats;
 
-            // Get mentor feedback rating separately; preserve the existing rating behavior.
+            // Use the public aggregate view instead of reading individual mentor reviews.
             let avgRating = '0.0';
-            try {
-                const { data: reviews } = await supabase
-                    .from('mentorship_reviews')
-                    .select('rating')
-                    .eq('mentor_id', instructorId);
+            const { data: ratingStats, error: ratingError } = await supabase
+                .from('mentor_rating_stats')
+                .select('avg_rating')
+                .eq('mentor_id', instructorId)
+                .maybeSingle();
 
-                if (reviews && reviews.length > 0) {
-                    const total = reviews.reduce((sum, r) => sum + (r.rating || 0), 0);
-                    avgRating = (total / reviews.length).toFixed(1);
-                }
-            } catch (err) {
-                console.warn("Could not fetch mentor rating for stats:", err);
+            if (!ratingError && ratingStats?.avg_rating != null) {
+                avgRating = Number(ratingStats.avg_rating).toFixed(1);
             }
 
             return {
