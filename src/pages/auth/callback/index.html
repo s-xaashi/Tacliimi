@@ -112,11 +112,22 @@
                 document.getElementById('status-title').textContent = 'Success!';
                 document.getElementById('status-message').textContent = 'Redirecting to your dashboard...';
 
-                // 3. Route to correct dashboard instantly
-                if (actualRole === 'instructor' || actualRole === 'mentor') {
-                    window.location.replace('/instructor/dashboard/');
-                } else if (actualRole === 'admin') {
+                // Admin routing must use the trusted admin_auth record, never profiles.role.
+                const { data: adminRecord, error: adminError } = await supabase
+                    .from('admin_auth')
+                    .select('role')
+                    .eq('id', session.user.id)
+                    .maybeSingle();
+
+                if (adminError) {
+                    throw new Error('Unable to verify administrator permissions.');
+                }
+
+                // A legacy profiles.role='admin' value is not an administrator grant.
+                if (adminRecord && ['superadmin', 'course_manager', 'finance_manager'].includes(adminRecord.role)) {
                     window.location.replace('/admin/dashboard/');
+                } else if (actualRole === 'instructor' || actualRole === 'mentor') {
+                    window.location.replace('/instructor/dashboard/');
                 } else {
                     window.location.replace('/student/dashboard/');
                 }
