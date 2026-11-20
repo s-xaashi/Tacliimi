@@ -317,7 +317,7 @@ export const MentorService = {
                     }
                 }
 
-                // Priority: (1) JS-aggregated raw reviews, (2) View fallback, (3) 0.0
+                // Rating values come only from the public aggregate view; raw reviews stay private.
                 const stats = ratingMap[mentor.instructor_id];
                 let finalRating = '0.0';
                 let finalCount = 0;
