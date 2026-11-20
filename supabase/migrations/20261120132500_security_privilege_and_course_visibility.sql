@@ -81,7 +81,7 @@ DECLARE
 BEGIN
   IF v_caller_id IS NULL OR NOT EXISTS (
     SELECT 1 FROM public.admin_auth
-    WHERE id = v_caller_id AND role IN ('superadmin', 'course_manager')
+    WHERE id = v_caller_id AND role IN ('superadmin', 'course_manager') AND COALESCE(is_suspended, false) = false
   ) THEN
     RAISE EXCEPTION 'Unauthorized: Not a valid admin' USING ERRCODE = '42501';
   END IF;
@@ -126,7 +126,7 @@ AS $function$
 BEGIN
   IF auth.uid() IS NULL OR NOT EXISTS (
     SELECT 1 FROM public.admin_auth
-    WHERE id = auth.uid() AND role IN ('superadmin', 'course_manager')
+    WHERE id = auth.uid() AND role IN ('superadmin', 'course_manager') AND COALESCE(is_suspended, false) = false
   ) THEN
     RAISE EXCEPTION 'Unauthorized: Not a valid admin' USING ERRCODE = '42501';
   END IF;
@@ -189,7 +189,7 @@ BEGIN
     RAISE EXCEPTION 'Unauthorized: authentication required' USING ERRCODE = '42501';
   END IF;
 
-  SELECT role INTO v_caller_role FROM public.admin_auth WHERE id = auth.uid();
+  SELECT role INTO v_caller_role FROM public.admin_auth WHERE id = auth.uid() AND COALESCE(is_suspended, false) = false;
   IF v_caller_role IS NULL OR v_caller_role NOT IN ('course_manager', 'superadmin') THEN
     RAISE EXCEPTION 'Unauthorized: course-manager privileges required' USING ERRCODE = '42501';
   END IF;
@@ -237,7 +237,7 @@ BEGIN
     RAISE EXCEPTION 'Unauthorized: authentication required' USING ERRCODE = '42501';
   END IF;
 
-  SELECT role INTO v_caller_role FROM public.admin_auth WHERE id = auth.uid();
+  SELECT role INTO v_caller_role FROM public.admin_auth WHERE id = auth.uid() AND COALESCE(is_suspended, false) = false;
   IF v_caller_role IS NULL OR v_caller_role NOT IN ('course_manager', 'superadmin') THEN
     RAISE EXCEPTION 'Unauthorized: course-manager privileges required' USING ERRCODE = '42501';
   END IF;
@@ -272,7 +272,7 @@ BEGIN
     RAISE EXCEPTION 'Unauthorized: authentication required' USING ERRCODE = '42501';
   END IF;
 
-  SELECT role INTO v_caller_role FROM public.admin_auth WHERE id = auth.uid();
+  SELECT role INTO v_caller_role FROM public.admin_auth WHERE id = auth.uid() AND COALESCE(is_suspended, false) = false;
   IF v_caller_role IS NULL OR v_caller_role NOT IN ('course_manager', 'superadmin') THEN
     RAISE EXCEPTION 'Unauthorized: course-manager privileges required' USING ERRCODE = '42501';
   END IF;
@@ -309,8 +309,26 @@ AS $function$
   SELECT EXISTS (
     SELECT 1 FROM public.admin_auth
     WHERE id = auth.uid()
+      AND role IN ('superadmin', 'course_manager', 'finance_manager')
+      AND COALESCE(is_suspended, false) = false
   );
 $function$;
+
+-- A legacy RLS helper is still referenced by mentorship message policies.
+-- Keep it aligned with the trusted admin registry and suspension state.
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS boolean
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path TO ''
+AS $function$
+  SELECT public.check_is_admin();
+$function$;
+
+REVOKE ALL ON FUNCTION public.check_is_admin() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.check_is_admin() TO anon, authenticated;
+REVOKE ALL ON FUNCTION public.is_admin() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.is_admin() TO authenticated;
 
 -- 5. Replace all 19 profile.role-based admin policy checks with admin_auth.
 ALTER POLICY "Admins can view all payout methods" ON public.payout_methods
@@ -333,10 +351,12 @@ ALTER POLICY "Admins can manage other admins" ON public.admin_accounts
 USING (EXISTS (
   SELECT 1 FROM public.admin_auth a
   WHERE a.id = auth.uid() AND a.role = 'superadmin'
+    AND COALESCE(a.is_suspended, false) = false
 ))
 WITH CHECK (EXISTS (
   SELECT 1 FROM public.admin_auth a
   WHERE a.id = auth.uid() AND a.role = 'superadmin'
+    AND COALESCE(a.is_suspended, false) = false
 ));
 
 ALTER POLICY "course_categories_admin_write" ON public.course_categories
@@ -385,6 +405,130 @@ WITH CHECK ((SELECT public.check_is_admin()));
 
 ALTER POLICY "Admins can view all enrollments" ON public.enrollments
 USING ((SELECT public.check_is_admin()));
+
+-- Other existing admin_auth-backed policies also need to honor suspension.
+ALTER POLICY "Admins can view all boosts" ON public.boosts
+USING ((SELECT public.check_is_admin()));
+
+ALTER POLICY "Admins can view certificate orders" ON public.certificate_orders
+USING ((SELECT public.check_is_admin()));
+
+ALTER POLICY "Admins can read all mentorship messages" ON public.mentorship_booking_messages
+USING ((SELECT public.is_admin()));
+
+ALTER POLICY "Finance access only" ON public.payments
+USING (EXISTS (
+  SELECT 1 FROM public.admin_auth a
+  WHERE a.id = auth.uid()
+    AND a.role IN ('superadmin', 'finance_manager')
+    AND COALESCE(a.is_suspended, false) = false
+))
+WITH CHECK (EXISTS (
+  SELECT 1 FROM public.admin_auth a
+  WHERE a.id = auth.uid()
+    AND a.role IN ('superadmin', 'finance_manager')
+    AND COALESCE(a.is_suspended, false) = false
+));
+
+ALTER POLICY "Finance access for payouts" ON public.payout_transactions
+USING (EXISTS (
+  SELECT 1 FROM public.admin_auth a
+  WHERE a.id = auth.uid()
+    AND a.role IN ('superadmin', 'finance_manager')
+    AND COALESCE(a.is_suspended, false) = false
+))
+WITH CHECK (EXISTS (
+  SELECT 1 FROM public.admin_auth a
+  WHERE a.id = auth.uid()
+    AND a.role IN ('superadmin', 'finance_manager')
+    AND COALESCE(a.is_suspended, false) = false
+));
+
+ALTER POLICY "Admins can update platform settings" ON public.platform_settings
+USING ((SELECT public.check_is_admin()))
+WITH CHECK ((SELECT public.check_is_admin()));
+
+ALTER POLICY "Admins can view all promo banners" ON public.promo_banners
+USING ((SELECT public.check_is_admin()));
+
+ALTER POLICY "Admins can view all promotion orders" ON public.promotion_orders
+USING ((SELECT public.check_is_admin()));
+
+ALTER POLICY "Admins can update refund requests" ON public.refund_requests
+USING (EXISTS (
+  SELECT 1 FROM public.admin_auth a
+  WHERE a.id = auth.uid()
+    AND a.role IN ('superadmin', 'finance_manager')
+    AND COALESCE(a.is_suspended, false) = false
+))
+WITH CHECK (EXISTS (
+  SELECT 1 FROM public.admin_auth a
+  WHERE a.id = auth.uid()
+    AND a.role IN ('superadmin', 'finance_manager')
+    AND COALESCE(a.is_suspended, false) = false
+));
+
+ALTER POLICY "Admins can view refund requests" ON public.refund_requests
+USING (EXISTS (
+  SELECT 1 FROM public.admin_auth a
+  WHERE a.id = auth.uid()
+    AND a.role IN ('superadmin', 'finance_manager')
+    AND COALESCE(a.is_suspended, false) = false
+));
+
+ALTER POLICY "admins_select_refunds" ON public.refund_requests
+USING (EXISTS (
+  SELECT 1 FROM public.admin_auth a
+  WHERE a.id = auth.uid()
+    AND a.role IN ('superadmin', 'finance_manager')
+    AND COALESCE(a.is_suspended, false) = false
+));
+
+ALTER POLICY "admins_update_refunds" ON public.refund_requests
+USING (EXISTS (
+  SELECT 1 FROM public.admin_auth a
+  WHERE a.id = auth.uid()
+    AND a.role IN ('superadmin', 'finance_manager')
+    AND COALESCE(a.is_suspended, false) = false
+))
+WITH CHECK (EXISTS (
+  SELECT 1 FROM public.admin_auth a
+  WHERE a.id = auth.uid()
+    AND a.role IN ('superadmin', 'finance_manager')
+    AND COALESCE(a.is_suspended, false) = false
+));
+
+ALTER POLICY "admins_view_attachments" ON public.support_ticket_attachments
+USING ((SELECT public.check_is_admin()));
+
+ALTER POLICY "admins_select_all_tickets" ON public.support_tickets
+USING ((SELECT public.check_is_admin()));
+
+ALTER POLICY "admins_update_tickets" ON public.support_tickets
+USING ((SELECT public.check_is_admin()))
+WITH CHECK ((SELECT public.check_is_admin()));
+
+ALTER POLICY "admins_select_withdrawals" ON public.withdrawal_requests
+USING (EXISTS (
+  SELECT 1 FROM public.admin_auth a
+  WHERE a.id = auth.uid()
+    AND a.role IN ('superadmin', 'finance_manager')
+    AND COALESCE(a.is_suspended, false) = false
+));
+
+ALTER POLICY "admins_update_withdrawals" ON public.withdrawal_requests
+USING (EXISTS (
+  SELECT 1 FROM public.admin_auth a
+  WHERE a.id = auth.uid()
+    AND a.role IN ('superadmin', 'finance_manager')
+    AND COALESCE(a.is_suspended, false) = false
+))
+WITH CHECK (EXISTS (
+  SELECT 1 FROM public.admin_auth a
+  WHERE a.id = auth.uid()
+    AND a.role IN ('superadmin', 'finance_manager')
+    AND COALESCE(a.is_suspended, false) = false
+));
 
 -- 6. Course visibility: no broad instructor SELECT and no legacy public
 -- published-only policy may remain, because permissive policies are ORed.
