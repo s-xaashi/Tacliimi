@@ -131,9 +131,20 @@ BEGIN
     RAISE EXCEPTION 'Unauthorized: Not a valid admin' USING ERRCODE = '42501';
   END IF;
 
+  IF NOT EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE id = p_user_id AND role = 'instructor'
+  ) THEN
+    RAISE EXCEPTION 'Instructor profile not found or user is not an instructor';
+  END IF;
+
   IF p_approval_status IS NOT NULL
      AND p_approval_status NOT IN ('approved', 'suspended', 'blocked') THEN
     RAISE EXCEPTION 'Invalid instructor approval status';
+  END IF;
+
+  IF p_approval_status IS NULL AND p_verification_status IS NULL THEN
+    RAISE EXCEPTION 'At least one instructor status change is required';
   END IF;
 
   INSERT INTO public.instructors (user_id, approval_status, verification_status)
@@ -384,7 +395,7 @@ STABLE
 SECURITY DEFINER
 SET search_path TO ''
 AS $function$
-  SELECT EXISTS (
+  SELECT auth.uid() IS NOT NULL AND EXISTS (
     SELECT 1 FROM public.enrollments e
     WHERE e.course_id = p_course_id AND e.student_id = auth.uid()
   );
@@ -392,6 +403,27 @@ $function$;
 
 REVOKE ALL ON FUNCTION public.user_is_enrolled(uuid) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.user_is_enrolled(uuid) TO authenticated;
+
+-- Evaluate instructor visibility outside nested RLS policies to avoid recursion.
+CREATE OR REPLACE FUNCTION public.is_public_course_owner_active(p_instructor_id uuid)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path TO ''
+AS $function$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.instructors i
+    JOIN public.profiles p ON p.id = i.user_id
+    WHERE i.user_id = p_instructor_id
+      AND i.approval_status = 'approved'
+      AND p.account_status = 'active'
+  );
+$function$;
+
+REVOKE ALL ON FUNCTION public.is_public_course_owner_active(uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.is_public_course_owner_active(uuid) TO anon, authenticated;
 
 DROP POLICY IF EXISTS "Instructors can read all courses" ON public.courses;
 DROP POLICY IF EXISTS "Courses are viewable by everyone if published" ON public.courses;
@@ -404,6 +436,7 @@ USING (
     AND version_status = 'published'
     AND is_latest_published = true
     AND deleted_at IS NULL
+    AND public.is_public_course_owner_active(instructor_id)
   )
   OR (auth.uid() = instructor_id AND deleted_at IS NULL)
 );
@@ -496,5 +529,10 @@ WHERE c.is_latest_published = true
   AND c.deleted_at IS NULL
   AND i.approval_status = 'approved'
   AND p.account_status = 'active';
+
+-- Curated public view: client roles receive read-only access only.
+ALTER VIEW public.course_marketplace_view SET (security_barrier = true);
+REVOKE ALL PRIVILEGES ON TABLE public.course_marketplace_view FROM PUBLIC, anon, authenticated;
+GRANT SELECT ON TABLE public.course_marketplace_view TO anon, authenticated;
 
 COMMIT;
