@@ -321,10 +321,14 @@ async function createDirectPayment(userId: string, token: string, payload: Direc
     }
   }
 
+  const initialGatewayMetadata = paymentRow.gateway_response && typeof paymentRow.gateway_response === 'object'
+    ? paymentRow.gateway_response as Record<string, unknown>
+    : {};
+
   const saveGatewayResponse = async (gatewayResponse: Record<string, unknown>) => {
     const { error } = await supabase
       .from('payments')
-      .update({ gateway_response: gatewayResponse })
+      .update({ gateway_response: { ...initialGatewayMetadata, ...gatewayResponse } })
       .eq('id', insertedPayment.id)
       .eq('payment_status', 'pending');
     return error;
