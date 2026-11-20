@@ -630,7 +630,8 @@ async function verifyTransaction(_userId: string, payload: VerifyPayload, token:
       : {};
     const mergedGatewayResponse = {
       ...verifyData,
-      ...storedGatewayMetadata,
+      ...(typeof storedGatewayMetadata.couponCode === 'string' ? { couponCode: storedGatewayMetadata.couponCode } : {}),
+      ...(typeof storedGatewayMetadata.promotionOrderId === 'string' ? { promotionOrderId: storedGatewayMetadata.promotionOrderId } : {}),
     };
     const { data: updatedPayment, error: updateErr } = await supabase
       .from('payments')
