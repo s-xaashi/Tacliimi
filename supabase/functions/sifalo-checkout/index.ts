@@ -195,17 +195,39 @@ async function createCheckout(userId: string, payload: CreateCheckoutPayload): P
   if (payload.couponCode && type === 'course') {
     paymentRow.gateway_response = { couponCode: payload.couponCode };
   }
+  if (payload.promotionOrderId && (type === 'boost' || type === 'banner' || type === 'boost_and_banner')) {
+    paymentRow.gateway_response = {
+      ...((paymentRow.gateway_response as Record<string, unknown> | undefined) ?? {}),
+      promotionOrderId: payload.promotionOrderId,
+    };
+  }
   if (type === 'course') {
     paymentRow.course_id = referenceId;
   } else if (type === 'booking') {
     paymentRow.mentorship_session_id = referenceId;
-    await supabase.from('mentorship_sessions').update({ booking_status: 'pending_payment' }).eq('id', referenceId);
   }
 
-  const { error: payErr } = await supabase.from('payments').insert(paymentRow);
-  if (payErr) {
+  const { data: insertedPayment, error: payErr } = await supabase
+    .from('payments').insert(paymentRow).select('id').single();
+  if (payErr || !insertedPayment) {
     console.error('Payment insert error:', payErr);
     return err('Failed to initialize payment record.', 500, payErr);
+  }
+
+  if (type === 'booking') {
+    const { data: updatedSession, error: bookingErr } = await supabase
+      .from('mentorship_sessions')
+      .update({ booking_status: 'pending_payment' })
+      .eq('id', referenceId)
+      .eq('student_id', userId)
+      .select('id')
+      .maybeSingle();
+
+    if (bookingErr || !updatedSession) {
+      const { error: cleanupErr } = await supabase.from('payments').delete().eq('id', insertedPayment.id);
+      if (cleanupErr) console.error('Failed to remove uncharged pending payment:', cleanupErr);
+      return err('Could not prepare the mentorship booking for payment. No checkout was started.', 500, bookingErr);
+    }
   }
 
   return json({ checkout_url: checkoutUrl, order_id: orderId });
