@@ -448,7 +448,7 @@ async function createDirectPayment(userId: string, token: string, payload: Direc
     message: 'The wallet response is not yet conclusive. Check the payment status before attempting another payment.',
   }, 202);
 }
-async function verifyTransaction(_userId: string, payload: VerifyPayload): Promise<Response> {
+async function verifyTransaction(_userId: string, payload: VerifyPayload, token: string): Promise<Response> {
   const orderId = typeof payload?.orderId === 'string' ? payload.orderId.trim() : '';
   const suppliedSid = typeof payload?.sid === 'string' ? payload.sid.trim() : '';
   if (!orderId) return err('Missing payment order reference');
@@ -621,10 +621,13 @@ async function verifyTransaction(_userId: string, payload: VerifyPayload): Promi
 
   // Granting is idempotent: a retry after a transient grant failure re-runs
   // these upserts even though the payment row is already marked verified.
-  const { data: settings } = await supabase.rpc('get_platform_settings');
-  const commEnabled = settings?.commission_enabled === true;
-  const pPct = commEnabled ? (settings?.platform_percentage || 0) : 0;
-  const iPct = commEnabled ? (settings?.instructor_percentage || 100) : 100;
+  const { data: settings, error: settingsErr } = await supabase.rpc('get_platform_settings');
+  if (settingsErr || !settings) {
+    return err('Payment is verified, but commission settings could not be loaded. Please retry reconciliation.', 500, settingsErr);
+  }
+  const commEnabled = settings.commission_enabled === true;
+  const pPct = commEnabled ? (settings.platform_percentage || 0) : 0;
+  const iPct = commEnabled ? (settings.instructor_percentage || 100) : 100;
   const fee = (Number(payment.amount) * pPct) / 100;
   const share = (Number(payment.amount) * iPct) / 100;
 
@@ -673,10 +676,12 @@ async function verifyTransaction(_userId: string, payload: VerifyPayload): Promi
   }
 
   if (resolvedType === 'booking') {
-    const { error: bookingErr } = await supabase.from('mentorship_sessions')
+    const { data: updatedSession, error: bookingErr } = await supabase.from('mentorship_sessions')
       .update({ booking_status: 'paid_waiting_review' })
-      .eq('id', payment.mentorship_session_id);
-    if (bookingErr) return err('Payment verified, but the booking could not be updated. Please retry.', 500, bookingErr);
+      .eq('id', payment.mentorship_session_id)
+      .select('id')
+      .maybeSingle();
+    if (bookingErr || !updatedSession) return err('Payment verified, but the booking could not be updated. Please retry.', 500, bookingErr);
 
     const { data: session, error: sessionErr } = await supabase.from('mentorship_sessions')
       .select('mentor_id').eq('id', payment.mentorship_session_id).maybeSingle();
@@ -700,7 +705,53 @@ async function verifyTransaction(_userId: string, payload: VerifyPayload): Promi
     return json({ status: 'success', type: 'booking', referenceId: payment.mentorship_session_id });
   }
 
-  return json({ status: 'success', type: 'boost_or_banner', referenceId: 'unlinked_boost_redirect' });
+  // Promotion grants use the caller JWT and are protected by consume_promotion_order.
+  // Check for an existing grant first so a retry after a successful RPC is idempotent.
+  const promotionOrderId = (payment.gateway_response as Record<string, unknown> | null)?.promotionOrderId;
+  if (typeof promotionOrderId !== 'string' || !promotionOrderId) {
+    return err('Payment verified, but its promotion order reference is missing. Please contact support.', 500);
+  }
+
+  const { data: promotionOrder, error: promotionLookupErr } = await supabase
+    .from('promotion_orders')
+    .select('id, status, payment_id')
+    .eq('id', promotionOrderId)
+    .maybeSingle();
+
+  if (promotionLookupErr || !promotionOrder) {
+    return err('Payment verified, but its promotion order could not be loaded. Please contact support.', 500, promotionLookupErr);
+  }
+
+  if (promotionOrder.status === 'paid_consumed' && promotionOrder.payment_id === payment.id) {
+    return json({ status: 'success', type: 'boost_or_banner', referenceId: promotionOrderId });
+  }
+
+  if (promotionOrder.status !== 'pending') {
+    return err('Payment verified, but the promotion order is no longer pending. Please contact support.', 409);
+  }
+
+  const userClient = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY') ?? '', {
+    global: { headers: { Authorization: 'Bearer ' + token } },
+  });
+  const { data: consumeResult, error: consumeErr } = await userClient.rpc('consume_promotion_order', {
+    p_order_id: promotionOrderId,
+    p_payment_id: payment.id,
+  });
+
+  if (consumeErr) {
+    const { data: latestOrder } = await supabase
+      .from('promotion_orders')
+      .select('status, payment_id')
+      .eq('id', promotionOrderId)
+      .maybeSingle();
+
+    if (latestOrder?.status === 'paid_consumed' && latestOrder.payment_id === payment.id) {
+      return json({ status: 'success', type: 'boost_or_banner', referenceId: promotionOrderId });
+    }
+    return err('Payment verified, but the promotion could not be activated. Please contact support.', 500, consumeErr);
+  }
+
+  return json({ status: 'success', type: 'boost_or_banner', referenceId: promotionOrderId, grant: consumeResult });
 }
 
 Deno.serve(async (req: Request) => {
@@ -717,7 +768,7 @@ Deno.serve(async (req: Request) => {
   switch (action) {
     case 'createCheckout':      return createCheckout(user.id, payload);
     case 'createDirectPayment': return createDirectPayment(user.id, token, payload);
-    case 'verifyTransaction':   return verifyTransaction(user.id, payload);
+    case 'verifyTransaction':   return verifyTransaction(user.id, payload, token);
     default:                    return err(`Unknown action: ${action}`);
   }
 });
