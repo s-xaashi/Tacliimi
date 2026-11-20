@@ -70,8 +70,14 @@ export const AuthService = {
             }
         });
 
-        if (error) throw error;
-        return data; // Usually prompts "Confirmation Email Sent"
+        if (error) {
+            // Do not disclose whether an email is already registered.
+            if (/already registered|already exists/i.test(error.message || '')) {
+                return { user: null, session: null };
+            }
+            throw error;
+        }
+        return data; // The UI displays a neutral next-steps message.
     },
 
     /**
