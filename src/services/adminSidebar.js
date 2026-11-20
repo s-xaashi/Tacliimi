@@ -105,6 +105,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
+    let accessDenied = false;
+
     try {
         const session = await AuthService.getSession();
         if (!session) {
@@ -112,17 +114,29 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        // Load profile FIRST — admin_role lives on the profile row, not the auth session
+        // A profile's legacy role='admin' is not proof of admin membership.
+        // Only an authenticated admin_auth row grants entry to the admin workspace.
+        const allowedRoles = ['superadmin', 'course_manager', 'finance_manager'];
+        if (session.is_admin !== true || !allowedRoles.includes(session.admin_role)) {
+            accessDenied = true;
+            window.location.replace('/src/pages/auth/login-select/index.html');
+            return;
+        }
+
         const profile = await AuthService.getCurrentProfile();
-        const role = profile?.admin_role;
+        if (!profile || profile.is_admin !== true || profile.admin_role !== session.admin_role) {
+            accessDenied = true;
+            window.location.replace('/src/pages/auth/login-select/index.html');
+            return;
+        }
+        const role = session.admin_role;
         const accessRules = {
             'superadmin': ['dashboard', 'courses-review', 'bookings-review', 'users', 'instructors', 'categories', 'admin-management', 'finance', 'settings', 'profile', 'analytics', 'course-manager'],
             'course_manager': ['dashboard', 'courses-review', 'bookings-review', 'categories', 'profile', 'course-manager'],
             'finance_manager': ['dashboard', 'finance', 'profile']
         };
 
-        // If no admin_role on profile, treat as superadmin (fallback for existing admins)
-        const allowedModules = accessRules[role] || accessRules['superadmin'];
+        const allowedModules = accessRules[role];
         
         // Save role for other components
         session.admin_role = role;
@@ -130,7 +144,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         // 4. Guard current page access
         const currentPath = window.location.pathname;
         const currentModule = currentPath.split('/admin/')[1]?.split('/')[0];
-        if (role && currentModule && currentModule !== 'dashboard' && !allowedModules.includes(currentModule)) {
+        if (currentModule && currentModule !== 'dashboard' && !allowedModules.includes(currentModule)) {
             console.warn(`Role ${role} is not authorized for module: ${currentModule}. Redirecting to dashboard.`);
             window.location.replace('/src/pages/admin/dashboard/index.html');
             return;
@@ -145,8 +159,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             navLinks.forEach(link => {
                 const href = link.getAttribute('href') || '';
                 const moduleName = href.split('/admin/')[1]?.split('/')[0];
-                // Only hide if we have a confirmed role AND the module is not allowed
-                if (role && moduleName && moduleName !== 'dashboard' && !allowedModules.includes(moduleName)) {
+                if (moduleName && moduleName !== 'dashboard' && !allowedModules.includes(moduleName)) {
                     link.style.display = 'none';
                 }
             });
@@ -217,8 +230,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (error) {
         console.error('AdminSidebar init error:', error);
     } finally {
-        // Safety net: always reveal nav so sidebar is never permanently invisible
-        _revealNav();
+        // Do not reveal admin navigation while an unauthorized session is being redirected.
+        if (!accessDenied) _revealNav();
     }
 });
 
