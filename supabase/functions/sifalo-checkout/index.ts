@@ -149,7 +149,8 @@ async function createCheckout(userId: string, payload: CreateCheckoutPayload): P
   const supabase = adminClient();
   
   if (type === 'boost' || type === 'banner' || type === 'boost_and_banner') {
-    const { data: settings } = await supabase.rpc('get_platform_settings');
+    const { data: settings, error: settingsErr } = await supabase.rpc('get_platform_settings');
+    if (settingsErr || !settings) return err('Could not verify promotion availability. Please try again.', 500, settingsErr);
     const isCourse = (payload.entityType || 'course') === 'course';
     if (type === 'boost' || type === 'boost_and_banner') {
         if (isCourse && settings?.course_boost_enabled === false) return err('Course boosting is currently disabled', 403);
@@ -338,7 +339,7 @@ async function createDirectPayment(userId: string, token: string, payload: Direc
       // A malformed verification response is not proof of payment failure.
     }
 
-    if (verificationResponse.ok && verification.status === 'success') {
+    if (verificationResponse.ok && (verification.status === 'success' || verification.status === 'failed')) {
       return json({ ...verification, order_id: orderId, ...(sid ? { sid } : {}) });
     }
     if (verification.status === 'pending') {
@@ -487,8 +488,11 @@ async function verifyTransaction(_userId: string, payload: VerifyPayload, token:
     && payment.verification_status === 'verified';
 
   if (!alreadyVerified) {
+    if (payment.payment_status === 'failed') {
+      return json({ status: 'failed', message: 'The gateway confirmed that this payment was declined.' });
+    }
     if (payment.payment_status !== 'pending') {
-      return json({ status: 'failed', message: 'This payment is not pending verification.' }, 409);
+      return json({ status: 'manual_review', message: 'This payment is not in a verifiable state. Please contact support.' }, 409);
     }
 
     // Always verify against the server-stored order_id. A browser-supplied SID
