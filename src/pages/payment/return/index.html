@@ -170,6 +170,14 @@
     try {
       const result = await PaymentService.verifyTransaction(orderId, sid);
 
+      if (result.status === 'pending') {
+        document.querySelector('#state-verifying h1').textContent = 'Payment Still Processing';
+        document.querySelector('#state-verifying p').textContent =
+          'The gateway has not confirmed this payment yet. Your order remains pending; refresh this page in a moment to check again.';
+        showState('state-verifying');
+        return;
+      }
+
       if (result.status === 'success') {
         if (result.type === 'course') {
           document.getElementById('sc-order-id').textContent = orderId;

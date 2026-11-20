@@ -457,33 +457,28 @@
                         p_admin_id: adminId, p_user_id: userId, p_approval_status: 'approved'
                     });
                     if (error) throw error;
-
-                    // Ensure profile is unblocked and active
-                    await supabase.from('profiles').update({ account_status: 'active' }).eq('id', userId);
-                    // Also make sure mentorship profile is public if it was hidden
-                    await supabase.from('mentorship_profiles').update({ is_public: true }).eq('instructor_id', userId);
+                    // Global account reactivation is handled atomically by the RPC.
+                    const { error: mentorProfileErr } = await supabase
+                        .from('mentorship_profiles').update({ is_public: true }).eq('instructor_id', userId);
+                    if (mentorProfileErr) throw mentorProfileErr;
                 } else if (action === 'suspend') {
                     const { error } = await supabase.rpc('admin_update_instructor_status', {
                         p_admin_id: adminId, p_user_id: userId, p_approval_status: 'suspended'
                     });
                     if (error) throw error;
-                    // Optional: hide from marketplace via is_public explicitly too
-                    await supabase.from('mentorship_profiles').update({ is_public: false }).eq('instructor_id', userId);
+                    // Preserve the existing instructor-only suspension behavior.
+                    const { error: mentorProfileErr } = await supabase
+                        .from('mentorship_profiles').update({ is_public: false }).eq('instructor_id', userId);
+                    if (mentorProfileErr) throw mentorProfileErr;
                 } else if (action === 'block') {
-                    // 1. Update instructor status
-                    await supabase.rpc('admin_update_instructor_status', {
+                    const { error } = await supabase.rpc('admin_update_instructor_status', {
                         p_admin_id: adminId, p_user_id: userId, p_approval_status: 'blocked'
                     });
-                    // 2. Update global profile status
-                    const { error } = await supabase.from('profiles').update({ account_status: 'blocked' }).eq('id', userId);
                     if (error) throw error;
                 } else if (action === 'unblock') {
-                    // 1. Update instructor status
-                    await supabase.rpc('admin_update_instructor_status', {
+                    const { error } = await supabase.rpc('admin_update_instructor_status', {
                         p_admin_id: adminId, p_user_id: userId, p_approval_status: 'approved'
                     });
-                    // 2. Update global profile status
-                    const { error } = await supabase.from('profiles').update({ account_status: 'active' }).eq('id', userId);
                     if (error) throw error;
                 }
                 await fetchInstructors();

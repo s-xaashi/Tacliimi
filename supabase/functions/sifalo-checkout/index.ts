@@ -30,7 +30,7 @@ interface DirectPaymentPayload {
 
 interface VerifyPayload {
   orderId: string;
-  sid: string;
+  sid?: string | null;
 }
 
 const SIFALO_USERNAME  = Deno.env.get('SIFALO_USERNAME')  ?? '';
@@ -141,12 +141,16 @@ async function getCanonicalPrice(supabase: any, type: string, referenceId: strin
 async function createCheckout(userId: string, payload: CreateCheckoutPayload): Promise<Response> {
   const { type, referenceId, currency = 'USD' } = payload;
   if (!type || !referenceId) return err('Missing required fields: type, referenceId');
+  if (String(currency).toUpperCase() !== 'USD') {
+    return err('Sifalo hosted checkout supports USD only.', 400);
+  }
   if (!RETURN_URL_BASE) return err('Server misconfiguration: RETURN_URL_BASE not set', 500);
 
   const supabase = adminClient();
   
   if (type === 'boost' || type === 'banner' || type === 'boost_and_banner') {
-    const { data: settings } = await supabase.rpc('get_platform_settings');
+    const { data: settings, error: settingsErr } = await supabase.rpc('get_platform_settings');
+    if (settingsErr || !settings) return err('Could not verify promotion availability. Please try again.', 500, settingsErr);
     const isCourse = (payload.entityType || 'course') === 'course';
     if (type === 'boost' || type === 'boost_and_banner') {
         if (isCourse && settings?.course_boost_enabled === false) return err('Course boosting is currently disabled', 403);
@@ -195,17 +199,42 @@ async function createCheckout(userId: string, payload: CreateCheckoutPayload): P
   if (payload.couponCode && type === 'course') {
     paymentRow.gateway_response = { couponCode: payload.couponCode };
   }
+  if (payload.promotionOrderId && (type === 'boost' || type === 'banner' || type === 'boost_and_banner')) {
+    paymentRow.gateway_response = {
+      ...((paymentRow.gateway_response as Record<string, unknown> | undefined) ?? {}),
+      promotionOrderId: payload.promotionOrderId,
+    };
+  }
   if (type === 'course') {
     paymentRow.course_id = referenceId;
   } else if (type === 'booking') {
     paymentRow.mentorship_session_id = referenceId;
-    await supabase.from('mentorship_sessions').update({ booking_status: 'pending_payment' }).eq('id', referenceId);
   }
 
-  const { error: payErr } = await supabase.from('payments').insert(paymentRow);
-  if (payErr) {
+  const { data: insertedPayment, error: payErr } = await supabase
+    .from('payments').insert(paymentRow).select('id').single();
+  if (payErr || !insertedPayment) {
+    if (payErr?.code === '23505') {
+      return err('An active payment already exists for this item. Complete or check that order before starting another checkout.', 409);
+    }
     console.error('Payment insert error:', payErr);
     return err('Failed to initialize payment record.', 500, payErr);
+  }
+
+  if (type === 'booking') {
+    const { data: updatedSession, error: bookingErr } = await supabase
+      .from('mentorship_sessions')
+      .update({ booking_status: 'pending_payment' })
+      .eq('id', referenceId)
+      .eq('student_id', userId)
+      .select('id')
+      .maybeSingle();
+
+    if (bookingErr || !updatedSession) {
+      const { error: cleanupErr } = await supabase.from('payments').delete().eq('id', insertedPayment.id);
+      if (cleanupErr) console.error('Failed to remove uncharged pending payment:', cleanupErr);
+      return err('Could not prepare the mentorship booking for payment. No checkout was started.', 500, bookingErr);
+    }
   }
 
   return json({ checkout_url: checkoutUrl, order_id: orderId });
@@ -217,259 +246,625 @@ async function createDirectPayment(userId: string, token: string, payload: Direc
     return err('Missing required fields: type, referenceId, gateway, account');
   }
 
+  const normalizedCurrency = String(currency).toUpperCase();
+  if (!['USD', 'SLSH'].includes(normalizedCurrency)) {
+    return err('Unsupported Sifalo currency. Use USD or SLSH.', 400);
+  }
+  if (gateway === 'pbwallet' && normalizedCurrency !== 'USD') {
+    return err('Premier Wallet supports USD only.', 400);
+  }
+
   const supabase = adminClient();
 
   if (type === 'boost' || type === 'banner' || type === 'boost_and_banner') {
-    const { data: settings } = await supabase.rpc('get_platform_settings');
+    const { data: settings, error: settingsErr } = await supabase.rpc('get_platform_settings');
+    if (settingsErr || !settings) return err('Could not verify promotion availability. Please try again.', 500, settingsErr);
     const isCourse = (payload.entityType || 'course') === 'course';
     if (type === 'boost' || type === 'boost_and_banner') {
-        if (isCourse && settings?.course_boost_enabled === false) return err('Course boosting is currently disabled', 403);
-        if (!isCourse && settings?.mentor_boost_enabled === false) return err('Mentor boosting is currently disabled', 403);
+      if (isCourse && settings.course_boost_enabled === false) return err('Course boosting is currently disabled', 403);
+      if (!isCourse && settings.mentor_boost_enabled === false) return err('Mentor boosting is currently disabled', 403);
     }
     if (type === 'banner' || type === 'boost_and_banner') {
-        if (isCourse && settings?.course_banner_enabled === false) return err('Course banners are currently disabled', 403);
-        if (!isCourse && settings?.mentor_banner_enabled === false) return err('Mentor banners are currently disabled', 403);
+      if (isCourse && settings.course_banner_enabled === false) return err('Course banners are currently disabled', 403);
+      if (!isCourse && settings.mentor_banner_enabled === false) return err('Mentor banners are currently disabled', 403);
     }
   }
 
-  const orderId  = generateOrderId();
-
-  // ==========================================
-  // CRITICAL PHASE 5 FIX: CANONICAL PRICE 
-  // No longer trusts payload.amount blindly
-  // ==========================================
-  let effectiveAmount = await getCanonicalPrice(supabase, type, referenceId, userId, payload);
-  if (effectiveAmount === null) return err('Invalid product pricing or coupon verification failed', 400);
-
-  let result: Awaited<ReturnType<typeof sifaloPost>>;
-  try {
-    result = await sifaloPost({ account, gateway, amount: effectiveAmount.toFixed(2), currency, order_id: orderId });
-  } catch (e) {
-    return err('Payment gateway unreachable.', 502);
+  const effectiveAmount = await getCanonicalPrice(supabase, type, referenceId, userId, payload);
+  if (effectiveAmount === null || !Number.isFinite(effectiveAmount) || effectiveAmount <= 0) {
+    return err('Invalid product pricing or coupon verification failed', 400);
   }
 
-  const { data, rawText, ok } = result;
-  const isSuccess = ok && (data.code === '601' || data.code === 601 || data.response?.toString().toLowerCase().includes('processed'));
-  const sid = data.sid as string | undefined;
+  const findExistingActivePayment = async () => {
+    let query = supabase.from('payments')
+      .select('id, order_id, payment_status, verification_status')
+      .eq('student_id', userId)
+      .in('payment_status', ['pending', 'paid']);
 
-  if (!isSuccess) {
-    const msg = (data.response ?? data.message ?? data.error ?? `Payment failed: ${rawText.substring(0, 200)}`) as string;
-    return err(msg, 402);
-  }
+    if (type === 'course') {
+      query = query.eq('course_id', referenceId);
+    } else if (type === 'booking') {
+      query = query.eq('mentorship_session_id', referenceId);
+    } else if (payload.promotionOrderId) {
+      query = query.contains('gateway_response', { promotionOrderId: payload.promotionOrderId })
+        .is('course_id', null)
+        .is('mentorship_session_id', null);
+    } else {
+      return { data: null, error: null };
+    }
 
-  const paymentRow: Record<string, unknown> = {
-    student_id: userId, amount: effectiveAmount, currency,
-    payment_provider: `sifalo_${gateway}`, payment_status: 'paid',
-    order_id: orderId, sifalo_sid: sid, gateway: `sifalo_${gateway}`,
-    verification_status: 'verified', transaction_reference: orderId,
-    gateway_response: data,
+    return await query.order('created_at', { ascending: false }).limit(1).maybeSingle();
   };
+
+  const resolveExistingPayment = async (existingPayment: { order_id: string }) => {
+    const response = await verifyTransaction(userId, { orderId: existingPayment.order_id }, token);
+    let result: Record<string, unknown> = {};
+    try {
+      result = await response.json();
+    } catch {
+      // Treat unreadable status as unresolved; never initiate a second charge.
+    }
+
+    if (response.ok && result.status === 'success') {
+      return json({ ...result, order_id: existingPayment.order_id, already_in_progress: true });
+    }
+    if (result.status === 'failed') {
+      return json({ ...result, order_id: existingPayment.order_id });
+    }
+    return json({
+      status: result.status === 'pending' ? 'pending' : 'manual_review',
+      order_id: existingPayment.order_id,
+      message: String(result.message || 'An earlier payment for this item is still unresolved. Do not submit another charge; check its status or contact support.'),
+    }, 202);
+  };
+
+  // Reuse an active order rather than issuing another wallet charge after a
+  // repeated tap, retry, or lost client response.
+  const { data: existingPayment, error: existingPaymentErr } = await findExistingActivePayment();
+  if (existingPaymentErr) {
+    return err('Could not check for an existing payment order. Please retry safely.', 500, existingPaymentErr);
+  }
+  if (existingPayment) return await resolveExistingPayment(existingPayment);
+
+  const orderId = generateOrderId();
+  const paymentRow: Record<string, unknown> = {
+    student_id: userId,
+    amount: effectiveAmount,
+    currency: normalizedCurrency,
+    payment_provider: 'sifalo_' + gateway,
+    payment_status: 'pending',
+    order_id: orderId,
+    gateway: 'sifalo_' + gateway,
+    verification_status: 'unverified',
+    transaction_reference: orderId,
+    ...(payload.promotionOrderId ? { gateway_response: { promotionOrderId: payload.promotionOrderId } } : {}),
+  };
+
   if (type === 'course') {
     paymentRow.course_id = referenceId;
   } else if (type === 'booking') {
     paymentRow.mentorship_session_id = referenceId;
   }
 
-  const { data: insertedPayment, error: payErr } = await supabase.from('payments').insert(paymentRow).select('id').single();
-  if (payErr || !insertedPayment) {
-    console.error('Payment insert error:', payErr);
-    return err('Failed to record payment.', 500, payErr);
+  // Persist the canonical order before contacting the wallet gateway. If the
+  // request times out after a debit, the order can be verified without charging again.
+  const { data: insertedPayment, error: insertErr } = await supabase
+    .from('payments')
+    .insert(paymentRow)
+    .select('id')
+    .single();
+
+  if (insertErr || !insertedPayment) {
+    if (insertErr?.code === '23505') {
+      const { data: racedPayment, error: raceLookupErr } = await findExistingActivePayment();
+      if (!raceLookupErr && racedPayment) return await resolveExistingPayment(racedPayment);
+    }
+    console.error('Direct payment order insert failed:', insertErr);
+    return err('Could not safely initialize the payment order. No wallet charge was attempted.', 500, insertErr);
   }
-  const safePaymentId = insertedPayment.id;
 
-  const { data: settings } = await supabase.rpc('get_platform_settings');
-  const commEnabled = settings?.commission_enabled === true;
-  const pPct = commEnabled ? (settings?.platform_percentage || 0) : 0;
-  const iPct = commEnabled ? (settings?.instructor_percentage || 100) : 100;
-  const fee = (effectiveAmount * pPct) / 100;
-  const share = (effectiveAmount * iPct) / 100;
+  if (type === 'booking') {
+    const { data: updatedSession, error: bookingErr } = await supabase
+      .from('mentorship_sessions')
+      .update({ booking_status: 'pending_payment' })
+      .eq('id', referenceId)
+      .eq('student_id', userId)
+      .select('id')
+      .maybeSingle();
 
-  if (type === 'course') {
-    await supabase.from('enrollments').upsert(
-      { student_id: userId, course_id: referenceId, enrolled_at: new Date().toISOString() },
-      { onConflict: 'student_id,course_id', ignoreDuplicates: true }
-    );
+    if (bookingErr || !updatedSession) {
+      const { error: cleanupErr } = await supabase.from('payments').delete().eq('id', insertedPayment.id);
+      if (cleanupErr) console.error('Failed to remove uncharged payment row:', cleanupErr);
+      return err('Could not prepare the mentorship booking for payment. No wallet charge was attempted.', 500, bookingErr);
+    }
+  }
 
-    if (payload.couponCode) {
-      const { data: coupon } = await supabase.from('course_coupons').select('id').eq('code', payload.couponCode.toUpperCase()).single();
-      if (coupon?.id) {
-         await supabase.from('course_update_offers')
-           .update({ redeemed_at: new Date().toISOString() })
-           .eq('coupon_id', coupon.id)
-           .eq('student_id', userId)
-           .is('redeemed_at', null);
+  const initialGatewayMetadata = paymentRow.gateway_response && typeof paymentRow.gateway_response === 'object'
+    ? paymentRow.gateway_response as Record<string, unknown>
+    : {};
+
+  const saveGatewayResponse = async (gatewayResponse: Record<string, unknown>) => {
+    const { error } = await supabase
+      .from('payments')
+      .update({ gateway_response: { ...gatewayResponse, ...initialGatewayMetadata } })
+      .eq('id', insertedPayment.id)
+      .eq('payment_status', 'pending');
+    return error;
+  };
+
+  const verifyStoredOrder = async (sid?: string) => {
+    const verificationResponse = await verifyTransaction(userId, { orderId, sid }, token);
+    let verification: Record<string, unknown> = {};
+    try {
+      verification = await verificationResponse.json();
+    } catch {
+      // A malformed verification response is not proof of payment failure.
+    }
+
+    if (verificationResponse.ok && (verification.status === 'success' || verification.status === 'failed')) {
+      return json({ ...verification, order_id: orderId, ...(sid ? { sid } : {}) });
+    }
+    if (verification.status === 'pending') {
+      return json({
+        status: 'pending',
+        order_id: orderId,
+        ...(sid ? { sid } : {}),
+        message: 'Your wallet request is still processing. Approve it if prompted, then check the payment status. Do not submit another charge.',
+      }, 202);
+    }
+
+    return json({
+      status: 'manual_review',
+      order_id: orderId,
+      ...(sid ? { sid } : {}),
+      message: 'The wallet gateway may have received the charge, but Tacliimi could not fully verify and reconcile it. Do not pay again; check the status or contact support.',
+    }, 202);
+  };
+
+  let result: Awaited<ReturnType<typeof sifaloPost>>;
+  try {
+    result = await sifaloPost({
+      account,
+      gateway,
+      amount: effectiveAmount.toFixed(2),
+      currency: normalizedCurrency,
+      order_id: orderId,
+    });
+  } catch (gatewayError) {
+    console.error('Direct wallet request outcome is unknown:', gatewayError);
+    return await verifyStoredOrder();
+  }
+
+  const { data, rawText, ok } = result;
+  const gatewayCode = Number(data.code);
+  const sid = typeof data.sid === 'string' ? data.sid.trim() : '';
+
+  // The documented e-Wallet response contains code, sid and response. If the
+  // provider also echoes order/amount/currency, validate those fields too.
+  if (data.order_id !== undefined && String(data.order_id) !== orderId) {
+    await saveGatewayResponse({ ...data, local_validation_error: 'order_id mismatch' });
+    return json({ status: 'manual_review', order_id: orderId, message: 'Gateway order reference mismatch. Do not pay again; contact support.' }, 202);
+  }
+  if (data.amount !== undefined) {
+    const returnedAmount = Number(data.amount);
+    if (!Number.isFinite(returnedAmount) || Math.round(returnedAmount * 100) !== Math.round(effectiveAmount * 100)) {
+      await saveGatewayResponse({ ...data, local_validation_error: 'amount mismatch' });
+      return json({ status: 'manual_review', order_id: orderId, message: 'Gateway amount mismatch. Do not pay again; contact support.' }, 202);
+    }
+  }
+  if (data.currency !== undefined && String(data.currency).toUpperCase() !== String(currency).toUpperCase()) {
+    await saveGatewayResponse({ ...data, local_validation_error: 'currency mismatch' });
+    return json({ status: 'manual_review', order_id: orderId, message: 'Gateway currency mismatch. Do not pay again; contact support.' }, 202);
+  }
+
+  const responseSaveErr = await saveGatewayResponse(data);
+  if (responseSaveErr) {
+    console.error('Could not persist direct gateway response:', responseSaveErr);
+    return json({
+      status: 'manual_review',
+      order_id: orderId,
+      message: 'The wallet gateway responded, but Tacliimi could not safely save the response. Do not pay again; contact support.',
+    }, 202);
+  }
+
+  if (ok && gatewayCode === 601) {
+    if (!sid) {
+      return json({
+        status: 'manual_review',
+        order_id: orderId,
+        message: 'The wallet gateway reported success without a transaction ID. Do not pay again; contact support.',
+      }, 202);
+    }
+    // Use the same authoritative verification and idempotent grant path as
+    // hosted checkout; this validates stored order, amount, currency and SID.
+    return await verifyStoredOrder(sid);
+  }
+
+  if (gatewayCode === 603) {
+    return json({
+      status: 'pending',
+      order_id: orderId,
+      ...(sid ? { sid } : {}),
+      message: 'Approve the payment request on your phone. Tacliimi will not charge you again while this order is pending.',
+    }, 202);
+  }
+
+  if (gatewayCode === 600 || gatewayCode === 604) {
+    const { error: failedErr } = await supabase
+      .from('payments')
+      .update({
+        payment_status: 'failed',
+        verification_status: 'failed',
+        gateway_response: data,
+        ...(sid ? { sifalo_sid: sid } : {}),
+      })
+      .eq('id', insertedPayment.id)
+      .eq('payment_status', 'pending');
+
+    if (failedErr) {
+      console.error('Could not persist definitive direct-payment decline:', failedErr);
+      return json({
+        status: 'manual_review',
+        order_id: orderId,
+        message: 'The wallet declined the request, but Tacliimi could not save the result. Check this order before trying another payment.',
+      }, 202);
+    }
+    if (type === 'booking') {
+      const { error: resetBookingErr } = await supabase.from('mentorship_sessions')
+        .update({ booking_status: 'pending' })
+        .eq('id', referenceId)
+        .eq('student_id', userId)
+        .eq('booking_status', 'pending_payment');
+      if (resetBookingErr) {
+        return json({
+          status: 'manual_review',
+          order_id: orderId,
+          message: 'The wallet declined the payment, but the booking status could not be reset. Contact support before retrying.',
+        }, 202);
       }
     }
-
-    const { data: course } = await supabase.from('courses').select('instructor_id').eq('id', referenceId).single();
-    if (course?.instructor_id) {
-       await supabase.from('instructor_earnings').upsert({
-         instructor_id: course.instructor_id, payment_id: safePaymentId, course_id: referenceId,
-         earning_type: 'course', gross_amount: effectiveAmount, platform_fee: fee, instructor_share: share, instructor_percentage_snapshot: iPct, platform_percentage_snapshot: pPct, currency
-       }, { onConflict: 'payment_id' });
-    }
-
-    return json({ status: 'success', type: 'course', referenceId, sid, order_id: orderId });
-  } else if (type === 'booking') {
-    await supabase.from('mentorship_sessions').update({ booking_status: 'paid_waiting_review' }).eq('id', referenceId);
-    const { data: session } = await supabase.from('mentorship_sessions').select('mentor_id').eq('id', referenceId).single();
-    if (session?.mentor_id) {
-        await supabase.from('instructor_earnings').upsert({
-           instructor_id: session.mentor_id, payment_id: safePaymentId, mentorship_session_id: referenceId,
-           earning_type: 'mentorship', gross_amount: effectiveAmount, platform_fee: fee, instructor_share: share, instructor_percentage_snapshot: iPct, platform_percentage_snapshot: pPct, currency
-        }, { onConflict: 'payment_id' });
-    }
-
-    return json({ status: 'success', type: 'booking', referenceId, sid, order_id: orderId });
-  } else if (type === 'boost' || type === 'banner' || type === 'boost_and_banner') {
-    const promotionOrderId = payload.promotionOrderId;
-    if (!promotionOrderId) {
-      await supabase.from('payments').update({
-        verification_status: 'needs_manual_grant',
-        gateway_response: { ...data, error: 'Missing promotionOrderId in payload' }
-      }).eq('id', safePaymentId);
-      return err('Missing promotionOrderId. Payment captured but boost not granted — flagged for admin review.', 400);
-    }
-    const userClient = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY') ?? '', {
-      global: { headers: { Authorization: `Bearer ${token}` } }
-    });
-    const { data: consumeResult, error: consumeErr } = await userClient.rpc('consume_promotion_order', {
-      p_order_id: promotionOrderId,
-      p_payment_id: safePaymentId
-    });
-
-    if (consumeErr) {
-      console.error('Failed to consume promotion order:', consumeErr);
-      await supabase.from('payments').update({
-        verification_status: 'needs_manual_grant',
-        gateway_response: { ...data, rpc_error: consumeErr }
-      }).eq('id', safePaymentId);
-      return err('Payment was captured but boost/banner could not be granted automatically. It has been flagged for admin review.', 500, consumeErr);
-    }
-
-    return json({ status: 'success', type, referenceId, sid, order_id: orderId, grant: consumeResult });
+    return json({ status: 'failed', message: String(data.response ?? data.message ?? 'Payment was declined.'), order_id: orderId });
   }
 
-  return json({ status: 'failed', message: 'Unknown type' });
+  // Unknown or non-definitive outcomes stay pending to prevent accidental
+  // duplicate charges. The stored order can be checked by order_id later.
+  console.warn('Unclassified direct wallet response:', { ok, code: data.code, response: data.response, rawText: rawText.slice(0, 160) });
+  return json({
+    status: 'pending',
+    order_id: orderId,
+    ...(sid ? { sid } : {}),
+    message: 'The wallet response is not yet conclusive. Check the payment status before attempting another payment.',
+  }, 202);
 }
+async function verifyTransaction(_userId: string, payload: VerifyPayload, token: string): Promise<Response> {
+  const orderId = typeof payload?.orderId === 'string' ? payload.orderId.trim() : '';
+  const suppliedSid = typeof payload?.sid === 'string' ? payload.sid.trim() : '';
+  if (!orderId) return err('Missing payment order reference');
 
-async function verifyTransaction(_userId: string, payload: VerifyPayload): Promise<Response> {
-  const { orderId, sid } = payload;
   const supabase = adminClient();
   const { data: payment, error: fetchErr } = await supabase
     .from('payments')
-    .select('id, student_id, course_id, mentorship_session_id, amount, payment_status, verification_status, gateway_response')
+    .select('id, order_id, student_id, course_id, mentorship_session_id, amount, currency, payment_status, verification_status, gateway_response, sifalo_sid')
     .eq('order_id', orderId)
-    .single();
+    .maybeSingle();
 
   if (fetchErr || !payment) return err('Payment record not found', 404);
-  
   if (payment.student_id !== _userId) {
-    console.warn(`Unauthorized verification attempt: User ${_userId} tried to verify payment owned by ${payment.student_id}`);
+    console.warn(\`Unauthorized verification attempt: User \${_userId} tried to verify payment owned by \${payment.student_id}\`);
     return err('Unauthorized: You do not own this transaction', 403);
   }
-  
-  const determineTypeFromPayment = () => {
-    if (payment.course_id) return 'course';
-    if (payment.mentorship_session_id) return 'booking';
-    return 'boost_or_banner'; 
-  };
-  
-  const resolvedType = determineTypeFromPayment();
-  if (payment.verification_status === 'verified' && payment.payment_status === 'paid') {
-    return json({ status: 'success', type: resolvedType, referenceId: payment.course_id || payment.mentorship_session_id || 'unlinked_boost' });
-  }
 
-  const verifyBody = sid ? { sid } : { order_id: orderId };
-  let verifyRes: Response;
-  try {
-    verifyRes = await fetch(SIFALO_VERIFY_URL, {
-      method: 'POST',
-      headers: { 'Authorization': basicAuthHeader(), 'Content-Type': 'application/json' },
-      body: JSON.stringify(verifyBody),
-    });
-  } catch { return err('Payment gateway unreachable', 502); }
+  const resolvedType = payment.course_id
+    ? 'course'
+    : payment.mentorship_session_id
+      ? 'booking'
+      : 'boost_or_banner';
 
-  const rawText = await verifyRes.text();
-  let verifyData: Record<string, unknown> = {};
-  try { verifyData = JSON.parse(rawText); } catch { return err('Bad gateway response', 502); }
+  const alreadyVerified = payment.payment_status === 'paid'
+    && payment.verification_status === 'verified';
 
-  const isSuccess = verifyData.status === 'success' || (verifyData.code as number) === 601;
-  const paymentType = (verifyData.payment_type as string) || null;
-
-  if (isSuccess) {
-    await supabase.from('payments').update({
-      payment_status: 'paid', sifalo_sid: verifyData.sid ?? sid,
-      payment_provider: paymentType ? `sifalo_${paymentType.toLowerCase()}` : 'sifalo_checkout',
-      gateway_response: verifyData, verification_status: 'verified',
-    }).eq('id', payment.id);
-
-    const { data: settings } = await supabase.rpc('get_platform_settings');
-    const commEnabled = settings?.commission_enabled === true;
-    const pPct = commEnabled ? (settings?.platform_percentage || 0) : 0;
-    const iPct = commEnabled ? (settings?.instructor_percentage || 100) : 100;
-      
-    const fee = (payment.amount * pPct) / 100;
-    const share = (payment.amount * iPct) / 100;
-
-    if (resolvedType === 'course') {
-       await supabase.from('enrollments').upsert({ student_id: payment.student_id, course_id: payment.course_id }, { onConflict: 'student_id,course_id' });
-       
-       const couponCode = (payment.gateway_response as Record<string, unknown>)?.couponCode as string | undefined;
-       if (couponCode) {
-         const { data: coupon } = await supabase.from('course_coupons').select('id').eq('code', couponCode.toUpperCase()).single();
-         if (coupon?.id) {
-            await supabase.from('course_update_offers')
-              .update({ redeemed_at: new Date().toISOString() })
-              .eq('coupon_id', coupon.id)
-              .eq('student_id', payment.student_id)
-              .is('redeemed_at', null);
-         }
-       }
-       
-       const { data: course } = await supabase.from('courses').select('instructor_id').eq('id', payment.course_id).single();
-       if (course?.instructor_id) {
-          await supabase.from('instructor_earnings').upsert({
-            instructor_id: course.instructor_id,
-            payment_id: payment.id,
-            course_id: payment.course_id,
-            earning_type: 'course',
-            gross_amount: payment.amount,
-            platform_fee: fee,
-            instructor_share: share,
-            instructor_percentage_snapshot: iPct,
-            platform_percentage_snapshot: pPct,
-            currency: 'USD'
-          }, { onConflict: 'payment_id' });
-       }
-       return json({ status: 'success', type: 'course', referenceId: payment.course_id });
-    } else if (resolvedType === 'booking') {
-      await supabase.from('mentorship_sessions').update({ booking_status: 'paid_waiting_review' }).eq('id', payment.mentorship_session_id);
-      
-      const { data: session } = await supabase.from('mentorship_sessions').select('mentor_id').eq('id', payment.mentorship_session_id).single();
-      if (session?.mentor_id) {
-          await supabase.from('instructor_earnings').upsert({
-            instructor_id: session.mentor_id,
-            payment_id: payment.id,
-            mentorship_session_id: payment.mentorship_session_id,
-            earning_type: 'mentorship',
-            gross_amount: payment.amount,
-            platform_fee: fee,
-            instructor_share: share,
-            instructor_percentage_snapshot: iPct,
-            platform_percentage_snapshot: pPct,
-            currency: 'USD'
-          }, { onConflict: 'payment_id' });
+  if (!alreadyVerified) {
+    if (payment.payment_status === 'failed') {
+      if (payment.mentorship_session_id) {
+        const { error: resetBookingErr } = await supabase.from('mentorship_sessions')
+          .update({ booking_status: 'pending' })
+          .eq('id', payment.mentorship_session_id)
+          .eq('student_id', _userId)
+          .eq('booking_status', 'pending_payment');
+        if (resetBookingErr) {
+          return err('The payment was declined, but the booking status could not be reset. Please contact support.', 500, resetBookingErr);
+        }
       }
-      return json({ status: 'success', type: 'booking', referenceId: payment.mentorship_session_id });
-    } else if (resolvedType === 'boost_or_banner') {
-       return json({ status: 'success', type: 'boost_or_banner', referenceId: 'unlinked_boost_redirect' });
+      return json({ status: 'failed', message: 'The gateway confirmed that this payment was declined.' });
     }
-    return json({ status: 'success' });
-  } else {
-    await supabase.from('payments').update({ payment_status: 'failed', sifalo_sid: verifyData.sid ?? sid, gateway_response: verifyData, verification_status: 'failed' }).eq('id', payment.id);
-    return json({ status: 'failed', message: (verifyData.message as string) || 'Payment failed' });
+    if (payment.payment_status !== 'pending') {
+      return json({ status: 'manual_review', message: 'This payment is not in a verifiable state. Please contact support.' }, 409);
+    }
+
+    // Always verify against the server-stored order_id. A browser-supplied SID
+    // is only a consistency check; it is never used as the lookup authority.
+    let verifyRes: Response;
+    try {
+      verifyRes = await fetch(SIFALO_VERIFY_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ order_id: payment.order_id }),
+      });
+    } catch {
+      return err('Payment gateway unreachable', 502);
+    }
+
+    const rawText = await verifyRes.text();
+    let verifyData: Record<string, unknown>;
+    try {
+      verifyData = JSON.parse(rawText);
+    } catch {
+      return err('Bad gateway response', 502);
+    }
+    if (!verifyRes.ok) return err('Payment gateway verification failed', 502);
+
+    const gatewayCode = Number(verifyData.code);
+    const gatewayStatus = String(verifyData.status ?? '').toLowerCase();
+
+    if (gatewayCode === 603 || gatewayStatus === 'pending') {
+      return json({ status: 'pending', message: 'Payment is still awaiting gateway confirmation.' });
+    }
+
+    if (gatewayCode === 600 || gatewayCode === 604 || gatewayStatus === 'failed') {
+      const failureSid = typeof verifyData.sid === 'string' ? verifyData.sid : null;
+      const { data: failedRow, error: failErr } = await supabase
+        .from('payments')
+        .update({
+          payment_status: 'failed',
+          ...(failureSid ? { sifalo_sid: failureSid } : {}),
+          gateway_response: { ...((payment.gateway_response && typeof payment.gateway_response === 'object') ? payment.gateway_response : {}), ...verifyData },
+          verification_status: 'failed',
+        })
+        .eq('id', payment.id)
+        .eq('payment_status', 'pending')
+        .select('id')
+        .maybeSingle();
+
+      if (failErr) return err('Could not record the gateway payment result', 500, failErr);
+      if (!failedRow) {
+        const { data: latest } = await supabase
+          .from('payments')
+          .select('payment_status, verification_status')
+          .eq('id', payment.id)
+          .maybeSingle();
+        if (latest?.payment_status === 'paid' && latest?.verification_status === 'verified') {
+          return err('This payment was already verified successfully. Refresh the page.', 409);
+        }
+      }
+      if (payment.mentorship_session_id) {
+        const { error: resetBookingErr } = await supabase.from('mentorship_sessions')
+          .update({ booking_status: 'pending' })
+          .eq('id', payment.mentorship_session_id)
+          .eq('student_id', _userId)
+          .eq('booking_status', 'pending_payment');
+        if (resetBookingErr) return err('Payment declined, but the booking status could not be reset. Please contact support.', 500, resetBookingErr);
+      }
+      return json({ status: 'failed', message: String(verifyData.message ?? 'Payment failed') });
+    }
+
+    // Sifalo documents a paid result as BOTH status=success and code=601.
+    if (gatewayStatus !== 'success' || gatewayCode !== 601) {
+      return err('Gateway did not return a confirmed successful payment', 502);
+    }
+
+    const returnedOrderId = String(verifyData.order_id ?? '');
+    const returnedSid = typeof verifyData.sid === 'string' ? verifyData.sid.trim() : '';
+    const amountInMinorUnits = (value: unknown): number | null => {
+      if (typeof value !== 'number' && typeof value !== 'string') return null;
+      const parsed = Number(value);
+      if (!Number.isFinite(parsed) || parsed < 0) return null;
+      return Math.round((parsed + Number.EPSILON) * 100);
+    };
+
+    const expectedAmount = amountInMinorUnits(payment.amount);
+    const gatewayAmount = amountInMinorUnits(verifyData.amount);
+    const expectedCurrency = String(payment.currency || 'USD').toUpperCase();
+    const gatewayCurrency = String(verifyData.currency ?? '').toUpperCase();
+
+    if (returnedOrderId !== payment.order_id) {
+      return err('Gateway order reference does not match this payment', 409);
+    }
+    if (!returnedSid) return err('Gateway response is missing its transaction ID', 502);
+    if (expectedAmount === null || gatewayAmount === null || gatewayAmount !== expectedAmount) {
+      return err('Verified payment amount does not match the stored order', 409);
+    }
+    if (!gatewayCurrency || gatewayCurrency !== expectedCurrency) {
+      return err('Verified payment currency does not match the stored order', 409);
+    }
+    if (suppliedSid && suppliedSid !== returnedSid) {
+      return err('Returned transaction ID does not match the gateway verification result', 409);
+    }
+    if (payment.sifalo_sid && payment.sifalo_sid !== returnedSid) {
+      return err('Gateway transaction ID does not match the transaction already stored', 409);
+    }
+
+    const storedGatewayMetadata = payment.gateway_response && typeof payment.gateway_response === 'object'
+      ? payment.gateway_response as Record<string, unknown>
+      : {};
+    const mergedGatewayResponse = {
+      ...verifyData,
+      ...(typeof storedGatewayMetadata.couponCode === 'string' ? { couponCode: storedGatewayMetadata.couponCode } : {}),
+      ...(typeof storedGatewayMetadata.promotionOrderId === 'string' ? { promotionOrderId: storedGatewayMetadata.promotionOrderId } : {}),
+    };
+    const { data: updatedPayment, error: updateErr } = await supabase
+      .from('payments')
+      .update({
+        payment_status: 'paid',
+        sifalo_sid: returnedSid,
+        payment_provider: typeof verifyData.payment_type === 'string'
+          ? \`sifalo_\${verifyData.payment_type.toLowerCase()}\`
+          : 'sifalo_checkout',
+        gateway_response: mergedGatewayResponse,
+        verification_status: 'verified',
+      })
+      .eq('id', payment.id)
+      .eq('payment_status', 'pending')
+      .select('id')
+      .maybeSingle();
+
+    if (updateErr) {
+      if (updateErr.code === '23505') {
+        return err('Another payment for this course has already been confirmed. No duplicate enrollment was created.', 409);
+      }
+      return err('Could not securely record the verified payment', 500, updateErr);
+    }
+
+    if (!updatedPayment) {
+      const { data: latest, error: latestErr } = await supabase
+        .from('payments')
+        .select('payment_status, verification_status, sifalo_sid, gateway_response')
+        .eq('id', payment.id)
+        .maybeSingle();
+      if (latestErr || latest?.payment_status !== 'paid' || latest?.verification_status !== 'verified' || latest?.sifalo_sid !== returnedSid) {
+        return err('Payment state changed during verification. Please refresh and try again.', 409);
+      }
+      payment.gateway_response = latest.gateway_response;
+    } else {
+      payment.gateway_response = mergedGatewayResponse;
+    }
+    payment.payment_status = 'paid';
+    payment.verification_status = 'verified';
+    payment.sifalo_sid = returnedSid;
   }
+
+  // Granting is idempotent: a retry after a transient grant failure re-runs
+  // these upserts even though the payment row is already marked verified.
+  const { data: settings, error: settingsErr } = await supabase.rpc('get_platform_settings');
+  if (settingsErr || !settings) {
+    return err('Payment is verified, but commission settings could not be loaded. Please retry reconciliation.', 500, settingsErr);
+  }
+  const commEnabled = settings.commission_enabled === true;
+  const pPct = commEnabled ? (settings.platform_percentage || 0) : 0;
+  const iPct = commEnabled ? (settings.instructor_percentage || 100) : 100;
+  const fee = (Number(payment.amount) * pPct) / 100;
+  const share = (Number(payment.amount) * iPct) / 100;
+
+  if (resolvedType === 'course') {
+    const { error: enrollmentErr } = await supabase.from('enrollments').upsert(
+      { student_id: payment.student_id, course_id: payment.course_id },
+      { onConflict: 'student_id,course_id' }
+    );
+    if (enrollmentErr) return err('Payment verified, but course enrollment could not be completed. Please retry.', 500, enrollmentErr);
+
+    const couponCode = (payment.gateway_response as Record<string, unknown> | null)?.couponCode as string | undefined;
+    if (couponCode) {
+      const { data: coupon, error: couponErr } = await supabase
+        .from('course_coupons').select('id').eq('code', couponCode.toUpperCase()).maybeSingle();
+      if (couponErr) return err('Payment verified, but coupon redemption could not be completed. Please retry.', 500, couponErr);
+      if (coupon?.id) {
+        const { error: redemptionErr } = await supabase.from('course_update_offers')
+          .update({ redeemed_at: new Date().toISOString() })
+          .eq('coupon_id', coupon.id)
+          .eq('student_id', payment.student_id)
+          .is('redeemed_at', null);
+        if (redemptionErr) return err('Payment verified, but coupon redemption could not be completed. Please retry.', 500, redemptionErr);
+      }
+    }
+
+    const { data: course, error: courseErr } = await supabase
+      .from('courses').select('instructor_id').eq('id', payment.course_id).maybeSingle();
+    if (courseErr || !course) return err('Payment verified, but course earnings could not be reconciled. Please contact support.', 500, courseErr);
+
+    if (course.instructor_id) {
+      const { error: earningErr } = await supabase.from('instructor_earnings').upsert({
+        instructor_id: course.instructor_id,
+        payment_id: payment.id,
+        course_id: payment.course_id,
+        earning_type: 'course',
+        gross_amount: payment.amount,
+        platform_fee: fee,
+        instructor_share: share,
+        instructor_percentage_snapshot: iPct,
+        platform_percentage_snapshot: pPct,
+        currency: payment.currency || 'USD',
+      }, { onConflict: 'payment_id' });
+      if (earningErr) return err('Payment verified, but instructor earnings could not be recorded. Please retry.', 500, earningErr);
+    }
+    return json({ status: 'success', type: 'course', referenceId: payment.course_id });
+  }
+
+  if (resolvedType === 'booking') {
+    const { data: updatedSession, error: bookingErr } = await supabase.from('mentorship_sessions')
+      .update({ booking_status: 'paid_waiting_review' })
+      .eq('id', payment.mentorship_session_id)
+      .select('id')
+      .maybeSingle();
+    if (bookingErr || !updatedSession) return err('Payment verified, but the booking could not be updated. Please retry.', 500, bookingErr);
+
+    const { data: session, error: sessionErr } = await supabase.from('mentorship_sessions')
+      .select('mentor_id').eq('id', payment.mentorship_session_id).maybeSingle();
+    if (sessionErr || !session) return err('Payment verified, but mentor earnings could not be reconciled. Please contact support.', 500, sessionErr);
+
+    if (session.mentor_id) {
+      const { error: earningErr } = await supabase.from('instructor_earnings').upsert({
+        instructor_id: session.mentor_id,
+        payment_id: payment.id,
+        mentorship_session_id: payment.mentorship_session_id,
+        earning_type: 'mentorship',
+        gross_amount: payment.amount,
+        platform_fee: fee,
+        instructor_share: share,
+        instructor_percentage_snapshot: iPct,
+        platform_percentage_snapshot: pPct,
+        currency: payment.currency || 'USD',
+      }, { onConflict: 'payment_id' });
+      if (earningErr) return err('Payment verified, but mentor earnings could not be recorded. Please retry.', 500, earningErr);
+    }
+    return json({ status: 'success', type: 'booking', referenceId: payment.mentorship_session_id });
+  }
+
+  // Promotion grants use the caller JWT and are protected by consume_promotion_order.
+  // Check for an existing grant first so a retry after a successful RPC is idempotent.
+  const promotionOrderId = (payment.gateway_response as Record<string, unknown> | null)?.promotionOrderId;
+  if (typeof promotionOrderId !== 'string' || !promotionOrderId) {
+    return err('Payment verified, but its promotion order reference is missing. Please contact support.', 500);
+  }
+
+  const { data: promotionOrder, error: promotionLookupErr } = await supabase
+    .from('promotion_orders')
+    .select('id, status, payment_id')
+    .eq('id', promotionOrderId)
+    .maybeSingle();
+
+  if (promotionLookupErr || !promotionOrder) {
+    return err('Payment verified, but its promotion order could not be loaded. Please contact support.', 500, promotionLookupErr);
+  }
+
+  if (promotionOrder.status === 'paid_consumed' && promotionOrder.payment_id === payment.id) {
+    return json({ status: 'success', type: 'boost_or_banner', referenceId: promotionOrderId });
+  }
+
+  if (promotionOrder.status !== 'pending') {
+    return err('Payment verified, but the promotion order is no longer pending. Please contact support.', 409);
+  }
+
+  const userClient = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY') ?? '', {
+    global: { headers: { Authorization: 'Bearer ' + token } },
+  });
+  const { data: consumeResult, error: consumeErr } = await userClient.rpc('consume_promotion_order', {
+    p_order_id: promotionOrderId,
+    p_payment_id: payment.id,
+  });
+
+  if (consumeErr) {
+    const { data: latestOrder } = await supabase
+      .from('promotion_orders')
+      .select('status, payment_id')
+      .eq('id', promotionOrderId)
+      .maybeSingle();
+
+    if (latestOrder?.status === 'paid_consumed' && latestOrder.payment_id === payment.id) {
+      return json({ status: 'success', type: 'boost_or_banner', referenceId: promotionOrderId });
+    }
+    return err('Payment verified, but the promotion could not be activated. Please contact support.', 500, consumeErr);
+  }
+
+  return json({ status: 'success', type: 'boost_or_banner', referenceId: promotionOrderId, grant: consumeResult });
 }
 
 Deno.serve(async (req: Request) => {
@@ -486,7 +881,7 @@ Deno.serve(async (req: Request) => {
   switch (action) {
     case 'createCheckout':      return createCheckout(user.id, payload);
     case 'createDirectPayment': return createDirectPayment(user.id, token, payload);
-    case 'verifyTransaction':   return verifyTransaction(user.id, payload);
+    case 'verifyTransaction':   return verifyTransaction(user.id, payload, token);
     default:                    return err(`Unknown action: ${action}`);
   }
 });

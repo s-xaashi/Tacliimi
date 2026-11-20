@@ -329,8 +329,15 @@ export function injectSecureWalletModal() {
         const container = document.getElementById('pm-result-container');
         const icon = document.getElementById('pm-result-icon');
         const btn = document.getElementById('pm-result-btn');
+        btn.disabled = false;
 
-        if (success) {
+        if (success === null) {
+            container.style.background = 'rgba(245, 158, 11, 0.1)';
+            container.style.color = '#d97706';
+            container.style.border = '2px solid rgba(245, 158, 11, 0.25)';
+            icon.textContent = 'hourglass_top';
+            icon.className = 'material-symbols-outlined text-5xl';
+        } else if (success) {
             container.style.background = 'rgba(16, 185, 129, 0.1)';
             container.style.color = '#10b981';
             container.style.border = '2px solid rgba(16, 185, 129, 0.2)';
@@ -357,15 +364,43 @@ export function injectSecureWalletModal() {
         if (success) {
             btn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
             btn.textContent = 'Done';
-            btn.onclick = () => { 
+            btn.onclick = () => {
                 window.closePaymentModal();
-                window.location.reload(); 
+                window.location.reload();
+            };
+        } else if (success === null) {
+            btn.style.background = 'linear-gradient(135deg, #f59e0b, #d97706)';
+            btn.textContent = 'Check Payment Status';
+            btn.onclick = async () => {
+                const pending = window._pmPendingPayment;
+                if (!pending?.orderId) {
+                    showResult(null, 'Payment Needs Review', 'We could not locate this payment order. Do not pay again; contact support.');
+                    return;
+                }
+
+                btn.disabled = true;
+                btn.textContent = 'Checking...';
+                try {
+                    const status = await PaymentService.verifyTransaction(pending.orderId, pending.sid || null);
+                    if (status.status === 'success') {
+                        window._pmPendingPayment = null;
+                        showResult(true, 'Payment Successful! 🎉', 'Your payment was verified and your purchase is ready.');
+                    } else if (status.status === 'failed') {
+                        window._pmPendingPayment = null;
+                        showResult(false, 'Payment Failed', status.message || 'The gateway confirmed that the payment was declined.');
+                    } else {
+                        showResult(null, 'Payment Still Processing', status.message || 'Your payment is not confirmed yet. Do not submit another charge.');
+                    }
+                } catch (checkError) {
+                    showResult(null, 'Payment Still Processing', 'We could not confirm the payment status. Do not submit another charge. Please check again or contact support.');
+                }
             };
         } else {
             btn.style.background = 'linear-gradient(135deg, #6c63ff, #4f46e5)';
             btn.textContent = 'Try Again';
             btn.onclick = () => showStep('method');
         }
+
         showStep('result');
         if (success) {
             document.body.style.overflow = 'hidden';
@@ -373,7 +408,6 @@ export function injectSecureWalletModal() {
             showModal();
         }
     }
-
     window.selectWallet = function (gateway, name, prefixDigit) {
         window._pmContext.gateway = gateway;
         document.getElementById('pm-wallet-name').textContent = name;
@@ -440,7 +474,14 @@ export function injectSecureWalletModal() {
             });
 
             if (result.status === 'success') {
-                showResult(true, 'Payment Successful! 🎉', 'Your payment was successfully verified securely and your boost has been activated.');
+                window._pmPendingPayment = null;
+                showResult(true, 'Payment Successful! 🎉', 'Your payment was verified and your purchase is ready.');
+            } else if (['pending', 'manual_review', 'reconciliation_pending'].includes(result.status)) {
+                window._pmPendingPayment = {
+                    orderId: result.order_id,
+                    sid: result.sid || null,
+                };
+                showResult(null, 'Payment Processing', result.message || 'Your payment has not been fully confirmed. Do not submit another charge.');
             } else {
                 showResult(false, 'Payment Failed', result.message || 'Your payment could not be processed. Please try again.');
             }

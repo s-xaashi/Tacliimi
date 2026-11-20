@@ -22,7 +22,7 @@
             const session = await AuthService.getSession();
             if (session) {
                 const profile = await AuthService.getCurrentProfile();
-                if (profile && profile.role === 'admin') {
+                if (profile && profile.is_admin === true) {
                     window.location.href = '/src/pages/admin/dashboard/index.html';
                 } else if (profile && profile.role === 'instructor') {
                     window.location.href = '/src/pages/instructor/instructor-dashboard/index.html';
