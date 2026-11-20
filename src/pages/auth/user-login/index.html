@@ -180,8 +180,6 @@
                     const loginForm = document.getElementById('student-login-form');
                     const submitBtn = loginForm.querySelector('button[type="submit"]');
 
-                    let lockoutInterval = null;
-
                     function showError(message) {
                         if (errorText && errorAlert) {
                             errorText.textContent = message;
@@ -194,82 +192,6 @@
                             errorAlert.classList.add('hidden');
                         }
                     }
-
-                    function startLockoutCountdown(seconds, email = '') {
-                        if (lockoutInterval) clearInterval(lockoutInterval);
-
-                        const expiresAt = Date.now() + (seconds * 1000);
-                        if (email) {
-                            localStorage.setItem('tacliimi_login_lockout', JSON.stringify({
-                                email: email.toLowerCase().trim(),
-                                expiresAt: expiresAt
-                            }));
-                        }
-
-                        let remaining = Math.ceil((expiresAt - Date.now()) / 1000);
-
-                        const updateUI = () => {
-                            if (remaining <= 0) {
-                                clearInterval(lockoutInterval);
-                                lockoutInterval = null;
-                                localStorage.removeItem('tacliimi_login_lockout');
-                                hideError();
-                                if (submitBtn) {
-                                    submitBtn.disabled = false;
-                                    submitBtn.innerText = 'Sign in to Student Dashboard';
-                                }
-                            } else {
-                                showError(`Account temporarily locked due to multiple failed login attempts. Please try again in ${remaining} seconds.`);
-                                if (submitBtn) {
-                                    submitBtn.disabled = true;
-                                    submitBtn.innerText = `Account Locked (${remaining}s)`;
-                                }
-                                remaining--;
-                            }
-                        };
-
-                        updateUI();
-                        lockoutInterval = setInterval(updateUI, 1000);
-                    }
-
-                    async function checkAndRestoreLockout(email = '') {
-                        const cleanEmail = (email || emailInput.value).toLowerCase().trim();
-
-                        // 1. Check client-side cached lockout in localStorage
-                        try {
-                            const cached = localStorage.getItem('tacliimi_login_lockout');
-                            if (cached) {
-                                const parsed = JSON.parse(cached);
-                                if (!cleanEmail || parsed.email === cleanEmail) {
-                                    const remSec = Math.ceil((parsed.expiresAt - Date.now()) / 1000);
-                                    if (remSec > 0) {
-                                        startLockoutCountdown(remSec, parsed.email);
-                                        return;
-                                    } else {
-                                        localStorage.removeItem('tacliimi_login_lockout');
-                                    }
-                                }
-                            }
-                        } catch (e) {
-                            console.warn('Lockout cache parse error:', e);
-                        }
-
-                        // 2. Check server-side authoritative status if email is present
-                        if (cleanEmail && cleanEmail.includes('@')) {
-                            const status = await AuthService.checkRateLimit(cleanEmail);
-                            if (status && status.allowed === false && status.retry_after_seconds > 0) {
-                                startLockoutCountdown(status.retry_after_seconds, cleanEmail);
-                            }
-                        }
-                    }
-
-                    // Restore lockout state on page load
-                    checkAndRestoreLockout();
-
-                    // Check rate limit status when user finishes typing email
-                    emailInput.addEventListener('blur', () => {
-                        checkAndRestoreLockout(emailInput.value.trim());
-                    });
 
                     // The Google button must explicitly start Supabase OAuth.
                     const googleLoginBtn = document.getElementById('student-google-login-btn');
@@ -300,12 +222,7 @@
                             submitBtn.disabled = true;
 
                             const data = await AuthService.login(email, password);
-                            const profile = await AuthService.getCurrentProfile();
-
-                            // Clear any rate-limiting cache on successful login
-                            localStorage.removeItem('tacliimi_login_lockout');
-
-                            if (profile && profile.role === 'instructor') {
+                            const profile = await AuthService.getCurrentProfile();if (profile && profile.role === 'instructor') {
                                 await supabase.auth.signOut();
                                 showError("Instructor accounts cannot log in on the Student Login page. Redirecting you to the Instructor Login page...");
                                 submitBtn.innerText = 'Redirecting to Instructor Login...';
@@ -324,15 +241,9 @@
 
                             window.location.href = '/src/pages/student/student-dashboard/index.html';
                         } catch (err) {
-                            if (err.isRateLimit || (err.message && err.message.includes('Account temporarily locked'))) {
-                                const match = err.message.match(/in (\d+) seconds/);
-                                const seconds = match ? parseInt(match[1], 10) : (err.retryAfter || 30);
-                                startLockoutCountdown(seconds, email);
-                            } else {
-                                showError(err.message || 'An error occurred during sign in.');
-                                submitBtn.innerText = 'Sign in to Student Dashboard';
-                                submitBtn.disabled = false;
-                            }
+                            showError(err.message || 'An error occurred during sign in.');
+                            submitBtn.innerText = 'Sign in to Student Dashboard';
+                            submitBtn.disabled = false;
                         }
                     });
                 </script>

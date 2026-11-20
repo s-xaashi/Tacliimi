@@ -120,10 +120,6 @@
                                 </svg>
                             </div>
                         </div>
-                        <div id="instr-email-error-msg" class="hidden text-xs text-red-600 mt-1.5 flex items-center gap-1 font-medium">
-                            <span class="material-symbols-outlined text-sm">error_outline</span>
-                            <span id="instr-email-error-text">This email is already registered. Please log in or use a different email address.</span>
-                        </div>
                     </div>
                     <div>
                         <label class="block text-sm font-semibold mb-2" for="password">Password</label>
@@ -284,38 +280,7 @@
                         passwordInput.addEventListener('input', (e) => updatePasswordStrengthUI(e.target.value));
                     }
 
-                    // Live Email Duplicate Check
                     const emailInput = document.getElementById('email');
-                    const instrEmailErrorMsg = document.getElementById('instr-email-error-msg');
-                    const instrEmailErrorText = document.getElementById('instr-email-error-text');
-
-                    async function checkEmailAvailability() {
-                        const email = emailInput ? emailInput.value.trim() : '';
-                        if (!email || !email.includes('@')) {
-                            if (instrEmailErrorMsg) instrEmailErrorMsg.classList.add('hidden');
-                            if (emailInput) emailInput.classList.remove('border-red-500');
-                            return false;
-                        }
-                        const exists = await AuthService.checkEmailExists(email);
-                        if (exists) {
-                            if (instrEmailErrorText) instrEmailErrorText.textContent = "This email is already used. Please log in or use a different email address.";
-                            if (instrEmailErrorMsg) instrEmailErrorMsg.classList.remove('hidden');
-                            if (emailInput) emailInput.classList.add('border-red-500');
-                            return true;
-                        } else {
-                            if (instrEmailErrorMsg) instrEmailErrorMsg.classList.add('hidden');
-                            if (emailInput) emailInput.classList.remove('border-red-500');
-                            return false;
-                        }
-                    }
-
-                    if (emailInput) {
-                        emailInput.addEventListener('blur', checkEmailAvailability);
-                        emailInput.addEventListener('input', () => {
-                            if (instrEmailErrorMsg) instrEmailErrorMsg.classList.add('hidden');
-                            if (emailInput) emailInput.classList.remove('border-red-500');
-                        });
-                    }
 
                     document.getElementById('instructorRegisterForm').addEventListener('submit', async (e) => {
                         e.preventDefault();
@@ -341,26 +306,8 @@
                         }
 
                         try {
-                            btn.innerText = 'Checking Email Availability...';
-                            btn.disabled = true;
-
-                            // 2. Pre-check email existence before sending verification
-                            const isDuplicate = await checkEmailAvailability();
-                            if (isDuplicate) {
-                                btn.innerHTML = originalText;
-                                btn.disabled = false;
-                                const oldErr = document.getElementById('register-error');
-                                if (oldErr) oldErr.remove();
-                                const errDiv = document.createElement('div');
-                                errDiv.id = 'register-error';
-                                errDiv.className = 'text-red-500 text-sm font-medium mt-2 p-3 bg-red-50 rounded-lg border border-red-100 flex items-center gap-2';
-                                errDiv.innerHTML = `<span class="material-icons-round text-lg">error_outline</span> This email is already used. Please log in or use a different email address.`;
-                                e.target.insertBefore(errDiv, e.target.querySelector('button[type="submit"]'));
-                                emailInput.focus();
-                                return;
-                            }
-
                             btn.innerText = 'Creating Account...';
+                            btn.disabled = true;
 
                             // Store intended role for callback
                             localStorage.setItem('tacliimi_pending_role', 'instructor');
@@ -373,7 +320,7 @@
                                 <div class="text-center p-6 bg-green-50 rounded-xl border border-green-200">
                                     <span class="material-icons-round text-green-500 text-4xl mb-3">mark_email_read</span>
                                     <h3 class="text-lg font-bold text-slate-800 mb-2">Check your email</h3>
-                                    <p class="text-slate-600 text-sm">We've sent a confirmation link to <strong>${email}</strong>. Please click the link to verify your account before logging in.</p>
+                                    <p class="text-slate-600 text-sm">If this email can be registered, we'll send next steps to <strong>${email}</strong>. If you already have an account, please log in.</p>
                                 </div>
                             `;
 
