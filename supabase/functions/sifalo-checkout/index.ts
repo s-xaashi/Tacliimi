@@ -272,6 +272,57 @@ async function createDirectPayment(userId: string, token: string, payload: Direc
     return err('Invalid product pricing or coupon verification failed', 400);
   }
 
+  const findExistingActivePayment = async () => {
+    let query = supabase.from('payments')
+      .select('id, order_id, payment_status, verification_status')
+      .eq('student_id', userId)
+      .in('payment_status', ['pending', 'paid']);
+
+    if (type === 'course') {
+      query = query.eq('course_id', referenceId);
+    } else if (type === 'booking') {
+      query = query.eq('mentorship_session_id', referenceId);
+    } else if (payload.promotionOrderId) {
+      query = query.contains('gateway_response', { promotionOrderId: payload.promotionOrderId })
+        .is('course_id', null)
+        .is('mentorship_session_id', null);
+    } else {
+      return { data: null, error: null };
+    }
+
+    return await query.order('created_at', { ascending: false }).limit(1).maybeSingle();
+  };
+
+  const resolveExistingPayment = async (existingPayment: { order_id: string }) => {
+    const response = await verifyTransaction(userId, { orderId: existingPayment.order_id }, token);
+    let result: Record<string, unknown> = {};
+    try {
+      result = await response.json();
+    } catch {
+      // Treat unreadable status as unresolved; never initiate a second charge.
+    }
+
+    if (response.ok && result.status === 'success') {
+      return json({ ...result, order_id: existingPayment.order_id, already_in_progress: true });
+    }
+    if (result.status === 'failed') {
+      return json({ ...result, order_id: existingPayment.order_id });
+    }
+    return json({
+      status: result.status === 'pending' ? 'pending' : 'manual_review',
+      order_id: existingPayment.order_id,
+      message: String(result.message || 'An earlier payment for this item is still unresolved. Do not submit another charge; check its status or contact support.'),
+    }, 202);
+  };
+
+  // Reuse an active order rather than issuing another wallet charge after a
+  // repeated tap, retry, or lost client response.
+  const { data: existingPayment, error: existingPaymentErr } = await findExistingActivePayment();
+  if (existingPaymentErr) {
+    return err('Could not check for an existing payment order. Please retry safely.', 500, existingPaymentErr);
+  }
+  if (existingPayment) return await resolveExistingPayment(existingPayment);
+
   const orderId = generateOrderId();
   const paymentRow: Record<string, unknown> = {
     student_id: userId,
@@ -301,6 +352,10 @@ async function createDirectPayment(userId: string, token: string, payload: Direc
     .single();
 
   if (insertErr || !insertedPayment) {
+    if (insertErr?.code === '23505') {
+      const { data: racedPayment, error: raceLookupErr } = await findExistingActivePayment();
+      if (!raceLookupErr && racedPayment) return await resolveExistingPayment(racedPayment);
+    }
     console.error('Direct payment order insert failed:', insertErr);
     return err('Could not safely initialize the payment order. No wallet charge was attempted.', 500, insertErr);
   }
