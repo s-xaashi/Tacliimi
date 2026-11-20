@@ -2,44 +2,64 @@ import { supabase } from './supabaseClient.js';
 
 export const financeSettingsService = {
     /**
-     * Get platform monetization settings
-     * Calls public RPC get_platform_settings
-     * @returns {Promise<Object>} Settings object
+     * Read the protected platform settings row for an authenticated administrator.
      */
     getSettings: async () => {
         try {
-            const { data, error } = await supabase.rpc('get_platform_settings');
-            
+            const { data, error } = await supabase
+                .from('platform_settings')
+                .select('*')
+                .limit(1)
+                .maybeSingle();
+
             if (error) {
-                console.error('Error fetching platform settings:', error);
-                // Fallback to defaults to prevent crashes
+                console.error('Error fetching protected platform settings:', error);
                 return {
-                    commission_enabled: false,
-                    instructor_percentage: 100,
-                    platform_percentage: 0,
-                    min_withdrawal_amount: 10,
-                    withdrawal_reserve_enabled: true,
-                    withdrawal_reserve_percent: 50,
-                    show_refund_request: true,
-                    course_boost_price_per_day: 5,
-                    mentor_boost_price_per_day: 5,
-                    course_banner_price_per_day: 3,
-                    mentor_banner_price_per_day: 3,
-                    boost_min_days: 1,
-                    boost_max_days: 90,
-                    boost_rotation_window_minutes: 3,
-                    course_boost_enabled: true,
-                    course_banner_enabled: true,
-                    mentor_boost_enabled: true,
-                    mentor_banner_enabled: true,
-                    self_hosted_video_uploads_enabled: false
-                };
+                commission_enabled: false,
+                instructor_percentage: 100,
+                platform_percentage: 0,
+                min_withdrawal_amount: 10,
+                withdrawal_reserve_enabled: true,
+                withdrawal_reserve_percent: 50,
+                show_refund_request: true,
+                course_boost_price_per_day: 5,
+                mentor_boost_price_per_day: 5,
+                course_banner_price_per_day: 3,
+                mentor_banner_price_per_day: 3,
+                boost_min_days: 1,
+                boost_max_days: 90,
+                boost_rotation_window_minutes: 3,
+                course_boost_enabled: true,
+                course_banner_enabled: true,
+                mentor_boost_enabled: true,
+                mentor_banner_enabled: true,
+                self_hosted_video_uploads_enabled: false
+            };
             }
-            
-            return data;
+
+            return data || {
+                commission_enabled: false,
+                instructor_percentage: 100,
+                platform_percentage: 0,
+                min_withdrawal_amount: 10,
+                withdrawal_reserve_enabled: true,
+                withdrawal_reserve_percent: 50,
+                show_refund_request: true,
+                course_boost_price_per_day: 5,
+                mentor_boost_price_per_day: 5,
+                course_banner_price_per_day: 3,
+                mentor_banner_price_per_day: 3,
+                boost_min_days: 1,
+                boost_max_days: 90,
+                boost_rotation_window_minutes: 3,
+                course_boost_enabled: true,
+                course_banner_enabled: true,
+                mentor_boost_enabled: true,
+                mentor_banner_enabled: true,
+                self_hosted_video_uploads_enabled: false
+            };
         } catch (error) {
             console.error('Err in getSettings:', error);
-            // Fallback
             return {
                 commission_enabled: false,
                 instructor_percentage: 100,
