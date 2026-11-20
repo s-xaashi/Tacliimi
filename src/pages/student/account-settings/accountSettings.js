@@ -88,25 +88,6 @@ function validatePublicUrl(urlStr, platform) {
     }
 }
 
-// Phone Uniqueness Checker via Supabase RPC
-async function isPhoneDuplicate(phone) {
-    if (!phone || !phone.trim()) return false;
-    try {
-        const { data, error } = await supabase.rpc('check_profile_phone_unique', {
-            p_phone: phone.trim(),
-            p_user_id: currentProfile?.id || currentUserSession?.user?.id || null
-        });
-        if (error) {
-            console.error('Phone uniqueness check error:', error);
-            return false;
-        }
-        return !!data;
-    } catch (e) {
-        console.error('RPC invocation failure:', e);
-        return false;
-    }
-}
-
 // Clear individual field errors
 function clearFieldErrors() {
     const errorEls = document.querySelectorAll('p[id$="-error"]');
@@ -389,14 +370,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 setFieldError('phone-number', 'Phone number must not contain URLs or web links.');
                 return;
             }
-            const duplicate = await isPhoneDuplicate(rawPhone);
-            if (duplicate) {
-                setFieldError('phone-number', 'this phone already exist in database');
-            } else {
-                const phoneErr = document.getElementById('phone-number-error');
-                if (phoneErr) phoneErr.classList.add('hidden');
-                phoneInput.classList.remove('border-red-500');
-            }
+            const phoneErr = document.getElementById('phone-number-error');
+            if (phoneErr) phoneErr.classList.add('hidden');
+            phoneInput.classList.remove('border-red-500');
         });
         phoneInput.addEventListener('input', () => {
             const phoneErr = document.getElementById('phone-number-error');
@@ -429,12 +405,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (containsUrl(cleanPhone)) {
                     setFieldError('phone-number', 'Phone number must not contain URLs or web links.');
                     hasError = true;
-                } else {
-                    const duplicate = await isPhoneDuplicate(cleanPhone);
-                    if (duplicate) {
-                        setFieldError('phone-number', 'this phone already exist in database');
-                        hasError = true;
-                    }
                 }
             }
 
