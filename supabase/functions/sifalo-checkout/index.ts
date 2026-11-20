@@ -447,6 +447,20 @@ async function createDirectPayment(userId: string, token: string, payload: Direc
         message: 'The wallet declined the request, but Tacliimi could not save the result. Check this order before trying another payment.',
       }, 202);
     }
+    if (type === 'booking') {
+      const { error: resetBookingErr } = await supabase.from('mentorship_sessions')
+        .update({ booking_status: 'pending' })
+        .eq('id', referenceId)
+        .eq('student_id', userId)
+        .eq('booking_status', 'pending_payment');
+      if (resetBookingErr) {
+        return json({
+          status: 'manual_review',
+          order_id: orderId,
+          message: 'The wallet declined the payment, but the booking status could not be reset. Contact support before retrying.',
+        }, 202);
+      }
+    }
     return json({ status: 'failed', message: String(data.response ?? data.message ?? 'Payment was declined.'), order_id: orderId });
   }
 
@@ -489,6 +503,16 @@ async function verifyTransaction(_userId: string, payload: VerifyPayload, token:
 
   if (!alreadyVerified) {
     if (payment.payment_status === 'failed') {
+      if (payment.mentorship_session_id) {
+        const { error: resetBookingErr } = await supabase.from('mentorship_sessions')
+          .update({ booking_status: 'pending' })
+          .eq('id', payment.mentorship_session_id)
+          .eq('student_id', _userId)
+          .eq('booking_status', 'pending_payment');
+        if (resetBookingErr) {
+          return err('The payment was declined, but the booking status could not be reset. Please contact support.', 500, resetBookingErr);
+        }
+      }
       return json({ status: 'failed', message: 'The gateway confirmed that this payment was declined.' });
     }
     if (payment.payment_status !== 'pending') {
@@ -549,6 +573,14 @@ async function verifyTransaction(_userId: string, payload: VerifyPayload, token:
         if (latest?.payment_status === 'paid' && latest?.verification_status === 'verified') {
           return err('This payment was already verified successfully. Refresh the page.', 409);
         }
+      }
+      if (payment.mentorship_session_id) {
+        const { error: resetBookingErr } = await supabase.from('mentorship_sessions')
+          .update({ booking_status: 'pending' })
+          .eq('id', payment.mentorship_session_id)
+          .eq('student_id', _userId)
+          .eq('booking_status', 'pending_payment');
+        if (resetBookingErr) return err('Payment declined, but the booking status could not be reset. Please contact support.', 500, resetBookingErr);
       }
       return json({ status: 'failed', message: String(verifyData.message ?? 'Payment failed') });
     }
