@@ -249,7 +249,7 @@ async function createDirectPayment(userId: string, token: string, payload: Direc
   }
 
   const { data, rawText, ok } = result;
-  const isSuccess = ok && (data.code === '601' || data.code === 601 || data.response?.toString().toLowerCase().includes('processed'));
+  const isSuccess = ok && Number(data.code) === 601;
   const sid = data.sid as string | undefined;
 
   if (!isSuccess) {
