@@ -247,43 +247,23 @@ export const MentorService = {
             if (error) throw error;
             if (!data) return [];
 
-            // ── Query 2: Rating stats (Aggregated from source table) ──────
-            // This bypasses the unreliable mentor_rating_stats view.
+            // ── Query 2: Public mentor rating aggregates ──────────────────
+            // The base reviews table is private; this view exposes only aggregate values.
             let ratingMap = {};
             try {
-                // Fetch all ratings to aggregate in JS (efficient for marketplace)
-                const { data: reviews } = await supabase
-                    .from('mentorship_reviews')
-                    .select('mentor_id, rating');
+                const { data: ratings, error: ratingsError } = await supabase
+                    .from('mentor_rating_stats')
+                    .select('mentor_id, avg_rating, review_count');
 
-                if (reviews) {
-                    reviews.forEach(r => {
-                        if (!ratingMap[r.mentor_id]) {
-                            ratingMap[r.mentor_id] = { total: 0, count: 0 };
-                        }
-                        ratingMap[r.mentor_id].total += (r.rating || 0);
-                        ratingMap[r.mentor_id].count += 1;
-                    });
-                }
+                if (ratingsError) throw ratingsError;
+                (ratings || []).forEach(r => {
+                    ratingMap[r.mentor_id] = {
+                        avg: r.avg_rating ?? '0.0',
+                        count: r.review_count ?? 0
+                    };
+                });
             } catch (ratingErr) {
-                console.warn('[Marketplace] Could not load raw reviews for ratings:', ratingErr.message);
-                
-                // Tertiary fallback: Try the view if raw table fetch fails
-                try {
-                    const { data: vRatings } = await supabase
-                        .from('mentor_rating_stats')
-                        .select('mentor_id, avg_rating, review_count');
-                    if (vRatings) {
-                        vRatings.forEach(r => {
-                            ratingMap[r.mentor_id] = { 
-                                avg: r.avg_rating ?? '0.0', 
-                                count: r.review_count ?? 0 
-                            };
-                        });
-                    }
-                } catch (vErr) {
-                    console.warn('[Marketplace] View fallback also failed:', vErr.message);
-                }
+                console.warn('[Marketplace] Could not load public mentor rating aggregates:', ratingErr.message);
             }
 
             // ── Query 3: Aggregated confirmed-session counts (RLS-safe view) ──
@@ -435,7 +415,7 @@ export const MentorService = {
                     .eq('mentor_id', mentorId)
                     .maybeSingle(),
                 supabase
-                    .from('mentor_profile_reviews_view')
+                    .from('mentor_profile_reviews_public_view')
                     .select('rating, comment, created_at, full_name, avatar_url, avatar_storage_key')
                     .eq('mentor_id', mentorId),
                 supabase
