@@ -42,7 +42,7 @@ BEGIN
     RAISE EXCEPTION 'Invalid administrator role';
   END IF;
 
-  INSERT INTO public.admin_auth (
+  INSERT INTO public.admin_auth AS existing (
     id, full_name, role, username, backup_password_enc, backup_email,
     address, city, phone_number
   )
@@ -53,14 +53,17 @@ BEGIN
   ON CONFLICT (id) DO UPDATE SET
     full_name = EXCLUDED.full_name,
     role = EXCLUDED.role,
-    username = COALESCE(EXCLUDED.username, public.admin_auth.username),
+    username = COALESCE(EXCLUDED.username, existing.username),
     backup_password_enc = NULL,
-    backup_email = COALESCE(EXCLUDED.backup_email, public.admin_auth.backup_email),
-    address = COALESCE(EXCLUDED.address, public.admin_auth.address),
-    city = COALESCE(EXCLUDED.city, public.admin_auth.city),
-    phone_number = COALESCE(EXCLUDED.phone_number, public.admin_auth.phone_number);
+    backup_email = COALESCE(EXCLUDED.backup_email, existing.backup_email),
+    address = COALESCE(EXCLUDED.address, existing.address),
+    city = COALESCE(EXCLUDED.city, existing.city),
+    phone_number = COALESCE(EXCLUDED.phone_number, existing.phone_number);
 END;
 $function$;
+
+REVOKE ALL ON FUNCTION public.create_admin_account(uuid, text, text, uuid, text, text, text, text, text, text) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.create_admin_account(uuid, text, text, uuid, text, text, text, text, text, text) TO authenticated;
 
 -- Legacy overloads can still write the same plaintext column. The current
 -- Admin Management page uses the 10-argument signature above; disable older
