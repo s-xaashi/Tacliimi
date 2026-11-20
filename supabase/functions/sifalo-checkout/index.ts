@@ -141,6 +141,9 @@ async function getCanonicalPrice(supabase: any, type: string, referenceId: strin
 async function createCheckout(userId: string, payload: CreateCheckoutPayload): Promise<Response> {
   const { type, referenceId, currency = 'USD' } = payload;
   if (!type || !referenceId) return err('Missing required fields: type, referenceId');
+  if (String(currency).toUpperCase() !== 'USD') {
+    return err('Sifalo hosted checkout supports USD only.', 400);
+  }
   if (!RETURN_URL_BASE) return err('Server misconfiguration: RETURN_URL_BASE not set', 500);
 
   const supabase = adminClient();
@@ -239,6 +242,14 @@ async function createDirectPayment(userId: string, token: string, payload: Direc
     return err('Missing required fields: type, referenceId, gateway, account');
   }
 
+  const normalizedCurrency = String(currency).toUpperCase();
+  if (!['USD', 'SLSH'].includes(normalizedCurrency)) {
+    return err('Unsupported Sifalo currency. Use USD or SLSH.', 400);
+  }
+  if (gateway === 'pbwallet' && normalizedCurrency !== 'USD') {
+    return err('Premier Wallet supports USD only.', 400);
+  }
+
   const supabase = adminClient();
 
   if (type === 'boost' || type === 'banner' || type === 'boost_and_banner') {
@@ -264,7 +275,7 @@ async function createDirectPayment(userId: string, token: string, payload: Direc
   const paymentRow: Record<string, unknown> = {
     student_id: userId,
     amount: effectiveAmount,
-    currency,
+    currency: normalizedCurrency,
     payment_provider: 'sifalo_' + gateway,
     payment_status: 'pending',
     order_id: orderId,
@@ -353,7 +364,7 @@ async function createDirectPayment(userId: string, token: string, payload: Direc
       account,
       gateway,
       amount: effectiveAmount.toFixed(2),
-      currency,
+      currency: normalizedCurrency,
       order_id: orderId,
     });
   } catch (gatewayError) {
