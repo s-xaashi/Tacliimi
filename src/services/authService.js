@@ -362,9 +362,11 @@ export const AuthService = {
                 await this.clearStaleAuthStorage();
                 return null;
             }
-            session.is_admin = true;
-            session.admin_role = adminRecord.role;
-            session.user.user_metadata.full_name = adminRecord.full_name;
+            if (['superadmin', 'course_manager', 'finance_manager'].includes(adminRecord.role)) {
+                session.is_admin = true;
+                session.admin_role = adminRecord.role;
+                session.user.user_metadata.full_name = adminRecord.full_name;
+            }
         }
 
         // Check if user is blocked globally
