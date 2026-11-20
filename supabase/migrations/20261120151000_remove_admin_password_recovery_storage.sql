@@ -21,13 +21,15 @@ SECURITY DEFINER
 SET search_path TO ''
 AS $function$
 BEGIN
-  IF auth.uid() IS NULL OR NOT EXISTS (
-    SELECT 1
-    FROM public.admin_auth AS aa
-    WHERE aa.id = auth.uid()
-      AND aa.role = 'superadmin'
-      AND COALESCE(aa.is_suspended, false) = false
-  ) THEN
+  IF auth.uid() IS NULL
+     OR p_caller_id IS DISTINCT FROM auth.uid()
+     OR NOT EXISTS (
+       SELECT 1
+       FROM public.admin_auth AS aa
+       WHERE aa.id = auth.uid()
+         AND aa.role = 'superadmin'
+         AND COALESCE(aa.is_suspended, false) = false
+     ) THEN
     RAISE EXCEPTION 'Unauthorized: active superadmin required'
       USING ERRCODE = '42501';
   END IF;
