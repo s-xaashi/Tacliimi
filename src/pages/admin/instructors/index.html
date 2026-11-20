@@ -458,14 +458,18 @@
                     });
                     if (error) throw error;
                     // Global account reactivation is handled atomically by the RPC.
-                    await supabase.from('mentorship_profiles').update({ is_public: true }).eq('instructor_id', userId);
+                    const { error: mentorProfileErr } = await supabase
+                        .from('mentorship_profiles').update({ is_public: true }).eq('instructor_id', userId);
+                    if (mentorProfileErr) throw mentorProfileErr;
                 } else if (action === 'suspend') {
                     const { error } = await supabase.rpc('admin_update_instructor_status', {
                         p_admin_id: adminId, p_user_id: userId, p_approval_status: 'suspended'
                     });
                     if (error) throw error;
                     // Preserve the existing instructor-only suspension behavior.
-                    await supabase.from('mentorship_profiles').update({ is_public: false }).eq('instructor_id', userId);
+                    const { error: mentorProfileErr } = await supabase
+                        .from('mentorship_profiles').update({ is_public: false }).eq('instructor_id', userId);
+                    if (mentorProfileErr) throw mentorProfileErr;
                 } else if (action === 'block') {
                     const { error } = await supabase.rpc('admin_update_instructor_status', {
                         p_admin_id: adminId, p_user_id: userId, p_approval_status: 'blocked'
