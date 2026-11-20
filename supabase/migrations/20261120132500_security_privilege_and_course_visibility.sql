@@ -10,7 +10,7 @@ CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path TO 'public'
+SET search_path TO ''
 AS $function$
 DECLARE
   v_role text;
@@ -31,7 +31,7 @@ $function$;
 CREATE OR REPLACE FUNCTION public.protect_profile_privileged_fields()
 RETURNS trigger
 LANGUAGE plpgsql
-SET search_path TO 'public'
+SET search_path TO ''
 AS $function$
 BEGIN
   IF current_user IN ('postgres', 'service_role', 'supabase_admin') THEN
@@ -74,7 +74,7 @@ CREATE OR REPLACE FUNCTION public.admin_update_student_status(
 RETURNS void
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path TO 'public'
+SET search_path TO ''
 AS $function$
 DECLARE
   v_caller_id uuid := auth.uid();
@@ -121,7 +121,7 @@ CREATE OR REPLACE FUNCTION public.admin_update_instructor_status(
 RETURNS void
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path TO 'public'
+SET search_path TO ''
 AS $function$
 BEGIN
   IF auth.uid() IS NULL OR NOT EXISTS (
@@ -167,7 +167,7 @@ CREATE OR REPLACE FUNCTION public.approve_course_admin(
 RETURNS void
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path TO 'public'
+SET search_path TO ''
 AS $function$
 DECLARE
   v_family_id uuid;
@@ -217,7 +217,7 @@ CREATE OR REPLACE FUNCTION public.reject_course_admin(
 RETURNS void
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path TO 'public'
+SET search_path TO ''
 AS $function$
 DECLARE
   v_caller_role text;
@@ -252,7 +252,7 @@ CREATE OR REPLACE FUNCTION public.handle_course_appeal_admin(
 RETURNS void
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path TO 'public'
+SET search_path TO ''
 AS $function$
 DECLARE
   v_caller_role text;
@@ -287,6 +287,19 @@ GRANT EXECUTE ON FUNCTION public.approve_course_admin(uuid, uuid, text) TO authe
 GRANT EXECUTE ON FUNCTION public.approve_course_admin(uuid, uuid, uuid, text) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.reject_course_admin(uuid, uuid, uuid, text) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.handle_course_appeal_admin(uuid, text, uuid, text) TO authenticated;
+
+-- Use an empty search_path in this SECURITY DEFINER authorization helper.
+CREATE OR REPLACE FUNCTION public.check_is_admin()
+RETURNS boolean
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path TO ''
+AS $function$
+  SELECT EXISTS (
+    SELECT 1 FROM public.admin_auth
+    WHERE id = auth.uid()
+  );
+$function$;
 
 -- 5. Replace all 19 profile.role-based admin policy checks with admin_auth.
 ALTER POLICY "Admins can view all payout methods" ON public.payout_methods
@@ -369,7 +382,7 @@ RETURNS boolean
 LANGUAGE sql
 STABLE
 SECURITY DEFINER
-SET search_path TO 'public'
+SET search_path TO ''
 AS $function$
   SELECT EXISTS (
     SELECT 1 FROM public.enrollments e
