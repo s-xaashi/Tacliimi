@@ -14,7 +14,8 @@ SELECT
   r.created_at,
   p.full_name,
   p.avatar_url,
-  p.avatar_storage_key
+  p.avatar_storage_key,
+  NULL::uuid AS student_id -- retained as NULL for view-schema compatibility
 FROM public.mentorship_reviews AS r
 LEFT JOIN public.profiles AS p ON p.id = r.student_id
 JOIN public.instructors AS i ON i.user_id = r.mentor_id
@@ -32,6 +33,7 @@ AS
 SELECT
   cr.id AS review_id,
   cr.course_id,
+  NULL::uuid AS student_id, -- retained as NULL for view-schema compatibility
   p.full_name,
   p.avatar_url,
   p.avatar_storage_key
