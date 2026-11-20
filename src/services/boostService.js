@@ -2,34 +2,40 @@ import { supabase } from './supabaseClient.js';
 
 export const boostService = {
     /**
-     * Get platform boost settings
+     * Get public boost pricing and availability settings.
      */
     getBoostSettings: async () => {
         try {
-            const { data, error } = await supabase
-                .from('platform_settings')
-                .select('course_boost_price_per_day, mentor_boost_price_per_day, course_banner_price_per_day, mentor_banner_price_per_day, boost_min_days, boost_max_days, boost_rotation_window_minutes, course_boost_enabled, course_banner_enabled, mentor_boost_enabled, mentor_banner_enabled')
-                .single();
-            if (error) {
-                // Return defaults
-                return {
-                    course_boost_price_per_day: 5,
-                    mentor_boost_price_per_day: 5,
-                    course_banner_price_per_day: 3,
-                    mentor_banner_price_per_day: 3,
-                    boost_min_days: 1,
-                    boost_max_days: 90,
-                    boost_rotation_window_minutes: 3,
-                    course_boost_enabled: true,
-                    course_banner_enabled: true,
-                    mentor_boost_enabled: true,
-                    mentor_banner_enabled: true
-                };
-            }
-            return data;
+            const { data, error } = await supabase.rpc('get_public_platform_settings');
+            if (error) throw error;
+            return data || {
+                course_boost_price_per_day: 5,
+                mentor_boost_price_per_day: 5,
+                course_banner_price_per_day: 3,
+                mentor_banner_price_per_day: 3,
+                boost_min_days: 1,
+                boost_max_days: 90,
+                boost_rotation_window_minutes: 3,
+                course_boost_enabled: true,
+                course_banner_enabled: true,
+                mentor_boost_enabled: true,
+                mentor_banner_enabled: true
+            };
         } catch (error) {
             console.error('Err in getBoostSettings:', error);
-            return null;
+            return {
+                course_boost_price_per_day: 5,
+                mentor_boost_price_per_day: 5,
+                course_banner_price_per_day: 3,
+                mentor_banner_price_per_day: 3,
+                boost_min_days: 1,
+                boost_max_days: 90,
+                boost_rotation_window_minutes: 3,
+                course_boost_enabled: true,
+                course_banner_enabled: true,
+                mentor_boost_enabled: true,
+                mentor_banner_enabled: true
+            };
         }
     },
 
