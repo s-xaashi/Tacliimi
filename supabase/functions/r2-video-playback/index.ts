@@ -59,7 +59,7 @@ Deno.serve(async (req: Request) => {
     const [instructorResult, adminResult, enrollmentResult] = await Promise.all([
       supabase.from("instructors").select("user_id,approval_status").eq("user_id", course.instructor_id).maybeSingle(),
       supabase.from("admin_auth").select("id,role,is_suspended").eq("id", user.id).maybeSingle(),
-      supabase.from("enrollments").select("id").eq("student_id", user.id).eq("course_id", courseId).maybeSingle(),
+      supabase.from("enrollments").select("id").eq("student_id", user.id).eq("course_id", courseId).in("status", ["active", "completed"]).maybeSingle(),
     ]);
     if (instructorResult.error) throw instructorResult.error;
     if (adminResult.error) throw adminResult.error;
