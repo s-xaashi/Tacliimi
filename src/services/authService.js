@@ -11,22 +11,6 @@ const getAuthRedirectBaseUrl = () => {
 
 export const AuthService = {
     /**
-     * Check rate limit status for a given email address without recording attempt
-     */
-    async checkRateLimit(email) {
-        if (!email || !email.trim()) return { allowed: true, retry_after_seconds: 0 };
-        try {
-            const { data: rateCheck } = await supabase.rpc('check_and_record_login_attempt', {
-                p_email: email.trim(),
-                p_success: null
-            });
-            return rateCheck || { allowed: true, retry_after_seconds: 0 };
-        } catch (err) {
-            return { allowed: true, retry_after_seconds: 0 };
-        }
-    },
-
-    /**
      * Register a new instructor account with Email Verification
      */
     async signUpInstructor(email, password, fullName) {
@@ -140,45 +124,15 @@ export const AuthService = {
             }
         }
 
-        // 2. SERVER-SIDE RATE LIMIT PRE-CHECK
-        try {
-            const { data: rateCheck, error: rateErr } = await supabase.rpc('check_and_record_login_attempt', {
-                p_email: email,
-                p_success: null
-            });
-
-            if (!rateErr && rateCheck && rateCheck.allowed === false) {
-                const retrySec = rateCheck.retry_after_seconds || 30;
-                const err = new Error(`Account temporarily locked due to multiple failed login attempts. Please try again in ${retrySec} seconds.`);
-                err.retryAfter = retrySec;
-                err.isRateLimit = true;
-                throw err;
-            }
-        } catch (rateEx) {
-            // If it's a rate-limit exception created above, rethrow
-            if (rateEx.isRateLimit || (rateEx.message && rateEx.message.includes('Account temporarily locked'))) {
-                throw rateEx;
-            }
-            console.warn('Login rate limit check notice:', rateEx);
-        }
-
-        // 3. ATTEMPT AUTHENTICATION
+        // Supabase Auth enforces its own sign-in rate limits.
+        // Never accept client-authored success/failure records for an email.
+        // 2. ATTEMPT AUTHENTICATION
         const { data, error } = await supabase.auth.signInWithPassword({
             email,
             password
         });
 
         if (error) {
-            // Record failed attempt in server database
-            try {
-                await supabase.rpc('check_and_record_login_attempt', {
-                    p_email: email,
-                    p_success: false
-                });
-            } catch (recErr) {
-                console.warn('Failed to record login attempt:', recErr);
-            }
-
             // Return generic error message to prevent user enumeration
             if (error.message && (error.message.includes('Invalid login credentials') || error.status === 400)) {
                 throw new Error("Invalid email or password.");
@@ -186,18 +140,8 @@ export const AuthService = {
             throw error;
         }
 
-        // 4. AUTHENTICATION SUCCESSFUL -> RECORD SUCCESS & CHECK ACCOUNT STATUS
+        // 3. AUTHENTICATION SUCCESSFUL -> CHECK ACCOUNT STATUS
         if (data.session) {
-            // Record successful login attempt (clears lockout counter)
-            try {
-                await supabase.rpc('check_and_record_login_attempt', {
-                    p_email: email,
-                    p_success: true
-                });
-            } catch (recErr) {
-                console.warn('Failed to record successful login:', recErr);
-            }
-
             // Priority 1: Check admin suspension
             const { data: adminAuth } = await supabase
                 .from('admin_auth')
