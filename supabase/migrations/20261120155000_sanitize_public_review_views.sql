@@ -52,4 +52,22 @@ WHERE c.status = 'published'::public.course_status
 REVOKE ALL PRIVILEGES ON TABLE public.public_course_review_display FROM PUBLIC, anon, authenticated;
 GRANT SELECT ON TABLE public.public_course_review_display TO anon, authenticated;
 
+-- The active boosts view contains payment IDs, amounts and cancellation contact
+-- details. No current application consumer was found, so it is server-only.
+REVOKE ALL PRIVILEGES ON TABLE public.active_boosts_view FROM PUBLIC, anon, authenticated;
+
+-- The remaining mentor-stat views are public aggregate projections. Preserve
+-- their existing read contract but remove unnecessary mutation/table privileges.
+REVOKE ALL PRIVILEGES ON TABLE public.mentor_rating_stats FROM PUBLIC, anon, authenticated;
+GRANT SELECT ON TABLE public.mentor_rating_stats TO anon, authenticated;
+
+REVOKE ALL PRIVILEGES ON TABLE public.mentor_response_times_view FROM PUBLIC, anon, authenticated;
+GRANT SELECT ON TABLE public.mentor_response_times_view TO anon, authenticated;
+
+REVOKE ALL PRIVILEGES ON TABLE public.mentor_session_stats_view FROM PUBLIC, anon, authenticated;
+GRANT SELECT ON TABLE public.mentor_session_stats_view TO anon, authenticated;
+
+REVOKE ALL PRIVILEGES ON TABLE public.mentor_response_metrics_view FROM PUBLIC, anon, authenticated;
+GRANT SELECT ON TABLE public.mentor_response_metrics_view TO anon, authenticated;
+
 COMMIT;
