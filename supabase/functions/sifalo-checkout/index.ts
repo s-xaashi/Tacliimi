@@ -214,6 +214,9 @@ async function createCheckout(userId: string, payload: CreateCheckoutPayload): P
   const { data: insertedPayment, error: payErr } = await supabase
     .from('payments').insert(paymentRow).select('id').single();
   if (payErr || !insertedPayment) {
+    if (payErr?.code === '23505') {
+      return err('An active payment already exists for this item. Complete or check that order before starting another checkout.', 409);
+    }
     console.error('Payment insert error:', payErr);
     return err('Failed to initialize payment record.', 500, payErr);
   }
