@@ -365,39 +365,7 @@
                 });
             }
 
-            // Live Email Duplicate Check
             const emailInput = document.getElementById('email');
-            const emailErrorMsg = document.getElementById('email-error-msg');
-            const emailErrorText = document.getElementById('email-error-text');
-
-            async function checkEmailAvailability() {
-                const email = emailInput.value.trim();
-                if (!email || !email.includes('@')) {
-                    if (emailErrorMsg) emailErrorMsg.classList.add('hidden');
-                    if (emailInput) emailInput.classList.remove('border-red-500');
-                    return false;
-                }
-
-                const exists = await AuthService.checkEmailExists(email);
-                if (exists) {
-                    if (emailErrorText) emailErrorText.textContent = "This email is already used. Please log in or use a different email address.";
-                    if (emailErrorMsg) emailErrorMsg.classList.remove('hidden');
-                    if (emailInput) emailInput.classList.add('border-red-500');
-                    return true;
-                } else {
-                    if (emailErrorMsg) emailErrorMsg.classList.add('hidden');
-                    if (emailInput) emailInput.classList.remove('border-red-500');
-                    return false;
-                }
-            }
-
-            if (emailInput) {
-                emailInput.addEventListener('blur', checkEmailAvailability);
-                emailInput.addEventListener('input', () => {
-                    if (emailErrorMsg) emailErrorMsg.classList.add('hidden');
-                    if (emailInput) emailInput.classList.remove('border-red-500');
-                });
-            }
 
             const registerForm = document.getElementById('register-form');
             const errorDiv = document.getElementById('register-error');
@@ -424,21 +392,8 @@
                     }
 
                     try {
-                        btn.innerText = 'Checking Email Availability...';
-                        btn.disabled = true;
-
-                        // 2. Pre-check email existence before sending verification
-                        const isDuplicate = await checkEmailAvailability();
-                        if (isDuplicate) {
-                            btn.innerHTML = originalText;
-                            btn.disabled = false;
-                            errorDiv.textContent = "This email is already used before sending a verification. Please log in or use a different email address.";
-                            errorDiv.classList.remove('hidden');
-                            emailInput.focus();
-                            return;
-                        }
-
                         btn.innerText = 'Creating Account...';
+                        btn.disabled = true;
                         localStorage.setItem('tacliimi_pending_role', role);
 
                         if (role === 'instructor') {
@@ -452,7 +407,7 @@
                             <div class="text-center p-6 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-200 dark:border-green-800">
                                 <span class="material-icons-outlined text-green-500 text-4xl mb-3">mark_email_read</span>
                                 <h3 class="text-lg font-bold text-slate-800 dark:text-slate-100 mb-2">Check your email</h3>
-                                <p class="text-slate-600 dark:text-slate-400 text-sm">We've sent a confirmation link to <strong>${email}</strong>. Please click the link to verify your account before logging in.</p>
+                                <p class="text-slate-600 dark:text-slate-400 text-sm">If this email can be registered, we'll send next steps to <strong>${email}</strong>. If you already have an account, please log in.</p>
                             </div>
                         `;
                     } catch (err) {
