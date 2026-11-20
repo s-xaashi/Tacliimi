@@ -329,6 +329,7 @@ export function injectSecureWalletModal() {
         const container = document.getElementById('pm-result-container');
         const icon = document.getElementById('pm-result-icon');
         const btn = document.getElementById('pm-result-btn');
+        btn.disabled = false;
 
         if (success === null) {
             container.style.background = 'rgba(245, 158, 11, 0.1)';
