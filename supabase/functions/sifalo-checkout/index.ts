@@ -328,7 +328,7 @@ async function createDirectPayment(userId: string, token: string, payload: Direc
   const saveGatewayResponse = async (gatewayResponse: Record<string, unknown>) => {
     const { error } = await supabase
       .from('payments')
-      .update({ gateway_response: { ...initialGatewayMetadata, ...gatewayResponse } })
+      .update({ gateway_response: { ...gatewayResponse, ...initialGatewayMetadata } })
       .eq('id', insertedPayment.id)
       .eq('payment_status', 'pending');
     return error;
@@ -625,9 +625,12 @@ async function verifyTransaction(_userId: string, payload: VerifyPayload, token:
       return err('Gateway transaction ID does not match the transaction already stored', 409);
     }
 
+    const storedGatewayMetadata = payment.gateway_response && typeof payment.gateway_response === 'object'
+      ? payment.gateway_response as Record<string, unknown>
+      : {};
     const mergedGatewayResponse = {
-      ...((payment.gateway_response && typeof payment.gateway_response === 'object') ? payment.gateway_response : {}),
       ...verifyData,
+      ...storedGatewayMetadata,
     };
     const { data: updatedPayment, error: updateErr } = await supabase
       .from('payments')
