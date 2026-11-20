@@ -953,12 +953,8 @@ export const CourseService = {
         // Note: this does not enforce at the Supabase Storage RLS level — a caller
         // that bypasses this service and calls the Supabase storage client directly
         // would not be blocked. Acceptable for a cost-control toggle.
-        const { data: settingsRow } = await supabase
-            .from('platform_settings')
-            .select('self_hosted_video_uploads_enabled')
-            .limit(1)
-            .maybeSingle();
-        if (settingsRow && settingsRow.self_hosted_video_uploads_enabled === false) {
+        const { data: publicSettings } = await supabase.rpc('get_public_platform_settings');
+        if (publicSettings && publicSettings.self_hosted_video_uploads_enabled === false) {
             throw new Error('Self-hosted video uploads are currently disabled. Please use a YouTube URL instead.');
         }
         const fileName = `${session.user.id}/${courseId ? courseId : 'new'}/video_${Date.now()}`;
@@ -970,12 +966,8 @@ export const CourseService = {
         if (!session?.user?.id) throw new Error("Not authenticated");
 
         // SERVICE-LAYER GUARD (same boundary as uploadCourseVideo — see note above)
-        const { data: settingsRow } = await supabase
-            .from('platform_settings')
-            .select('self_hosted_video_uploads_enabled')
-            .limit(1)
-            .maybeSingle();
-        if (settingsRow && settingsRow.self_hosted_video_uploads_enabled === false) {
+        const { data: publicSettings } = await supabase.rpc('get_public_platform_settings');
+        if (publicSettings && publicSettings.self_hosted_video_uploads_enabled === false) {
             throw new Error('Self-hosted video uploads are currently disabled. Please use a YouTube URL instead.');
         }
         const fileName = `${session.user.id}/${lessonId ? lessonId : 'new'}/video_${Date.now()}`;
