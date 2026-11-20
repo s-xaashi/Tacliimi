@@ -115,7 +115,7 @@
                 // Admin routing must use the trusted admin_auth record, never profiles.role.
                 const { data: adminRecord, error: adminError } = await supabase
                     .from('admin_auth')
-                    .select('role')
+                    .select('role, is_suspended')
                     .eq('id', session.user.id)
                     .maybeSingle();
 
@@ -124,7 +124,7 @@
                 }
 
                 // A legacy profiles.role='admin' value is not an administrator grant.
-                if (adminRecord && ['superadmin', 'course_manager', 'finance_manager'].includes(adminRecord.role)) {
+                if (adminRecord && adminRecord.is_suspended !== true && ['superadmin', 'course_manager', 'finance_manager'].includes(adminRecord.role)) {
                     window.location.replace('/admin/dashboard/');
                 } else if (actualRole === 'instructor' || actualRole === 'mentor') {
                     window.location.replace('/instructor/dashboard/');
