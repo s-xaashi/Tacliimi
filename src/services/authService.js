@@ -347,11 +347,21 @@ export const AuthService = {
         // Extend session with admin role if it exists
         const { data: adminRecord, error: adminError } = await supabase
             .from('admin_auth')
-            .select('role, full_name')
+            .select('role, full_name, is_suspended')
             .eq('id', session.user.id)
             .maybeSingle();
 
-        if (adminRecord && !adminError) {
+        if (adminError) {
+            console.error('[AuthService] Could not verify administrator membership:', adminError);
+            this._sessionCache = null;
+            return null;
+        }
+
+        if (adminRecord) {
+            if (adminRecord.is_suspended === true) {
+                await this.clearStaleAuthStorage();
+                return null;
+            }
             session.is_admin = true;
             session.admin_role = adminRecord.role;
             session.user.user_metadata.full_name = adminRecord.full_name;
@@ -381,44 +391,37 @@ export const AuthService = {
         const session = await this.getSession();
         if (!session) return null;
 
-        // Admin Profile Override
+        // Admin Profile Override: fail closed if the trusted registry row cannot be re-read.
         if (session.is_admin) {
             try {
                 const { data: adminRecord, error: adminError } = await supabase
                     .from('admin_auth')
-                    .select('id, full_name, username, role, phone_number, city, address, avatar_url')
+                    .select('id, full_name, username, role, phone_number, city, address, avatar_url, is_suspended')
                     .eq('id', session.user.id)
                     .maybeSingle();
 
-                if (adminRecord && !adminError) {
-                    return {
-                        id: adminRecord.id,
-                        full_name: adminRecord.full_name || 'Administrator',
-                        username: adminRecord.username,
-                        email: session.user.email,
-                        role: 'admin',
-                        admin_role: adminRecord.role,
-                        is_admin: true,
-                        phone_number: adminRecord.phone_number,
-                        city: adminRecord.city,
-                        address: adminRecord.address,
-                        avatar_url: adminRecord.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(adminRecord.full_name || 'Admin')}&background=4F46E5&color=fff`
-                    };
+                if (adminError || !adminRecord || adminRecord.is_suspended === true || adminRecord.role !== session.admin_role) {
+                    if (adminError) console.error("Admin profile verification failed:", adminError);
+                    return null;
                 }
+
+                return {
+                    id: adminRecord.id,
+                    full_name: adminRecord.full_name || 'Administrator',
+                    username: adminRecord.username,
+                    email: session.user.email,
+                    role: 'admin',
+                    admin_role: adminRecord.role,
+                    is_admin: true,
+                    phone_number: adminRecord.phone_number,
+                    city: adminRecord.city,
+                    address: adminRecord.address,
+                    avatar_url: adminRecord.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(adminRecord.full_name || 'Admin')}&background=4F46E5&color=fff`
+                };
             } catch (err) {
                 console.error("Admin profile fetch error:", err);
+                return null;
             }
-
-            // Fallback
-            return {
-                id: session.user.id,
-                full_name: session.user.user_metadata.full_name || 'Administrator',
-                email: session.user.email,
-                role: 'admin',
-                admin_role: session.admin_role,
-                is_admin: true,
-                avatar_url: `https://ui-avatars.com/api/?name=${encodeURIComponent(session.user.user_metadata.full_name || 'Admin')}&background=4F46E5&color=fff`
-            };
         }
 
         try {
