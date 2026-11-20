@@ -241,26 +241,6 @@
         </div>
     </div>
 
-    <!-- Verification Modal -->
-    <div id="verify-modal" class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/80 backdrop-blur-md hidden p-4">
-        <div class="bg-white dark:bg-slate-900 w-full max-w-sm p-8 rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-800">
-            <div class="text-center mb-6">
-                <div class="w-16 h-16 bg-amber-50 dark:bg-amber-900/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <span class="material-symbols-outlined text-amber-600 text-3xl">security</span>
-                </div>
-                <h3 class="text-lg font-black text-slate-900 dark:text-white">Identity Verification</h3>
-                <p class="text-xs text-slate-400 font-medium px-4">Please enter your SuperAdmin password to authorize this action.</p>
-            </div>
-            <form id="verify-form" class="space-y-4">
-                <input type="password" id="verify-password" required class="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-amber-500 transition-all text-center" placeholder="••••••••">
-                <div class="flex gap-3">
-                    <button type="button" id="close-verify" class="flex-1 py-4 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-200 transition-all">Cancel</button>
-                    <button type="submit" class="flex-1 py-4 bg-amber-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-amber-100 dark:shadow-none hover:bg-amber-700 transition-all">Verify</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
     <!-- Profile Details Modal -->
     <div id="profile-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden p-4">
         <div class="bg-white dark:bg-slate-900 w-full max-w-sm p-8 rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-800">
@@ -314,17 +294,14 @@
         document.addEventListener('DOMContentLoaded', async () => {
             const tableBody = document.getElementById('admin-table-body');
             const adminModal = document.getElementById('admin-modal');
-            const verifyModal = document.getElementById('verify-modal');
-            const profileModal = document.getElementById('profile-modal');
+                        const profileModal = document.getElementById('profile-modal');
             
             const btnOpenModal = document.getElementById('btn-open-modal');
             const btnCloseModal = document.getElementById('close-modal');
-            const btnCloseVerify = document.getElementById('close-verify');
-            const btnCloseProfile = document.getElementById('close-profile');
+                        const btnCloseProfile = document.getElementById('close-profile');
             
             const addAdminForm = document.getElementById('add-admin-form');
-            const verifyForm = document.getElementById('verify-form');
-            const themeToggle = document.getElementById('theme-toggle');
+                        const themeToggle = document.getElementById('theme-toggle');
             const sidebar = document.getElementById('sidebar');
             const sidebarToggle = document.getElementById('toggle-sidebar');
             const overlay = document.getElementById('sidebar-overlay');
@@ -335,7 +312,6 @@
             const viewLogs = document.getElementById('view-logs');
             const logsTableBody = document.getElementById('logs-table-body');
             
-            let currentVerificationAction = null; 
             let adminList = [];
 
             // 1. Initialize Theme
@@ -369,7 +345,7 @@
                     // Parallelize session check, admin list, and current user profile for header
                     const [sessionResult, adminResult, profileResult] = await Promise.all([
                         AuthService.getSession(),
-                        supabase.from('admin_auth').select('*').order('role', { ascending: true }),
+                        supabase.from('admin_auth').select('id, full_name, role, username, backup_email, address, city, phone_number, avatar_url, is_suspended, last_seen_at').order('role', { ascending: true }),
                         AuthService.getCurrentProfile()
                     ]);
 
@@ -500,9 +476,6 @@
                         </td>
                         <td class="px-6 py-5 text-right">
                             <div class="flex items-center justify-end gap-1">
-                                <button onclick="event.stopPropagation(); window.requestVisibility('${adm.id}')" class="p-2 text-slate-400 hover:text-indigo-600 transition-colors" title="View Credentials">
-                                    <span class="material-symbols-outlined text-[20px]">visibility</span>
-                                </button>
                                 <button onclick="event.stopPropagation(); window.toggleSuspension('${adm.id}')" class="p-2 ${adm.is_suspended ? 'text-emerald-500 hover:text-emerald-600' : 'text-amber-500 hover:text-amber-600'} transition-colors" title="${adm.is_suspended ? 'Activate' : 'Suspend'}">
                                     <span class="material-symbols-outlined text-[20px]">${adm.is_suspended ? 'settings_backup_restore' : 'block'}</span>
                                 </button>
@@ -540,11 +513,6 @@
                     avatarPlaceholder.classList.remove('hidden');
                 }
                 profileModal.classList.remove('hidden');
-            };
-
-            window.requestVisibility = (targetId) => {
-                currentVerificationAction = { type: 'show_pwd', targetId };
-                verifyModal.classList.remove('hidden');
             };
 
             window.toggleSuspension = async (targetId) => {
@@ -597,7 +565,6 @@
                         p_full_name: fullName,
                         p_role: role,
                         p_username: username,
-                        p_backup_password: password,
                         p_backup_email: email,
                         p_caller_id: session.user.id,
                         p_city: city,
@@ -618,39 +585,8 @@
                 }
             });
 
-            verifyForm?.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const pwd = document.getElementById('verify-password').value;
-                const btn = verifyForm.querySelector('button[type="submit"]');
-                const orig = btn.innerText;
-                try {
-                    btn.innerText = 'VERIFYING...';
-                    btn.disabled = true;
-                    const isValid = await AuthService.verifyPassword(pwd);
-                    if (!isValid) throw new Error("Invalid SuperAdmin credentials.");
-
-                    if (currentVerificationAction.type === 'show_pwd') {
-                        const session = await AuthService.getSession();
-                        const { data, error } = await supabase.rpc('admin_get_backup_password', {
-                            p_target_id: currentVerificationAction.targetId
-                        });
-                        if (error) throw error;
-                        const [username, password] = data.split(':');
-                        alert(`UNCLOAKED CREDENTIALS\n--------------------\nUsername: ${username}\nPassword: ${password}`);
-                    }
-                    verifyModal.classList.add('hidden');
-                    verifyForm.reset();
-                } catch (err) {
-                    alert("Failure: " + err.message);
-                } finally {
-                    btn.innerText = orig;
-                    btn.disabled = false;
-                }
-            });
-
             btnOpenModal?.addEventListener('click', () => adminModal.classList.remove('hidden'));
             btnCloseModal?.addEventListener('click', () => adminModal.classList.add('hidden'));
-            btnCloseVerify?.addEventListener('click', () => { verifyModal.classList.add('hidden'); verifyForm.reset(); });
             btnCloseProfile?.addEventListener('click', () => profileModal.classList.add('hidden'));
             
             themeToggle?.addEventListener('click', () => ThemeService.toggle());
